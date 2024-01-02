@@ -48,3 +48,35 @@ Note: You must use the existing OOTB Order entities available in the mantle comp
     "approvedDate": "2020-04-19"
 }
 ```
+2b. Add Order Items
+* Identify the entities involved in adding items to an order as per the below input schema.
+
+* The input schema for the Add Order Items API should have the parameters as per the sample request body added below, with the following constraints.
+  * The orderId, facilityId and customerPartyId parameters should be mandatory for adding the items to an existing order.
+  * The shipmentMethodEnumId parameter should consider the default value of “ShMthGround” if not provided in the request.
+  * The item_details parameter should be mandatory.
+  * For each item inside the item_details, productId, quantity and unitAmount parameters should be mandatory.
+
+* Use the existing customer with the partyId, “CustJqp”, available in the moqui-tutorial component, for creating the orders.
+```
+{
+    "orderId": "100000",
+    "partName": "Test Order Part 1",
+    "facilityId": "ZIRET_WH",
+    "shipmentMethodEnumId": "ShMthGround",
+    "customerPartyId": "CustJqp",
+    "item_details": [{
+        "productId": "DEMO_UNIT",
+        "itemDescription": "Demo Product Unit One",
+        "quantity": "1",
+        "unitAmount": "16.99"
+    },
+    {
+        "productId": "DEMO_1_1",
+        "itemDescription": "Demo Product Unit Two",
+        "quantity": "2",
+        "unitAmount": "18.99"
+    }]
+}
+
+```
