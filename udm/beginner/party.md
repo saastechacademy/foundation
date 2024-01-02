@@ -78,7 +78,7 @@ Sample JSON Data
 
 
 2. PartyGroup as Supplier
-
+```
 {
   "Party": {"partyId": "SUPP456", "partyTypeId": "PARTY_GROUP"},
   "PartyGroup": {"partyId": "SUPP456", "groupName": "XYZ Supplies Inc.", "taxId": "98-7654321"},
@@ -89,6 +89,7 @@ Sample JSON Data
   "ContactMechPurpose": [{"contactMechId": "ADDR002", "contactMechPurposeTypeId": "BILLING"},
                          {"contactMechId": "ADDR002", "contactMechPurposeTypeId": "SHIPPING"}]
 }
+```
 
 
 
