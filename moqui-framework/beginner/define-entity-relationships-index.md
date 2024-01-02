@@ -6,7 +6,7 @@ Learning objectives
 - Understanding maps and lists preparation in Moqui.
 
 Prerequisite
-Complete developing resp api assignment.
+Complete developing rest api assignment.
 
 Task 1: Define entities
 
