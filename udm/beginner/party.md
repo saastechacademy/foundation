@@ -80,14 +80,48 @@ Sample JSON Data
 2. PartyGroup as Supplier
 ```
 {
-  "Party": {"partyId": "SUPP456", "partyTypeId": "PARTY_GROUP"},
-  "PartyGroup": {"partyId": "SUPP456", "groupName": "XYZ Supplies Inc.", "taxId": "98-7654321"},
-  "PartyRole": {"partyId": "SUPP456", "roleTypeId": "SUPPLIER"},
-  "ContactMech": [{"contactMechId": "PHONE002", "contactMechTypeId": "TELECOM_NUMBER", "infoString": "555-6789"},
-                  {"contactMechId": "ADDR002", "contactMechTypeId": "POSTAL_ADDRESS", "infoString": "456 Oak Avenue, Metropolis, 54321, USA"}],
-  "PostalAddress": {"contactMechId": "ADDR002", "address1": "456 Oak Avenue", "city": "Metropolis", "postalCode": "54321", "countryGeoId": "USA"},
-  "ContactMechPurpose": [{"contactMechId": "ADDR002", "contactMechPurposeTypeId": "BILLING"},
-                         {"contactMechId": "ADDR002", "contactMechPurposeTypeId": "SHIPPING"}]
+  "Party": {
+    "partyId": "SUPP456",
+    "partyTypeId": "PARTY_GROUP"
+  },
+  "PartyGroup": {
+    "partyId": "SUPP456",
+    "groupName": "XYZ Supplies Inc.",
+    "taxId": "98-7654321"
+  },
+  "PartyRole": {
+    "partyId": "SUPP456",
+    "roleTypeId": "SUPPLIER"
+  },
+  "ContactMech": [
+    {
+      "contactMechId": "PHONE002",
+      "contactMechTypeId": "TELECOM_NUMBER",
+      "infoString": "555-6789"
+    },
+    {
+      "contactMechId": "ADDR002",
+      "contactMechTypeId": "POSTAL_ADDRESS",
+      "infoString": "456 Oak Avenue, Metropolis, 54321, USA"
+    }
+  ],
+  "PostalAddress": {
+    "contactMechId": "ADDR002",
+    "address1": "456 Oak Avenue",
+    "city": "Metropolis",
+    "postalCode": "54321",
+    "countryGeoId": "USA"
+  },
+  "ContactMechPurpose": [
+    {
+      "contactMechId": "ADDR002",
+      "contactMechPurposeTypeId": "BILLING"
+    },
+    {
+      "contactMechId": "ADDR002",
+      "contactMechPurposeTypeId": "SHIPPING"
+    }
+  ]
 }
 ```
 
