@@ -10,7 +10,7 @@ Complete developing rest api assignment.
 
 Task 1: Define entities
 
-order_header, order_item entity as per the definition given below.
+order_header, order_item, party, person, product entities as per the definition given below.
 ```
 {
   "table": "order_header",
@@ -362,4 +362,10 @@ Task 2: Sample data
 ```
 
 Task 3: REST API
-Design and Develop rest API to perform CRUD operations on entities. 
+Design and Develop rest API to perform CRUD operations on entities. Demonstrate use of view entities for fetching data from database. 
+
+Task 4: Report API
+Design and implement view entity and service to report on
+* Total number of orders placed in given period
+* Total revenue for given period
+* Revenue by product for given period
