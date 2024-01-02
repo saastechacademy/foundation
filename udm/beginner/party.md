@@ -28,7 +28,7 @@ Assigning Purposes to Contact Mechanisms
 * Implementation: Utilizes the ContactMechPurpose entity, linking a contactMechId to a purpose such as BILLING or SHIPPING.
 Sample JSON Data
 1. Person as Customer
-{
+`{
   "Party": {"partyId": "CUST123", "partyTypeId": "PERSON"},
   "Person": {"partyId": "CUST123", "firstName": "John", "lastName": "Doe", "birthDate": "1990-01-01"},
   "PartyRole": {"partyId": "CUST123", "roleTypeId": "CUSTOMER"},
@@ -37,7 +37,7 @@ Sample JSON Data
   "PostalAddress": {"contactMechId": "ADDR001", "address1": "123 Elm Street", "city": "Springfield", "postalCode": "12345", "countryGeoId": "USA"},
   "ContactMechPurpose": [{"contactMechId": "ADDR001", "contactMechPurposeTypeId": "BILLING"},
                          {"contactMechId": "ADDR001", "contactMechPurposeTypeId": "SHIPPING"}]
-}
+}`
 
 
 2. PartyGroup as Supplier
