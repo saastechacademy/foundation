@@ -134,12 +134,31 @@ The API request should return information about an order by giving its order id.
 Note: This API should return the information for the order as per the output schema of get orders API. 
 
 2e. Update Order
-The API request should be able to update the order name for a given order Id, as per the sample request body added below.
-
+* The API request should be able to update the order name for a given order Id, as per the sample request body added below.
 ```
 {
    "orderId": "100000",
    "orderName": "My first order."
 }
+```
+
+* The output schema for the API should have the parameters as per the sample response body added below.
 
 ```
+{
+    "orderId": "100000",
+    "orderName": "My first order.",
+    "currencyUomId": "USD",
+    "salesChannelEnumId": "ScWeb",
+    "statusId": "OrderPlaced"
+    "productStoreId": "OMS_DEFAULT_STORE",
+    "placedDate": "2020-04-17",
+    "approvedDate": "2020-04-19",
+    "grandTotal": 54.97
+}
+```
+
+
+Run APIs
+
+* Check the working of all the developed REST APIs by executing the requests using Postman.
