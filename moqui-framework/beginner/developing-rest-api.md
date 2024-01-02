@@ -58,6 +58,8 @@ Note: You must use the existing OOTB Order entities available in the mantle comp
   * For each item inside the item_details, productId, quantity and unitAmount parameters should be mandatory.
 
 * Use the existing customer with the partyId, “CustJqp”, available in the moqui-tutorial component, for creating the orders.
+* The successful API request should output the orderId and orderPartSeqId.
+
 ```
 {
     "orderId": "100000",
@@ -78,5 +80,53 @@ Note: You must use the existing OOTB Order entities available in the mantle comp
         "unitAmount": "18.99"
     }]
 }
+
+```
+2c. Get all Orders
+* The API request should return the list of all orders.
+* The output schema for the Get Orders API should have the parameters as per the sample response body added below. 
+
+```
+{
+	"orders": [
+{
+	"orderId": "105001",				
+	"orderName": "sample order 1",
+	"currencyUom": "USD",
+	"salesChannelEnumId": "ScWeb",
+	"statusId": "OrderPlaced",				
+	"placedDate": "2020-04-17",			
+"grandTotal": 54.97,
+      	"customer_details": {
+		"customerPartyId": "100601",
+	"firstName": "Sam",	
+"middleName": "",				
+	"lastName": "Wilson"
+	},
+	"order_parts": [{
+		"orderPartSeqId": "01",	
+           "partName": "Test Order Part 1",	
+"facilityId": "ZIRET_WH",
+           "shipmentMethodEnumId": "ShMthGround",	
+           "partStatusId": "OrderPlaced",
+           "partTotal": 54.97,
+		"item_details": [{
+			"orderItemSeqId": "01",		
+		"productId": "DEMO_UNIT",
+		"itemDescription": "Demo Product One Unit",
+		"quantity":  1,
+		"unitAmount":  16.99
+	}, {
+           "orderItemSeqId": "02",
+                      "productId": "DEMO_1_1",
+                       "itemDescription": "Demo Product Unit Two",
+                       "quantity": "2",
+                       "unitAmount": "18.99"
+    }]
+	}]
+}]
+}
+
+
 
 ```
