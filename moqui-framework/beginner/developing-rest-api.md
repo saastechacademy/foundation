@@ -28,9 +28,15 @@ Load data provided in moqui-tutorial component.
 Develop API to perform CRUD operations on order entities.
 Note: You must use the existing OOTB Order entities available in the mantle component for this assignment. 
 
-2.a Create Order
-Identify the entity to create the order with the data as per the below input schema.
-The input schema for the Create Order API should have the parameters as per the sample request body added below, with the following constraints.
+2a. Create Order
+* Identify the entity to create the order with the data as per the below input schema.
+* The input schema for the Create Order API should have the parameters as per the sample request body added below, with the following constraints.
+  * Default currencyUomId parameter to “USD” if not passed in the request.
+  * Default the statusId parameter to “OrderPlaced” if not passed in the request.
+  * The orderName and placedDate parameters is required for creating the order.
+
+* The successful API request should return the orderId for the new Order created.
+
 ```
 {
     "orderName": "Test Order 1",
@@ -41,6 +47,4 @@ The input schema for the Create Order API should have the parameters as per the 
     "placedDate": "2020-04-17",
     "approvedDate": "2020-04-19"
 }
-
-
 ```
