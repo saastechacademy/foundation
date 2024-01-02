@@ -3,7 +3,7 @@ Learning objective
 * Implement CRUD services in Moqui
 
 Prerequisite
-Complete following tutorial in give order
+Complete following tutorial in given order
 
 Services in Moqui.
 https://youtu.be/6kFwPlPk92c
