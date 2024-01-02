@@ -1,6 +1,6 @@
-Introduction to Apache OFBiz Party Data Model
+Introduction to Party Data Model
 
-Apache OFBiz offers a flexible, robust framework for managing complex business relationships. Central to this framework is the Party data model. This document provides an overview of this model, focusing on its core entities - Party, Person, and PartyGroup - and their applications in representing various business relationships. Additionally, we will delve into Party Roles, contact mechanisms, and their purposes. Finally, we provide sample JSON data for a Person as a Customer and a PartyGroup as a Supplier.
+This document provides an overview of this model, focusing on its core entities - Party, Person, and PartyGroup - and their applications in representing various business relationships. Additionally, we will delve into Party Roles, contact mechanisms, and their purposes. Finally, we provide sample JSON data for a Person as a Customer and a PartyGroup as a Supplier.
 Party Data Model Overview
 
 Entities
