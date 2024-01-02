@@ -1,67 +1,61 @@
-Apache OFBiz uses a set of entities to manage various types of contact mechanisms:
+The Apache OFBiz (Open For Business) project is an open source enterprise resource planning (ERP) system. It provides a suite of enterprise applications that integrate and automate many of the business processes of an enterprise. Among its various features, it includes a system for managing contact mechanisms, which is primarily handled through the ContactMech table and its related tables.
 
-ContactMech: The central table for storing different forms of contact information.
+ContactMech Table
+Purpose: This table is the central table in the contact mechanism schema. It stores different types of contact information.
+Fields: Common fields include contactMechId, contactMechTypeId, infoString, etc.
+Usage: The infoString field is used to store the actual contact information, such as an email address.
+Related Tables
+TelecomNumber Table
 
-TelecomNumber: Specifically stores telephone numbers.
+Relationship with ContactMech: This table is related to ContactMech and specifically stores telephone numbers.
+Fields: Includes contactMechId, countryCode, areaCode, contactNumber, etc.
+Usage: Used to store detailed telephone contact information. The contactMechId field links it to the ContactMech table.
+PostalAddress Table
 
-PostalAddress: Holds details of postal addresses.
-
-EmailAddress: Used for storing email addresses. Sometimes, it's not a separate table but rather a type of contact mechanism stored in ContactMech.
-
-PartyContactMech: Links contact mechanisms to specific parties (individuals or organizations).
-
-ContactMechType: Defines different types of contact mechanisms, like phone, email, postal address, etc.
-
-ContactMechPurpose: Specifies the purpose for which a contact mechanism is used (e.g., billing, shipping).
-
-PartyContactMechPurpose: Connects a PartyContactMech to a specific purpose.
-
-Here's a combined JSON sample data reflecting these entities:
+Relationship with ContactMech: This table stores the postal address information and is linked to the ContactMech table.
+Fields: Includes contactMechId, toName, attnName, address1, address2, city, postalCode, etc.
+Usage: Stores detailed information about postal addresses. The contactMechId field serves as the link to the ContactMech table.
+Email Addresses in ContactMech
+Handling: Email addresses are managed directly in the ContactMech table, typically using the infoString field.
+No Dedicated Table: Unlike telephone numbers and postal addresses, there is no dedicated table for email addresses in OFBiz.
+Sample Data in JSON Format
 
 ```
 {
   "ContactMech": [
     {
-      "contactMechId": "10010",
+      "contactMechId": "10000",
       "contactMechTypeId": "TELECOM_NUMBER",
       "TelecomNumber": {
         "countryCode": "1",
         "areaCode": "123",
         "contactNumber": "4567890"
-      },
-      "PartyContactMechPurpose": {
-        "purposeTypeId": "PRIMARY_PHONE"
       }
     },
     {
-      "contactMechId": "10011",
+      "contactMechId": "10001",
       "contactMechTypeId": "EMAIL_ADDRESS",
-      "infoString": "example@email.com",
-      "PartyContactMechPurpose": {
-        "purposeTypeId": "PRIMARY_EMAIL"
-      }
+      "infoString": "example@email.com"
     },
     {
-      "contactMechId": "10012",
+      "contactMechId": "10002",
       "contactMechTypeId": "POSTAL_ADDRESS",
       "PostalAddress": {
+        "toName": "John Doe",
+        "attnName": "Office",
         "address1": "123 Main St",
-        "city": "Anytown",
-        "postalCode": "12345",
-        "countryGeoId": "USA"
-      },
-      "PartyContactMechPurpose": {
-        "purposeTypeId": "BILLING_ADDRESS"
+        "address2": "Suite 100",
+        "city": "Metropolis",
+        "postalCode": "12345"
       }
     }
   ]
 }
+
 ```
 
-In this JSON:
+In this sample JSON data:
 
-Each contact mechanism is represented as an object within the ContactMech array.
-contactMechId and contactMechTypeId identify each contact mechanism.
-Nested objects (TelecomNumber, infoString for email, and PostalAddress) store the contact details.
-PartyContactMechPurpose with purposeTypeId specifies the purpose of each contact mechanism.
-This model provides a detailed view of how contact information is structured and linked to its purpose in Apache OFBiz. Remember, the actual OFBiz implementation might have more fields and relationships, and the JSON representation is a simplified version for illustrative purposes.
+A telecom number is linked to the ContactMech table through contactMechId and detailed in the TelecomNumber object.
+An email address is stored as an infoString in the ContactMech table.
+A postal address is linked via contactMechId and detailed in the PostalAddress object.

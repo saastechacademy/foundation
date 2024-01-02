@@ -5,7 +5,7 @@ Party Data Model Overview
 
 Entities
 1. Party
-* Description: Represents any entity that can enter into a relationship. This includes individuals, groups, or organizations.
+Description: Represents any entity that can enter into a relationship. This includes individuals, groups, or organizations.
 * Key Attributes: Unique identifier (partyId).
 2. Person
 * Description: A specialization of Party, representing individual human beings.
