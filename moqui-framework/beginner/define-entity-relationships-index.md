@@ -361,5 +361,5 @@ Task 2: Sample data
 }
 ```
 
-Task 3: Define REST API
+Task 3: REST API
 Design and Develop rest API to perform CRUD operations on entities. 
