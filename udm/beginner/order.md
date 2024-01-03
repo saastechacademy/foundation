@@ -22,7 +22,8 @@
     "orderId": "10001",
     "orderDate": "2024-01-03",
     "orderStatus": "CREATED",
-    "partyId": "C100"
+    "partyId": "C100",
+    "grandTotal": 95.00
   },
   "OrderItems": [
     {
@@ -56,6 +57,7 @@
     }
   ]
 }
+
 ```
 
 This JSON example represents a sales order with two items and a shipping charge adjustment. It demonstrates the relationships between the different entities and how adjustments are applied within the OFBiz data model.
