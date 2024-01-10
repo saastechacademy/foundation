@@ -179,7 +179,7 @@ Activity 1
     Phone: 877.736.4080
     Email Address: mark.tailor@hotwaxmedia.com
     Shipping Method: UPS Ground
-    Billing Method: Credit Card - Visa
+    Billing Method: Credit Card - Visa 4111 1111 1111 1111
     Billing Address:
     HotWax Media Inc.
     136 S MAIN ST #A200
