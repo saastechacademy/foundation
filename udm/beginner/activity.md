@@ -3,8 +3,48 @@ https://confluence.hotwaxmedia.com/display/IMPL/Data+Model+Exercises
 
 Setup up Company, Product store and Catalog:
 
-Company and Product store data along with Catalog data need to setup by taking reference from OOTB DemoProduct.xml file.
-These details are imaginary for a shoe store.
+Activity - 1
+
+1. **Company Information**
+   - Company ID: COMPANY
+   - Company Name: Default Company
+   - Company Logo URL: /resources/uploads/images/company_logo.png
+
+Activity - 2
+
+2. **Company Roles**
+   - Roles for COMPANY: 
+     - Bill From Vendor
+     - Ship From Vendor
+     - Bill To Customer
+     - Internal Organization
+     - Supplier Agent
+     - Supplier
+     - Vendor
+
+Activity - 3
+
+3. **Product Store Group**
+   - Store Group Name: Company Store Group
+   - Description: Company Store Group
+   - Store Group ID: STORE_GROUP
+
+Activity - 4
+
+4. **Product Store**
+   - Store ID: STORE
+   - Store Name: Demo Store
+   - Group: Company Store Group (STORE_GROUP)
+   - Company Name: Company
+   - Store Attributes: 
+     - Primary Store Group ID: STORE_GROUP
+     - Inventory Policy: Non-reserving
+     - Locale: English (US)
+     - Currency: USD
+     - Sales Channel: Web Sales
+     - Invoice and Order Approval: Automatic
+
+
 
 Activity - 1
 
