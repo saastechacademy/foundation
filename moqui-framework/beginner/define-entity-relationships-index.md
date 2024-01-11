@@ -5,8 +5,6 @@ Learning objectives
 - Understanding using sub queries in a view entity. Ex- Shopify Inventory Feed.
 - Understanding maps and lists preparation in Moqui.
 
-Prerequisite
-Complete developing rest api assignment.
 
 Task 1: Define entities
 
