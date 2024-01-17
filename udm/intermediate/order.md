@@ -167,3 +167,8 @@
   ]
 }
 ```
+
+
+**Order lifecyle**
+
+https://app.diagrams.net/#G0BykZZYyGnR7UQlpsc3MwUGtfRVU
