@@ -1,3 +1,6 @@
+Recommeded reading
+https://www.moqui.org/m/docs/mantle/Mantle+Structure+and+UDM/Party
+
 Introduction to Party Data Model
 
 This document provides an overview of this model, focusing on its core entities - Party, Person, and PartyGroup - and their applications in representing various business relationships. Additionally, we will delve into Party Roles, contact mechanisms, and their purposes. Finally, we provide sample JSON data for a Person as a Customer and a PartyGroup as a Supplier.
