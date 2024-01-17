@@ -154,16 +154,16 @@ Categories:
 
 ### Activity - 2 
 
-Features:
+**Features:**
 
-Size
+***Size***
 
     – 7, 8, 9, 10, 11
-Color
+***Color***
 
     – Red, Black, White, Brown
 
-Products:
+***Products:***
 
     – Virtual Products
     — Men > MSports
