@@ -22,7 +22,7 @@ UDM offers framework for managing product features and specifications. Key to th
 - Description.
 
 #### 3. ProductFeatureType Entity
-**Purpose**: Categorizes product features.
+**Purpose**: Classifies product features.
 
 **Key Attributes**:
 - Product Feature Type ID: Unique identifier.
@@ -54,7 +54,7 @@ UDM offers framework for managing product features and specifications. Key to th
 
 ### Utilizing Entities for Product Feature Definition
 
-1. **Define ProductFeatureType**: Categorize the feature.
+1. **Define ProductFeatureType**: Classify the feature.
 2. **Define ProductFeature**: Create a feature with specific details.
 3. **Link Feature to Product using ProductFeatureAppl**: Associate the feature with a product, detailing applicability and sequence.
 4. **Specify Feature Application using ProductFeatureApplType**: Clarify the nature of the feature's application, whether it's standard, optional, required, distinguishing, or selectable.
