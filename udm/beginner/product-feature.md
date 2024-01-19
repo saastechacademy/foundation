@@ -180,6 +180,9 @@ A sample JSON data for "Men's Blue Denim Pants" product available in 3 sizes.
     }
   ]
 }
-
-
 ```
+
+**Activity:** 
+**Discuss** ProductFeatureAppl and ProductFeatureApplTypes entities and analyse similarity with ProductAssoc and ProductAssocType entities.
+**Define** Men's Denim Pants product that is available in 3 colors (Light Blue, Nevy, Black) and 4 sizes (28, 30, 32, 34)  
+**Write SQL** to select all available sizes for each color
