@@ -1,4 +1,4 @@
-###### This document contains information about various categories and their types for developing an e-commerce application, also considering the purpose of them.
+# This document contains information about various categories and their types for developing an e-commerce application, also considering the purpose of them.
 
 * Browse Root Category
 * Search Category
@@ -28,8 +28,11 @@ Association of catalog with "BROWSE_ROOT" category
 ```
 <ProductCategory productCategoryId="BROWSE_ROOT" productCategoryTypeId="CATALOG_CATEGORY" categoryName="Browse Root" longDescription="Primary Browse Root Category" description="Browse Root"/>
 <ProdCatalogCategory prodCatalogId="WFI_CATALOG" productCategoryId="BROWSE_ROOT" fromDate="2001-05-15 12:00:00.0" sequenceNum="1" prodCatalogCategoryTypeId="PCCT_BROWSE_ROOT"/>
+```
 
 Association of other categories with "BROWSE_ROOT" category
+
+```
 <ProductCategory productCategoryId="4999" productCategoryTypeId="CATALOG_CATEGORY" primaryParentCategoryId="BROWSE_ROOT" description="Food" categoryName="Food" productCategoryUrlName="survival-food"/>
 <ProductCategory productCategoryId="5004" productCategoryTypeId="CATALOG_CATEGORY" primaryParentCategoryId="BROWSE_ROOT" description="Water" categoryName="Water" productCategoryUrlName="water-filters"/>
 <ProductCategory productCategoryId="5005" productCategoryTypeId="CATALOG_CATEGORY" primaryParentCategoryId="BROWSE_ROOT" description="Power" categoryName="Power" productCategoryUrlName="portable-solar-power"/>
@@ -247,3 +250,11 @@ Sequence number in Product Category Rollup and Product Category Member depicts t
 Best Practice: Set the Product Category Members if page will show the products
 Best Practice: Set Category Rollups if the page will show the categories.
 In general it is about setting the Product Category Members.
+
+
+
+**Activity**
+
+* Analyze ProductCategory entity, its attributes, its relationships.
+* Analyze ProductCategoryMember entity and its relationships. Notice similarty with ProductFeatureAppl entity. 
+* Analyze Category model design, notice role and responsibilities of various categories and how their definition is captured by the data model.
