@@ -20,7 +20,7 @@ Description:  The PARTY entity represents a unified model for individuals (PERSO
 * Relationship with Party: Every PartyGroup is a Party, but with attributes specific to groups.
 4. Party Roles
 * Function: Defines the role of a Party in a specific context.
-* There is an Entity RoleType which stores the types of Roles available in the data model, we can also add a new role as per the requirement.
+* There is an Entity RoleType which stores roles available OOTB like carrier, bill-to customer, ship-from vendor, employee.
 * Examples: Customer, Supplier, Employee.
 * Assignment: A Party is assigned a Role through the PartyRole entity, linking the Party to its function within the business ecosystem.
 5. Contact Mechanisms and Purposes Adding Contact Mechanisms
