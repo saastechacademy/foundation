@@ -8,7 +8,7 @@ Party Data Model Overview
 
 Entities
 1. Party
-Description:  The PARTY entity represents a unified model for individuals (PERSON) and organisations (ORGANIZATION), capturing common attributes and classifications, essential for managing business relationships, contracts, and demographic categorizations.
+Description:  The Party entity represents a unified model for individuals (PERSON) and organisations (ORGANIZATION), capturing common attributes and classifications, essential for managing business relationships, contracts, and demographic categorizations.
 * Key Attributes: Unique identifier (partyId).
 2. Person
 * Description: A specialization of the Party, representing unique characteristics of individual human beings.
@@ -20,16 +20,16 @@ Description:  The PARTY entity represents a unified model for individuals (PERSO
 * Relationship with Party: Every PartyGroup is a Party, but with attributes specific to groups.
 4. Party Roles
 * Function: Defines the role of a Party in a specific context.
-* There is an Entity RoleType which stores roles available OOTB like carrier, bill-to customer, ship-from vendor, employee.
+* An Entity RoleType which stores roles available OOTB like carrier, bill-to customer, ship-from vendor, employee. we can also add a new role as per the requirement.
 * Examples: Customer, Supplier, Employee.
 * Assignment: A Party is assigned a Role through the PartyRole entity, linking the Party to its function within the business ecosystem.
 5. Contact Mechanisms and Purposes Adding Contact Mechanisms
 * Types: Includes phone numbers (TelecomNumber) postal addresses (PostalAddress) and electronic addresses (Email).
 * Linking to Party: Achieved via the ContactMech entity, which associates a contact mechanism with a Party through a unique contactMechId.
-* Association Entity: An intermediary entity (PartyContactMech) establishes a clear link between a Party and a Contact Mechanism by utilizing their unique identifiers, namely, partyId and contactMechId. This association entity facilitates the connection between Parties and their respective Contact Mechanisms, providing an organized and efficient means of managing communication details.
+* Association Entity: PartyContactMech entity establishes a clear link between a Party and a Contact Mechanism by utilizing their unique identifiers, namely, partyId and contactMechId. This association entity facilitates the connection between Parties and their respective Contact Mechanisms, providing an organized and efficient means of managing communication details.
 Assigning Purposes to Contact Mechanisms
 * Function: Defines the specific use of a contact mechanism, like billing or shipping.
-* Implementation: The ContactMechPurpose entity is employed to associate a contactMechId with a particular purpose, exemplified by values like BILLING or SHIPPING. This entails utilizing the ContactMechPurpose table, where each entry indicates the purpose assigned to a specific contact mechanism. For instance, an entry in this table might signify that a particular postal address is designated for shipping purposes.
+* Implementation: The PartyContactMechPurpose entity is like a tool we use to link a contact mechanism with a specific purpose, such as billing or shipping.  This entails utilizing the ContactMechPurpose table, where each entry indicates the purpose assigned to a specific contact mechanism. For instance, an entry in this table might signify that a particular postal address is designated for shipping purposes.
 
 Sample JSON Data
 1. Person as Customer
@@ -68,19 +68,35 @@ Sample JSON Data
     "postalCode": "12345",
     "countryGeoId": "USA"
   },
-  "ContactMechPurpose": [
-    {
-      "contactMechId": "ADDR001",
-      "contactMechPurposeTypeId": "BILLING"
+
+  "PartyContactMech": [
+  {
+    "partyId":"CUST123",
+    "contactMechId": "PHONE001"
+  },
+  {
+    "partyId":"CUST123",
+    "contactMechId": "ADDR001"
+  }
+],
+
+"PartyContactMechPurpose": [
+  {
+  "contactMechId": "ADDR001",
+      "partyId": "CUST123",
+      "contactMechPurposeTypeId": "BILLING_LOCATION",
+      "fromDate": "2023-05-13 00:00:00.0"
+
     },
     {
       "contactMechId": "ADDR001",
-      "contactMechPurposeTypeId": "SHIPPING"
+      "partyId": "CUST123",
+      "contactMechPurposeTypeId": "SHIPPING_LOCATION",
+      "fromDate": "2023-05-13 00:00:00.0"
     }
   ]
 }
 ```
-
 
 2. PartyGroup as Supplier
 ```
@@ -117,14 +133,25 @@ Sample JSON Data
     "postalCode": "54321",
     "countryGeoId": "USA"
   },
-  "ContactMechPurpose": [
+   "PartyContactMech": [
+{
+  "partyId":"SUPP456",
+  "contactMechId": "PHONE002"
+},
+{
+  "partyId":"SUPP456",
+  "contactMechId": "ADDR002"
+}
+],
+
+"PartyContactMechPurpose": [
     {
       "contactMechId": "ADDR002",
-      "contactMechPurposeTypeId": "BILLING"
+      "contactMechPurposeTypeId": "BILLING_LCATION"
     },
     {
       "contactMechId": "ADDR002",
-      "contactMechPurposeTypeId": "SHIPPING"
+      "contactMechPurposeTypeId": "SHIPPING_LOCATION"
     }
   ]
 }
