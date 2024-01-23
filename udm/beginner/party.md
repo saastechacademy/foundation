@@ -50,13 +50,11 @@ Sample JSON Data
   "ContactMech": [
     {
       "contactMechId": "PHONE001",
-      "contactMechTypeId": "TELECOM_NUMBER",
-      "infoString": "555-1234"
+      "contactMechTypeId": "TELECOM_NUMBER"
     },
     {
       "contactMechId": "ADDR001",
-      "contactMechTypeId": "POSTAL_ADDRESS",
-      "infoString": "123 Elm Street, Springfield, 12345, USA"
+      "contactMechTypeId": "POSTAL_ADDRESS"
     }
   ],
   "PostalAddress": {
@@ -66,14 +64,36 @@ Sample JSON Data
     "postalCode": "12345",
     "countryGeoId": "USA"
   },
-  "ContactMechPurpose": [
+“TelecomNumber”:{
+  "contactMechId": "PHONE001",
+  "countryCode": "1",
+  "areaCode": "555",
+  "contactNumber": "4536-9712"
+},
+  ‘’PartyContactMech”: [
+  {
+   "partyId": "CUST123",
+   "contactMechId": "PHONE001",
+   “fromDate”:”2024-01-22 00:00:00”
+  },
+  {
+   "partyId": "CUST123",
+   "contactMechId": "ADDR001",
+   “fromDate”:”2024-01-22 00:00:00”
+  }
+],
+  "PartyContactMechPurpose": [
     {
+      "partyId": "CUST123",
       "contactMechId": "ADDR001",
-      "contactMechPurposeTypeId": "BILLING"
+      "contactMechPurposeTypeId": "BILLING_LOCATION",
+      “fromDate”:”2024-01-22 00:00:00”
     },
     {
+      "partyId": "CUST123",
       "contactMechId": "ADDR001",
-      "contactMechPurposeTypeId": "SHIPPING"
+      "contactMechPurposeTypeId": "SHIPPING_LOCATION",
+      “fromDate”:”2024-01-22 00:00:00”
     }
   ]
 }
@@ -89,8 +109,7 @@ Sample JSON Data
   },
   "PartyGroup": {
     "partyId": "SUPP456",
-    "groupName": "XYZ Supplies Inc.",
-    "taxId": "98-7654321"
+    "groupName": "XYZ Supplies Inc."
   },
   "PartyRole": {
     "partyId": "SUPP456",
@@ -115,16 +134,38 @@ Sample JSON Data
     "postalCode": "54321",
     "countryGeoId": "USA"
   },
-  "ContactMechPurpose": [
-    {
-      "contactMechId": "ADDR002",
-      "contactMechPurposeTypeId": "BILLING"
-    },
-    {
-      "contactMechId": "ADDR002",
-      "contactMechPurposeTypeId": "SHIPPING"
-    }
-  ]
+“TelecomNumber”:{
+    "contactMechId": "PHONE002",
+    "countryCode": "1",
+    "areaCode": "555",
+    "contactNumber": "4536-9712"
+},
+"PartyContactMech”:[
+  {
+   "partyId": "SUPP456",
+   "contactMechId": "PHONE002",
+   “fromDate”:”2024-01-22 00:00:00”
+  },
+  {
+   "partyId": "SUPP456",
+   "contactMechId": "ADDR002",
+   “fromDate”:”2024-01-22 00:00:00”
+  }
+],
+"PartyContactMechPurpose": [
+  {
+    "partyId": "SUPP456",
+    "contactMechId": "ADDR002",
+    "contactMechPurposeTypeId": "BILLING_LOCATION",
+    “fromDate”:”2024-01-22 00:00:00”
+  },
+  {
+    "partyId": "SUPP456",
+    "contactMechId": "ADDR002",
+    "contactMechPurposeTypeId": "SHIPPING_LOCATION",
+    “fromDate”:”2024-01-22 00:00:00”
+  }
+]
 }
 ```
 
