@@ -25,26 +25,35 @@ Related Tables
 Sample Data in JSON Format
 
 ```
+     {
+      "ContactMech": [
+     {
+        "contactMechId": "100000",
+        "contactMechTypeId": "TELECOM_NUMBER"
+      },
+   {
+         "contactMechId": "10002",
+        "contactMechTypeId": "POSTAL_ADDRESS"
+   }
+
 {
-  "ContactMech": [
+        "contactMechId": "10001",
+        "contactMechTypeId": "EMAIL_ADDRESS",
+        "infoString": "example@email.com"
+  }
+],
+
     {
-      "contactMechId": "10000",
-      "contactMechTypeId": "TELECOM_NUMBER",
       "TelecomNumber": {
         "countryCode": "1",
         "areaCode": "123",
         "contactNumber": "4567890"
       }
     },
+ 
     {
-      "contactMechId": "10001",
-      "contactMechTypeId": "EMAIL_ADDRESS",
-      "infoString": "example@email.com"
-    },
-    {
-      "contactMechId": "10002",
-      "contactMechTypeId": "POSTAL_ADDRESS",
       "PostalAddress": {
+        "contactMechId": "10002",
         "toName": "John Doe",
         "attnName": "Office",
         "address1": "123 Main St",
@@ -53,8 +62,8 @@ Sample Data in JSON Format
         "postalCode": "12345"
       }
     }
-  ]
 }
+
 
 ```
 
