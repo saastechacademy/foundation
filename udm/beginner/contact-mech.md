@@ -38,15 +38,17 @@ Sample Data in JSON Format
     },
     {
       "contactMechId": "10002",
-      "contactMechTypeId": "POSTAL_ADDRESS",
+      "contactMechTypeId": "POSTAL_ADDRESS"
     }
   ],
   "TelecomNumber": {
+        "contactMechId": "10001"
         "countryCode": "1",
         "areaCode": "123",
         "contactNumber": "4567890"
   },
   "PostalAddress": {
+        "contactMechId": "10002"
         "toName": "John Doe",
         "attnName": "Office",
         "address1": "123 Main St",
