@@ -64,24 +64,24 @@ Sample JSON Data
     "postalCode": "12345",
     "countryGeoId": "USA"
   },
-“TelecomNumber”:{
-  "contactMechId": "PHONE001",
-  "countryCode": "1",
-  "areaCode": "555",
-  "contactNumber": "4536-9712"
-},
-  ‘’PartyContactMech”: [
-  {
-   "partyId": "CUST123",
-   "contactMechId": "PHONE001",
-   “fromDate”:”2024-01-22 00:00:00”
+  “TelecomNumber”:{
+    "contactMechId": "PHONE001",
+    "countryCode": "1",
+    "areaCode": "555",
+    "contactNumber": "4536-9712"
   },
-  {
-   "partyId": "CUST123",
-   "contactMechId": "ADDR001",
-   “fromDate”:”2024-01-22 00:00:00”
-  }
-],
+  "PartyContactMech”: [
+    {
+     "partyId": "CUST123",
+     "contactMechId": "PHONE001",
+     “fromDate”:”2024-01-22 00:00:00”
+    },
+    {
+     "partyId": "CUST123",
+     "contactMechId": "ADDR001",
+     “fromDate”:”2024-01-22 00:00:00”
+    }
+  ],
   "PartyContactMechPurpose": [
     {
       "partyId": "CUST123",
@@ -134,24 +134,24 @@ Sample JSON Data
     "postalCode": "54321",
     "countryGeoId": "USA"
   },
-“TelecomNumber”:{
-    "contactMechId": "PHONE002",
-    "countryCode": "1",
-    "areaCode": "555",
-    "contactNumber": "4536-9712"
-},
-"PartyContactMech”:[
-  {
-   "partyId": "SUPP456",
-   "contactMechId": "PHONE002",
-   “fromDate”:”2024-01-22 00:00:00”
+  “TelecomNumber”:{
+      "contactMechId": "PHONE002",
+      "countryCode": "1",
+      "areaCode": "555",
+      "contactNumber": "4536-9712"
   },
-  {
-   "partyId": "SUPP456",
-   "contactMechId": "ADDR002",
-   “fromDate”:”2024-01-22 00:00:00”
-  }
-],
+  "PartyContactMech”:[
+    {
+     "partyId": "SUPP456",
+     "contactMechId": "PHONE002",
+     “fromDate”:”2024-01-22 00:00:00”
+    },
+    {
+     "partyId": "SUPP456",
+     "contactMechId": "ADDR002",
+     “fromDate”:”2024-01-22 00:00:00”
+    }
+  ],
 "PartyContactMechPurpose": [
   {
     "partyId": "SUPP456",
