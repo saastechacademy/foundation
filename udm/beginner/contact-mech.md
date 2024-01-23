@@ -30,7 +30,8 @@ Sample Data in JSON Format
     {
       "contactMechId": "10000",
       "contactMechTypeId": "TELECOM_NUMBER",
-      "TelecomNumber": {
+     "TelecomNumber": {
+        "contactMechId": "10000",
         "countryCode": "1",
         "areaCode": "123",
         "contactNumber": "4567890"
@@ -45,6 +46,7 @@ Sample Data in JSON Format
       "contactMechId": "10002",
       "contactMechTypeId": "POSTAL_ADDRESS",
       "PostalAddress": {
+        "contactMechId": "10002",
         "toName": "John Doe",
         "attnName": "Office",
         "address1": "123 Main St",
