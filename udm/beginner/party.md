@@ -51,14 +51,36 @@ Sample JSON Data
     {
       "contactMechId": "PHONE001",
       "contactMechTypeId": "TELECOM_NUMBER",
-      "infoString": "555-1234"
     },
+
     {
       "contactMechId": "ADDR001",
       "contactMechTypeId": "POSTAL_ADDRESS",
-      "infoString": "123 Elm Street, Springfield, 12345, USA"
     }
   ],
+
+{
+  "PartyContactMechs": [
+    {
+      "contactMechId": "PHONE001",
+      "fromDate": "2024-01-21 00:00:00.0",
+      "partyId": "CUST123"
+    },
+    {
+      "contactMechId": "ADDR001",
+      "fromDate": null,
+      "partyId": "CUST123"
+    }
+  ],
+
+  "TelecomNumbers": [
+    {
+      "areaCode": "801",
+      "contactMechId": "PHONE001",
+      "contactNumber": "555-5555"
+    }
+  ]
+
   "PostalAddress": {
     "contactMechId": "ADDR001",
     "address1": "123 Elm Street",
@@ -66,17 +88,21 @@ Sample JSON Data
     "postalCode": "12345",
     "countryGeoId": "USA"
   },
-  "ContactMechPurpose": [
+  "PartyContactMechPurpose": [
     {
+       “partyId”: “CUST123”
       "contactMechId": "ADDR001",
-      "contactMechPurposeTypeId": "BILLING"
+      "contactMechPurposeTypeId": "BILLING_LOCATION"
     },
     {
+      “partyId”: “CUST123”
       "contactMechId": "ADDR001",
-      "contactMechPurposeTypeId": "SHIPPING"
+      "contactMechPurposeTypeId": "SHIPPING_LOCATION"
     }
   ]
 }
+
+
 ```
 
 
@@ -85,12 +111,13 @@ Sample JSON Data
 {
   "Party": {
     "partyId": "SUPP456",
-    "partyTypeId": "PARTY_GROUP"
+    "partyTypeId": "Party_Group"
   },
-  "PartyGroup": {
+  "Person": {
     "partyId": "SUPP456",
-    "groupName": "XYZ Supplies Inc.",
-    "taxId": "98-7654321"
+    "firstName": "John",
+    "lastName": "Hayes",
+    "birthDate": "1990-01-01"
   },
   "PartyRole": {
     "partyId": "SUPP456",
@@ -100,14 +127,35 @@ Sample JSON Data
     {
       "contactMechId": "PHONE002",
       "contactMechTypeId": "TELECOM_NUMBER",
-      "infoString": "555-6789"
     },
+
     {
       "contactMechId": "ADDR002",
       "contactMechTypeId": "POSTAL_ADDRESS",
-      "infoString": "456 Oak Avenue, Metropolis, 54321, USA"
     }
   ],
+
+{
+  "PartyContactMech": [
+    {
+      "contactMechId": "PHONE002",
+      "fromDate": "2024-01-21 00:00:00.0",
+      "partyId": "SUPP456"
+    },
+    {
+      "contactMechId": "ADDR002",
+      "fromDate": "2024-01-21 00:00:00.0" ,
+      "partyId": "SUPP456"
+    }
+  ],
+
+  "TelecomNumbers": [
+    {
+      "contactMechId": "PHONE002",
+      "contactNumber": "555-6789"
+    }
+  ]
+
   "PostalAddress": {
     "contactMechId": "ADDR002",
     "address1": "456 Oak Avenue",
@@ -115,17 +163,20 @@ Sample JSON Data
     "postalCode": "54321",
     "countryGeoId": "USA"
   },
-  "ContactMechPurpose": [
+  "PartyContactMechPurpose": [
     {
+       “partyId”: “SUPP456”
       "contactMechId": "ADDR002",
-      "contactMechPurposeTypeId": "BILLING"
+      "contactMechPurposeTypeId": "BILLING_LOCATION"
     },
     {
+      “partyId”: “SUPP456”
       "contactMechId": "ADDR002",
-      "contactMechPurposeTypeId": "SHIPPING"
+      "contactMechPurposeTypeId": "SHIPPING_LOCATION"
     }
   ]
 }
+
 ```
 
 
