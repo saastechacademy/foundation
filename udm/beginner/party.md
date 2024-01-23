@@ -59,6 +59,11 @@ Sample JSON Data
       "infoString": "123 Elm Street, Springfield, 12345, USA"
     }
   ],
+  "TelecomNumber": {
+    "contactMechId": "PHONE001",
+    "areaCode": "555",
+    "contactNumber": "1234"
+  },
   "PostalAddress": {
     "contactMechId": "ADDR001",
     "address1": "123 Elm Street",
@@ -66,14 +71,36 @@ Sample JSON Data
     "postalCode": "12345",
     "countryGeoId": "USA"
   },
-  "ContactMechPurpose": [
+  "PartyContactMech": [
     {
-      "contactMechId": "ADDR001",
-      "contactMechPurposeTypeId": "BILLING"
+      "partyId": "CUST123",
+      "contactMechId": "PHONE001",
+      "fromDate": "2024-01-22 00:00:00"
     },
     {
+      "partyId": "CUST123",
       "contactMechId": "ADDR001",
-      "contactMechPurposeTypeId": "SHIPPING"
+      "fromDate": "2024-01-22 00:00:00"
+    }
+  ],
+  "PartyContactMechPurpose": [
+    {
+      "partyId": "CUST123",
+      "contactMechId": "ADDR001",
+      "contactMechPurposeTypeId": "BILLING_LOCATION",
+      "fromDate": "2024-01-22 00:00:00"
+    },
+    {
+      "partyId": "CUST123",
+      "contactMechId": "ADDR001",
+      "contactMechPurposeTypeId": "SHIPPING_LOCATION",
+      "fromDate": "2024-01-22 00:00:00"
+    },
+    {
+      "partyId": "CUST123",
+      "contactMechId": "PHONE001",
+      "contactMechPurposeTypeId": "PHONE_BILLING",
+      "fromDate": "2024-01-22 00:00:00"
     }
   ]
 }
@@ -89,8 +116,7 @@ Sample JSON Data
   },
   "PartyGroup": {
     "partyId": "SUPP456",
-    "groupName": "XYZ Supplies Inc.",
-    "taxId": "98-7654321"
+    "groupName": "XYZ Supplies Inc."
   },
   "PartyRole": {
     "partyId": "SUPP456",
@@ -108,6 +134,11 @@ Sample JSON Data
       "infoString": "456 Oak Avenue, Metropolis, 54321, USA"
     }
   ],
+  "TelecomNumber": {
+    "contactMechId": "PHONE002",
+    "areaCode": "555",
+    "contactNumber": "6789"
+  },
   "PostalAddress": {
     "contactMechId": "ADDR002",
     "address1": "456 Oak Avenue",
@@ -115,14 +146,36 @@ Sample JSON Data
     "postalCode": "54321",
     "countryGeoId": "USA"
   },
-  "ContactMechPurpose": [
+  "PartyContactMech": [
     {
-      "contactMechId": "ADDR002",
-      "contactMechPurposeTypeId": "BILLING"
+      "partyId": "SUPP456",
+      "contactMechId": "PHONE002",
+      "fromDate": "2024-01-22 00:00:00"
     },
     {
+      "partyId": "SUPP456",
       "contactMechId": "ADDR002",
-      "contactMechPurposeTypeId": "SHIPPING"
+      "fromDate": "2024-01-22 00:00:00"
+    }
+  ],
+  "PartyContactMechPurpose": [
+    {
+      "partyId": "SUPP456",
+      "contactMechId": "ADDR002",
+      "contactMechPurposeTypeId": "BILLING_LOCATION",
+      "fromDate": "2024-01-22 00:00:00"
+    },
+    {
+      "partyId": "SUPP456",
+      "contactMechId": "ADDR002",
+      "contactMechPurposeTypeId": "SHIPPING_LOCATION",
+      "fromDate": "2024-01-22 00:00:00"
+    },
+    {
+      "partyId": "SUPP456",
+      "contactMechId": "PHONE002",
+      "contactMechPurposeTypeId": "PHONE_BILLING",
+      "fromDate": "2024-01-22 00:00:00"
     }
   ]
 }
