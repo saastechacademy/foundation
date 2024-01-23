@@ -66,14 +66,30 @@ Sample JSON Data
     "postalCode": "12345",
     "countryGeoId": "USA"
   },
-  "ContactMechPurpose": [
+  "PartyContactMech": [
     {
+      "partyId": "CUST123",
       "contactMechId": "ADDR001",
-      "contactMechPurposeTypeId": "BILLING"
+      "fromDate": "2024-01-22 15:17:50"
     },
     {
+      "partyId": "CUST123",
+      "contactMechId": "PHONE001",
+      "fromDate": "2024-01-22 15:17:50"
+    }
+  ],
+  "PartyContactMechPurpose": [
+    {
+      "partyId": "CUST123",
       "contactMechId": "ADDR001",
-      "contactMechPurposeTypeId": "SHIPPING"
+      "contactMechPurposeTypeId": "BILLING_LOCATION",
+      "fromDate": "2024-01-22 15:17:50"
+    },
+    {
+      "partyId": "CUST123",
+      "contactMechId": "ADDR001",
+      "contactMechPurposeTypeId": "SHIPPING_LOCATION",
+      "fromDate": "2024-01-22 15:17:50"
     }
   ]
 }
@@ -115,14 +131,30 @@ Sample JSON Data
     "postalCode": "54321",
     "countryGeoId": "USA"
   },
-  "ContactMechPurpose": [
+  "PartyContactMech": [
     {
+      "partyId": "SUPP456",
       "contactMechId": "ADDR002",
-      "contactMechPurposeTypeId": "BILLING"
+      "fromDate": "2024-01-22 15:17:50"
     },
     {
+      "partyId": "SUPP456",
+      "contactMechId": "PHONE002",
+      "fromDate": "2024-01-22 15:17:50"
+    }
+  ],
+  "PartyContactMechPurpose": [
+    {
+      "partyId": "SUPP456",
       "contactMechId": "ADDR002",
-      "contactMechPurposeTypeId": "SHIPPING"
+      "contactMechPurposeTypeId": "BILLING_LOCATION",
+      "fromDate": "2024-01-22 15:22:00"
+    },
+    {
+      "partyId": "SUPP456",
+      "contactMechId": "ADDR002",
+      "contactMechPurposeTypeId": "SHIPPING_LOCATION",
+      "fromDate": "2024-01-22 15:22:00"
     }
   ]
 }
