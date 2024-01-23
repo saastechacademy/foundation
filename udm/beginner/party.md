@@ -8,27 +8,44 @@ Party Data Model Overview
 
 Entities
 1. Party
-Description: Represents any entity that can enter into a relationship. This includes individuals, groups, or organizations.
+* Description: Represents any entity that can enter into a relationship. This includes individuals, groups, or organizations.
 * Key Attributes: Unique identifier (partyId).
+  
 2. Person
 * Description: A specialization of Party, representing individual human beings.
 * Key Attributes: Inherits partyId, plus attributes like firstName, lastName, birthDate.
-* Relationship with Party: Every Person is a Party, but with additional attributes specific to individuals.
+* Relationship with Party: Person is subentity of Party entity. Every Person is a Party, but with additional attributes specific to individuals. 
+
 3. PartyGroup
 * Description: Another specialization of Party, representing collective entities such as companies or organizations.
 * Key Attributes: Inherits partyId, plus attributes like groupName, taxId.
 * Relationship with Party: Every PartyGroup is a Party, but with attributes specific to groups.
+  
 4. Party Roles
 * Function: Defines the role of a Party in a specific context.
 * Examples: Customer, Supplier, Employee.
+* Key Attributes: partyId and roleTypeId (Unique identifier of roleType entity).
+* Relationship with Party: A single party can have multiple roles.
 * Assignment: A Party is assigned a Role through the PartyRole entity, linking the Party to its function within the business ecosystem.
-5. Contact Mechanisms and Purposes
-Adding Contact Mechanisms
-* Types: Includes phone numbers (TelecomNumber) and postal addresses (PostalAddress).
+
+5. Party Relationships
+* Description: A relationship is defined by two parties and their respective roles.
+* Function: To maintain the unique information about each relationship of party to each other.
+* Key Attributes: partyId and roleTypeId of both parties and relationshipTypeId.
+
+5. Contact Mechanism
+* Function: Contact Mech entity stores access mechanism from parties.
+* Types: Includes email address (EmailAddress), phone numbers (TelecomNumber) and postal addresses (PostalAddress).
+* Key Attributes: Unique identifier (contactMechId).
+
+6. Party Contact Mechanism
 * Linking to Party: Achieved via the ContactMech entity, which associates a contact mechanism with a Party through a unique contactMechId.
-Assigning Purposes to Contact Mechanisms
+* Key Attributes: partyId, contactMechId and fromDate.
+
+7. Party Contact Mechanism Purposes
 * Function: Defines the specific use of a contact mechanism, like billing or shipping.
-* Implementation: Utilizes the ContactMechPurpose entity, linking a contactMechId to a purpose such as BILLING or SHIPPING.
+* Implementation: Utilizes the ContactMechPurposeType entity, linking a PartyContactMech to a purposeTypeId such as BILLING or SHIPPING.
+
 Sample JSON Data
 1. Person as Customer
 ```
