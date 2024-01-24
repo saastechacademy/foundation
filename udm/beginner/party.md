@@ -1,4 +1,4 @@
-Recommeded reading
+Recommended reading
 https://www.moqui.org/m/docs/mantle/Mantle+Structure+and+UDM/Party
 
 ### Introduction to Party Data Model
