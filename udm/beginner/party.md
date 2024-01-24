@@ -1,37 +1,38 @@
 Recommeded reading
 https://www.moqui.org/m/docs/mantle/Mantle+Structure+and+UDM/Party
 
-Introduction to Party Data Model
+### Introduction to Party Data Model
 
 This document provides an overview of this model, focusing on its core entities - Party, Person, and PartyGroup - and their applications in representing various business relationships. Additionally, we will delve into Party Roles, contact mechanisms, and their purposes. Finally, we provide sample JSON data for a Person as a Customer and a PartyGroup as a Supplier.
 Party Data Model Overview
 
-Entities
+### Entities
 1. Party
-Description: Represents any entity that can enter into a relationship. This includes individuals, groups, or organizations.
-* Key Attributes: Unique identifier (partyId).
+* Description: Represents any entity that can enter into a relationship. This includes individuals, groups, or organizations.
+* Key Attributes: Unique identifier (`partyId`).
 2. Person
-* Description: A specialization of Party, representing individual human beings.
-* Key Attributes: Inherits partyId, plus attributes like firstName, lastName, birthDate.
-* Relationship with Party: Every Person is a Party, but with additional attributes specific to individuals.
+* Description: A specialization of `Party`, representing individual human beings.
+* Key Attributes: Inherits `partyId`, plus attributes like `firstName`, `lastName`, `birthDate`.
+* Relationship with Party: Every `Person` is a `Party`, but with additional attributes specific to individuals.
 3. PartyGroup
-* Description: Another specialization of Party, representing collective entities such as companies or organizations.
-* Key Attributes: Inherits partyId, plus attributes like groupName, taxId.
-* Relationship with Party: Every PartyGroup is a Party, but with attributes specific to groups.
+* Description: Another specialization of `Party`, representing collective entities such as companies or organizations.
+* Key Attributes: Inherits `partyId`, plus attributes like `groupName`.
+* Relationship with Party: Every `PartyGroup` is a `Party`, but with attributes specific to groups.
 4. Party Roles
-* Function: Defines the role of a Party in a specific context.
+* Function: Defines the role of a `Party` in a specific context.
 * Examples: Customer, Supplier, Employee.
-* Assignment: A Party is assigned a Role through the PartyRole entity, linking the Party to its function within the business ecosystem.
+* Assignment: A `Party` is assigned a Role through the PartyRole entity using `partyId` attribute, linking the Party to its function within the business ecosystem.
 5. Contact Mechanisms and Purposes
-Adding Contact Mechanisms
-* Types: Includes phone numbers (TelecomNumber) and postal addresses (PostalAddress).
-* Linking to Party: Achieved via the ContactMech entity, which associates a contact mechanism with a Party through a unique contactMechId.
-Assigning Purposes to Contact Mechanisms
-* Function: Defines the specific use of a contact mechanism, like billing or shipping.
-* Implementation: Utilizes the ContactMechPurpose entity, linking a contactMechId to a purpose such as BILLING or SHIPPING.
-Sample JSON Data
+* Adding Contact Mechanisms
+  * Types: Includes phone numbers (TelecomNumber) and postal addresses (PostalAddress).
+  * Linking to Party: Achieved via the `PartyContactMech` entity, which associates a `ContactMech` with a `Party` through a unique identifiers `contactMechId` & `partyId`.
+* Assigning Purposes to Contact Mechanisms
+  * Function: Defines the specific use of a contact mechanism, like billing or shipping.
+  * Implementation: Utilizes the `PartyContactMechPurpose` entity, linking a `contactMechId`, `partyId`, `contactMechPurposeTypeId` to a purpose such as BILLING_LOCATION or SHIPPING_LOCATION.
+  
+### Sample JSON Data
 1. Person as Customer
-```
+```json
 {
   "Party": {
     "partyId": "CUST123",
@@ -59,6 +60,18 @@ Sample JSON Data
       "infoString": "123 Elm Street, Springfield, 12345, USA"
     }
   ],
+  "PartyContactMech": [
+    {
+      "partyId": "CUST123",
+      "contactMechId": "PHONE001",
+      "fromDate": "2024-01-24 00:00:00.0"
+    },
+    {
+      "partyId": "CUST123",
+      "contactMechId": "ADDR001",
+      "fromDate": "2024-01-24 00:00:00.0"
+    }
+  ],
   "PostalAddress": {
     "contactMechId": "ADDR001",
     "address1": "123 Elm Street",
@@ -66,14 +79,18 @@ Sample JSON Data
     "postalCode": "12345",
     "countryGeoId": "USA"
   },
-  "ContactMechPurpose": [
+  "PartyContactMechPurpose": [
     {
+      "partyId": "CUST123",
       "contactMechId": "ADDR001",
-      "contactMechPurposeTypeId": "BILLING"
+      "contactMechPurposeTypeId": "BILLING_LOCATION",
+      "fromDate": "2024-01-24 00:00:00.0"
     },
     {
+      "partyId": "CUST123",
       "contactMechId": "ADDR001",
-      "contactMechPurposeTypeId": "SHIPPING"
+      "contactMechPurposeTypeId": "SHIPPING_LOCATION",
+      "fromDate": "2024-01-24 00:00:00.0"
     }
   ]
 }
@@ -81,7 +98,7 @@ Sample JSON Data
 
 
 2. PartyGroup as Supplier
-```
+```json
 {
   "Party": {
     "partyId": "SUPP456",
@@ -89,8 +106,7 @@ Sample JSON Data
   },
   "PartyGroup": {
     "partyId": "SUPP456",
-    "groupName": "XYZ Supplies Inc.",
-    "taxId": "98-7654321"
+    "groupName": "XYZ Supplies Inc."
   },
   "PartyRole": {
     "partyId": "SUPP456",
@@ -115,18 +131,31 @@ Sample JSON Data
     "postalCode": "54321",
     "countryGeoId": "USA"
   },
-  "ContactMechPurpose": [
+  "PartyContactMech": [
     {
-      "contactMechId": "ADDR002",
-      "contactMechPurposeTypeId": "BILLING"
+      "partyId": "SUPP456",
+      "contactMechId": "PHONE002",
+      "fromDate": "2024-01-24 00:00:00.0"
     },
     {
-      "contactMechId": "ADDR002",
-      "contactMechPurposeTypeId": "SHIPPING"
+      "partyId": "SUPP456",
+      "contactMechId": "ADDR001",
+      "fromDate": "2024-01-24 00:00:00.0"
+    }
+  ],
+  "PartyContactMechPurpose": [
+    {
+      "partyId": "SUPP456",
+      "contactMechId": "ADDR001",
+      "contactMechPurposeTypeId": "BILLING_LOCATION",
+      "fromDate": "2024-01-24 00:00:00.0"
+    },
+    {
+      "partyId": "SUPP456",
+      "contactMechId": "ADDR001",
+      "contactMechPurposeTypeId": "SHIPPING_LOCATION",
+      "fromDate": "2024-01-24 00:00:00.0"
     }
   ]
 }
 ```
-
-
-
