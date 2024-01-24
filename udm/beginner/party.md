@@ -28,7 +28,7 @@ Adding Contact Mechanisms
 * Linking to Party: Achieved via the ContactMech entity, which associates a contact mechanism with a Party through a unique contactMechId.
 Assigning Purposes to Contact Mechanisms
 * Function: Defines the specific use of a contact mechanism, like billing or shipping.
-* Implementation: Utilizes the ContactMechPurpose entity, linking a contactMechId to a purpose such as BILLING or SHIPPING.
+* Implementation: Utilizes the PartyContactMechPurpose entity, linking a contactMechId to a purpose such as BILLING or SHIPPING.
 Sample JSON Data
 1. Person as Customer
 ```
