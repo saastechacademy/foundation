@@ -12,7 +12,7 @@ For eg: A T-shirt is a virtual product which is available in different sizes (sm
 **Product Association**
 A Product Variant association is used to associate Virtual Product with its Variants. You can associate as many variant with a virtual product as feature combinations possible but only single unit of a variant will be associated with a virtual product.
 
-For this association virtual product must be setup as a finished good and have isVirtual set to 'Y' indicating that no inventory is kept for this product. Similarly the variant product must also be set as a finished good and have isVirtual set to 'Y'. The virtual product product will have some selectable features associated with them that will be indeed associated as standard features with one or more variants.
+For this association virtual product must be setup as a finished good and have isVirtual set to 'Y' indicating that no inventory is kept for this product. Similarly the variant product must also be set as a finished good and have isVirtual set to 'N'. The virtual product product will have some selectable features associated with them that will be indeed associated as standard features with one or more variants.
 
 Purpose: The main purpose of this association is to group the similar products with similar features set to be sold as a single product on the online store. This association is also used by a merchandiser to organize products in the catalog sharing similar attributes at but sold at one place as a separate merchandise unit.
 
