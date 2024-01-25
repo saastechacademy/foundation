@@ -8,13 +8,14 @@ The UDM, among its various features, it includes a system for managing contact m
 Related Tables
 
 2. TelecomNumber Table
-
-* Relationship with ContactMech: This table is related to ContactMech and specifically stores telephone numbers.
+* TELECOMMUNICATIONS NUMBER includes any access via telecommunications lines such as phones, faxes, modems, pagers, and cellular numbers.
 * Fields: Includes contactMechId, countryCode, areaCode, contactNumber, etc.
 * Usage: Used to store detailed telephone contact information. The contactMechId field links it to the ContactMech table.
 
 3. PostalAddress Table
-* Relationship with ContactMech: This table stores the postal address information and is linked to the ContactMech table.
+* The POSTAL ADDRESS entity maintains all addresses used by the enterprise in a central place.
+* The PARTY POSTAL ADDRESS entity shows which POSTAL
+ADDRESSes are related to which PARTYs.
 * Fields: Includes contactMechId, toName, attnName, address1, address2, city, postalCode, etc.
 * Usage: Stores detailed information about postal addresses. The contactMechId field serves as the link to the ContactMech table.
 
