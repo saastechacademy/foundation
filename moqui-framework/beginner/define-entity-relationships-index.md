@@ -1,9 +1,9 @@
 Learning objectives
 - Creating an Entity with Indexes and relationships like one-to-one mapping, one-nofk,etc.
-- Creating a simple view entity, understanding its relationships and applying aggregate funtions.
-- Understanding how view entity is translated in Moqui.
-- Understanding using sub queries in a view entity. Ex- Shopify Inventory Feed.
-- Understanding maps and lists preparation in Moqui.
+- Creating a simple view entity, understanding its member relationships and using aggregate funtions.
+- Understanding how a view entity is translated in Moqui.
+- Understanding how to use sub queries in a view entity. Ex- Shopify Inventory Feed.
+- Understanding maps and lists preparation in services in Moqui.
 
 
 Task 1: Define entities
@@ -360,10 +360,12 @@ Task 2: Sample data
 ```
 
 Task 3: REST API
+
 Design and Develop rest API to perform CRUD operations on entities. Demonstrate use of view entities for fetching data from database. 
 
 Task 4: Report API
-Design and implement view entity and service to report on
+
+Design and implement view entity and service to provide a report on the following
 * Total number of orders placed in given period
 * Total revenue for given period
 * Revenue by product for given period
