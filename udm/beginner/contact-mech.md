@@ -30,11 +30,6 @@ Sample Data in JSON Format
     {
       "contactMechId": "10000",
       "contactMechTypeId": "TELECOM_NUMBER",
-      "TelecomNumber": {
-        "countryCode": "1",
-        "areaCode": "123",
-        "contactNumber": "4567890"
-      }
     },
     {
       "contactMechId": "10001",
@@ -44,16 +39,24 @@ Sample Data in JSON Format
     {
       "contactMechId": "10002",
       "contactMechTypeId": "POSTAL_ADDRESS",
-      "PostalAddress": {
-        "toName": "John Doe",
-        "attnName": "Office",
-        "address1": "123 Main St",
-        "address2": "Suite 100",
-        "city": "Metropolis",
-        "postalCode": "12345"
-      }
     }
-  ]
+  ],
+  "TelecomNumber": {
+      "contactMechId": "100000",
+      "countryCode": "1",
+      "areaCode": "123",
+      "contactNumber": "4567890"
+},
+  "PostalAddress": {
+      "contactMechId": "100002",
+      "toName": "John Doe",
+      "attnName": "Office",
+      "address1": "123 Main St",
+      "address2": "Suite 100",
+      "city": "Metropolis",
+      "postalCode": "12345"
+}
+  
 }
 
 ```
@@ -61,5 +64,5 @@ Sample Data in JSON Format
 In this sample JSON data:
 
 A telecom number is linked to the ContactMech table through contactMechId and detailed in the TelecomNumber object.
-An email address is stored as an infoString in the ContactMech table.
-A postal address is linked via contactMechId and detailed in the PostalAddress object.
+An email address is stored as an infoString in the ContactMech table not having a separate table for storing Email.
+A postal address is linked to the ContactMech table via contactMechId and detailed in the PostalAddress object.
