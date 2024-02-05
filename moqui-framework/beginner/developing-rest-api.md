@@ -9,19 +9,15 @@ Complete following tutorial in given order
 
 [Services in Moqui](https://youtu.be/6kFwPlPk92c)
 
-Service XML Actions.
-https://youtu.be/gAeYvAU9S2Y
+[Service XML Actions](https://youtu.be/gAeYvAU9S2Y)
 
-Developing of REST APIs in Moqui.
-https://youtu.be/IAt0HQVGMrQ
+[Developing of REST APIs in Moqui](https://youtu.be/IAt0HQVGMrQ)
 
-Overview of the Mantle Business Artifacts.
-https://youtu.be/lV0RqRtrnbU
+[Overview of the Mantle Business Artifacts](https://youtu.be/lV0RqRtrnbU)
 
-Fork and then clone following repository
-https://github.com/hotwax/moqui-tutorial
+[Fork and then clone following repository](https://github.com/hotwax/moqui-tutorial)
 
-Tasks 
+### Tasks 
 1. Data load
 Load data provided in moqui-tutorial component. 
 
@@ -160,6 +156,6 @@ Note: This API should return the information for the order as per the output sch
 ```
 
 
-Run APIs
+### Run APIs
 
 * Check the working of all the developed REST APIs by executing the requests using Postman.
