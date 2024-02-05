@@ -5,7 +5,7 @@ Learning objectives
 * Design Data Model, with UDM foundation
 * Document their solution before starting to code. 
 
-You are part of a team developing OMS.You are assigned three tasks. 
+You are part of a team developing CDP.You are assigned three tasks. 
 1. Design Customer data model.
 2. Prepare mapping for Customer model on Shopify with your Customer model.
 3. Write pseudo code for parsing Shopify API response and then storing it in UDM/OFBiz model
