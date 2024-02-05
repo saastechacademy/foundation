@@ -1,8 +1,8 @@
 # Design Customer Data Platform and Create mapping with Shopify Customer API.
 
 Learning objectives 
+* Design Customer Data Model, with UDM foundation
 * Read API documentation, and develop application using it. 
-* Design Data Model, with UDM foundation
 * Document solution before starting to code. 
 
 You are part of a team developing CDP. You are assigned three tasks. 
