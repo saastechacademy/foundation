@@ -1,12 +1,13 @@
+# Moqui services and REST API
+
 Learning objective
 * Define new REST APIs in Moqui
 * Implement CRUD services in Moqui
 
-Prerequisite
+### Prerequisite
 Complete following tutorial in given order
 
-Services in Moqui.
-https://youtu.be/6kFwPlPk92c
+[Services in Moqui] (https://youtu.be/6kFwPlPk92c)
 
 Service XML Actions.
 https://youtu.be/gAeYvAU9S2Y
