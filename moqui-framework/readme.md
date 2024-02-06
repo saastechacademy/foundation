@@ -124,8 +124,8 @@ Use of iterator. The moqui code making it available for it. Part of Jdbc driver 
 Basics of transaction management. Interface in moqui , jdbc and MySQL
 
 
-https://arpitbhayani.me/blogs/taxonomy-on-sql
-https://www.moqui.org/m/docs/framework/Data+and+Resources/Data+Model+Patterns
-https://arpitbhayani.me/blogs/atomicity
+* https://arpitbhayani.me/blogs/taxonomy-on-sql
+* https://www.moqui.org/m/docs/framework/Data+and+Resources/Data+Model+Patterns
+* https://arpitbhayani.me/blogs/atomicity
 
 
