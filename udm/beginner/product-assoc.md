@@ -50,11 +50,12 @@ Prerequisite Data:
 
 Product Component Association:
 
-	Product Component Association
+```
   <ProductAssoc productId="Compaq_260S" productIdTo="Compaq_Monitor" productAssocTypeId="PRODUCT_COMPONENT" quantity="1" fromDate="2007-01-01 12:00:00.0"/>
   <ProductAssoc productId="Compaq_260S" productIdTo="Compaq_Keyboard" productAssocTypeId="PRODUCT_COMPONENT" quantity="1" fromDate="2007-01-01 12:00:00.0"/>
   <ProductAssoc productId="Compaq_260S" productIdTo="Compaq_CPU" productAssocTypeId="PRODUCT_COMPONENT" quantity="1" fromDate="2007-01-01 12:00:00.0"/>
   <ProductAssoc productId="Compaq_260S" productIdTo="Compaq_Speaker" productAssocTypeId="PRODUCT_COMPONENT" quantity="2" fromDate="2007-01-01 12:00:00.0"/>
+```
 
 ### Upgrade (Up-Sell) Product Association
 Upgrade or Up-sell Products
