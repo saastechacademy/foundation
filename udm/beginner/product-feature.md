@@ -207,45 +207,45 @@ A sample JSON data for "Men's Blue Denim Pants" product available in 3 sizes.
     "Price": 69.99,
     "Quantity": 250
   },
-  "ProductFeatures": [
+  "ProductFeature": [
     {
       "ProductFeatureID": "2013",
-      "FeatureType": "3002",
+      "ProductFeatureTypeID": "3002",
       "Description": "Light Blue"
     },
     {
       "ProductFeatureID": "2014",
-      "FeatureType": "3002",
+      "ProductFeatureTypeID": "3002",
       "Description": "Navy"
     },
     {
       "ProductFeatureID": "2015",
-      "FeatureType": "3002",
+      "ProductFeatureTypeID": "3002",
       "Description": "Black"
     },
     {
       "ProductFeatureID": "2016",
-      "FeatureType": "3001",
+      "ProductFeatureTypeID": "3001",
       "Description": "28"
     },
     {
       "ProductFeatureID": "2017",
-      "FeatureType": "3001",
+      "ProductFeatureTypeID": "3001",
       "Description": "30"
     },
     {
       "ProductFeatureID": "2018",
-      "FeatureType": "3001",
+      "ProductFeatureTypeID": "3001",
       "Description": "32"
     },
     {
       "ProductFeatureID": "2019",
-      "FeatureType": "3001",
+      "ProductFeatureTypeID": "3001",
       "Description": "34"
     },
     {
       "ProductFeatureID": "2020",
-      "FeatureType": "3003",
+      "ProductFeatureTypeID": "3003",
       "Description": "Denim"
     }
   ],
