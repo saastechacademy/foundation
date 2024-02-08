@@ -70,7 +70,7 @@ UDM offers a framework for managing product features and specifications. Key to 
 
 A sample JSON data for "Men's Blue Denim Pants" product available in 3 sizes. 
 
-```xml
+```json
 {
   "Product": {
     "ProductID": "1001",
@@ -197,7 +197,7 @@ A sample JSON data for "Men's Blue Denim Pants" product available in 3 sizes.
 * Similarly, ProductAssoc is ued to establish relationship between multiple Products. A product can be related to another product with some several types For example: Complementary Product, Also Bought Together, Upgrade Product, Product Variant. These types are defined in ProductAssocType entity
 
 **Define** Men's Denim Pants product that is available in 3 colors (Light Blue, Nevy, Black) and 4 sizes (28, 30, 32, 34)  
-```xml
+```json
 {
   "Product": {
     "ProductID": "1003",
