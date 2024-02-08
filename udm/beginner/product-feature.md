@@ -18,7 +18,7 @@ UDM offers a framework for managing product features and specifications. Key to 
 
 **Key Attributes**:
 - Product Feature ID: Unique identifier.
-- Feature Feature Type ID: Linked to ProductFeatureType.
+- Product Feature Type ID: Linked to ProductFeatureType.
 - Description.
 
 #### 3. ProductFeatureType Entity
@@ -70,7 +70,7 @@ UDM offers a framework for managing product features and specifications. Key to 
 
 A sample JSON data for "Men's Blue Denim Pants" product available in 3 sizes. 
 
-```
+```xml
 {
   "Product": {
     "ProductID": "1001",
@@ -80,34 +80,34 @@ A sample JSON data for "Men's Blue Denim Pants" product available in 3 sizes.
     "Price": 49.99,
     "Quantity": 500
   },
-  "ProductFeatures": [
+  "ProductFeature": [
     {
-      "ProductFeatureID": "2001",
-      "FeatureType": "3001",
+      "ProductFeatureId": "2001",
+      "ProductFeatureTypeId": "3001",
       "Description": "Small"
     },
     {
-      "ProductFeatureID": "2002",
-      "FeatureType": "3001",
+      "ProductFeatureId": "2002",
+      "ProductFeatureTypeId": "3001",
       "Description": "Medium"
     },
     {
-      "ProductFeatureID": "2003",
-      "FeatureType": "3001",
+      "ProductFeatureId": "2003",
+      "ProductFeatureTypeId": "3001",
       "Description": "Large"
     },
     {
-      "ProductFeatureID": "2004",
-      "FeatureType": "3002",
+      "ProductFeatureId": "2004",
+      "ProductFeatureTypeId": "3002",
       "Description": "Blue"
     },
     {
-      "ProductFeatureID": "2005",
-      "FeatureType": "3003",
+      "ProductFeatureId": "2005",
+      "ProductFeatureTypeId": "3003",
       "Description": "Denim"
     }
   ],
-  "ProductFeatureTypes": [
+  "ProductFeatureType": [
     {
       "ProductFeatureTypeID": "3001",
       "Description": "Size"
@@ -192,12 +192,12 @@ A sample JSON data for "Men's Blue Denim Pants" product available in 3 sizes.
 **Activity:** 
 **Discuss** ProductFeatureAppl and ProductFeatureApplTypes entities and analyse similarity with ProductAssoc and ProductAssocType entities.
 
-- Both ProductFeatureAppl and ProductAssoc entities are used to establish relationships between different aspects of products.
-- While ProductFeatureAppl deals with linking specific features to a product (e.g., color, size), ProductAssoc deals with relationships between entire products.
-- The ProductFeatureApplType entity and ProductAssocType entity serve similar roles in classifying the nature of these associations (e.g., standard features, optional features, required features, etc.).
+* ProductFeatureAppl entity is used to establish relationship between Product and ProductFeature entity. Many products can have multiple features governing many to many relationship
+* ProductFeatureApplType entity defines the meta data or characteristics of a product feature, It can be OPTIONAL_FEATURE, REQUIRED_FEATURE, SELECTABLE_FEATURE, STANDARD_FEATURE
+* Similarly, ProductAssoc is ued to establish relationship between multiple Products. A product can be related to another product with some several types For example: Complementary Product, Also Bought Together, Upgrade Product, Product Variant. These types are defined in ProductAssocType entity
 
 **Define** Men's Denim Pants product that is available in 3 colors (Light Blue, Nevy, Black) and 4 sizes (28, 30, 32, 34)  
-```
+```xml
 {
   "Product": {
     "ProductID": "1003",
@@ -319,11 +319,16 @@ A sample JSON data for "Men's Blue Denim Pants" product available in 3 sizes.
 
 **Write SQL** to select all available sizes for each color
 
-```
-SELECT Color, GROUP_CONCAT(Size ORDER BY SequenceNumber) AS AvailableSizes
-FROM ProductFeatureAppl PFA
-JOIN ProductFeature PF ON PFA.ProductID = PF.ProductID AND PFA.ProductFeatureID = PF.ProductFeatureID
-WHERE
-PFA.ThruDate >= CURDATE() AND PFA.ProductID = '1003' AND PF.FeatureType = '3002'
-GROUP BY Color;
+```sql
+SELECT
+	pf1.DESCRIPTION as Size,
+	pf.DESCRIPTION as Color
+FROM
+	Product_Feature_Type pft1
+JOIN Product_Feature pf on
+	pft1.PRODUCT_FEATURE_TYPE_ID = pf.PRODUCT_FEATURE_TYPE_ID
+	and pft1.PRODUCT_FEATURE_TYPE_ID = "COLOR"
+JOIN Product_Feature pf1 ON
+	pft1.PRODUCT_FEATURE_TYPE_ID = pf.PRODUCT_FEATURE_TYPE_ID
+	AND pf1.DESCRIPTION IN (SELECT DESCRIPTION FROM Product_Feature WHERE Product_Feature.PRODUCT_FEATURE_TYPE_ID="SIZE" and DESCRIPTION>0);
 ```
