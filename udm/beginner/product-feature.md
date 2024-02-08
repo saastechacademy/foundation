@@ -196,7 +196,7 @@ A sample JSON data for "Men's Blue Denim Pants" product available in 3 sizes.
     "ProductID": "1003",
     "ProductName": "Men's Denim Pants",
     "Description": "Stylish denim pants for men.",
-    "ProductType": "Clothing",
+    "ProductTypeId": "FINISHED_GOOD",
     "Price": 69.99,
     "Quantity": 250
   },
@@ -235,6 +235,11 @@ A sample JSON data for "Men's Blue Denim Pants" product available in 3 sizes.
       "ProductFeatureID": "2019",
       "FeatureType": "3001",
       "Description": "34"
+    },
+    {
+      "ProductFeatureID": "2020",
+      "FeatureType": "3003",
+      "Description": "Denim"
     }
   ],
   "ProductFeatureAppl": [
