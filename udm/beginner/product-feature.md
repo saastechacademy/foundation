@@ -1,6 +1,6 @@
 ### Overview of Product Feature Management Entities
 
-UDM offers framework for managing product features and specifications. Key to this functionality are several interrelated entities: Product, ProductFeature, ProductFeatureType, ProductFeatureAppl, and ProductFeatureApplType.
+UDM offers a framework for managing product features and specifications. Key to this functionality are several interrelated entities: Product, ProductFeature, ProductFeatureType, ProductFeatureAppl, and ProductFeatureApplType.
 
 #### 1. Product Entity
 **Purpose**: Represents items for sale or use.
@@ -18,7 +18,7 @@ UDM offers framework for managing product features and specifications. Key to th
 
 **Key Attributes**:
 - Product Feature ID: Unique identifier.
-- Feature Type: Linked to ProductFeatureType.
+- Feature Feature Type ID: Linked to ProductFeatureType.
 - Description.
 
 #### 3. ProductFeatureType Entity
@@ -26,6 +26,7 @@ UDM offers framework for managing product features and specifications. Key to th
 
 **Key Attributes**:
 - Product Feature Type ID: Unique identifier.
+- Parent Type Id 
 - Description.
 
 #### 4. ProductFeatureAppl Entity
@@ -34,6 +35,7 @@ UDM offers framework for managing product features and specifications. Key to th
 **Key Attributes**:
 - Product ID.
 - Product Feature ID.
+- Product Feature Appl Type ID
 - From Date and Thru Date: Applicability period.
 - Sequence Number.
 - Amount.
@@ -43,13 +45,14 @@ UDM offers framework for managing product features and specifications. Key to th
 
 **Key Attributes**:
 - Product Feature Appl Type ID: Unique identifier.
+- Parent Type ID 
 - Description.
 
 #### Common ProductFeatureApplType Values:
 1. **DISTINGUISHING_FEAT**: For unique or characteristic features that distinguish one product from another.
 2. **OPTIONAL_FEATURE**: Represents add-on features that are not essential but can be chosen by the user.
 3. **REQUIRED_FEATURE**: Essential features necessary for the product’s operation.
-4. **SELECTABLE_FEATURE**: Features that offer multiple options, requiring a selection.
+4. **SELECTABLE_FEATURE**: Features that offer multiple options, require a selection.
 5. **STANDARD_FEATURE**: Standard features included in every unit of the product.
 
 ### Utilizing Entities for Product Feature Definition
@@ -59,7 +62,11 @@ UDM offers framework for managing product features and specifications. Key to th
 3. **Link Feature to Product using ProductFeatureAppl**: Associate the feature with a product, detailing applicability and sequence.
 4. **Specify Feature Application using ProductFeatureApplType**: Clarify the nature of the feature's application, whether it's standard, optional, required, distinguishing, or selectable.
 
-
+### The Relationships between these entities -- 
+1. **Product to ProductFeatureAppl** :  Many to one
+2. **ProductFeatureAppl to ProductFeature** : one to many
+3. **ProductFeature to ProductFeatureType** : one to many
+4. **ProductFeatureAppl to ProductFeatureApplType** one to many 
 
 A sample JSON data for "Men's Blue Denim Pants" product available in 3 sizes. 
 
