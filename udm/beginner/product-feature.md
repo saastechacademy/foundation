@@ -257,7 +257,7 @@ A sample JSON data for "Men's Blue Denim Pants" product available in 3 sizes.
       "ThruDate": "2024-12-31",
       "SequenceNumber": 1,
       "Amount": null,
-      "ProductFeatureApplTypeID": "4001"
+      "ProductFeatureApplTypeID": "4004"
     },
     {
       "ProductID": "1003",
@@ -266,7 +266,7 @@ A sample JSON data for "Men's Blue Denim Pants" product available in 3 sizes.
       "ThruDate": "2024-12-31",
       "SequenceNumber": 2,
       "Amount": null,
-      "ProductFeatureApplTypeID": "4001"
+      "ProductFeatureApplTypeID": "4004"
     },
     {
       "ProductID": "1003",
@@ -275,7 +275,7 @@ A sample JSON data for "Men's Blue Denim Pants" product available in 3 sizes.
       "ThruDate": "2024-12-31",
       "SequenceNumber": 3,
       "Amount": null,
-      "ProductFeatureApplTypeID": "4001"
+      "ProductFeatureApplTypeID": "4004"
     },
     {
       "ProductID": "1003",
@@ -284,7 +284,7 @@ A sample JSON data for "Men's Blue Denim Pants" product available in 3 sizes.
       "ThruDate": "2024-12-31",
       "SequenceNumber": 4,
       "Amount": null,
-      "ProductFeatureApplTypeID": "4001"
+      "ProductFeatureApplTypeID": "4004"
     },
     {
       "ProductID": "1003",
@@ -293,7 +293,7 @@ A sample JSON data for "Men's Blue Denim Pants" product available in 3 sizes.
       "ThruDate": "2024-12-31",
       "SequenceNumber": 5,
       "Amount": null,
-      "ProductFeatureApplTypeID": "4001"
+      "ProductFeatureApplTypeID": "4004"
     },
     {
       "ProductID": "1003",
@@ -302,7 +302,7 @@ A sample JSON data for "Men's Blue Denim Pants" product available in 3 sizes.
       "ThruDate": "2024-12-31",
       "SequenceNumber": 6,
       "Amount": null,
-      "ProductFeatureApplTypeID": "4001"
+      "ProductFeatureApplTypeID": "4004"
     },
     {
       "ProductID": "1003",
@@ -311,7 +311,16 @@ A sample JSON data for "Men's Blue Denim Pants" product available in 3 sizes.
       "ThruDate": "2024-12-31",
       "SequenceNumber": 7,
       "Amount": null,
-      "ProductFeatureApplTypeID": "4001"
+      "ProductFeatureApplTypeID": "4004"
+    },
+    {
+       "ProductID": "1003",
+       "ProductFeatureID": "2020",
+       "FromDate": "2024-01-01",
+       "ThruDate": "2024-12-31",
+       "SequenceNumber": 8,
+       "Amount": null,
+       "ProductFeatureApplTypeID": "4001"
     }
   ]
 }
