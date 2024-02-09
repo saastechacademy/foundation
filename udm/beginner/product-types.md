@@ -30,6 +30,23 @@ The relationships for the "product type" entity can be further detailed as follo
 "Finished Good" can be a child product type of "GOOD" product type.
 - **Product Type to ProductTypeAttr:** This relationship involves the attributes associated with each product type.
 
+### Subtypes and supertypes of product
+- Goods
+       *Finished Goods
+       *Digital Good
+       *Marketing Package
+           > Marketing Package:Auto
+           > Marketing Package: Pick
+       *Raw Materials
+       *Subassembly
+       *Aggregated
+           > Aggregated: Config
+       *WIP
+
+- Service
+      *Installation Service
+
+
 ## Activity
 
 **The Table** Name the table for managing master list of product types.
