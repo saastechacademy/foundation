@@ -1,4 +1,7 @@
-# Products Types :-
+# Product Types:-
+
+This classification system outlines the fundamental traits and features common to a set of products. Each product is assigned a single product category and product type. Multiple products can be associated with a single product type, indicating a many-to-one relationship.
+  
 **Finished goods**  are goods that have completed the manufacturing process but have not yet been sold or distributed to the end user. Eg-- Cars, Computers, Spare parts etc.
 
 **Raw Material** is the basic material used for manufacturing of a product/good. It is in unprocessed or minimal processed state.
@@ -15,12 +18,24 @@
 
 **Virtual product** is a product which has no real inventory associated with it.
 
-**Variant product** -- A product variant is a specific item that is grouped with related variants that together form a product. Variants usually vary from each other in one or more properties. For example, a medium-sized, green shirt is one product variant of the Shirt product; together size and color form one variant. Group of features for a particular product at an instance is termed as product variant. Before you can add a product variant to a product, you must specify in the product definition that the product will include variants. This implies that a virtual product can indeed hold inventory and that a variant product does not necessarily have to have any inventory associated with it.
+**Variant product** -- A product variant is a specific item that is grouped with related variants that together form a product. Variants usually vary from each other in one or more properties. For example, a medium-sized, green shirt is one product variant of the Shirt product; together size and color form one variant. Group of features for a particular product at an instance is termed as product variant. Before you can add a product variant to a product, you must specify in the product definition that the product will include variants. A virtual product does not hold physical inventory, as it represents non-tangible items, while a variant product may or may not have physical inventory associated with it.
 
 **Marketing Package** -- It involves purchasing of any product or products in the form of a combo or package. It can be auto manufactured and offered by company, like Barbie Set---Doll, Comb, Dress, Accessories etc, or it can be picked manually by the customer from a given group of items. It is designed as per the need of the customer for the purpose of best pick. 
 
+### Relationships
+The relationships for the "product type" entity can be further detailed as follows:
+
+- **Product Type to Product:** This relationship defines the various types of products available in the system. For example, a "Finished Good" product type is a type for the goods that have completed manufacturing process but not sold.
+- **Product Type to ChildProductType:** This relationship defines the hierarchy of product types. For instance, "Digital Good" and 
+"Finished Good" can be a child product type of "GOOD" product type.
+- **Product Type to ProductTypeAttr:** This relationship involves the attributes associated with each product type.
 
 ## Activity
 
 **The Table** Name the table for managing master list of product types.
 **The Relationships** Name related tables.
+
+### Activity Answers
+
+- Master list of product types: ProductType
+- Relationships Name: ChildProductType, Product, ProductTypeAttr
