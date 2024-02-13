@@ -1,0 +1,387 @@
+{
+  "order": {
+    "id": 5524199276797,
+    "admin_graphql_api_id": "gid://shopify/Order/5524199276797",
+    "app_id": 580111,
+    "browser_ip": "111.118.250.178",
+    "buyer_accepts_marketing": false,
+    "cancel_reason": null,
+    "cancelled_at": null,
+    "cart_token": "c1-a69a86dc4215fee6278b3e65939619b6",
+    "checkout_id": 34877544038653,
+    "checkout_token": "435fc8ce63326c3fe1fe5af31bb2e9d2",
+    "client_details": {
+      "accept_language": "en-IN",
+      "browser_height": null,
+      "browser_ip": "111.118.250.178",
+      "browser_width": null,
+      "session_hash": null,
+      "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    },
+    "closed_at": null,
+    "company": null,
+    "confirmed": true,
+    "contact_email": "muskan@hotwax.com",
+    "created_at": "2024-02-12T05:55:29-05:00",
+    "currency": "USD",
+    "current_subtotal_price": "42.00",
+    "current_subtotal_price_set": {
+      "shop_money": {
+        "amount": "42.00",
+        "currency_code": "USD"
+      },
+      "presentment_money": {
+        "amount": "42.00",
+        "currency_code": "USD"
+      }
+    },
+    "current_total_additional_fees_set": null,
+    "current_total_discounts": "0.00",
+    "current_total_discounts_set": {
+      "shop_money": {
+        "amount": "0.00",
+        "currency_code": "USD"
+      },
+      "presentment_money": {
+        "amount": "0.00",
+        "currency_code": "USD"
+      }
+    },
+    "current_total_duties_set": null,
+    "current_total_price": "48.90",
+    "current_total_price_set": {
+      "shop_money": {
+        "amount": "48.90",
+        "currency_code": "USD"
+      },
+      "presentment_money": {
+        "amount": "48.90",
+        "currency_code": "USD"
+      }
+    },
+    "current_total_tax": "0.00",
+    "current_total_tax_set": {
+      "shop_money": {
+        "amount": "0.00",
+        "currency_code": "USD"
+      },
+      "presentment_money": {
+        "amount": "0.00",
+        "currency_code": "USD"
+      }
+    },
+    "customer_locale": "en-IN",
+    "device_id": null,
+    "discount_codes": [],
+    "email": "muskan@hotwax.com",
+    "estimated_taxes": false,
+    "financial_status": "authorized",
+    "fulfillment_status": null,
+    "landing_site": "/",
+    "landing_site_ref": null,
+    "location_id": null,
+    "merchant_of_record_app_id": null,
+    "name": "#2004",
+    "note": null,
+    "note_attributes": [],
+    "number": 1004,
+    "order_number": 2004,
+    "order_status_url": "https://hc-demo.myshopify.com/6973849727/orders/c020b3a96505b901852ed920924fa2a5/authenticate?key=b0f1f05909923db34625ab141f150cee",
+    "original_total_additional_fees_set": null,
+    "original_total_duties_set": null,
+    "payment_gateway_names": [
+      "shopify_payments"
+    ],
+    "phone": null,
+    "presentment_currency": "USD",
+    "processed_at": "2024-02-12T05:55:26-05:00",
+    "reference": "473285fe42aea63b3c5b3a8fd37a48ea",
+    "referring_site": "",
+    "source_identifier": "473285fe42aea63b3c5b3a8fd37a48ea",
+    "source_name": "web",
+    "source_url": null,
+    "subtotal_price": "42.00",
+    "subtotal_price_set": {
+      "shop_money": {
+        "amount": "42.00",
+        "currency_code": "USD"
+      },
+      "presentment_money": {
+        "amount": "42.00",
+        "currency_code": "USD"
+      }
+    },
+    "tags": "",
+    "tax_lines": [],
+    "taxes_included": false,
+    "test": true,
+    "token": "c020b3a96505b901852ed920924fa2a5",
+    "total_discounts": "0.00",
+    "total_discounts_set": {
+      "shop_money": {
+        "amount": "0.00",
+        "currency_code": "USD"
+      },
+      "presentment_money": {
+        "amount": "0.00",
+        "currency_code": "USD"
+      }
+    },
+    "total_line_items_price": "42.00",
+    "total_line_items_price_set": {
+      "shop_money": {
+        "amount": "42.00",
+        "currency_code": "USD"
+      },
+      "presentment_money": {
+        "amount": "42.00",
+        "currency_code": "USD"
+      }
+    },
+    "total_outstanding": "0.00",
+    "total_price": "48.90",
+    "total_price_set": {
+      "shop_money": {
+        "amount": "48.90",
+        "currency_code": "USD"
+      },
+      "presentment_money": {
+        "amount": "48.90",
+        "currency_code": "USD"
+      }
+    },
+    "total_shipping_price_set": {
+      "shop_money": {
+        "amount": "6.90",
+        "currency_code": "USD"
+      },
+      "presentment_money": {
+        "amount": "6.90",
+        "currency_code": "USD"
+      }
+    },
+    "total_tax": "0.00",
+    "total_tax_set": {
+      "shop_money": {
+        "amount": "0.00",
+        "currency_code": "USD"
+      },
+      "presentment_money": {
+        "amount": "0.00",
+        "currency_code": "USD"
+      }
+    },
+    "total_tip_received": "0.00",
+    "total_weight": 300,
+    "updated_at": "2024-02-12T05:55:34-05:00",
+    "user_id": null,
+    "billing_address": {
+      "first_name": "Muskan",
+      "address1": "12th S St NW",
+      "phone": null,
+      "city": "Washington",
+      "zip": "20008",
+      "province": "District of Columbia",
+      "country": "United States",
+      "last_name": "Pahwa",
+      "address2": null,
+      "company": null,
+      "latitude": null,
+      "longitude": null,
+      "name": "Muskan Pahwa",
+      "country_code": "US",
+      "province_code": "DC"
+    },
+    "customer": {
+      "id": 7133450502397,
+      "email": "muskan@hotwax.com",
+      "created_at": "2024-01-19T04:06:05-05:00",
+      "updated_at": "2024-02-12T06:11:22-05:00",
+      "first_name": "Muskan",
+      "last_name": "Pahwa",
+      "state": "disabled",
+      "note": null,
+      "verified_email": true,
+      "multipass_identifier": null,
+      "tax_exempt": false,
+      "phone": null,
+      "email_marketing_consent": {
+        "state": "not_subscribed",
+        "opt_in_level": "single_opt_in",
+        "consent_updated_at": null
+      },
+      "sms_marketing_consent": null,
+      "tags": "",
+      "currency": "USD",
+      "accepts_marketing": false,
+      "accepts_marketing_updated_at": "2024-01-19T04:06:05-05:00",
+      "marketing_opt_in_level": null,
+      "tax_exemptions": [],
+      "admin_graphql_api_id": "gid://shopify/Customer/7133450502397",
+      "default_address": {
+        "id": 8819900711165,
+        "customer_id": 7133450502397,
+        "first_name": "Muskan",
+        "last_name": "Pahwa",
+        "company": null,
+        "address1": "12th Street Northwest",
+        "address2": null,
+        "city": "Washington",
+        "province": "District of Columbia",
+        "country": "United States",
+        "zip": "20008",
+        "phone": null,
+        "name": "Muskan Pahwa",
+        "province_code": "DC",
+        "country_code": "US",
+        "country_name": "United States",
+        "default": true
+      }
+    },
+    "discount_applications": [],
+    "fulfillments": [],
+    "line_items": [
+      {
+        "id": 13665325482237,
+        "admin_graphql_api_id": "gid://shopify/LineItem/13665325482237",
+        "fulfillable_quantity": 1,
+        "fulfillment_service": "manual",
+        "fulfillment_status": null,
+        "gift_card": false,
+        "grams": 300,
+        "name": "Beaumont Summit Kit - S / Yellow",
+        "price": "42.00",
+        "price_set": {
+          "shop_money": {
+            "amount": "42.00",
+            "currency_code": "USD"
+          },
+          "presentment_money": {
+            "amount": "42.00",
+            "currency_code": "USD"
+          }
+        },
+        "product_exists": true,
+        "product_id": 8074452009213,
+        "properties": [
+          {
+            "name": "Note",
+            "value": "Pre Order"
+          }
+        ],
+        "quantity": 1,
+        "requires_shipping": true,
+        "sku": "MJ01-S-Yellow",
+        "taxable": true,
+        "title": "Beaumont Summit Kit",
+        "total_discount": "0.00",
+        "total_discount_set": {
+          "shop_money": {
+            "amount": "0.00",
+            "currency_code": "USD"
+          },
+          "presentment_money": {
+            "amount": "0.00",
+            "currency_code": "USD"
+          }
+        },
+        "variant_id": 43899495088381,
+        "variant_inventory_management": "shopify",
+        "variant_title": "S / Yellow",
+        "vendor": "HotWax",
+        "tax_lines": [
+          {
+            "channel_liable": false,
+            "price": "0.00",
+            "price_set": {
+              "shop_money": {
+                "amount": "0.00",
+                "currency_code": "USD"
+              },
+              "presentment_money": {
+                "amount": "0.00",
+                "currency_code": "USD"
+              }
+            },
+            "rate": "0.0n_____",
+            "title": "District of Columbia State Tax"
+          }
+        ],
+        "duties": [],
+        "discount_allocations": []
+      }
+    ],
+    "payment_terms": null,
+    "refunds": [],
+    "shipping_address": {
+      "first_name": "Muskan",
+      "address1": "12th S St NW",
+      "phone": null,
+      "city": "Washington",
+      "zip": "20008",
+      "province": "District of Columbia",
+      "country": "United States",
+      "last_name": "Pahwa",
+      "address2": null,
+      "company": null,
+      "latitude": 38.9140405,
+      "longitude": -77.0532386,
+      "name": "Muskan Pahwa",
+      "country_code": "US",
+      "province_code": "DC"
+    },
+    "shipping_lines": [
+      {
+        "id": 4546501247229,
+        "carrier_identifier": "650f1a14fa979ec5c74d063e968411d4",
+        "code": "Expedited",
+        "delivery_category": null,
+        "discounted_price": "6.90",
+        "discounted_price_set": {
+          "shop_money": {
+            "amount": "6.90",
+            "currency_code": "USD"
+          },
+          "presentment_money": {
+            "amount": "6.90",
+            "currency_code": "USD"
+          }
+        },
+        "phone": null,
+        "price": "6.90",
+        "price_set": {
+          "shop_money": {
+            "amount": "6.90",
+            "currency_code": "USD"
+          },
+          "presentment_money": {
+            "amount": "6.90",
+            "currency_code": "USD"
+          }
+        },
+        "requested_fulfillment_service_id": null,
+        "source": "shopify",
+        "title": "Expedited",
+        "tax_lines": [
+          {
+            "channel_liable": false,
+            "price": "0.00",
+            "price_set": {
+              "shop_money": {
+                "amount": "0.00",
+                "currency_code": "USD"
+              },
+              "presentment_money": {
+                "amount": "0.00",
+                "currency_code": "USD"
+              }
+            },
+            "rate": "0.0n_____",
+            "title": "District of Columbia State Tax"
+          }
+        ],
+        "discount_allocations": []
+      }
+    ]
+  }
+}
