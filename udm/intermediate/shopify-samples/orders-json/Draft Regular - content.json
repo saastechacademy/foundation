@@ -73,7 +73,7 @@
     "customer_locale": "en-IN",
     "device_id": null,
     "discount_codes": [],
-    "email": "adeletfrt@gmail.com",
+    "email": "customer@example.com",
     "estimated_taxes": false,
     "financial_status": "paid",
     "fulfillment_status": null,
@@ -194,7 +194,7 @@
     },
     "customer": {
       "id": 6743799791869,
-      "email": "adeletfrt@gmail.com",
+      "email": "customer@example.com",
       "created_at": "2023-05-12T03:16:26-04:00",
       "updated_at": "2024-02-12T02:27:38-05:00",
       "first_name": "Adele",
