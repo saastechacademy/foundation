@@ -9,7 +9,7 @@
     "cancelled_at": null,
     "cart_token": null,
     "checkout_id": 34877244899581,
-    "checkout_token": "ebb4f2e5c1ee3b075ce3f4d23b5c1775",
+    "checkout_token": "",
     "client_details": {
       "accept_language": null,
       "browser_height": null,
@@ -21,7 +21,7 @@
     "closed_at": null,
     "company": null,
     "confirmed": true,
-    "contact_email": "adeletfrt@gmail.com",
+    "contact_email": "customer@example.com",
     "created_at": "2024-02-12T01:54:02-05:00",
     "currency": "USD",
     "current_subtotal_price": "56.20",
@@ -86,7 +86,7 @@
     "note_attributes": [],
     "number": 1001,
     "order_number": 2001,
-    "order_status_url": "https://hc-demo.myshopify.com/6973849727/orders/0b8a6937c277b0ac39af306a9a69a6e6/authenticate?key=a9f1a1bde6361f6b73ff8fc4e81bda2b",
+    "order_status_url": "https://hc-sandbox.myshopify.com/",
     "original_total_additional_fees_set": null,
     "original_total_duties_set": null,
     "payment_gateway_names": [
@@ -115,7 +115,7 @@
     "tax_lines": [],
     "taxes_included": false,
     "test": false,
-    "token": "0b8a6937c277b0ac39af306a9a69a6e6",
+    "token": "",
     "total_discounts": "0.00",
     "total_discounts_set": {
       "shop_money": {

@@ -7,9 +7,9 @@
     "buyer_accepts_marketing": false,
     "cancel_reason": null,
     "cancelled_at": null,
-    "cart_token": "c1-c964e177bc5fa7df64f732ce5ad8375a",
+    "cart_token": "",
     "checkout_id": 34877542662397,
-    "checkout_token": "0ee9ea252c487a8f2a134c74e4dd256d",
+    "checkout_token": "",
     "client_details": {
       "accept_language": "en-IN",
       "browser_height": null,
@@ -21,7 +21,7 @@
     "closed_at": null,
     "company": null,
     "confirmed": true,
-    "contact_email": "muskan@hotwax.com",
+    "contact_email": "",
     "created_at": "2024-02-12T05:54:26-05:00",
     "currency": "USD",
     "current_subtotal_price": "42.00",
@@ -86,7 +86,7 @@
     "note_attributes": [],
     "number": 1003,
     "order_number": 2003,
-    "order_status_url": "https://hc-demo.myshopify.com/6973849727/orders/610063a7c620953679e84485a659fefc/authenticate?key=04beea527cb96fb2bb7d36c0bfa69e1f",
+    "order_status_url": "https://hc-sandbox.myshopify.com/",
     "original_total_additional_fees_set": null,
     "original_total_duties_set": null,
     "payment_gateway_names": [
@@ -115,7 +115,7 @@
     "tax_lines": [],
     "taxes_included": false,
     "test": true,
-    "token": "610063a7c620953679e84485a659fefc",
+    "token": "",
     "total_discounts": "0.00",
     "total_discounts_set": {
       "shop_money": {

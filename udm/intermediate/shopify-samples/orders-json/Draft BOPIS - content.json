@@ -9,7 +9,7 @@
     "cancelled_at": null,
     "cart_token": null,
     "checkout_id": 34877680779517,
-    "checkout_token": "bffa6e1ce450156605a76f32cfd874c3",
+    "checkout_token": "",
     "client_details": {
       "accept_language": null,
       "browser_height": null,
@@ -86,7 +86,7 @@
     "note_attributes": [],
     "number": 1016,
     "order_number": 2016,
-    "order_status_url": "https://hc-demo.myshopify.com/6973849727/orders/7f02932a966051fad9c1ccb7a150c221/authenticate?key=be8d44f59e773ca8f219de5d93dc4969",
+    "order_status_url": "https://hc-sandbox.myshopify.com/",
     "original_total_additional_fees_set": null,
     "original_total_duties_set": null,
     "payment_gateway_names": [
@@ -115,7 +115,7 @@
     "tax_lines": [],
     "taxes_included": false,
     "test": false,
-    "token": "7f02932a966051fad9c1ccb7a150c221",
+    "token": "",
     "total_discounts": "0.00",
     "total_discounts_set": {
       "shop_money": {
