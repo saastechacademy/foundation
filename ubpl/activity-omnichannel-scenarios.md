@@ -14,6 +14,9 @@ Analysts are required to explore and study blogs published on the HotWax.co webs
 3. Ship from Store
 4. Pre-Order Management
 5. BI Reports & Analytics
+6. BORIS
+7. WMS
+8. Endless Aisle
 
 #### Task Instructions:
 1. **Document Business Requirements and Challenges:**
