@@ -1,0 +1,87 @@
+{
+  "product": {
+    "id": 8280227610877,
+    "title": "Full sleeve T-shirt",
+    "body_html": "Comfortable",
+    "vendor": "HC Demo",
+    "product_type": "",
+    "created_at": "2024-02-08T23:48:39-05:00",
+    "handle": "full-sleeve-t-shirt",
+    "updated_at": "2024-02-09T08:30:16-05:00",
+    "published_at": "2024-02-08T23:48:39-05:00",
+    "template_suffix": "",
+    "published_scope": "global",
+    "tags": "",
+    "status": "active",
+    "admin_graphql_api_id": "gid://shopify/Product/8280227610877",
+    "variants": [
+      {
+        "id": 44504503746813,
+        "product_id": 8280227610877,
+        "title": "Default Title",
+        "price": "30.00",
+        "sku": "",
+        "position": 2,
+        "inventory_policy": "deny",
+        "compare_at_price": "35.00",
+        "fulfillment_service": "manual",
+        "inventory_management": "shopify",
+        "option1": "Default Title",
+        "option2": null,
+        "option3": null,
+        "created_at": "2024-02-08T23:48:41-05:00",
+        "updated_at": "2024-02-09T08:30:16-05:00",
+        "taxable": true,
+        "barcode": "",
+        "grams": 0,
+        "weight": "0.0n_____",
+        "weight_unit": "lb",
+        "inventory_item_id": 46604604539133,
+        "inventory_quantity": 269,
+        "old_inventory_quantity": 269,
+        "requires_shipping": true,
+        "admin_graphql_api_id": "gid://shopify/ProductVariant/44504503746813",
+        "image_id": null
+      }
+    ],
+    "options": [
+      {
+        "id": 10516416594173,
+        "product_id": 8280227610877,
+        "name": "Title",
+        "position": 1,
+        "values": [
+          "Default Title"
+        ]
+      }
+    ],
+    "images": [
+      {
+        "id": 40162550972669,
+        "alt": null,
+        "position": 1,
+        "product_id": 8280227610877,
+        "created_at": "2024-02-08T23:48:39-05:00",
+        "updated_at": "2024-02-08T23:48:45-05:00",
+        "admin_graphql_api_id": "gid://shopify/ProductImage/40162550972669",
+        "width": 473,
+        "height": 593,
+        "src": "https://cdn.shopify.com/s/files/1/0069/7384/9727/files/473Wx593H-464024673-pink-MODEL.jpg?v=1707454125",
+        "variant_ids": []
+      }
+    ],
+    "image": {
+      "id": 40162550972669,
+      "alt": null,
+      "position": 1,
+      "product_id": 8280227610877,
+      "created_at": "2024-02-08T23:48:39-05:00",
+      "updated_at": "2024-02-08T23:48:45-05:00",
+      "admin_graphql_api_id": "gid://shopify/ProductImage/40162550972669",
+      "width": 473,
+      "height": 593,
+      "src": "https://cdn.shopify.com/s/files/1/0069/7384/9727/files/473Wx593H-464024673-pink-MODEL.jpg?v=1707454125",
+      "variant_ids": []
+    }
+  }
+}
