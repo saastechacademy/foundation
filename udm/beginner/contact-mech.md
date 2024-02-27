@@ -24,7 +24,7 @@ Related Tables
 
 Sample Data in JSON Format
 
-```
+```json
 {
   "ContactMech": [
     {
@@ -42,13 +42,13 @@ Sample Data in JSON Format
     }
   ],
   "TelecomNumber": {
-        "contactMechId": "10001"
+        "contactMechId": "10001",
         "countryCode": "1",
         "areaCode": "123",
         "contactNumber": "4567890"
   },
   "PostalAddress": {
-        "contactMechId": "10002"
+        "contactMechId": "10002",
         "toName": "John Doe",
         "attnName": "Office",
         "address1": "123 Main St",
