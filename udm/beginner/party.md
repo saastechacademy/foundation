@@ -35,7 +35,7 @@ Assigning Purposes to Contact Mechanisms
 
 Sample JSON Data
 1. Person as Customer
-```
+```json
 {
   "Party": {
     "partyId": "CUST123",
@@ -58,15 +58,14 @@ Sample JSON Data
     },
     {
       "contactMechId": "ADDR001",
-      "contactMechTypeId": "POSTAL_ADDRESS",
+      "contactMechTypeId": "POSTAL_ADDRESS"
     }
   ],
-
-  "TelecomNumber":{
+  "TelecomNumber": {
     "contactMechId": "PHONE001",
-    "countryCode": "+1"
+    "countryCode": "+1",
     "contactNumber": "555-1234"
-  }
+  },
   "PostalAddress": {
     "contactMechId": "ADDR001",
     "address1": "123 Elm Street",
@@ -94,7 +93,7 @@ Sample JSON Data
     {
       "partyId": "CUST123",
       "contactMechId": "ADDR001",
-      "contactMechPurposeTypeId": "SHIPPING"
+      "contactMechPurposeTypeId": "SHIPPING",
       "fromDate": "2024-01-22 00:00:00"
     }
   ]
@@ -103,7 +102,7 @@ Sample JSON Data
 
 
 2. PartyGroup as Supplier
-```
+```json
 {
   "Party": {
     "partyId": "SUPP456",
@@ -111,7 +110,7 @@ Sample JSON Data
   },
   "PartyGroup": {
     "partyId": "SUPP456",
-    "groupName": "XYZ Supplies Inc.",
+    "groupName": "XYZ Supplies Inc."
   },
   "PartyRole": {
     "partyId": "SUPP456",
@@ -125,14 +124,14 @@ Sample JSON Data
     },
     {
       "contactMechId": "ADDR002",
-      "contactMechTypeId": "POSTAL_ADDRESS",
+      "contactMechTypeId": "POSTAL_ADDRESS"
     }
   ],
-  "TelecomNumber":{
+  "TelecomNumber": {
     "contactMechId": "PHONE002",
-    "countryCode": "+1"
+    "countryCode": "+1",
     "contactNumber": "555-6789"
-  }
+  },
   "PostalAddress": {
     "contactMechId": "ADDR002",
     "address1": "456 Oak Avenue",
@@ -140,7 +139,7 @@ Sample JSON Data
     "postalCode": "54321",
     "countryGeoId": "USA"
   },
-   "PartyContactMech": [
+  "PartyContactMech": [
     {
       "partyId": "SUPP456",
       "contactMechId": "PHONE002"
@@ -160,7 +159,7 @@ Sample JSON Data
     {
       "partyId": "SUPP456",
       "contactMechId": "ADDR002",
-      "contactMechPurposeTypeId": "SHIPPING"
+      "contactMechPurposeTypeId": "SHIPPING",
       "fromDate": "2024-01-22 00:00:00"
     }
   ]
