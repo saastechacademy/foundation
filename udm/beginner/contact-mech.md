@@ -28,32 +28,34 @@ Sample Data in JSON Format
 {
   "ContactMech": [
     {
-      "contactMechId": "10000",
-      "contactMechTypeId": "TELECOM_NUMBER",
-      "TelecomNumber": {
-        "countryCode": "1",
-        "areaCode": "123",
-        "contactNumber": "4567890"
-      }
+      "contactMechId": "ABC123",
+      "contactMechTypeId": "TELECOM_NUMBER"
     },
     {
-      "contactMechId": "10001",
+      "contactMechId": "ABC124",
       "contactMechTypeId": "EMAIL_ADDRESS",
       "infoString": "example@email.com"
     },
     {
-      "contactMechId": "10002",
-      "contactMechTypeId": "POSTAL_ADDRESS",
-      "PostalAddress": {
-        "toName": "John Doe",
-        "attnName": "Office",
-        "address1": "123 Main St",
-        "address2": "Suite 100",
-        "city": "Metropolis",
-        "postalCode": "12345"
-      }
+      "contactMechId": "ABC125",
+      "contactMechTypeId": "POSTAL_ADDRESS"
     }
-  ]
+  ],
+  "TelecomNumber": {
+    "contactMechId": "ABC123",
+    "countryCode": 1,
+    "areaCode": 123,
+    "contactNumber": 4567890
+  },
+  "PostalAddress": {
+    "contactMechId": "ABC125",
+    "toName": "John Doe",
+    "attnName": "Office",
+    "address1": "123 Main St",
+    "address2": "Suite 100",
+    "city": "Metropolis",
+    "postalCode": 12345
+  }
 }
 
 ```
