@@ -1,4 +1,4 @@
-Recommeded reading
+Recommended reading
 https://www.moqui.org/m/docs/mantle/Mantle+Structure+and+UDM/Party
 
 Introduction to Party Data Model
@@ -12,13 +12,13 @@ Entities
 * Key Attributes: Unique identifier (partyId).
   
 2. Person
-* Description: A specialization of Party. PERSON entity stores a particular person's information, independent of his or her jobs or roles.  
-* Key Attributes: Inherits partyId, plus attributes like firstName, lastName, birthDate,etc
-* Relationship with Party: Every Person is a Party, but with additional attributes specific to individuals.
+* Description: A specialization of the Party. PERSON entity stores a particular person's information, independent of his or her jobs or roles.  
+* Key Attributes: Inherits partyId, plus attributes like firstName, lastName, birthDate, etc
+* Relationship with Party: Every Person is a Party but with additional attributes specific to individuals.
   
 3. PartyGroup
-* Description: Another specialization of Party, representing collective entities such as companies or organizations.
-* Key Attributes: Inherits partyId, plus attributes like groupName, taxId.
+* Description: Another specialization of the Party, representing collective entities such as companies or organizations.
+* Key Attributes: Inherits partyId, plus attributes like groupName, groupNameLocal, officeSiteName, comments, logoImageUrl
 * Relationship with Party: Every PartyGroup is a Party, but with attributes specific to groups.
 
 4. Party Classification
@@ -27,26 +27,26 @@ Entities
 * EXAMPLE: Income_Classification, Minority_Classification, organization_classification and person_classification, etc.
    
 5. Party Roles
-* Defines: The party role entity defines how a party acts or what roles the party plays in the context of the enterprise's environment.
+* Defines: The party role entity defines how a party acts or what roles the party plays in the enterprise's environment.
 * A role can be associated with a party using the PartyRole entity.
 * Key Attributes: partyId, roleTypeId.
-* Examples: Customer, Supplier, Employee,Organization_Role, Person_Role, etc.
+* Examples: Customer, Supplier, Employee, Organization_Role, Person_Role, etc.
 
 6. Party Relationship
 * Defines: A relationship is defined by the two parties and their respective roles.
-* Key attributes: partyIdTo, partyIdFrom, roleTypeIdFrom, roleTypeIdTo, fromDate.(from date and thru date in order to
+* Key attributes: partyIdTo, partyIdFrom, roleTypeIdFrom, roleTypeIdTo, fromDate.(from date and thru date to
 show when the relationship started and optionally when (and if) it ended).
   
 7. Contact Mechanisms and Purposes
 Adding Contact Mechanisms:
-* A contact mechanism is a means of contacting a party. The primary entity is ContactMech 
-* Types: Includes mail, fax, email, with field infoString while types two have entities with additional fields i.e. PostalAddress and TelecomNumber.
-* The ContactMech,PostalAddress and TelecomNumber shares same primary key field so they have a one-to-one relationship.
-* Linking to Party: The PartyContactMech entity is used to associate a ContactMech with a Party.
+* A contact mechanism is a means of contacting a party. The primary entity is ContactMech
+* Types of contact mech: email_address, Telecom_number, Postal_Address.To store email, a field infoString in the ContactMech entity exists, whereas to store details for PostalAddress and TelecomNumber there are two separate entities with additional fields like areaCode, countryCode in TelecomNumber and postalCode, address1, address2, city, etc. in PostalAddress.
+* The ContactMech, PostalAddress, and TelecomNumber share the same primary key field so they have a one-to-one relationship.
+* Linking to Party: The PartyContactMech entity associates a ContactMech with a Party.
   
-Assigning Purposes to Contact Mechanisms
+8. Assigning Purposes to Contact Mechanisms 
 * Function: Defines the specific purpose of a contact mechanism, like billing or shipping. Each contact mechanism for each party may have many purposes.
-* ContactMechPurpose entity is introduce to specfy the purpose for the particular contact mechanism such as BILLING_ADDRESS, SHIPPING_ADDRESS,BILLING_PHONE,SHIPPING_PHONE.
+* ContactMechPurpose entity is introduced to specify the purpose for the particular contact mechanism such as BILLING_ADDRESS, SHIPPING_ADDRESS, BILLING_PHONE, and SHIPPING_PHONE.
 
 
 Sample JSON Data
@@ -56,50 +56,80 @@ Sample JSON Data
   "Party": {
     "partyId": "CUST123",
     "partyTypeId": "PERSON"
+    "statusId": "PARTY_ENABLED"
   },
+
+    "PartyRole": {
+    "partyId": "CUST123",
+    "roleTypeId": "CUSTOMER"
+  },
+
   "Person": {
     "partyId": "CUST123",
     "firstName": "John",
     "lastName": "Doe",
     "birthDate": "1990-01-01"
   },
-  "PartyRole": {
-    "partyId": "CUST123",
-    "roleTypeId": "CUSTOMER"
-  },
+
+  "PartyContactMech": [
+    {
+      "contactMechId": "PHONE001",
+      "fromDate": "2024-01-a21 00:00:00.0",
+      "partyId": "CUST123"
+    },
+
+    {
+      "contactMechId": "ADDR001",
+      "fromDate": null,
+      "partyId": "CUST123"
+    }
+  ],
+
   "ContactMech": [
     {
       "contactMechId": "PHONE001",
       "contactMechTypeId": "TELECOM_NUMBER",
-      "infoString": "555-1234"
     },
+
     {
       "contactMechId": "ADDR001",
       "contactMechTypeId": "POSTAL_ADDRESS",
-      "infoString": "123 Elm Street, Springfield, 12345, USA"
     }
   ],
-  "PostalAddress": {
+
+  "TelecomNumbers": [
+    {
+      "areaCode": "801",
+      "contactMechId": "PHONE001",
+      "contactNumber": "555-5555"
+    }
+  ],
+  
+  "PostalAddress": [
+{
     "contactMechId": "ADDR001",
     "address1": "123 Elm Street",
     "city": "Springfield",
     "postalCode": "12345",
     "countryGeoId": "USA"
-  },
-  "ContactMechPurpose": [
+  }
+],
+
+  "PartyContactMechPurpose": [
     {
+      “partyId”: “CUST123”
       "contactMechId": "ADDR001",
-      "contactMechPurposeTypeId": "BILLING"
+      "contactMechPurposeTypeId": "BILLING_LOCATION"
     },
     {
+      “partyId”: “CUST123”
       "contactMechId": "ADDR001",
-      "contactMechPurposeTypeId": "SHIPPING"
+      "contactMechPurposeTypeId": "SHIPPING_LOCATION"
     }
   ]
 }
-```
 
-
+``` 
 2. PartyGroup as Supplier
 ```
 {
@@ -107,46 +137,75 @@ Sample JSON Data
     "partyId": "SUPP456",
     "partyTypeId": "PARTY_GROUP"
   },
-  "PartyGroup": {
-    "partyId": "SUPP456",
-    "groupName": "XYZ Supplies Inc.",
-    "taxId": "98-7654321"
-  },
+
   "PartyRole": {
     "partyId": "SUPP456",
     "roleTypeId": "SUPPLIER"
   },
+
+  "PartyGroup": {
+    "partyId": "SUPP456",
+    "groupName": "XYZ Supplies Inc.",
+  },
+
+ "PartyContactMech": [
+    {
+      "contactMechId": "PHONE002",
+      "fromDate": "2024-01-21 00:00:00.0",
+      "partyId": "SUPP456"
+    },
+
+    {
+      "contactMechId": "ADDR002",
+      "fromDate": "2024-01-21 00:00:00.0" ,
+      "partyId": "SUPP456"
+    }
+  ],
+
   "ContactMech": [
     {
       "contactMechId": "PHONE002",
       "contactMechTypeId": "TELECOM_NUMBER",
-      "infoString": "555-6789"
     },
     {
       "contactMechId": "ADDR002",
       "contactMechTypeId": "POSTAL_ADDRESS",
-      "infoString": "456 Oak Avenue, Metropolis, 54321, USA"
     }
   ],
-  "PostalAddress": {
+
+  "TelecomNumbers": [
+    {
+      "contactMechId": "PHONE002",
+      "contactNumber": "555-6789"
+    }
+  ],
+
+  "PostalAddress": [
+    {
     "contactMechId": "ADDR002",
     "address1": "456 Oak Avenue",
     "city": "Metropolis",
     "postalCode": "54321",
     "countryGeoId": "USA"
-  },
-  "ContactMechPurpose": [
+    }
+  ],
+ 
+  "PartyContactMechPurpose": [
     {
+       “partyId”: “SUPP456”
       "contactMechId": "ADDR002",
-      "contactMechPurposeTypeId": "BILLING"
+      "contactMechPurposeTypeId": "BILLING_LOCATION"
     },
     {
+      “partyId”: “SUPP456”
       "contactMechId": "ADDR002",
-      "contactMechPurposeTypeId": "SHIPPING"
+      "contactMechPurposeTypeId": "SHIPPING_LOCATION"
     }
   ]
 }
+
 ```
+
 
 
 
