@@ -3,11 +3,11 @@ A product is an individual piece of merchandise or service that can be offered i
 
 ### Product to Product Association
 Products have different types of relationships to other products. Product to product association is a relationship between two products. The association indicates similarity, recommendation or connection between products. Here are some common types of product-to-product associations:
-1.Variant Product association
-2.Cross-sell products(complementary) association
-3.Recommended(also bought) product association
-4.Up-sell product association.
-5.Product component association.
+1. Variant Product association
+2. Cross-sell products(complementary) association
+3. Recommended(also bought) product association
+4. Up-sell product association.
+5. Product component association.
 
 ProductAssoc (key attributes) : 
 * productId 
@@ -28,7 +28,7 @@ For eg: A T-shirt is a virtual product which is available in different sizes (sm
 **Product Association**
 The Product Variant association facilitates linking Virtual Products with their respective Variants. Multiple variants can be linked to a single virtual product. However, each variant is linked as a single unit to a virtual product.
 
-To establish this association, the virtual product must be configured as a finished goods with the attribute isVirtual set to 'Y', indicating that no inventory is maintained for this product. Likewise, the variant product should also be configured as a finished goods with isVirtual set to 'Y'. The virtual product may have 
+To establish this association, the virtual product must be configured as a finished goods with the attribute isVirtual set to 'Y', indicating that no inventory is maintained for this product. Likewise, the variant product should also be configured as a finished goods with isVariant set to 'Y'. The virtual product may have selectable features associated with it, which are standardized features shared with one or more variants.
 
 **Purpose :** The main purpose of this association is to group the similar products with similar features set to be sold as a single product on the online store. This association is also used by a merchandiser to organize products in the catalog sharing similar attributes at but sold at one place as a separate merchandise unit.
 
