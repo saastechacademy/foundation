@@ -1,7 +1,7 @@
 The UDM, among its various features, it includes a system for managing contact mechanisms, which is primarily handled through the ContactMech table and its related tables.
 
 1. ContactMech Table
-* Purpose: This table is the central table in the contact mechanism schema. The ContactMech entity is used to store the information meant for contacting party.
+* Purpose: This table is the central table in the contact mechanism schema. The ContactMech entity is used to store the information meant for contacting.
 * Fields: Common fields include contactMechId(primary key), contactMechTypeId, infoString, etc.
 * Usage: The infoString field is used to store the actual contact information, such as an email address while Telecom number and postal address have some additional fields hence they have separate table.
 
