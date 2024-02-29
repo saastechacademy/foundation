@@ -87,13 +87,13 @@ Sample JSON Data
     {
       "partyId": "CUST123",
       "contactMechId": "ADDR001",
-      "contactMechPurposeTypeId": "BILLING",
+      "contactMechPurposeTypeId": "BILLING_LOCATION",
       "fromDate": "2024-01-22 00:00:00"
     },
     {
       "partyId": "CUST123",
       "contactMechId": "ADDR001",
-      "contactMechPurposeTypeId": "SHIPPING",
+      "contactMechPurposeTypeId": "SHIPPING_LOCATION",
       "fromDate": "2024-01-22 00:00:00"
     }
   ]
@@ -153,13 +153,13 @@ Sample JSON Data
     {
       "partyId": "SUPP456",
       "contactMechId": "ADDR002",
-      "contactMechPurposeTypeId": "BILLING",
+      "contactMechPurposeTypeId": "BILLING_LOCATION",
       "fromDate": "2024-01-22 00:00:00"
     },
     {
       "partyId": "SUPP456",
       "contactMechId": "ADDR002",
-      "contactMechPurposeTypeId": "SHIPPING",
+      "contactMechPurposeTypeId": "SHIPPING_LOCATION",
       "fromDate": "2024-01-22 00:00:00"
     }
   ]
