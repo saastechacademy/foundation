@@ -1,0 +1,78 @@
+{
+  "customer": {
+    "id": 7194269253885,
+    "email": "ivan.smith@example.com",
+    "created_at": "2024-02-13T01:58:04-05:00",
+    "updated_at": "2024-02-13T01:58:04-05:00",
+    "first_name": "Ivan",
+    "last_name": "Smith",
+    "orders_count": 0,
+    "state": "disabled",
+    "total_spent": "0.00",
+    "last_order_id": null,
+    "note": "Notes",
+    "verified_email": true,
+    "multipass_identifier": null,
+    "tax_exempt": false,
+    "tags": "",
+    "last_order_name": null,
+    "currency": "USD",
+    "phone": "+12127654327",
+    "addresses": [
+      {
+        "id": 8821857550589,
+        "customer_id": 7194269253885,
+        "first_name": "Ivan",
+        "last_name": "Smith",
+        "company": "",
+        "address1": "",
+        "address2": "",
+        "city": "",
+        "province": "",
+        "country": "United States",
+        "zip": "",
+        "phone": "",
+        "name": "Ivan Smith",
+        "province_code": null,
+        "country_code": "US",
+        "country_name": "United States",
+        "default": true
+      }
+    ],
+    "accepts_marketing": false,
+    "accepts_marketing_updated_at": "2024-02-13T01:58:04-05:00",
+    "marketing_opt_in_level": null,
+    "tax_exemptions": [],
+    "email_marketing_consent": {
+      "state": "not_subscribed",
+      "opt_in_level": "single_opt_in",
+      "consent_updated_at": null
+    },
+    "sms_marketing_consent": {
+      "state": "not_subscribed",
+      "opt_in_level": "single_opt_in",
+      "consent_updated_at": null,
+      "consent_collected_from": "SHOPIFY"
+    },
+    "admin_graphql_api_id": "gid://shopify/Customer/7194269253885",
+    "default_address": {
+      "id": 8821857550589,
+      "customer_id": 7194269253885,
+      "first_name": "Ivan",
+      "last_name": "Smith",
+      "company": "",
+      "address1": "",
+      "address2": "",
+      "city": "",
+      "province": "",
+      "country": "United States",
+      "zip": "",
+      "phone": "",
+      "name": "Ivan Smith",
+      "province_code": null,
+      "country_code": "US",
+      "country_name": "United States",
+      "default": true
+    }
+  }
+}
