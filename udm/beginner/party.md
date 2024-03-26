@@ -59,6 +59,15 @@ Sample JSON Data
       "infoString": "123 Elm Street, Springfield, 12345, USA"
     }
   ],
+  
+  // Add a TelecomNumber entity
+  "TelecomNumber" :{
+    "contactMechId": "PHONE001",
+    "counrtyCode" : "44",
+    "areaCode" :"212",
+    "contactNumber" :"+1 555-1234",
+    "partContactMechPurpose" :"BILLING"
+  }
   "PostalAddress": {
     "contactMechId": "ADDR001",
     "address1": "123 Elm Street",
@@ -66,7 +75,37 @@ Sample JSON Data
     "postalCode": "12345",
     "countryGeoId": "USA"
   },
-  "ContactMechPurpose": [
+  // Associate PartyID with PartyContactMech entity
+  "PartContactMech" :[
+    {
+    "partyId": "CUST123",
+    "contactMechId" :"PHONE001",
+    "fromDate" :"Jan 23,2024",
+    "roleTypeId": "CUSTOMER"
+  },
+  {
+    "partyId": "CUST123",
+    "contactMechId" :"ADDR001",
+    "fromDate" :"Jan 23,2024",
+    "roleTypeId": "CUSTOMER"
+
+  }
+  ],
+
+//Multiple PartyContactMechPurpose
+  "PartyContactMechPurpose" :[{
+    "partyId": "CUST123",
+    "contactMechId" :"ADDR001",
+    "contactMechPurposeTypeId" :"SHIPPING",
+    "fromDate" :"Jan 23,2024",
+  },
+ {
+    "partyId": "CUST123",
+    "contactMechId" :"ADDR001",
+    "contactMechPurposeTypeId" :"BILLING",
+    "fromDate" :"Jan 23,2024",
+  }],
+  "ContactMechPurposeType": [
     {
       "contactMechId": "ADDR001",
       "contactMechPurposeTypeId": "BILLING"
@@ -87,11 +126,13 @@ Sample JSON Data
     "partyId": "SUPP456",
     "partyTypeId": "PARTY_GROUP"
   },
+
+  // Remove Invalid entity in PartyGroup
   "PartyGroup": {
     "partyId": "SUPP456",
     "groupName": "XYZ Supplies Inc.",
-    "taxId": "98-7654321"
-  },
+    <!-- "taxId": "98-7654321" -->  Invalid Entity
+  }
   "PartyRole": {
     "partyId": "SUPP456",
     "roleTypeId": "SUPPLIER"
@@ -108,6 +149,13 @@ Sample JSON Data
       "infoString": "456 Oak Avenue, Metropolis, 54321, USA"
     }
   ],
+  //add TelecomNumber of Party
+   "TelecomNumber" :{
+    "contactMechId": "PHONE002",
+    "counrtyCode" : "43",
+    "areaCode" :"217",
+    "contactNumber" :"+1 555-6789",
+  }
   "PostalAddress": {
     "contactMechId": "ADDR002",
     "address1": "456 Oak Avenue",
@@ -115,7 +163,19 @@ Sample JSON Data
     "postalCode": "54321",
     "countryGeoId": "USA"
   },
-  "ContactMechPurpose": [
+  "PartyContactMechPurpose" :[{
+    "partyId": "SUPP456",
+    "contactMechId" :"ADDR002",
+    "contactMechPurposeTypeId" :"SHIPPING",
+    "fromDate" :"Jan 23,2024",
+  },
+ {
+    "partyId": "SUPP456",
+    "contactMechId" :"ADDR002",
+    "contactMechPurposeTypeId" :"BILLING",
+    "fromDate" :"Jan 23,2024",
+  }],
+  "ContactMechPurposeType": [
     {
       "contactMechId": "ADDR002",
       "contactMechPurposeTypeId": "BILLING"
