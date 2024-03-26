@@ -30,11 +30,6 @@ Sample Data in JSON Format
     {
       "contactMechId": "10000",
       "contactMechTypeId": "TELECOM_NUMBER",
-      "TelecomNumber": {
-        "countryCode": "1",
-        "areaCode": "123",
-        "contactNumber": "4567890"
-      }
     },
     {
       "contactMechId": "10001",
@@ -44,16 +39,23 @@ Sample Data in JSON Format
     {
       "contactMechId": "10002",
       "contactMechTypeId": "POSTAL_ADDRESS",
-      "PostalAddress": {
-        "toName": "John Doe",
-        "attnName": "Office",
-        "address1": "123 Main St",
-        "address2": "Suite 100",
-        "city": "Metropolis",
-        "postalCode": "12345"
-      }
     }
   ]
+"TelecomNumber": {
+    "contactMechId": "10000",
+    "countryCode": "1",
+    "areaCode": "123",
+    "contactNumber": "4567890"
+  },
+  "PostalAddress": {
+    "contactMechId": "10002",
+    "toName": "John Doe",
+    "attnName": "Office",
+    "address1": "123 Main St",
+    "address2": "Suite 100",
+    "city": "Metropolis",
+    "postalCode": "12345"
+  }
 }
 
 ```
