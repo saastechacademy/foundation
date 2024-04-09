@@ -1,4 +1,4 @@
-## Solr terminologies and common confusions:
+## Glossary:
 
 When navigating Solr's terminology, it's common to encounter confusion between certain terms. Let's discuss each one to ensure clarity.
 
