@@ -1,3 +1,7 @@
+Open Source 
+* https://www.youtube.com/playlist?list=PLsdq-3Z1EPT2IycAvAoMgC98b7UXDe4Pa
+
+
 Microservices
 * https://arpitbhayani.me/videos#:~:text=BFF%20%2D%20Backend%20for,a%20microservice%20architecture
 
