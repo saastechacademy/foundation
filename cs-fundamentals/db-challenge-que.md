@@ -1,7 +1,3 @@
-Certainly! Below is a combined document with both the challenge questions and their corresponding answers for interviewing a candidate on MySQL database and RDBMS fundamentals:
-
----
-
 ### Execution Plan
 **Question:** Analyzing an Execution Plan: Given a scenario where a particular query is running slower than expected, how would you use the execution plan in MySQL to identify bottlenecks?
 **Answer:** 
