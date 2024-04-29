@@ -21,3 +21,9 @@ Extract and document general observations about these patterns, focusing on how 
 
 - **Suggestions for Application:** Outline how the observed patterns could be used or adapted for other data modeling purposes within our projects.
 
+**References:**
+1. https://www.moqui.org/m/docs/framework/Data+and+Resources/Data+Model+Patterns
+2. https://cwiki.apache.org/confluence/display/OFBIZ/General+Entity+Overview
+3. https://arpitbhayani.me/blogs/taxonomy-on-sql
+
+
