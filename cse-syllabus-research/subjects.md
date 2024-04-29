@@ -1,31 +1,35 @@
 #### First Semester:
 - Computer Programming
-- Economics for Engineers
-- Programming Practices
 - Computer Workshop
 
 #### Second Semester:
-- Object Oriented Programming Systems
-- Data Structures
-- Software Engineering
+- Economics for Engineers
 
 #### Third Semester:
-- Computer Architecture
+- Object Oriented Programming Systems
+- Data Structures
 - Operating System
-- Design & Analysis of Algorithms
-- Theory of Computation
 
 #### Fourth Semester:
-- Data Base Management Systems
-- Computer Networks
-- Agile Software Methodology
+- Software Engineering
+- Computer Architecture
+- Design & Analysis of Algorithms
+- Programming Practices
 
 #### Fifth Semester:
-- Machine Learning
+- Theory of Computation
+- Data Base Management Systems
+- Internet & Web Technology
 - Foundation of Information Security
 
 
 #### Sixth Semester:
-- Internet of Things
+- Computer Networks
+- Machine Learning
 - Systems Programming
-- Internet & Web Technology
+
+#### Seventh Semester:
+- Agile Software Methodology
+
+#### Eighth Semester:
+- Internet of Things
