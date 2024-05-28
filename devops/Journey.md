@@ -13,3 +13,5 @@ Started discussion on how to manage and improve devops infrastructure and practi
 #### Plan
 
 26th May 2024
+
+Started working on creating a plan and todo.
