@@ -90,7 +90,6 @@ Sample JSON Data
   "PartyGroup": {
     "partyId": "SUPP456",
     "groupName": "XYZ Supplies Inc.",
-    "taxId": "98-7654321"
   },
   "PartyRole": {
     "partyId": "SUPP456",
