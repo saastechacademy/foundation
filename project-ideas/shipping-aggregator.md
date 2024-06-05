@@ -190,3 +190,83 @@ This project aims to build a shipping gateway application that simplifies shippi
 
 By making this change, you guarantee that every shipping gateway configuration is linked to a specific party (customer), which can be helpful for managing permissions, billing, and reporting in your shipping gateway application.
 
+
+## Carrier Shipment Method Management
+
+**Entity Description:**
+
+The `CarrierShipmentMethod` entity represents the specific shipping methods available from different carriers. It associates these methods with carriers, categorizes them using enumeration values, and provides additional details for integration with shipping providers.
+
+**Base URL:** `/api/v1/carrier_shipment_methods`
+
+**Authentication:**
+
+* Requires appropriate authentication and authorization (e.g., user login or API key with admin privileges) to access these endpoints.
+
+**Endpoints:**
+
+1.  **Get All Carrier Shipment Methods (GET)**
+
+    *   **Endpoint:** `/`
+    *   **Method:** `GET`
+    *   **Query Parameters:**
+        *   `carrierPartyId` (optional): Filter by carrier party ID.
+        *   `shipmentMethodEnumId` (optional): Filter by shipment method type.
+        *   `limit` (optional): Limit the number of results.
+        *   `offset` (optional): Offset for pagination.
+    *   **Response:**
+        *   200 OK: Returns a list of `CarrierShipmentMethod` objects in JSON format.
+        *   400 Bad Request: Invalid query parameters.
+
+2.  **Get Carrier Shipment Method by ID (GET)**
+
+    *   **Endpoint:** `/{carrierPartyId}/{shipmentMethodEnumId}`
+    *   **Method:** `GET`
+    *   **Path Parameters:**
+        *   `carrierPartyId`: The ID of the carrier party.
+        *   `shipmentMethodEnumId`: The ID of the shipment method type.
+    *   **Response:**
+        *   200 OK: Returns the `CarrierShipmentMethod` object in JSON format.
+        *   404 Not Found: The specified shipment method does not exist.
+
+3.  **Create Carrier Shipment Method (POST)**
+
+    *   **Endpoint:** `/`
+    *   **Method:** `POST`
+    *   **Request Body (JSON):**
+
+```json
+{
+  "carrierPartyId": "string (required, ID of the carrier party)",
+  "shipmentMethodEnumId": "string (required, ID of the shipment method type)",
+  "description": "string (optional, description of the shipment method)",
+  "sequenceNum": "integer (optional, order of the shipment method)",
+  "carrierServiceCode": "string (required, carrier's code for the method)",
+  "scaCode": "string (optional, Standard Carrier Alpha Code)",
+  "gatewayServiceCode": "string (optional, code used by the gateway)"
+}
+```
+
+    *   **Response:**
+        *   201 Created: Successfully created the carrier shipment method.
+        *   400 Bad Request: Invalid or missing data in the request.
+        *   409 Conflict: A shipment method with the same carrierPartyId and shipmentMethodEnumId already exists.
+
+4.  **Delete Carrier Shipment Method (DELETE)**
+
+    *   **Endpoint:** `/{carrierPartyId}/{shipmentMethodEnumId}`
+    *   **Method:** `DELETE`
+    *   **Path Parameters:**
+        *   `carrierPartyId`: The ID of the carrier party.
+        *   `shipmentMethodEnumId`: The ID of the shipment method type.
+    *   **Response:**
+        *   204 No Content: Successfully deleted the carrier shipment method.
+        *   404 Not Found: The specified shipment method does not exist.
+
+
+**Key Considerations:**
+
+*   The `shipmentMethodEnumId` must be a valid value from the `ShipmentMethod` enumeration defined in `moqui.basic.Enumeration`.
+*   To modify a shipment method's type, delete the existing record and create a new one with the desired `shipmentMethodEnumId`.
+*   Ensure the `shipmentMethodEnumId` in the request body is a valid enumeration value using validation logic.
+
