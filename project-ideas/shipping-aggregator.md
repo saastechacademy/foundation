@@ -113,6 +113,8 @@ This project aims to build a shipping gateway application that simplifies shippi
 
 ## Shipping Gateway Configuration API
 
+The ShippingGatewayConfig entity stores configuration settings for integrating with various shipping providers (e.g., FedEx, UPS, DHL, etc.). Each record represents a unique configuration for a specific provider, allowing customization per customer or on a global level.
+
 **Base URL:** `/rest/s1/data/ShippingGatewayConfig`
 
 **Authentication:**
