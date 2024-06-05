@@ -413,3 +413,11 @@ The `CarrierShipmentMethod` entity represents the specific shipping methods avai
 *   To modify a shipment method's type, delete the existing record and create a new one with the desired `shipmentMethodEnumId`.
 *   Ensure the `shipmentMethodEnumId` in the request body is a valid enumeration value using validation logic.
 
+
+Useful links
+
+https://github.com/hotwax/mantle-fedex
+https://github.com/hotwax/mantle-shipstation
+https://github.com/hotwax/mantle-shipengine
+
+
