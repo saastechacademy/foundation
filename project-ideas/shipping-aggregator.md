@@ -197,7 +197,7 @@ By making this change, you guarantee that every shipping gateway configuration i
 
 The `CarrierShipmentMethod` entity represents the specific shipping methods available from different carriers. It associates these methods with carriers, categorizes them using enumeration values, and provides additional details for integration with shipping providers.
 
-**Base URL:** `/api/v1/carrier_shipment_methods`
+**Base URL:** `/api/v1/carrierShipmentMethods`
 
 **Authentication:**
 
