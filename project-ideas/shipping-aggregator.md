@@ -117,3 +117,76 @@ This project aims to build a shipping gateway application that simplifies shippi
 *   **Caching:** Consider caching API responses from shipping providers to improve performance (optional).
 *   **Webhooks:** Utilize webhooks to receive real-time updates from shipping providers (optional).
 *   **Security:** Prioritize security best practices for API key management, data storage, and communication with external APIs.
+
+
+
+**Shipping Gateway Configuration API**
+
+**Base URL:** `/rest/s1/data/ShippingGatewayConfig`
+
+**Authentication:**
+
+* Requires appropriate authentication and authorization (e.g., user login or API key) to access these endpoints.
+
+**Endpoints:**
+
+1.  **Create Shipping Gateway Configuration (POST)**
+
+    *   **Endpoint:** `/`
+    *   **Method:** `POST`
+    *   **Request Body (JSON):**
+
+```json
+{
+  "gatewayConfigId": "string (unique ID for the configuration)",
+  "description": "string (description of the provider)",
+  "serviceName": "string (name of the service implementing the integration)",
+  "configProps": {
+    "key1": "value1",
+    "key2": "value2",
+    // ... other provider-specific properties
+  },
+  "partyId": "string (required, ID of the associated party)" 
+}
+```
+
+    *   **Response:**
+        *   `201 Created`: Successfully created the configuration.
+        *   `400 Bad Request`: Invalid or missing data in the request (including a missing or null `partyId`).
+        *   `409 Conflict`: A configuration with the same `gatewayConfigId` already exists.
+
+2.  **Get Shipping Gateway Configuration (GET)**
+
+    *   **Endpoint:** `/{gatewayConfigId}`
+    *   **Method:** `GET`
+    *   **Response:**
+        *   `200 OK`: Returns the configuration details in JSON format (same structure as the request body).
+        *   `404 Not Found`: The specified configuration does not exist.
+
+3.  **Update Shipping Gateway Configuration (PUT)**
+
+    *   **Endpoint:** `/{gatewayConfigId}`
+    *   **Method:** `PUT`
+    *   **Request Body (JSON):**
+        *   Same as the request body for creating a configuration, but you can omit fields that you don't want to update.  The `partyId` cannot be changed or set to null in an update.
+    *   **Response:**
+        *   `200 OK`: Successfully updated the configuration.
+        *   `400 Bad Request`: Invalid or missing data in the request (including attempts to change or remove the `partyId`).
+        *   `404 Not Found`: The specified configuration does not exist.
+
+4.  **Delete Shipping Gateway Configuration (DELETE)**
+
+    *   **Endpoint:** `/{gatewayConfigId}`
+    *   **Method:** `DELETE`
+    *   **Response:**
+        *   `204 No Content`: Successfully deleted the configuration.
+        *   `404 Not Found`: The specified configuration does not exist.
+
+**Key Changes:**
+
+*   The `partyId` field in the request body is now explicitly marked as **required** for the `POST` (create) endpoint.
+*   The `PUT` (update) endpoint will now reject requests that attempt to change or remove the `partyId`. This ensures that the association between a configuration and a party remains consistent.
+*   The `400 Bad Request` error response is now used for any invalid input, including a missing or null `partyId`.
+
+By making this change, you guarantee that every shipping gateway configuration is linked to a specific party (customer), which can be helpful for managing permissions, billing, and reporting in your shipping gateway application.
+
