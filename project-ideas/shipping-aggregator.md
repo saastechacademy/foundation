@@ -112,8 +112,6 @@ This project aims to build a shipping gateway application that simplifies shippi
         *   404 Not Found: Shipment not found
 
 
-Absolutely! Let's break down the provided Moqui Mantle entity definitions related to shipping gateway configuration.
-
 ## Shipping Gateway Configuration Entities
 
 Moqui Mantle uses a set of interconnected entities to manage shipping gateway configurations:
