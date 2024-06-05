@@ -103,60 +103,52 @@ The application recognizes two primary party roles:
 *   `ShippingGateway[BoxType, Carrier, Method, Option]` have a many-to-one relationship with `ShippingGatewayConfig`.
 
 
-### API Specification
+**Party Management Services**
 
-**Base URL:** `/api/v1`
+These services handle the core operations for creating, retrieving, updating, and deleting parties (customers and carriers) along with their associated organization details and roles.
 
-**Authentication:**
+*   **`findParty`:**
+    *   **Purpose:** Searches for parties based on various criteria like `partyId`, `partyTypeEnumId`, `roleTypeId`, names, addresses, contact information, etc.
+    *   **Relevance:** Essential for your application to allow users to search and select existing parties (customers or carriers).
 
-*   API keys are required for all endpoints except `/customers/register` and `/customers/login`.
-*   Include the API key in the `Authorization` header as `Bearer <api_key>`.
+*   **`searchParty`:**
+    *   **Purpose:**  Similar to `findParty`, but uses a search index for potentially faster and more flexible searches.
+    *   **Relevance:**  Can be used to provide a more advanced search interface for parties.
 
-**Customer/User Management**
+*   **`createAccount`:**
+    *   **Purpose:** Creates a new user account, including the associated `Party`, `Person`, `UserAccount`, and `ContactMech` records.
+    *   **Relevance:**  Potentially useful for your application if you allow self-registration of customer accounts.
 
-*   **POST /customers/register**
-    *   Request Body:
-        *   `name` (string, required): Customer name
-        *   `email` (string, required): Customer email (unique)
-        *   `company_name` (string, optional): Company name
-        *   `address` (object, required):
-            *   `line1` (string, required): Address line 1
-            *   `line2` (string, optional): Address line 2
-            *   `city` (string, required): City
-            *   `state` (string, required): State/Province
-            *   `postal_code` (string, required): Postal code
-            *   `country` (string, required): Country code (ISO 3166-1 alpha-2)
-        *   `phone` (string, optional): Phone number
-    *   Response:
-        *   201 Created: Successful registration, includes initial API key
-        *   400 Bad Request: Invalid request data
-        *   409 Conflict: Email already in use
+*   **`updateAccount`:**
+    *   **Purpose:** Updates an existing user account's details.
+    *   **Relevance:**  Necessary for allowing users to modify their account information.
 
-*   **POST /customers/login**
-    *   Request Body:
-        *   `email` (string, required): Customer email
-        *   `password` (string, required): Customer password
-    *   Response:
-        *   200 OK: Successful login, includes authentication token
-        *   401 Unauthorized: Invalid credentials
+*   **`createPartyUserAccount`:**
+    *   **Purpose:** Creates a `UserAccount` for an existing `Party`.
+    *   **Relevance:**  Could be used if you have a separate process for creating parties and then later adding user accounts to them.
 
-*   **GET /customers/{customer_id}/api_keys** (Requires authentication)
-    *   Response:
-        *   200 OK: List of API keys for the customer
-        *   401 Unauthorized
+*   **`updatePartyUserAccount`:**
+    *   **Purpose:** Updates the `UserAccount` and primary email address for a party.
+    *   **Relevance:**  Useful for managing user accounts linked to parties.
 
-*   **POST /customers/{customer_id}/api_keys** (Requires authentication)
-    *   Request Body:
-        *   `description` (string, optional): Description of the API key
-    *   Response:
-        *   201 Created: New API key generated
-        *   401 Unauthorized
+*   **`createPerson`:**
+    *   **Purpose:** Creates a new party of type "Person" (likely not directly relevant for your use case as you're dealing with organizations).
 
-*   **DELETE /customers/{customer_id}/api_keys/{key_id}** (Requires authentication)
-    *   Response:
-        *   204 No Content: API key successfully deleted
-        *   401 Unauthorized
-        *   404 Not Found: API key not found
+*   **`createOrganization`:**
+    *   **Purpose:** Creates a new party of type "Organization" along with the associated `Organization` record.
+    *   **Relevance:**  Essential for creating both customer and carrier parties in your application.
+
+*   **`updatePartyDetail`:**
+    *   **Purpose:** Updates the details of an existing party, including both `Person` and `Organization` attributes.
+    *   **Relevance:**  Necessary for allowing modifications to party information.
+
+*   **`convertPartyToOrganization` and `convertPartyToPerson`:**
+    *   **Purpose:** Convert a party from one type to another.
+    *   **Relevance:**  Likely not needed in your application unless you anticipate needing to change a party's type.
+
+*   **`ensurePartyRole`:**
+    *   **Purpose:** Ensures a party has a specific role, creating it if necessary.
+    *   **Relevance:**  Useful for assigning roles like "Customer" or "Carrier" to parties.
 
 **Shipping Integration**
 
