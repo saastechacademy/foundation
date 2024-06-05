@@ -26,6 +26,83 @@ This project aims to build a shipping gateway application that simplifies shippi
 *   **Database (e.g., PostgreSQL, MySQL):** For storing customer data, API keys, and shipping information.
 *   **SDKs/Libraries:** Utilize official SDKs or libraries from shipping providers (if available).
 
+## Shipping Gateway Application: Data Model and Entity Relationships
+
+This is outline of the core data model and entity relationships for a lightweight shipping gateway application built on the Moqui Framework. The application facilitates interaction between customers (organizations needing shipping services) and carriers (shipping providers).
+
+### Party Roles
+
+The application recognizes two primary party roles:
+
+1.  **Customers:** Organizations that utilize the shipping gateway to manage their shipping operations.
+2.  **Carriers:** Shipping providers (e.g., FedEx, UPS, DHL) that integrate with the application.
+
+### Entities
+
+#### 1. `Party`
+
+*   **Purpose:** Represents both customers and carriers as organizations.
+*   **Key Fields:**
+    *   `partyId`: Unique identifier (e.g., "ORG_ACME" for a customer, "FedEx" for a carrier).
+    *   `partyTypeEnumId`:  "PtyOrganization" for both customer and carrier organizations.
+    *   `roles`: Collection of roles indicating the party's function (e.g., ["Customer", "CustomerBillTo"] or ["Carrier"]).
+
+#### 2. `Organization`
+
+*   **Purpose:** Stores additional details specific to organizations (both customers and carriers).
+*   **Key Fields:**
+    *   `partyId`: (PK) Links to the corresponding `Party` record.
+    *   `organizationName`: The name of the organization (e.g., "Acme Corporation" or "FedEx").
+    *   (Other fields from Moqui Mantle as needed: `officeSiteName`, `annualRevenue`, `numEmployees`, etc.)
+
+#### 3. `PartyRole`
+
+*   **Purpose:** Assigns roles (e.g., "Customer", "Carrier") to parties.
+*   **Key Fields:**
+    *   `partyId`: (PK) Links to the corresponding `Party` record.
+    *   `roleTypeId`:  The role identifier (e.g., "Customer" or "Carrier").
+
+#### 4. `CarrierShipmentMethod`
+
+*   **Purpose:** Defines available shipping methods for each carrier.
+*   **Key Fields:**
+    *   `carrierPartyId`: (PK) The `partyId` of the carrier offering this method.
+    *   `shipmentMethodEnumId`: (PK) An ID referencing a standardized shipment method (e.g., "ShMthGround" for Ground shipping).
+    *   `description`, `sequenceNum`, `carrierServiceCode`, `scaCode`, `gatewayServiceCode`: Provide additional details and codes for the shipping method.
+
+#### 5. `CarrierShipmentBoxType`
+
+*   **Purpose:** Specifies the standard box types that each carrier supports.
+*   **Key Fields:**
+    *   `carrierPartyId`: (PK) The `partyId` of the carrier supporting this box type.
+    *   `shipmentBoxTypeId`: (PK) An ID referencing a standardized box type (e.g., "SmallFlatRateBox").
+    *   `packagingTypeCode`, `oversizeCode`: Provide additional information about the box type.
+
+#### 6. `ShippingGatewayConfig`
+
+*   **Purpose:** Stores configuration settings for each integrated shipping gateway.
+*   **Key Fields:**
+    *   `shippingGatewayConfigId`: (PK) Unique identifier for the configuration.
+    *   `shippingGatewayTypeEnumId`: An ID referencing the type of gateway (e.g., "ShGtwyShippo").
+    *   `description`: Description of the gateway configuration.
+    *   (Other fields for service names related to rate calculation, label generation, tracking, etc.)
+
+#### 7. `ShippingGateway[BoxType, Carrier, Method, Option]`
+
+*   **Purpose:** These entities allow customization of the interaction between each shipping gateway and carriers, box types, shipping methods, and additional options.
+*   **Key Fields:**
+    *   `shippingGatewayConfigId`: (PK) Links to the parent `ShippingGatewayConfig`.
+    *   Additional PK fields depending on the specific entity (e.g., `shipmentBoxTypeId`, `carrierPartyId`, `shipmentMethodEnumId`, `optionEnumId`).
+    *   Fields for overriding default values, providing gateway-specific IDs, etc.
+
+### Entity Relationships
+
+*   `Party` has a one-to-one relationship with `Organization`.
+*   `Party` has a one-to-many relationship with `PartyRole`.
+*   `CarrierShipmentMethod` and `CarrierShipmentBoxType` have a many-to-one relationship with `Party` (through `carrierPartyId`).
+*   `ShippingGateway[BoxType, Carrier, Method, Option]` have a many-to-one relationship with `ShippingGatewayConfig`.
+
+
 ### API Specification
 
 **Base URL:** `/api/v1`
