@@ -111,15 +111,6 @@ This project aims to build a shipping gateway application that simplifies shippi
         *   401 Unauthorized
         *   404 Not Found: Shipment not found
 
-## Additional Considerations
-
-*   **Error Handling:** Implement robust error handling to gracefully manage failures in communication with the shipping providers' APIs.
-*   **Caching:** Consider caching API responses from shipping providers to improve performance (optional).
-*   **Webhooks:** Utilize webhooks to receive real-time updates from shipping providers (optional).
-*   **Security:** Prioritize security best practices for API key management, data storage, and communication with external APIs.
-
-
-
 **Shipping Gateway Configuration API**
 
 **Base URL:** `/rest/s1/data/ShippingGatewayConfig`
