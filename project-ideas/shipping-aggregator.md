@@ -78,16 +78,8 @@ The application recognizes two primary party roles:
     *   `shipmentBoxTypeId`: (PK) An ID referencing a standardized box type (e.g., "SmallFlatRateBox").
     *   `packagingTypeCode`, `oversizeCode`: Provide additional information about the box type.
 
-#### 6. `ShippingGatewayConfig`
 
-*   **Purpose:** Stores configuration settings for each integrated shipping gateway.
-*   **Key Fields:**
-    *   `shippingGatewayConfigId`: (PK) Unique identifier for the configuration.
-    *   `shippingGatewayTypeEnumId`: An ID referencing the type of gateway (e.g., "ShGtwyShippo").
-    *   `description`: Description of the gateway configuration.
-    *   (Other fields for service names related to rate calculation, label generation, tracking, etc.)
-
-#### 7. `ShippingGateway[BoxType, Carrier, Method, Option]`
+#### 6. `ShippingGateway[BoxType, Carrier, Method, Option]`
 
 *   **Purpose:** These entities allow customization of the interaction between each shipping gateway and carriers, box types, shipping methods, and additional options.
 *   **Key Fields:**
