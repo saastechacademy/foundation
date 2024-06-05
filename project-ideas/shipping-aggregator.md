@@ -225,11 +225,27 @@ Moqui Mantle uses a set of interconnected entities to manage shipping gateway co
     *   `optionValue` (Text-Medium): The value of the option.
 
 
-## Carrier Shipment Method Management
+### 6. CarrierShipmentMethod
 
-**Entity Description:**
+*   **Description:**
 
-The `CarrierShipmentMethod` entity represents the specific shipping methods available from different carriers. It associates these methods with carriers, categorizes them using enumeration values, and provides additional details for integration with shipping providers.
+The `CarrierShipmentMethod` entity is the cornerstone of shipping method management within a Moqui-based application. It bridges the gap between your application and various shipping carriers by storing the specific shipping methods they offer, their internal codes, and categorization for easy reference and selection during the order fulfillment process.
+
+**Key Attributes:**
+
+*   **carrierPartyId (ID, Primary Key):** Uniquely identifies the carrier company providing this shipping method.
+*   **shipmentMethodEnumId (ID, Primary Key):** References a standardized shipping method type (e.g., GROUND, AIR) from the `moqui.basic.Enumeration` table, aiding categorization.
+*   **description (Text-Medium):** A human-readable description for display to users.
+*   **sequenceNum (Number-Integer):** Controls the order in which methods are presented (lower numbers appear first).
+*   **carrierServiceCode (Text-Short):** The carrier's unique code for this specific method (essential for API integration).
+*   **scaCode (Text-Short):** Standard Carrier Alpha Code (SCAC) for additional carrier identification.
+*   **gatewayServiceCode (Text-Short):** An internal code for your gateway application to reference this method.
+
+**Relationships:**
+
+*   **carrierParty:**  Directly links the shipment method to the `Party` representing the carrier company.
+*   **shipmentMethodEnum:**  Associates the method with a broader category from the `Enumeration` table.
+
 
 
 Useful links
