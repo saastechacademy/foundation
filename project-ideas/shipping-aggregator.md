@@ -1,5 +1,3 @@
-Absolutely! Here's the combined document that merges the project requirements and API specification for the shipping gateway application:
-
 # Shipping Gateway Application: Project Requirements and API Specification
 
 ## Project Overview
@@ -119,5 +117,3 @@ This project aims to build a shipping gateway application that simplifies shippi
 *   **Caching:** Consider caching API responses from shipping providers to improve performance (optional).
 *   **Webhooks:** Utilize webhooks to receive real-time updates from shipping providers (optional).
 *   **Security:** Prioritize security best practices for API key management, data storage, and communication with external APIs.
-
-Let me know if you have any other questions.
