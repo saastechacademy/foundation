@@ -111,7 +111,7 @@ This project aims to build a shipping gateway application that simplifies shippi
         *   401 Unauthorized
         *   404 Not Found: Shipment not found
 
-**Shipping Gateway Configuration API**
+## Shipping Gateway Configuration API
 
 **Base URL:** `/rest/s1/data/ShippingGatewayConfig`
 
