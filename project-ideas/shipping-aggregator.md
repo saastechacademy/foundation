@@ -428,7 +428,8 @@ Here's sample data to setup FedEx gateway and a detailed system setup guide:
 3.  **Configuration:**
     *   Update the `optionValue` fields in the `ShippingGatewayConfig.options` records with your actual FedEx API credentials.
 
-
+**Important Note**
+We will copy over limited set entity definition and services from Moqui UDM and USL. 
 
 Useful links
 
