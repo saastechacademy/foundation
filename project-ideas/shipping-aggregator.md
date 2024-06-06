@@ -324,6 +324,61 @@ This API specification defines the endpoints and operations for managing parties
   "success": true
 }
 ```
+ing gateway integrations.
+
+## Shipping Gateway Interfaces
+
+These interfaces define the contract that your shipping gateway integrations will need to fulfill to interact with the Moqui Framework and provide shipping functionality:
+
+1.  **`get#OrderShippingRate`:**
+    *   **Purpose:** Calculates the shipping rate for an entire order, potentially consisting of multiple items and packages.
+    *   **Key Inputs:** `orderId`, `orderPartSeqId`, `shippingGatewayConfigId`, package information, etc.
+    *   **Key Outputs:** `shippingTotal`, `orderItemSeqId` (if an order item is created for the shipping charge).
+
+2.  **`get#ShippingRatesBulk`:**
+    *   **Purpose:** Retrieves shipping rates in bulk for multiple carrier services and packages.
+    *   **Key Inputs:** `shippingGatewayConfigId`, list of carrier shipment methods, origin and destination details, package information.
+    *   **Key Outputs:** List of `shippingRateInfoList` (containing rate details for each carrier/method combination), potentially updated origin/destination addresses.
+
+3.  **`get#AutoPackageInfo`:**
+    *   **Purpose:** Automatically determines package information (e.g., box type, weight) based on the items in the order.
+    *   **Key Inputs:** List of `itemInfoList` (containing product IDs and quantities).
+    *   **Key Outputs:** List of `packageInfoList` (containing package details).
+
+4.  **`get#ShippingRate`:**
+    *   **Purpose:** Calculates the shipping rate for a single shipment package and route segment.
+    *   **Key Inputs:** `shipmentId`, `shipmentRouteSegmentSeqId`, `shipmentPackageSeqId`, `shippingGatewayConfigId`.
+
+5.  **`request#ShippingLabels`:**
+    *   **Purpose:** Requests shipping labels from the carrier for a shipment (single package or all packages).
+    *   **Key Inputs:** `shipmentId`, `shipmentRouteSegmentSeqId`, `shipmentPackageSeqId` (optional), `shippingGatewayConfigId`.
+
+6.  **`refund#ShippingLabels`:**
+    *   **Purpose:** Initiates a refund for shipping labels.
+    *   **Key Inputs:** `shipmentId`, `shipmentRouteSegmentSeqId`, `shipmentPackageSeqId` (optional), `shippingGatewayConfigId`.
+
+7.  **`track#ShippingLabels`:**
+    *   **Purpose:** Tracks the status of shipments.
+    *   **Key Inputs:** `shipmentId`, `shipmentRouteSegmentSeqId`, `shipmentPackageSeqId` (optional), `shippingGatewayConfigId`.
+
+8.  **`validate#ShippingPostalAddress`:**
+    *   **Purpose:** Validates a shipping address using the specified gateway configuration.
+    *   **Key Inputs:** `contactMechId`, `partyId`, `facilityId`, `shippingGatewayConfigId`.
+    *   **Key Outputs:** Potentially updated `contactMechId` if the address is corrected.
+
+**Key Services for Building Integrations**
+
+*   **`calculate#OrderShipping`:** This service is a high-level entry point for calculating shipping costs for an entire order. It calls the appropriate `getOrderRateServiceName` based on the shipping gateway configuration.
+
+*   **`calculate#OrderPartShipping`:** This service calculates shipping for a specific part of an order. It handles tasks like deleting existing shipping charges, determining package information (if the `getAutoPackageInfoName` service is available), and calling the `getOrderRateServiceName` to get the actual rate.
+
+*   **`get#OrderShippingRatesBulk`:** This service retrieves shipping rates in bulk for multiple carriers and methods. It interacts with both the `getShippingRatesBulkName` and `getOrderRateServiceName` services based on the gateway configuration.
+
+*   **`request#ShipmentLabels`:** This service is responsible for requesting shipping labels for a shipment. It retrieves the necessary gateway details and then calls the `requestLabelsServiceName` to interact with the specific shipping provider's API.
+
+*   **`refund#ShipmentLabels` and `track#ShipmentLabels`:** These services follow a similar pattern to `request#ShipmentLabels`, retrieving gateway details and calling the appropriate service to handle refunds or tracking.
+
+*   **`validate#PostalAddress`:** This service is a wrapper around the `validate#ShippingPostalAddress` interface. It handles the logic of determining which gateway configuration to use for validation and then calls the corresponding service.
 
 
 
