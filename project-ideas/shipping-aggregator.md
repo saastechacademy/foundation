@@ -381,6 +381,53 @@ These interfaces define the contract that your shipping gateway integrations wil
 *   **`validate#PostalAddress`:** This service is a wrapper around the `validate#ShippingPostalAddress` interface. It handles the logic of determining which gateway configuration to use for validation and then calls the corresponding service.
 
 
+## System setup guide
+
+Here's sample data to setup FedEx gateway and a detailed system setup guide:
+
+**1. Enumeration Records**
+
+*   These records define the necessary configuration options for the FedEx gateway:
+    *   `SgoFedExClientId`: Stores the FedEx REST API Client ID.
+    *   `SgoFedExClientSecret`: Stores the FedEx REST API Client Secret.
+    *   `SgoFedExAccountNumber`: Stores the FedEx Account Number.
+    *   `ShGtwyFedEx`: Identifies the FedEx REST API as the shipping gateway type.
+    *   `EgFedExOption`: Defines an enumeration group for FedEx gateway options.
+
+**2. ShipmentBoxType Records**
+
+*   These records define the various box types supported by FedEx, including their dimensions and corresponding gateway box IDs. This information is crucial for accurate rate calculation and label generation.
+
+**3. ShippingGatewayConfig Record**
+
+*   This record is the core configuration for the FedEx shipping gateway:
+    *   `shippingGatewayConfigId`: "FedEx_DEMO" (a unique identifier for this configuration).
+    *   `shippingGatewayTypeEnumId`: "ShGtwyFedEx" (indicates that this is a FedEx gateway).
+    *   `description`: "FedEx API Demo" (a brief description).
+    *   `getRateServiceName`: "mantle.FedExServices.get#ShippingRate" (the service used to get shipping rates).
+    *   `requestLabelServiceName`: "mantle.FedExServices.create#ShippingLabel" (the service used to create shipping labels).
+    *   **`methods` (child elements):** Map Moqui's standard shipment methods to FedEx's specific service codes.
+    *   **`options` (child elements):** Store the FedEx API credentials and label type preferences.
+
+**4. PartySetting Record**
+
+*   This record sets the default shipping gateway for the organization "ORG_ZIZI_RETAIL" to the "FedEx_DEMO" configuration.
+
+**System Setup Guide**
+
+
+1.  **Data Import:**
+    *   Prepare and Import the configuration XML data into your database. This will create the necessary records in the `moqui.basic.Enumeration`, `mantle.shipment.ShipmentBoxType`, `mantle.shipment.carrier.ShippingGatewayConfig`, and `mantle.party.PartySetting` entities.
+
+2.  **Service Implementation:**
+    *   Implement the Moqui services referenced in the `ShippingGatewayConfig` record:
+        *   `mantle.FedExServices.get#ShippingRate`
+        *   `mantle.FedExServices.create#ShippingLabel`
+    *   These services should handle the communication with the FedEx API to retrieve rates and generate labels.
+
+3.  **Configuration:**
+    *   Update the `optionValue` fields in the `ShippingGatewayConfig.options` records with your actual FedEx API credentials.
+
 
 
 Useful links
