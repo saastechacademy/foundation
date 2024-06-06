@@ -152,10 +152,190 @@ Moqui Mantle uses a set of interconnected entities to manage shipping gateway co
     *   `shippingGatewayConfigId` (ID, Primary Key):** Foreign key referencing the parent `
 
 
+
+
+
+## API Specification for Party Management
+
+This API specification defines the endpoints and operations for managing parties (customers and organizations) within the shipping gateway application, aligning with the Moqui Mantle service implementations.
+
+
+### Endpoints
+
+1.  **Find Party**
+
+    *   **Endpoint:** `/mantle/party/PartyServices/find#Party` (POST)
+    *   **Purpose:** Search for parties based on various criteria (party ID, type, role, name, contact details, etc.).
+    *   **Request Body:**
+
+```json
+{
+  "partyId": (Optional),
+  "partyTypeEnumId": (Optional),
+  "roleTypeId": (Optional),
+  "organizationName": (Optional),
+  "firstName": (Optional),
+  "lastName": (Optional),
+  "address1": (Optional),
+  "city": (Optional),
+  "postalCode": (Optional),
+  "countryCode": (Optional),
+  "contactNumber": (Optional),
+  "emailAddress": (Optional),
+  "orderByField": (Optional, default: "firstName,organizationName"),
+  "pageIndex": (Optional, default: 0),
+  "pageSize": (Optional, default: 20)
+}
+```
+
+    *   **Response Body:**
+
+```json
+{
+  "partyIdList": [
+    {
+      "partyId": "Party ID"
+    },
+    ...
+  ],
+  "partyIdListCount": (Total count of matching parties)
+}
+```
+
+2.  **Search Party**
+
+    *   **Endpoint:** `/mantle/party/PartyServices/search#Party` (POST)
+    *   **Purpose:** More flexible search for parties using a search index and additional filters (e.g., `anyField` for full-text search, `customerStatusId`).
+    *   **Request Body:** Similar to `findParty`, but with additional search-specific parameters.
+    *   **Response Body:**
+
+```json
+{
+  "documentList": [
+    {
+      "partyId": "Party ID",
+      "partyTypeEnumId": "Party Type",
+      "roles": ["Role1", "Role2"],
+      "organization": {
+        "organizationName": "Organization Name"
+      }
+    },
+    ...
+  ],
+  "documentListCount": (Total count of matching parties)
+}
+```
+
+3.  **Get User Notice Counts**
+
+    *   **Endpoint:** `/mantle/party/PartyServices/get#UserNoticeCounts` (GET)
+    *   **Purpose:** Retrieve counts of various notifications (e.g., messages, tasks) for the authenticated user.
+    *   **Request Body:** (None)
+    *   **Response Body:**
+
+```json
+{
+  "partyId": "User's Party ID",
+  "notificationCount": (Number),
+  "messageCount": (Number),
+  "eventCount": (Number),
+  "taskCount": (Number)
+}
+```
+
+4.  **Create Person**
+
+    *   **Endpoint:** `/mantle/party/PartyServices/create#Person` (POST)
+    *   **Purpose:** Create a new party of type "Person" (may not be directly relevant for your use case).
+    *   **Request Body:** (See Moqui Mantle service definition for parameters)
+    *   **Response Body:**
+
+```json
+{
+  "partyId": "Newly created party ID"
+}
+```
+
+5.  **Create Organization**
+
+    *   **Endpoint:** `/mantle/party/PartyServices/create#Organization` (POST)
+    *   **Purpose:** Create a new organization party (customer or carrier).
+    *   **Request Body:**
+
+```json
+{
+  "partyTypeEnumId": "PtyOrganization",
+  "roles": ["Customer" or "Carrier"],
+  "organization": {
+    "organizationName": "Organization Name"
+  }
+}
+```
+
+    *   **Response Body:**
+
+```json
+{
+  "partyId": "Newly created party ID"
+}
+```
+
+6.  **Update Party Detail**
+
+    *   **Endpoint:** `/mantle/party/PartyServices/update#PartyDetail` (PUT)
+    *   **Purpose:** Update the details of an existing party.
+    *   **Request Body:**
+
+```json
+{
+  "partyId": "Party ID to update",
+  "organization": {
+    "organizationName": "Updated Organization Name"
+  }
+  // Other fields as needed
+}
+```
+
+    *   **Response Body:**
+
+```json
+{
+  "success": true
+}
+```
+
+7.  **Ensure Party Role**
+
+    *   **Endpoint:** `/mantle/party/PartyServices/ensure#PartyRole` (POST)
+    *   **Purpose:** Ensure a party has a specific role.
+    *   **Request Body:**
+
+```json
+{
+  "partyId": "Party ID",
+  "roleTypeId": "Role Type ID"
+}
+```
+
+    *   **Response Body:**
+
+```json
+{
+  "success": true
+}
+```
+
+
+
+
 Useful links
 
+
 https://github.com/hotwax/mantle-fedex
+
 https://github.com/hotwax/mantle-shipstation
+
+
 https://github.com/hotwax/mantle-shipengine
 
 
