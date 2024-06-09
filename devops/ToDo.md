@@ -2,6 +2,7 @@
 
 1. List all types of instances both AWS and local infra
 2. List all pipelines
+3. Create Ovpn files to connect through internal network
 
 For each type of instance -
 
