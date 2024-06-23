@@ -89,6 +89,7 @@ c) TelecomNumber - Use to define contact number (contactMechId, countryCode, are
 
 Corrected Person JSON data will be :
 
+```
 {
     "Party": {
       "partyId": "CUST123",
@@ -160,7 +161,7 @@ Corrected Person JSON data will be :
       }
     ]
   }
-
+```
   
 
 
@@ -222,7 +223,7 @@ b) PartyContactMech  - Joins the respective party(partyId) with contactMechId(PH
 c) TelecomNumber - Use to define contact number (contactMechId, countryCode, areaCode, contactNumber)
 
 Corrected PartyGroup JSON data will be :
-
+```
 {
   "Party": {
     "partyId": "SUPP456",
@@ -299,5 +300,5 @@ Corrected PartyGroup JSON data will be :
     }
   ]
 }
-
+```
 
