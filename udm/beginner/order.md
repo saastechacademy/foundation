@@ -41,9 +41,13 @@
 {
   "OrderHeader": {
     "orderId": "10001",
-    "orderDate": "2024-01-03",
-    "orderStatus": "CREATED",
-    "partyId": "C100",
+    "orderTypeId": "SALES_ORDER",
+    "orderName": "SU#2770",
+    "salesChannelEnumId": "WEB_SALES_CHANNEL",
+    "orderDate": "2020-05-28 08:50:43",
+    "entryDate": "2020-05-28 08:54:30.259",
+    "orderStatus": "ORDER_CREATED",
+    "productStoreId": "SU_STORE",
     "grandTotal": 95.00
   },
   "OrderItems": [
@@ -52,14 +56,16 @@
       "orderItemSeqId": "00001",
       "productId": "P100",
       "quantity": 2,
-      "unitPrice": 20.00
+      "unitPrice": 20.00,
+      "statusId": "ITEM_CREATED"  
     },
     {
       "orderId": "10001",
       "orderItemSeqId": "00002",
       "productId": "P200",
       "quantity": 1,
-      "unitPrice": 50.00
+      "unitPrice": 50.00,
+      "statusId": "ITEM_CREATED" 
     }
   ],
   "OrderItemShipGroup": {
@@ -69,16 +75,16 @@
     "facilityId": "FAC100",
     "contactMechId": "CM100"
   },
-  "ContactMech": {
+  "orderContactMech": {
+    "orderId": "10001",
     "contactMechId": "CM100",
-    "contactMechTypeId": "POSTAL_ADDRESS"
+    "contactMechPurposeTypeId": "POSTAL_ADDRESS"
   },
   "PostalAddress": {
     "contactMechId": "CM100",
-    "toName": "Customer Name",
-    "attnName": "Receiving Department",
+    "toName": "Jhon M Doe",
     "address1": "123 Main St",
-    "city": "Metropolis",
+    "city": "New York",
     "postalCode": "12345",
     "countryGeoId": "USA"
   },
@@ -88,8 +94,9 @@
       "orderAdjustmentTypeId": "SHIPPING_CHARGES",
       "orderId": "10001",
       "orderItemSeqId": null,
-      "shipGroupSeqId": "01",
-      "amount": 5.00
+      "shipGroupSeqId": "001",
+      "amount": 5.00,
+      "createdDate": "2020-08-11 12:53:15.987"
     }
   ]
 }
