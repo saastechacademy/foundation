@@ -1,4 +1,4 @@
-# Foundation
+## Foundation
 
 1. https://github.com/saastechacademy/foundation/tree/main/cs-fundamentals
 2. https://github.com/saastechacademy/foundation/tree/main/udm
@@ -6,7 +6,7 @@
 4. https://github.com/saastechacademy/foundation/tree/main/moqui-framework
 5. https://github.com/saastechacademy/foundation/tree/main/ofbiz-framework
 
-Basics 
+## Basics 
 
 1. https://github.com/saastechacademy/foundation/blob/main/udm/beginner/party.md
 2. https://github.com/saastechacademy/foundation/blob/main/udm/beginner/contact-mech.md
