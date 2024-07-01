@@ -26,6 +26,10 @@ First five chapters, Start from Vol. 1, then go to Vol. 3:
 
 1. The Data Model Resource Book, Vol. 1: A Library of Universal Data Models for All Enterprises
 2. The Data Model Resource Book, Vol. 3: Universal Patterns for Data Modeling
+
+
 References:
 
-https://www.amazon.com/Data-Model-Resource-Book-Vol/dp/0471380237
+1. https://cwiki.apache.org/confluence/display/OFBIZ/Data+Model+Diagrams
+2. https://cwiki.apache.org/confluence/download/attachments/13271792/OFBizDatamodelBook_Combined_20171001.pdf
+3. https://www.amazon.com/Data-Model-Resource-Book-Vol/dp/0471380237
