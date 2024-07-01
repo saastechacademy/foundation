@@ -67,3 +67,8 @@ Create your custom Moqui component.
 7. Run Moqui.
 8. Verify that the new `MoquiTraining` entity is visible in the Entity Tools list in the Moqui UI.
 9. Push the `moqui-training` component code to the `moqui-training` repository.
+
+
+### Resources 
+
+https://www.youtube.com/playlist?list=PL6JSOz3-TrFSBQFDVSyjuZ49BUENd4bH6
