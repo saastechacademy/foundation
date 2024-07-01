@@ -8,14 +8,6 @@ Why?
 In this repo, We want manage all training material and other documentation.
 Create sub folder for "App-Development-Introduction"
 
-
-Part of the training, 
-We will have interns, create training assets from Google docs to markdown files in GitHub.
-https://docs.google.com/spreadsheets/d/1HQYAZnXGIAvStIEvT6e4UCw_NCv_Qi6nN_GL2JZzicA/edit#gid=0
-https://drive.google.com/drive/folders/1_IhHBZjR3GO2pFzJ3GFN8XzGmur8Mhh7
-https://drive.google.com/drive/folders/1Mn7b7c-uskEn4tDg4v0Wk4RD2eQZYZad
-
-
 TODO: Define a training document and assignment on 
 Extending Entity in Moqui / OFBiz. Compile challenge questions that lead to learning best practices. 
 We should check our repo. 
