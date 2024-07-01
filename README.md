@@ -4,7 +4,8 @@
 2. https://github.com/saastechacademy/foundation/tree/main/udm
 3. https://github.com/saastechacademy/foundation/tree/main/ubpl
 4. https://github.com/saastechacademy/foundation/tree/main/moqui-framework
-5. https://github.com/saastechacademy/foundation/tree/main/ofbiz-framework
+5. https://www.moqui.org/m/docs/framework/Framework+Features
+6. https://github.com/saastechacademy/foundation/tree/main/ofbiz-framework
 
 ## Basics 
 
@@ -22,7 +23,6 @@
 
 ## Must Read Books
 First five chapters, Start from Vol. 1, then go to Vol. 3:
-
 
 1. The Data Model Resource Book, Vol. 1: A Library of Universal Data Models for All Enterprises
 2. The Data Model Resource Book, Vol. 3: Universal Patterns for Data Modeling
