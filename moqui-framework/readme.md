@@ -49,30 +49,31 @@ The SDE should study limited set of JEE
 4) JPA
 5) ..
 
-Dynamic programming and DSL
-Case study
-Use of Groovy and XML in Moqui.
+### Dynamic programming and DSL
+### Case study
+### Use of Groovy and XML in Moqui.
 
-Data Document
-SystemMessage
-Security, Authentication and Authorization
-Artifact Aware Authorization
-DataFeedDocument
-Multi Instance setup and management
-Two phase Commit, Distributed transactions
+### Data Document, DataFeedDocument
+### SystemMessage
+### Security, Authentication and Authorization
+### Artifact Aware Authorization
+### Multi Instance setup and management
+### Two phase Commit, Distributed transactions
 
-Data Model Patterns
+### Data Model Patterns
+
 https://www.moqui.org/m/docs/framework/Data+and+Resources/Data+Model+Patterns
 Case studies
 -- Order data model
 -- Inventory data model
 
 
-StatusFlow 
+### StatusFlow 
 Modeling and use scenarios.
-https://www.moqui.org/m/docs/apps/Marble+ERP+User+Guide/Statuses+and+Types
-http://localhost:8080/qapps/tools/Entity/DataEdit/EntityDetail?selectedEntity=moqui.basic.StatusFlow
-Case study
+* https://www.moqui.org/m/docs/apps/Marble+ERP+User+Guide/Statuses+and+Types
+* http://localhost:8080/qapps/tools/Entity/DataEdit/EntityDetail?selectedEntity=moqui.basic.StatusFlow
+
+### Case study
 -- Order fulfillment, 
 -- Shopify <--> HC <--> WMS
 
@@ -83,15 +84,15 @@ Email Gateway, A Unified API for email
 DataDocument to exporting Shipping Method, Payment Method, Customer Classification, SalesChannel, ShopifyShop configuration
 
 InventoryManagement API for Fulfillment application. 
-https://docs.hotwax.co/integration-resources-1/v/hotwax-commerce/apis/inventory
-https://github.com/hotwax/fulfillment
+* https://docs.hotwax.co/integration-resources-1/v/hotwax-commerce/apis/inventory
+* https://github.com/hotwax/fulfillment
 
 Fulfillment process API to manage execution of Picking, Packing, Shipping the shipment.
-https://docs.hotwax.co/integration-resources-1/v/hotwax-commerce/apis/fulfillment
-https://github.com/hotwax/fulfillment/wiki/Requirements-and-Outline
+* https://docs.hotwax.co/integration-resources-1/v/hotwax-commerce/apis/fulfillment
+* https://github.com/hotwax/fulfillment/wiki/Requirements-and-Outline
 
 OrderImport and Query API for Fulfillment application. 
-https://github.com/hotwax/fulfillment/wiki/Importing-Order-Feed
+* https://github.com/hotwax/fulfillment/wiki/Importing-Order-Feed
 
 
 IOC and Moqui Execution Context
