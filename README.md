@@ -20,3 +20,12 @@
 10. https://github.com/saastechacademy/foundation/blob/main/udm/beginner/activity.md#setup-up-company-product-store-and-catalog
 
 
+## Must Read Books
+First five chapters, Start from Vol. 1, then go to Vol. 3:
+
+
+1. The Data Model Resource Book, Vol. 1: A Library of Universal Data Models for All Enterprises
+2. The Data Model Resource Book, Vol. 3: Universal Patterns for Data Modeling
+References:
+
+https://www.amazon.com/Data-Model-Resource-Book-Vol/dp/0471380237
