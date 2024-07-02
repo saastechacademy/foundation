@@ -59,6 +59,11 @@ Sample JSON Data
       "infoString": "123 Elm Street, Springfield, 12345, USA"
     }
   ],
+  "TelecomNumber" : {
+    "contactMechId": "PHONE002",
+    "CountryCode" : "+1",
+    "ContactNumber" : "555-6789"
+},
   "PostalAddress": {
     "contactMechId": "ADDR001",
     "address1": "123 Elm Street",
@@ -69,11 +74,11 @@ Sample JSON Data
   "ContactMechPurpose": [
     {
       "contactMechId": "ADDR001",
-      "contactMechPurposeTypeId": "BILLING"
+      "contactMechPurposeTypeId": "BILLING_LOCATION"
     },
     {
       "contactMechId": "ADDR001",
-      "contactMechPurposeTypeId": "SHIPPING"
+      "contactMechPurposeTypeId": "SHIPPING_LOCATION"
     }
   ]
 }
@@ -118,11 +123,11 @@ Sample JSON Data
   "ContactMechPurpose": [
     {
       "contactMechId": "ADDR002",
-      "contactMechPurposeTypeId": "BILLING"
+      "contactMechPurposeTypeId": "BILLING_LOCATION"
     },
     {
       "contactMechId": "ADDR002",
-      "contactMechPurposeTypeId": "SHIPPING"
+      "contactMechPurposeTypeId": "SHIPPING_LOCATION"
     }
   ]
 }
