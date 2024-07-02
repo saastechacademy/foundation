@@ -28,7 +28,7 @@ Adding Contact Mechanisms
 * Linking to Party: Achieved via the ContactMech entity, which associates a contact mechanism with a Party through a unique contactMechId.
 Assigning Purposes to Contact Mechanisms
 * Function: Defines the specific use of a contact mechanism, like billing or shipping.
-* Implementation: Utilizes the ContactMechPurpose entity, linking a contactMechId to a purpose such as BILLING or SHIPPING.
+* Implementation: Utilizes the PartyContactMechPurpose entity, linking a contactMechId to a purpose such as BILLING or SHIPPING.
 Sample JSON Data
 1. Person as Customer
 ```
@@ -63,17 +63,29 @@ Sample JSON Data
     "contactMechId": "ADDR001",
     "address1": "123 Elm Street",
     "city": "Springfield",
-    "postalCode": "12345",
+    "postalCode": 12345,
     "countryGeoId": "USA"
   },
-  "ContactMechPurpose": [
+  "ContactMechPurposeType": [
     {
-      "contactMechId": "ADDR001",
       "contactMechPurposeTypeId": "BILLING"
     },
     {
-      "contactMechId": "ADDR001",
       "contactMechPurposeTypeId": "SHIPPING"
+    }
+  ],
+  "PartyContactMechPurpose": [
+    {
+      "partyId": "CUST123",
+      "contactMechId": "ADDR001",
+      "contactMechPurposeTypeId": "BILLING",
+      "fromDate": "2003-01-01 00:00:00.000"
+    },
+    {
+      "partyId": "CUST123",
+      "contactMechId": "ADDR001",
+      "contactMechPurposeTypeId": "SHIPPING",
+      "fromDate": "2003-01-01 00:00:00.000"
     }
   ]
 }
@@ -112,17 +124,29 @@ Sample JSON Data
     "contactMechId": "ADDR002",
     "address1": "456 Oak Avenue",
     "city": "Metropolis",
-    "postalCode": "54321",
+    "postalCode": 54321,
     "countryGeoId": "USA"
   },
-  "ContactMechPurpose": [
+  "ContactMechPurposeType": [
     {
-      "contactMechId": "ADDR002",
       "contactMechPurposeTypeId": "BILLING"
     },
     {
-      "contactMechId": "ADDR002",
       "contactMechPurposeTypeId": "SHIPPING"
+    }
+  ],
+  "PartyContactMechPurpose": [
+    {
+      "partyId": "SUPP456",
+      "contactMechId": "ADDR002",
+      "contactMechPurposeTypeId": "BILLING",
+      "fromDate": "2003-01-01 00:00:00.000"
+    },
+    {
+      "partyId": "SUPP456",
+      "contactMechId": "ADDR002",
+      "contactMechPurposeTypeId": "SHIPPING",
+      "fromDate": "2003-01-01 00:00:00.000"
     }
   ]
 }
