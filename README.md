@@ -7,7 +7,7 @@
 5. https://www.moqui.org/m/docs/framework/Framework+Features
 6. https://github.com/saastechacademy/foundation/tree/main/ofbiz-framework
 
-## Basics 
+## UDM Basics 
 
 1. https://github.com/saastechacademy/foundation/blob/main/udm/beginner/party.md
 2. https://github.com/saastechacademy/foundation/blob/main/udm/beginner/contact-mech.md
@@ -20,7 +20,7 @@
 9. https://github.com/saastechacademy/foundation/blob/main/udm/beginner/activity.md#order
 10. https://github.com/saastechacademy/foundation/blob/main/udm/beginner/activity.md#setup-up-company-product-store-and-catalog
 
-## Intermediate
+## UDM Intermediate
 1. https://github.com/saastechacademy/foundation/tree/main/udm/intermediate
 
 ## Must Read Books
