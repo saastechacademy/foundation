@@ -51,29 +51,71 @@ Sample JSON Data
     {
       "contactMechId": "PHONE001",
       "contactMechTypeId": "TELECOM_NUMBER",
-      "infoString": "555-1234"
     },
     {
       "contactMechId": "ADDR001",
-      "contactMechTypeId": "POSTAL_ADDRESS",
-      "infoString": "123 Elm Street, Springfield, 12345, USA"
+      "contactMechTypeId": "POSTAL_ADDRESS"
+    },
+    {
+      "contactMechId": "EMAIL001",
+      "contactMechTypeId": "EMAIL_ADDRESS",
+      "infoString": "john@doe.com"
     }
   ],
+  "TelecomNumber": {
+    "contactMechId": "PHONE001",
+    "countryCode": "+1",
+    "contactNumber": "555-1234"
+  },
   "PostalAddress": {
     "contactMechId": "ADDR001",
+    "toName": "John Doe",
     "address1": "123 Elm Street",
     "city": "Springfield",
     "postalCode": "12345",
     "countryGeoId": "USA"
   },
-  "ContactMechPurpose": [
+  "PartyContactMechPurpose": [
     {
-      "contactMechId": "ADDR001",
-      "contactMechPurposeTypeId": "BILLING"
+      "partyId": "CUST123",
+      "contactMechId": "PHONE001",
+      "contactMechPurposeTypeId": "PHONE_BILLING",
+      "fromDate": "2024-06-11 00:00:00.000"
     },
     {
+      "partyId": "CUST123",
+      "contactMechId": "PHONE001",
+      "contactMechPurposeTypeId": "PHONE_SHIPPING",
+      "fromDate": "2024-06-11 00:00:00.000"
+    },
+    {
+      "partyId": "CUST123",
       "contactMechId": "ADDR001",
-      "contactMechPurposeTypeId": "SHIPPING"
+      "contactMechPurposeTypeId": "BILLING_LOCATION",
+      "fromDate": "2024-06-11 00:00:00.000"
+    },
+    {
+      "partyId": "CUST123",
+      "contactMechId": "ADDR001",
+      "contactMechPurposeTypeId": "SHIPPING_LOCATION",
+      "fromDate": "2024-06-11 00:00:00.000"
+    }
+  ],
+  "PartyContactMech": [
+    {
+      "partyId": "CUST123",
+      "contactMechId": "PHONE001",
+      "fromDate": "2024-06-11 00:00:00.000"
+    },
+    {
+      "partyId": "CUST123",
+      "contactMechId": "ADDR001",
+      "fromDate": "2024-06-11 00:00:00.000"
+    },
+    {
+      "partyId": "CUST123",
+      "contactMechId": "EMAIL001",
+      "fromDate": "2024-06-11 00:00:00.000"
     }
   ]
 }
@@ -89,8 +131,7 @@ Sample JSON Data
   },
   "PartyGroup": {
     "partyId": "SUPP456",
-    "groupName": "XYZ Supplies Inc.",
-    "taxId": "98-7654321"
+    "groupName": "XYZ Supplies Inc."
   },
   "PartyRole": {
     "partyId": "SUPP456",
@@ -100,14 +141,17 @@ Sample JSON Data
     {
       "contactMechId": "PHONE002",
       "contactMechTypeId": "TELECOM_NUMBER",
-      "infoString": "555-6789"
     },
     {
       "contactMechId": "ADDR002",
-      "contactMechTypeId": "POSTAL_ADDRESS",
-      "infoString": "456 Oak Avenue, Metropolis, 54321, USA"
-    }
+      "contactMechTypeId": "POSTAL_ADDRESS"
+    },
   ],
+  "TelecomNumber": {
+    "contactMechId": "PHONE002",
+    "countryCode": "+1",
+    "contactNumber": "555-6789"
+  },
   "PostalAddress": {
     "contactMechId": "ADDR002",
     "address1": "456 Oak Avenue",
@@ -115,15 +159,43 @@ Sample JSON Data
     "postalCode": "54321",
     "countryGeoId": "USA"
   },
-  "ContactMechPurpose": [
+  "PartyContactMechPurpose": [
     {
-      "contactMechId": "ADDR002",
-      "contactMechPurposeTypeId": "BILLING"
+      "partyId": "SUPP456",
+      "contactMechId": "PHONE002",
+      "contactMechPurposeTypeId": "PHONE_BILLING",
+      "fromDate": "2024-06-11 00:00:00.000"
     },
     {
+      "partyId": "SUPP456",
+      "contactMechId": "PHONE002",
+      "contactMechPurposeTypeId": "PHONE_SHIPPING",
+      "fromDate": "2024-06-11 00:00:00.000"
+    },
+    {
+      "partyId": "SUPP456",
       "contactMechId": "ADDR002",
-      "contactMechPurposeTypeId": "SHIPPING"
+      "contactMechPurposeTypeId": "BILLING_LOCATION",
+      "fromDate": "2024-06-11 00:00:00.000"
+    },
+    {
+      "partyId": "SUPP456",
+      "contactMechId": "ADDR002",
+      "contactMechPurposeTypeId": "SHIPPING_LOCATION",
+      "fromDate": "2024-06-11 00:00:00.000"
     }
+  ],
+  "PartyContactMech": [
+    {
+      "partyId": "SUPP456",
+      "contactMechId": "PHONE001",
+      "fromDate": "2024-06-11 00:00:00.000"
+    },
+    {
+      "partyId": "SUPP456",
+      "contactMechId": "ADDR001",
+      "fromDate": "2024-06-11 00:00:00.000"
+    },
   ]
 }
 ```
