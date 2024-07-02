@@ -1,0 +1,61 @@
+{
+  "product": {
+    "id": 8290751152381,
+    "title": "loyality card",
+    "body_html": "",
+    "vendor": "HC Demo",
+    "product_type": "loyality card",
+    "created_at": "2024-02-20T03:59:41-05:00",
+    "handle": "loyality-card",
+    "updated_at": "2024-02-20T04:00:16-05:00",
+    "published_at": "2024-02-20T03:59:41-05:00",
+    "template_suffix": "",
+    "published_scope": "global",
+    "tags": "",
+    "status": "active",
+    "admin_graphql_api_id": "gid://shopify/Product/8290751152381",
+    "variants": [
+      {
+        "id": 44537738133757,
+        "product_id": 8290751152381,
+        "title": "Default Title",
+        "price": "25.00",
+        "sku": "",
+        "position": 2,
+        "inventory_policy": "deny",
+        "compare_at_price": null,
+        "fulfillment_service": "manual",
+        "inventory_management": "shopify",
+        "option1": "Default Title",
+        "option2": null,
+        "option3": null,
+        "created_at": "2024-02-20T03:59:42-05:00",
+        "updated_at": "2024-02-20T04:00:16-05:00",
+        "taxable": true,
+        "barcode": "",
+        "grams": 0,
+        "weight": "0.0n_____",
+        "weight_unit": "lb",
+        "inventory_item_id": 46637864419581,
+        "inventory_quantity": 5,
+        "old_inventory_quantity": 5,
+        "requires_shipping": true,
+        "admin_graphql_api_id": "gid://shopify/ProductVariant/44537738133757",
+        "image_id": null
+      }
+    ],
+    "options": [
+      {
+        "id": 10530434089213,
+        "product_id": 8290751152381,
+        "name": "Title",
+        "position": 1,
+        "values": [
+          "Default Title"
+        ]
+      }
+    ],
+    "images": [],
+    "image": null
+  }
+}
