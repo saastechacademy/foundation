@@ -29,12 +29,7 @@ Sample Data in JSON Format
   "ContactMech": [
     {
       "contactMechId": "10000",
-      "contactMechTypeId": "TELECOM_NUMBER",
-      "TelecomNumber": {
-        "countryCode": "1",
-        "areaCode": "123",
-        "contactNumber": "4567890"
-      }
+      "contactMechTypeId": "TELECOM_NUMBER"
     },
     {
       "contactMechId": "10001",
@@ -43,8 +38,17 @@ Sample Data in JSON Format
     },
     {
       "contactMechId": "10002",
-      "contactMechTypeId": "POSTAL_ADDRESS",
-      "PostalAddress": {
+      "contactMechTypeId": "POSTAL_ADDRESS"
+    }
+  ],
+"TelecomNumber": {
+        "contactMechId": "10000",
+        "countryCode": "1",
+        "areaCode": "123",
+        "contactNumber": "4567890"
+      },
+"PostalAddress": {
+        "contactMechId": "10002",
         "toName": "John Doe",
         "attnName": "Office",
         "address1": "123 Main St",
@@ -52,8 +56,6 @@ Sample Data in JSON Format
         "city": "Metropolis",
         "postalCode": "12345"
       }
-    }
-  ]
 }
 
 ```
