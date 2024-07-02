@@ -20,6 +20,8 @@
 9. https://github.com/saastechacademy/foundation/blob/main/udm/beginner/activity.md#order
 10. https://github.com/saastechacademy/foundation/blob/main/udm/beginner/activity.md#setup-up-company-product-store-and-catalog
 
+## Intermediate
+1. https://github.com/saastechacademy/foundation/tree/main/udm/intermediate
 
 ## Must Read Books
 First five chapters, Start from Vol. 1, then go to Vol. 3:
