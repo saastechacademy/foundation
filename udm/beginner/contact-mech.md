@@ -8,7 +8,6 @@ The UDM, among its various features, it includes a system for managing contact m
 Related Tables
 
 2. TelecomNumber Table
-
 * Relationship with ContactMech: This table is related to ContactMech and specifically stores telephone numbers.
 * Fields: Includes contactMechId, countryCode, areaCode, contactNumber, etc.
 * Usage: Used to store detailed telephone contact information. The contactMechId field links it to the ContactMech table.
@@ -30,12 +29,7 @@ Sample Data in JSON Format
     {
       "contactMechId": "10000",
       "contactMechTypeId": "TELECOM_NUMBER",
-      "TelecomNumber": {
-        "countryCode": "1",
-        "areaCode": "123",
-        "contactNumber": "4567890"
-      }
-    },
+      },
     {
       "contactMechId": "10001",
       "contactMechTypeId": "EMAIL_ADDRESS",
@@ -44,16 +38,22 @@ Sample Data in JSON Format
     {
       "contactMechId": "10002",
       "contactMechTypeId": "POSTAL_ADDRESS",
-      "PostalAddress": {
-        "toName": "John Doe",
-        "attnName": "Office",
-        "address1": "123 Main St",
-        "address2": "Suite 100",
-        "city": "Metropolis",
-        "postalCode": "12345"
-      }
     }
-  ]
+  ],
+"TelecomNumber": {
+      "contactMechId": "100000",
+      "countryCode": "1",
+      "areaCode": "123",
+      "contactNumber": "2107852"
+},
+  "PostalAddress": {
+      "contactMechId": "100002",
+      "toName": "John Doe",
+      "attnName": "Office",
+      "address1": "123 Main St",
+      "address2": "Suite 100",
+      "city": "Metropolis",
+      "postalCode": "12345"
 }
 
 ```
@@ -61,5 +61,5 @@ Sample Data in JSON Format
 In this sample JSON data:
 
 A telecom number is linked to the ContactMech table through contactMechId and detailed in the TelecomNumber object.
-An email address is stored as an infoString in the ContactMech table.
+An email address is stored as an "infoString" in the ContactMech table.
 A postal address is linked via contactMechId and detailed in the PostalAddress object.
