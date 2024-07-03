@@ -1,10 +1,11 @@
 ## Getting Started
 
 ### Fundamentals
-1. https://github.com/saastechacademy/foundation/tree/main/cs-fundamentals#dbms-basics
+1. https://www.scaler.com/topics/git/ 
 2. First five chapters of the book: The Data Model Resource Book, Vol. 1
-3. https://github.com/saastechacademy/foundation/tree/main/udm
-4. https://github.com/saastechacademy/foundation/tree/main/ubpl
+3. https://github.com/saastechacademy/foundation/tree/main/cs-fundamentals#dbms-basics
+4. https://github.com/saastechacademy/foundation/tree/main/udm
+5. https://github.com/saastechacademy/foundation/tree/main/ubpl
 
 ### UDM Basics
 1. https://github.com/saastechacademy/foundation/blob/main/udm/beginner/party.md
