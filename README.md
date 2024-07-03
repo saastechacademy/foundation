@@ -28,6 +28,7 @@
 1. https://github.com/saastechacademy/foundation/tree/main/moqui-framework/beginner
 2. https://cwiki.apache.org/confluence/display/OFBIZ/OFBiz+Tutorial+-+A+Beginners+Development+Guide+for+Release+18.12+and+Release+22.01
 3. https://www.moqui.org/m/docs/framework/Framework+Features
+4. https://www.moqui.org/m/docs/framework/IDE+Setup/IntelliJ+IDEA+Setup
 
 ### Scaling
 1. https://github.com/saastechacademy/foundation/blob/main/udm/intermediate/order.md
