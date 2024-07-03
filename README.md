@@ -1,14 +1,11 @@
-## Foundation
+## Getting Started
 
-1. https://github.com/saastechacademy/foundation/tree/main/cs-fundamentals
+### Fundamentals
+1. https://github.com/saastechacademy/foundation/tree/main/cs-fundamentals#dbms-basics
 2. https://github.com/saastechacademy/foundation/tree/main/udm
 3. https://github.com/saastechacademy/foundation/tree/main/ubpl
-4. https://github.com/saastechacademy/foundation/tree/main/moqui-framework
-5. https://www.moqui.org/m/docs/framework/Framework+Features
-6. https://github.com/saastechacademy/foundation/tree/main/ofbiz-framework
 
-## UDM Basics 
-
+### UDM Basics
 1. https://github.com/saastechacademy/foundation/blob/main/udm/beginner/party.md
 2. https://github.com/saastechacademy/foundation/blob/main/udm/beginner/contact-mech.md
 3. https://github.com/saastechacademy/foundation/blob/main/udm/beginner/activity.md#party-data-model
@@ -20,7 +17,12 @@
 9. https://github.com/saastechacademy/foundation/blob/main/udm/beginner/activity.md#order
 10. https://github.com/saastechacademy/foundation/blob/main/udm/beginner/activity.md#setup-up-company-product-store-and-catalog
 
-## UDM Intermediate
+## Early Traction
+4. https://github.com/saastechacademy/foundation/tree/main/moqui-framework
+5. https://www.moqui.org/m/docs/framework/Framework+Features
+6. https://github.com/saastechacademy/foundation/tree/main/ofbiz-framework
+
+## Scaling
 1. https://github.com/saastechacademy/foundation/tree/main/udm/intermediate
 
 ## Must Read Books
