@@ -14,9 +14,15 @@
 5. https://github.com/saastechacademy/foundation/blob/main/udm/beginner/product-types.md
 6. https://github.com/saastechacademy/foundation/blob/main/udm/beginner/product-feature.md
 7. https://github.com/saastechacademy/foundation/blob/main/udm/beginner/product-category-explained.md
-8. https://github.com/saastechacademy/foundation/blob/main/udm/beginner/order.md
-9. https://github.com/saastechacademy/foundation/blob/main/udm/beginner/activity.md#order
-10. https://github.com/saastechacademy/foundation/blob/main/udm/beginner/activity.md#setup-up-company-product-store-and-catalog
+8. https://github.com/saastechacademy/foundation/blob/main/udm/beginner/activity.md#setup-up-company-product-store-and-catalog
+9. https://github.com/saastechacademy/foundation/blob/main/udm/beginner/order.md
+10. https://github.com/saastechacademy/foundation/blob/main/udm/beginner/activity.md#order
+
+### SQL Assignments
+1. https://github.com/saastechacademy/foundation/blob/main/udm/intermediate/sql-assignment-1.md
+2. https://github.com/saastechacademy/foundation/blob/main/udm/intermediate/sql-assignment-2.md
+3. https://github.com/saastechacademy/foundation/blob/main/udm/intermediate/sql-assignment-3.md
+
 
 ### Early Traction
 1. https://github.com/saastechacademy/foundation/tree/main/moqui-framework/beginner
@@ -24,7 +30,13 @@
 3. https://www.moqui.org/m/docs/framework/Framework+Features
 
 ### Scaling
-1. https://github.com/saastechacademy/foundation/tree/main/udm/intermediate
+1. https://github.com/saastechacademy/foundation/blob/main/udm/intermediate/order.md
+2. https://github.com/saastechacademy/foundation/blob/main/udm/intermediate/order-status.md
+3. https://github.com/saastechacademy/foundation/blob/main/udm/intermediate/activity-design-cdp.md
+4. https://github.com/saastechacademy/foundation/blob/main/udm/intermediate/activity-design-pim.md
+5. https://github.com/saastechacademy/foundation/blob/main/udm/intermediate/activity-design-order.md
+6. https://github.com/saastechacademy/foundation/blob/main/udm/intermediate/activity-design-fulfillment.md
+
 
 ## Must Read Books
 First five chapters, Start from Vol. 1, then go to Vol. 3:
