@@ -2,8 +2,9 @@
 
 ### Fundamentals
 1. https://github.com/saastechacademy/foundation/tree/main/cs-fundamentals#dbms-basics
-2. https://github.com/saastechacademy/foundation/tree/main/udm
-3. https://github.com/saastechacademy/foundation/tree/main/ubpl
+2. First five chapters of the book: The Data Model Resource Book, Vol. 1
+3. https://github.com/saastechacademy/foundation/tree/main/udm
+4. https://github.com/saastechacademy/foundation/tree/main/ubpl
 
 ### UDM Basics
 1. https://github.com/saastechacademy/foundation/blob/main/udm/beginner/party.md
@@ -17,12 +18,12 @@
 9. https://github.com/saastechacademy/foundation/blob/main/udm/beginner/activity.md#order
 10. https://github.com/saastechacademy/foundation/blob/main/udm/beginner/activity.md#setup-up-company-product-store-and-catalog
 
-## Early Traction
-4. https://github.com/saastechacademy/foundation/tree/main/moqui-framework
-5. https://www.moqui.org/m/docs/framework/Framework+Features
-6. https://github.com/saastechacademy/foundation/tree/main/ofbiz-framework
+### Early Traction
+1. https://github.com/saastechacademy/foundation/tree/main/moqui-framework/beginner
+2. https://cwiki.apache.org/confluence/display/OFBIZ/OFBiz+Tutorial+-+A+Beginners+Development+Guide+for+Release+18.12+and+Release+22.01
+3. https://www.moqui.org/m/docs/framework/Framework+Features
 
-## Scaling
+### Scaling
 1. https://github.com/saastechacademy/foundation/tree/main/udm/intermediate
 
 ## Must Read Books
@@ -30,10 +31,10 @@ First five chapters, Start from Vol. 1, then go to Vol. 3:
 1. The Data Model Resource Book, Vol. 1: A Library of Universal Data Models for All Enterprises
 2. The Data Model Resource Book, Vol. 3: Universal Patterns for Data Modeling
 
-Official Documentation 
+## Official Documentation 
 1. https://docs.hotwax.co/documents/v/documents-1
 
-References:
+## References:
 
 1. https://cwiki.apache.org/confluence/display/OFBIZ/Data+Model+Diagrams
 2. https://cwiki.apache.org/confluence/download/attachments/13271792/OFBizDatamodelBook_Combined_20171001.pdf
