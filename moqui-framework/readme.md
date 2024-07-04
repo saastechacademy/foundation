@@ -1,17 +1,8 @@
 HotWax Certified Moqui App Developer
 
-Let's launch , Certificate program.
-
-2024 SDE Interns will be first batch from "training to certified". 
-
 Why?
-In this repo, We want manage all training material and other documentation.
-Create sub folder for "App-Development-Introduction"
+In this repo, We want manage all training material and activites to practice the skills.
 
-TODO: Define a training document and assignment on 
-Extending Entity in Moqui / OFBiz. Compile challenge questions that lead to learning best practices. 
-We should check our repo. 
-If we have extended fields in Moqui Order Data model , Then we can add that in place of made up situation in one of the tasks in assignment.
 
 TODO: Common training element for all roles.
 I am sure we have training document on  "Writing commit log". 
@@ -30,9 +21,6 @@ Our training program should,  Help developer to learn it and we should have Assi
 -- Online tutorial
 -- Experience, write real life tasks. 
 -- Start with Why
-
-The training material we have defined so far, in the spreadsheet mentioned earlier in this chat is considered at fundamental skill.
-Once developer has passed this stage, they can pick smaller but well defined skill that we need once in while
 
 Like Data Document, SystemMessageRemote feature of Moqui (we need to call this by appropriate name) is other skills that might qualify for Independently managed moqui platform skill
 
