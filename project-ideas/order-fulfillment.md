@@ -67,7 +67,11 @@ The data model defines the structure for storing and managing information relate
     *   ItemIssuanceRole Name
 
 **Relationships:**
-*(Refer to the previous response for a detailed list of relationships between entities)*
+
+*   A **Shipment** has one **ShipmentType**, one **ShipmentStatus**, and many **ShipmentItems**, **ShipmentPackages**, and **ShipmentRouteSegments**.
+*   A **ShipmentItem** belongs to one **Shipment** and relates to one **OrderItem** (from the Order Management System).
+*   A **ShipmentPackage** belongs to one **Shipment**.
+*   A **ShipmentRouteSegment** belongs to one **Shipment**.
 
 
 **II. Fulfillment Workflow**
