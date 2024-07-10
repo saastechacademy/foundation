@@ -526,3 +526,18 @@ Enforce constraints on when the status of a shipment can be changed. Prevent inv
 **Example**
 
 Let's say a user tries to change the status of a shipment that's already been marked as "Shipped" back to "Packed." The `checkCanChangeShipmentStatusGeneral` method would detect this invalid transition, generate an error message like "Cannot perform operation Pack when the shipment is in the Shipped status," and add it to the `error_list`. This prevents the invalid status change and informs the user of the reason.
+
+
+**Set originContactMechId based on originFacilityId**
+
+1.  **Set Origin Information:**
+    *   If the `originFacilityId` is present in the shipment:
+        *   If `originContactMechId` is empty, it finds a contact mechanism associated with the origin facility with the purpose "PRIMARY_LOCATION" or "SHIP_ORIG_LOCATION" and sets it as the `originContactMechId`.
+        *   If `originTelecomNumberId` is empty, it finds a contact mechanism associated with the origin facility with the purpose "PRIMARY_PHONE" and sets it as the `originTelecomNumberId`.
+
+**How It Helps Manage Shipment Data**
+
+*   **Automation:** The method automates the process of filling in missing contact and telecom information, saving time and reducing manual effort.
+*   **Data Completeness:** It ensures that shipments have complete contact information for both origin and destination, which is crucial for communication and tracking.
+*   **Accuracy:** By deriving information directly from the associated facilities, it reduces the risk of errors in manually entering contact details.
+*   **Efficiency:** The method only updates the shipment if changes were made, avoiding unnecessary database writes.
