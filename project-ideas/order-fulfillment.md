@@ -542,9 +542,7 @@ Let's say a user tries to change the status of a shipment that's already been ma
 *   **Accuracy:** By deriving information directly from the associated facilities, it reduces the risk of errors in manually entering contact details.
 *   **Efficiency:** The method only updates the shipment if changes were made, avoiding unnecessary database writes.
 
-
 **Update shipment details based on the primary order associated with it**
-
 
 1.  **Retrieve Shipment and Order Data:**
     *   If `Shipment.primaryOrderId` and `primaryShipGroupSeqId` are present in the shipment, fetch the corresponding `OrderHeader` and `OrderItemShipGroup` entities. These entities hold details about the order and the specific group of items within the order that the shipment is fulfilling.
@@ -597,5 +595,25 @@ Let's say a user tries to change the status of a shipment that's already been ma
 *   **Required Fields:** Either `productId` or `sku` is required for each item. If both are missing, an error is added to the `errorList`.
 *   **Valid Product:** The provided `productId` or the `productId` derived from the `sku` must exist in the `Product` entity. If not, an error is added to the `errorList`.
 *   **Quantity Conversion:** The `quantity` must be convertible to a `BigDecimal`. While the code doesn't explicitly handle a `NumberFormatException`, it's good practice to add error handling for this scenario.
+
+**Prepares data to  `createOrderShipment`**
+
+2.  **Order and Ship Group Information:**
+    *   Check if both `orderId` (the ID of the order) and `shipGroupSeqId` (the sequence ID of the shipment group within the order) are available. If so, it proceeds to create `OrderShipment` entities.
+
+3.  **Order Shipment Context Creation:**
+    *   A `createOrderShipmentCtx` map is created to hold the data for the `createOrderShipment` service call.
+    *   The map is populated with the following key-value pairs:
+        *   `"shipmentId"`: The ID of the shipment.
+        *   `"shipmentItemSeqId"`: The sequence ID of the shipment item obtained in step 1.
+        *   `"orderId"`: The ID of the order.
+        *   `"userLogin"`: The userLogin object representing the user performing the operation.
+
+4.  **OrderItemShipGroup Retrieval:**
+    *   The code queries the database for an `OrderItemShipGroup` entity that matches the `orderId`, `productId` (of the current item), `shipGroupSeqId`, and has a `statusId` of either "ITEM_APPROVED" or "ITEM_CREATED."
+    *   This entity represents the association between an order item and a shipment group.
+
+6.  **Order Shipment Creation:**
+    *   If an `OrderItemShipGroup` entity is found, use `shipGroupSeqId` and `orderItemSeqId`.
 
 
