@@ -525,7 +525,7 @@ Enforce constraints on when the status of a shipment can be changed. Prevent inv
 
 **Example**
 
-Let's say a user tries to change the status of a shipment that's already been marked as "Shipped" back to "Packed." The `checkCanChangeShipmentStatusGeneral` method would detect this invalid transition, generate an error message like "Cannot perform operation Pack when the shipment is in the Shipped status," and add it to the `error_list`. This prevents the invalid status change and informs the user of the reason.
+Let's say a user tries to change the status of a shipment that's already been marked as "Shipped" back to "Packed." Detect invalid transition, generate an error message like "Cannot perform operation Pack when the shipment is in the Shipped status," and add it to the `error_list`. This prevents the invalid status change and informs the user of the reason.
 
 
 **Set originContactMechId based on originFacilityId**
@@ -541,3 +541,34 @@ Let's say a user tries to change the status of a shipment that's already been ma
 *   **Data Completeness:** It ensures that shipments have complete contact information for both origin and destination, which is crucial for communication and tracking.
 *   **Accuracy:** By deriving information directly from the associated facilities, it reduces the risk of errors in manually entering contact details.
 *   **Efficiency:** The method only updates the shipment if changes were made, avoiding unnecessary database writes.
+
+
+**Update shipment details based on the primary order associated with it**
+
+
+1.  **Retrieve Shipment and Order Data:**
+    *   If `Shipment.primaryOrderId` and `primaryShipGroupSeqId` are present in the shipment, fetch the corresponding `OrderHeader` and `OrderItemShipGroup` entities. These entities hold details about the order and the specific group of items within the order that the shipment is fulfilling.
+
+1.  **Set Shipment Type:**
+    *   Determines the `shipmentTypeId` based on the `orderTypeId` of the associated order:
+        *   If the order is a "SALES_ORDER," the shipment type is set to "SALES_SHIPMENT."
+ 
+2.  **Set Origin Facility (For Store Shipments):**
+    *   If the shipment is a "SALES_SHIPMENT" from a store with a single inventory facility, and the `originFacilityId` is not already set, retrieve the `ProductStore` entity and set the `originFacilityId` to the store's `inventoryFacilityId`.
+
+3.  **Set Party Information (From/To):**
+    *   Fetche `OrderRole` entities associated with the order.
+    *   If `partyIdFrom` (the party shipping the goods) is not set, try to find it from the order roles with the "SHIP_FROM_VENDOR" role types.
+    *   If `partyIdTo` (the party receiving the goods) is not set, try to find it from the order roles with the "SHIP_TO_CUSTOMER" or "CUSTOMER" role types.
+
+4.  **Set Contact Information:**
+    *   Fetche `OrderContactMech` entities associated with the order.
+    *   If `destinationContactMechId` (shipping address) is not set, it tries to find it from the order contact mechanisms with the "SHIPPING_LOCATION" purpose.
+    *   If `originContactMechId` is not set, it tries to find it from the order contact mechanisms with the "SHIP_ORIG_LOCATION" purpose.
+    *   Similary set `destinationTelecomNumberId` and `originTelecomNumberId` (phone numbers).
+
+5.  **Handle Special Case for Store Pickup:**
+    *   If the order is a "SALES_ORDER" and the shipment method is "STOREPICKUP," the `destinationContactMechId` is set to the same value as `originContactMechId`.
+
+6. **Create Shipment Route Segment:**
+    *   If no `ShipmentRouteSegment` exists for the shipment, it create one using the gathered information (origin/destination facilities, contact mechanisms, shipping method, carrier, etc.).
