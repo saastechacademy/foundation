@@ -572,3 +572,30 @@ Let's say a user tries to change the status of a shipment that's already been ma
 
 6. **Create Shipment Route Segment:**
     *   If no `ShipmentRouteSegment` exists for the shipment, it create one using the gathered information (origin/destination facilities, contact mechanisms, shipping method, carrier, etc.).
+
+**Prepare data for ShipmentItem**
+
+1.  **Extraction of Item Details:**
+
+    *   For each item in the `Shipmentitems` :
+        *   `productId`: The ID of the product to be included in the shipment.
+        *   `sku`: The SKU (Stock Keeping Unit) of the product, which can be used to look up the `productId` if it's not provided directly.
+        *   `itemSeqId`: A sequence ID for the shipment item, likely used for ordering or identification within the shipment.
+        *   `orderItemSeqId`: The sequence ID of the corresponding order item from the original order.
+        *   `quantity`: The quantity of the product to be included in the shipment.
+
+2.  **Product ID Resolution:**
+
+    *   If the `productId` is not provided but the `sku` is,  lookup database in the `Product` entity to find the corresponding `productId` based on the `internalName` (which is assumed to be the SKU).
+
+3.  **Data Conversion:**
+
+    *   The `quantity` value, which might be provided as a string or another numeric type, is explicitly converted to a `BigDecimal` using `ObjectType.simpleTypeConvert`. This ensures accurate representation of quantities, especially for fractional values.
+
+**Rules and Error Handling:**
+
+*   **Required Fields:** Either `productId` or `sku` is required for each item. If both are missing, an error is added to the `errorList`.
+*   **Valid Product:** The provided `productId` or the `productId` derived from the `sku` must exist in the `Product` entity. If not, an error is added to the `errorList`.
+*   **Quantity Conversion:** The `quantity` must be convertible to a `BigDecimal`. While the code doesn't explicitly handle a `NumberFormatException`, it's good practice to add error handling for this scenario.
+
+
