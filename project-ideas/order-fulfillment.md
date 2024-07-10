@@ -417,3 +417,91 @@ The service should take extra care to ensure that numeric values, especially tho
 *   **Conversion:** The `ObjectType.simpleTypeConvert` method is a utility function in OFBiz that handles the conversion of various data types. In this case, it's used to safely convert the input values (which might be strings, numbers, or other objects) into the desired `BigDecimal` format.
 
 *   **Locale:** The locale is passed to `simpleTypeConvert` to handle potential differences in decimal separators (e.g., "." vs ",").
+
+
+Prepare data for creating a new `Shipment` entity in the database. Let's break down the data elements it includes, their significance, and any associated rules:
+
+1.  **shipmentId:**
+
+    *   **Significance:** The unique identifier for the new shipment.
+    *   **Rule:** It's generated using `delegator.getNextSeqId("Shipment")` to ensure uniqueness.
+
+2.  **externalId:**
+
+    *   **Significance:** An optional external identifier for the shipment, potentially used for integration with other systems.
+    *   **Rule:** If provided in the input, it's included as-is.
+
+3.  **shipmentTypeId:**
+
+    *   **Significance:** The type of shipment (e.g., "SALES_SHIPMENT").
+    *   **Rule:** If not provided in the input, it defaults to "SALES_SHIPMENT".
+
+4.  **statusId:**
+
+    *   **Significance:** The initial status of the shipment.
+    *   **Rule:** If not provided in the input, it defaults to "SHIPMENT_INPUT."
+
+5.  **primaryOrderId:**
+
+    *   **Significance:** The ID of the primary order associated with the shipment.
+    *   **Rule:** Included only if the `orderId` is provided in the input.
+
+6.  **picklistBinId:**
+
+    *   **Significance:** The ID of the picklist bin from which items were picked for the shipment.
+    *   **Rule:** Included only if the `picklistBinId` is provided in the input.
+
+7.  **primaryShipGroupSeqId:**
+
+    *   **Significance:** The sequence ID of the primary shipment group within the order.
+    *   **Rule:** Included only if both `orderId` and `shipGroupSeqId` are provided in the input.
+
+8.  **partyIdFrom:**
+
+    *   **Significance:** The ID of the party (e.g., company) initiating the shipment.
+    *   **Rule:** If not provided directly, it's resolved from the `externalPartyIdFrom` if available.
+
+9.  **partyIdTo:**
+
+    *   **Significance:** The ID of the party receiving the shipment (e.g., customer).
+    *   **Rule:** If not provided directly, it's resolved from the `externalPartyIdTo` if available.
+
+10. **originFacilityId:**
+
+    *   **Significance:** The ID of the facility from which the shipment originates.
+    *   **Rule:** If not provided directly, it's resolved from the `externalOriginFacilityId` if available.
+
+11. **destinationFacilityId:**
+
+    *   **Significance:** The ID of the destination facility (if applicable).
+    *   **Rule:** If not provided directly, it's resolved from the `externalDestinationFacilityId` if available.
+
+12. **originContactMechId:**
+
+    *   **Significance:** The contact mechanism ID for the origin's location (e.g., address).
+    *   **Rule:** Resolved from the `shipFrom` information in the input if available.
+
+13. **originTelecomNumberId:**
+
+    *   **Significance:** The contact mechanism ID for the origin's phone number.
+    *   **Rule:** Resolved from the `shipFrom` information in the input if available.
+
+14. **destinationContactMechId:**
+
+    *   **Significance:** The contact mechanism ID for the destination's location (e.g., address).
+    *   **Rule:** Resolved from the `shipTo` information in the input if available.
+
+15. **destinationTelecomNumberId:**
+
+    *   **Significance:** The contact mechanism ID for the destination's phone number.
+    *   **Rule:** Resolved from the `shipTo` information in the input if available.
+
+16. **estimatedShipCost:**
+
+    *   **Significance:** The estimated cost of shipping.
+    *   **Rule:** Included only if provided in the input.
+
+17. **estimatedArrivalDate, estimatedReadyDate, estimatedShipDate:**
+
+    *   **Significance:** Estimated dates for arrival, readiness, and shipping.
+    *   **Rule:** Included only if provided in the input and converted to Timestamp objects.
