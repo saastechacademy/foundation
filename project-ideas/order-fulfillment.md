@@ -505,3 +505,24 @@ Prepare data for creating a new `Shipment` entity in the database. Let's break d
 
     *   **Significance:** Estimated dates for arrival, readiness, and shipping.
     *   **Rule:** Included only if provided in the input and converted to Timestamp objects.
+
+
+Enforce constraints on when the status of a shipment can be changed. Prevent invalid status transitions, particularly those that would revert a shipment to an earlier stage after it has reached specific milestones.
+
+**Requirement**
+
+1. **Scenario 1:** If the desired transition is from any status to "SHIPMENT_SHIPPED" and the current status of the `testShipment` is already "SHIPMENT_SHIPPED," the transition is not allowed.
+
+2. **Scenario 2:** If the desired transition is from any status to "SHIPMENT_DELIVERED" and the current status of the `testShipment` is already "SHIPMENT_SHIPPED" or "SHIPMENT_DELIVERED," the transition is not allowed.
+
+**How It Helps Manage Shipment Data**
+
+*   **Prevents Invalid Transitions:** The method enforces business rules that prevent a shipment from moving backward in its lifecycle. Once a shipment is shipped or delivered, it shouldn't be possible to change its status to something that implies it's still in the warehouse.
+
+*   **Data Integrity:** By restricting invalid status changes, the method helps maintain the integrity of the shipment data. It ensures that the status accurately reflects the shipment's progress.
+
+*   **User Guidance:** The error message provides feedback to the user, explaining why the requested operation is not allowed. This helps users understand the system's constraints and make appropriate decisions.
+
+**Example**
+
+Let's say a user tries to change the status of a shipment that's already been marked as "Shipped" back to "Packed." The `checkCanChangeShipmentStatusGeneral` method would detect this invalid transition, generate an error message like "Cannot perform operation Pack when the shipment is in the Shipped status," and add it to the `error_list`. This prevents the invalid status change and informs the user of the reason.
