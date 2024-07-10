@@ -316,3 +316,72 @@ The XML defines the statuses a shipment can go through, the valid transitions be
 <ItemIssuance createdStamp="2024-06-26 01:57:04.054" createdTxStamp="2024-06-26 01:57:03.804" inventoryItemId="21070" issuedByUserLoginId="hotwax.user" issuedDateTime="2024-06-26 01:57:04.054" itemIssuanceId="10005" lastUpdatedStamp="2024-06-26 01:57:04.054" lastUpdatedTxStamp="2024-06-26 01:57:03.804" orderId="10203" orderItemSeqId="00102" quantity="1.000000" shipGroupSeqId="00001" shipmentId="10013" shipmentItemSeqId="00002"/>
 
 ```
+
+**Comprehensive Data Validation Requirements**
+
+1.  **External Shipment ID (externalId):**
+
+    *   **Uniqueness:** If provided, the `externalId` must be unique within the `Shipment` entity.
+
+2.  **Shipment Type ID (shipmentTypeId):**
+
+    *   **Validity:** If provided, the `shipmentTypeId` must exist in the `ShipmentType` entity.
+    *   **Default Value:** If not provided, defaults to "SALES_SHIPMENT".
+
+3.  **Order ID (orderId) and Order External ID (orderExternalId):**
+
+    *   **Existence:** Either `orderId` or `orderExternalId` is required.
+    *   **External ID Resolution:** If only `orderExternalId` is provided, the service should fetche the corresponding `orderId`.
+    *   **Order Validity:** The `orderId` must exist in the `OrderHeader` entity and match the correct `orderTypeId` ("SALES_ORDER" ).
+    *   **Ship Group Validity (Optional):** If `shipGroupSeqId` is provided, it must be valid within the specified order.
+
+5.  **Party IDs (partyIdFrom, externalPartyIdFrom, partyIdTo, externalPartyIdTo):**
+
+    *   **Applicability:** These validations apply only to Sales Shipment (`shipmentTypeId` != "SALES_SHIPMENT").
+    *   **Party From:** Either `partyIdFrom` or `externalPartyIdFrom` is required, and it must be valid.
+    *   **Party To:** Either `partyIdTo` or `externalPartyIdTo` is required, and it must be valid.
+
+6.  **Facility IDs (originFacilityId, externalOriginFacilityId, destinationFacilityId, externalDestinationFacilityId):**
+
+    *   **Facility Origin:** Either `originFacilityId` or `externalOriginFacilityId` is required, and it must be valid.
+    *   **Facility Destination (Optional):** If provided, either `destinationFacilityId` or `externalDestinationFacilityId` must be valid.
+
+7.  **Status ID (status):**
+
+    *   **Validity:** If provided, the `status` must be a valid `statusId` for the "SHIPMENT_STATUS" type.
+    *   **Default Value:** If not provided, defaults to "SHIPMENT_INPUT."
+
+8.  **Dates (estimatedReadyDate, estimatedShipDate, estimatedArrivalDate):**
+
+    *   **Format:** If provided, dates must follow specific formats (e.g., "yyyy-MM-dd HH:mm:ss").
+
+9.  **Ship From Information (shipFrom):**
+
+    *   **Postal Address:** If provided, the postal address ID (`id`) or external ID (`externalId`) must be valid.
+    *   **Phone Number:** If provided, the phone number ID (`id`) or external ID (`externalId`) must be valid.
+
+10. **Ship To Information (shipTo):**
+
+    *   **Postal Address:** If provided, the postal address ID (`id`) or external ID (`externalId`) must be valid.
+    *   **Phone Number:** If provided, the phone number ID (`id`) or external ID (`externalId`) must be valid.
+
+11. **Items (items):**
+
+    *   **Product Identification:** For each item, either `productId` or `sku` is required.
+    *   **Product/SKU Validity:** The provided `productId` or `sku` must exist in the `Product` entity.
+
+12. **Packages (packages):**
+
+    *   **Package Details:** For each package, validations are performed for:
+        *   `dimensionUomId`: Must be a valid unit of measurement for length.
+        *   `weightUomId`: Must be a valid unit of measurement for weight.
+        *   `boxTypeId`: If provided, must be a valid shipment box type.
+        *   `boxLength`, `boxHeight`, `boxWidth`, `weight`: If provided, must be convertible to BigDecimal.
+
+    *   **Package Items:** If `items` are included within a package, the same validations as for the top-level `items` list are applied.
+
+**Additional Considerations:**
+
+*   **Default Values:** The service should set default values for `shipmentTypeId`, `statusId`, `boxTypeId`, `weightUomId`, and `dimensionUomId` if they are not provided.
+*   **Error Handling:** The service should collects all validation errors and returns them in a consolidated error message if any validation fails.
+
