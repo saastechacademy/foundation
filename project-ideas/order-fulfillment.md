@@ -678,3 +678,95 @@ The code that prepares data `ShipmentPackageContent`:
 *   **Product ID or SKU Required:** Either `productId` or `sku` must be provided for each item in the package.
 *   **Valid Product:** The `productId` (whether provided directly or derived from the `sku`) must exist in the `Product` entity.
 *   **Shipment Item Existence:** The `shipmentItemSeqId` must correspond to an existing `ShipmentItem` within the shipment.
+
+
+
+**Sample shipment JSON representation**
+
+```json
+{
+    "shipmentId": "10025",
+    "shipmentTypeId": "SALES_SHIPMENT",
+    "statusId": "SHIPMENT_INPUT",
+    "primaryOrderId": "OR12345",
+    "primaryShipGroupSeqId": "00001",
+    "partyIdFrom": "COMPANY",
+    "partyIdTo": "10001", 
+    "originFacilityId": "WAREHOUSE_A",
+    "destinationFacilityId": null,
+    "originContactMechId": "12345",
+    "originTelecomNumberId": "67890",
+    "destinationContactMechId": "54321",
+    "destinationTelecomNumberId": "09876",
+    "estimatedShipCost": 15.99,
+    "estimatedReadyDate": "2024-07-15 10:00:00",
+    "estimatedShipDate": "2024-07-16 14:30:00",
+    "estimatedArrivalDate": "2024-07-20 16:45:00",
+    "shipmentStatus": [
+        {
+            "shipmentStatusId": "10001",
+            "statusId": "SHIPMENT_INPUT",
+            "statusDate": "2024-07-12 10:15:00"
+        }
+    ],
+    "shipmentItems": [
+        {
+            "shipmentItemSeqId": "00001",
+            "productId": "PROD123",
+            "quantity": 2
+        },
+        {
+            "shipmentItemSeqId": "00002",
+            "productId": "PROD456",
+            "quantity": 1
+        }
+    ],
+    "shipmentPackages": [
+        {
+            "shipmentPackageSeqId": "00001",
+            "boxTypeId": "YOURPACKNG",
+            "weight": 5.5,
+            "weightUomId": "WT_lb",
+            "dimensionUomId": "LEN_in",
+            "boxLength": 12,
+            "boxHeight": 8,
+            "boxWidth": 10,
+            "shipmentPackageContents": [
+                {
+                    "shipmentItemSeqId": "00001",
+                    "quantity": 2
+                }
+            ]
+        }
+    ],
+    "shipmentRouteSegments": [
+        {
+            "shipmentRouteSegmentId": "00001",
+            "originFacilityId": "WAREHOUSE_A",
+            "destinationFacilityId": "HUB_B",
+            "estimatedArrival": "2024-07-17 09:00:00"
+        },
+        {
+            "shipmentRouteSegmentId": "00002",
+            "originFacilityId": "HUB_B",
+            "destinationFacilityId": null, 
+            "estimatedArrival": "2024-07-20 16:45:00"
+        }
+    ]
+}
+```
+
+**Key Points and Explanations:**
+
+*   **Shipment:**  Core shipment details like ID, type, status, order information, parties involved, facility information, contact information, estimated cost, and dates.
+*   **shipmentStatus:** An array to capture the history of status changes for the shipment. In this sample, it only has the initial "SHIPMENT_INPUT" status.
+*   **shipmentItems:** An array listing the items in the shipment with their quantities.
+*   **shipmentPackages:** An array of packages, each with details like dimensions, weight, box type, and a list of its contents (`shipmentPackageContents`).
+*   **shipmentRouteSegments:** An array defining the route segments (legs) of the shipment, with origin/destination facilities and estimated arrival times.
+
+**Additional Notes:**
+
+*   The `OrderItemShipGroupAssoc` and `ItemIssuance` entities are not included in this JSON structure as they would be created and managed separately within the system.
+*   The actual values in this JSON are placeholders. You'd replace them with real data based on your specific shipment. 
+*   The structure aligns with the entity relationships defined in the ER diagram
+
