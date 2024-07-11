@@ -647,3 +647,34 @@ Let's say a user tries to change the status of a shipment that's already been ma
 *   **Dimension and Weight UoM Validation:** The `dimensionUomId` and `weightUomId` are validated against the `Uom` entity to ensure they are valid units of measurement for length and weight, respectively.
 *   **Box Type Validation:** If `boxTypeId` is provided, it's validated against the `ShipmentBoxType` entity.
 
+
+The code that prepares data `ShipmentPackageContent`: 
+
+1.  **Outer Loop (Packages):** Iterates over each package in the `packages` list from the input.
+
+2.  **Inner Loop (Package Items):** Iterates over the `items` list within each package.
+
+1.  **Shipment and Package IDs:**
+    *   The `shipmentId` (of the overall shipment) and `shipmentPackageSeqId` (of the current package) are obtained from the outer scope.
+
+2.  **Product ID Resolution:**
+    *   For each item in the package, the code checks if `productId` is provided. If not, and `sku` is available, it fetche the corresponding `productId` from the `Product` entity using the `internalName` (assumed to be the SKU).
+
+3.  **Shipment Item Sequence ID Resolution:**
+    *   If `shipmentItemSeqId` (the sequence ID of the shipment item) is not provided, find it by querying the `ShipmentItem` entity based on the `shipmentId` and `productId`. This assumes that the `ShipmentItem` entities were already created earlier.
+
+4.  **Quantity Conversion:**
+    *   If the `quantity` of the item in the package is provided, it's converted to a `BigDecimal` for precision.
+
+5.  **Context Map Creation:**
+    *   the `shipmentPackageContent` map is populated with:
+        *   `"shipmentId"`
+        *   `"shipmentPackageSeqId"`
+        *   `"shipmentItemSeqId"` (if found)
+        *   `"quantity"` (if provided and converted to `BigDecimal`)
+
+**Rules and Error Handling:**
+
+*   **Product ID or SKU Required:** Either `productId` or `sku` must be provided for each item in the package.
+*   **Valid Product:** The `productId` (whether provided directly or derived from the `sku`) must exist in the `Product` entity.
+*   **Shipment Item Existence:** The `shipmentItemSeqId` must correspond to an existing `ShipmentItem` within the shipment.
