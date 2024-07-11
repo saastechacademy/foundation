@@ -616,4 +616,34 @@ Let's say a user tries to change the status of a shipment that's already been ma
 6.  **Order Shipment Creation:**
     *   If an `OrderItemShipGroup` entity is found, use `shipGroupSeqId` and `orderItemSeqId`.
 
+1.  **Package Details Extraction:**
+    *   Package as following details:
+        *   `boxTypeId`: The type of box used for the package.
+        *   `packageSeqId`: A sequence ID for the package, likely used for ordering or identification within the shipment.
+        *   `dimensionUomId`: The unit of measurement for the package dimensions (e.g., "LEN_in" for inches).
+        *   `weightUomId`: The unit of measurement for the package weight (e.g., "WT_lb" for pounds).
+        *   `boxLength`, `boxHeight`, `boxWidth`, `weight`: The dimensions and weight of the package.
+        *   `items`: A list of items included in the package (this is used later for creating `ShipmentPackageContent` entities).
+
+2.  **Default Values and Conversions:**
+    *   If `boxTypeId` is not provided, it defaults to a value from the configuration ("YOURPACKNG" in this case).
+    *   If `weightUomId` is not provided, it tries to get it from the origin facility's default or a system-wide default ("WT_lb").
+    *   If `dimensionUomId` is not provided, it defaults to a system-wide default ("LEN_in").
+    *   The `boxLength`, `boxHeight`, `boxWidth`, and `weight` values are converted to `BigDecimal` for precision.
+
+3.  **Shipment Package Context Creation:**
+    *   A `shipmentPackage` map is created to hold the data for the `ShipmentPackage`.
+    *   The map is populated with the following key-value pairs:
+        *   `"shipmentId"`: The ID of the shipment.
+        *   `"shipmentPackageSeqId"`: The sequence ID of the package.
+        *   `"boxLength"`, `"boxHeight"`, `"boxWidth"`, `"weight"`: The package dimensions and weight (as `BigDecimal`).
+        *   `"shipmentBoxTypeId"`: The type of box.
+        *   `"dimensionUomId"`: The unit of measurement for dimensions.
+        *   `"weightUomId"`: The unit of measurement for weight.
+        *   `"userLogin"`: The userLogin object representing the user performing the operation.
+
+**Rules and Error Handling:**
+
+*   **Dimension and Weight UoM Validation:** The `dimensionUomId` and `weightUomId` are validated against the `Uom` entity to ensure they are valid units of measurement for length and weight, respectively.
+*   **Box Type Validation:** If `boxTypeId` is provided, it's validated against the `ShipmentBoxType` entity.
 
