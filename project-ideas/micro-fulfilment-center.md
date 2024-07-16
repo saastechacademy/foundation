@@ -465,4 +465,51 @@ The `PhysicalInventory` and `InventoryItemVariance` entities work together to ma
 
 By leveraging these entities and their relationships, businesses can effectively manage inventory discrepancies, improve accuracy, and optimize inventory processes. The `VarianceReason` entity adds valuable context to variances, facilitating informed decision-making and targeted actions to address inventory issues.
 
+**Sample data**
 
+```json
+{
+  "physicalInventoryId": "PI_20240715",
+  "physicalInventoryDate": "2024-07-15 10:00:00",
+  "partyId": "PARTY_EMPLOYEE_JOHN_DOE",
+  "generalComments": "Routine inventory count at Main Street Store",
+  "inventoryItemVariances": [
+    {
+      "inventoryItemId": "FG001-INV-001",
+      "physicalInventoryId": "PI_20240715",
+      "varianceReasonId": "VAR_FOUND",
+      "availableToPromiseVar": 1,
+      "quantityOnHandVar": 1,
+      "comments": "Found one extra unit on shelf"
+    },
+    {
+      "inventoryItemId": "FG002-INV-002",
+      "physicalInventoryId": "PI_20240715",
+      "varianceReasonId": "VAR_DAMAGED",
+      "availableToPromiseVar": -2,
+      "quantityOnHandVar": -2,
+      "comments": "Two units damaged during shipping"
+    }
+  ]
+}
+```
+
+**Explanation:**
+
+*   **`physicalInventoryId`:** A unique identifier for this specific inventory count event (PI\_20240715).
+*   **`physicalInventoryDate`:** The date and time the inventory count was conducted (2024-07-15 10:00:00).
+*   **`partyId`:** The ID of the employee who performed the count ("PARTY\_EMPLOYEE\_JOHN\_DOE").
+*   **`generalComments`:** A brief note about the inventory count ("Routine inventory count at Main Street Store").
+*   **`inventoryItemVariances`:** An array containing the variances found during the count.
+    *   **First Variance:**
+        *   **`inventoryItemId`:** "FG001-INV-001" (one of the inventory items for Product 1).
+        *   **`varianceReasonId`:** "VAR\_FOUND" (the reason for the variance).
+        *   **`availableToPromiseVar`:** 1 (one extra unit was found).
+        *   **`quantityOnHandVar`:** 1 (the on-hand quantity also increased by one).
+        *   **`comments`:** "Found one extra unit on shelf" (additional details about the variance).
+    *   **Second Variance:**
+        *   **`inventoryItemId`:** "FG002-INV-002" (one of the inventory items for Product 2).
+        *   **`varianceReasonId`:** "VAR\_DAMAGED" (two units were damaged).
+        *   **`availableToPromiseVar`:** -2 (two units are no longer available).
+        *   **`quantityOnHandVar`:** -2 (the on-hand quantity decreased by two).
+        *   **`comments`:** "Two units damaged during shipping" (additional details about the variance).
