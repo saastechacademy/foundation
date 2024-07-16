@@ -208,4 +208,52 @@ The core entities used for modeling facility and location information in our inv
         *   **minimumStock:** Minimum stock level to maintain at this specific location.
         *   **moveQuantity:** Quantity to move when stock at this location falls below the minimum.
      
-   
+
+
+**The core entities used for modeling inventory are:**
+
+*   **InventoryItem:** Represents a specific item in inventory, tracking its quantity, location, status, and other details.
+    *   **inventoryItemId** (Primary Key): Unique identifier for the inventory item.
+    *   **inventoryItemTypeId:** Type of inventory item (e.g., raw material, finished good).
+    *   **productId:** The product associated with the inventory item.
+    *   **statusId:** Current status of the inventory item (e.g., available, on hold).
+    *   **facilityId:** The facility where the item is located.
+    *   **locationSeqId:** The specific location within the facility.
+    *   **lotId:** The lot or batch the item belongs to.
+    *   **quantityOnHandTotal:** Total quantity of the item on hand.
+    *   **availableToPromiseTotal:** Quantity available for reservation or sale.
+    *   **accountingQuantityTotal:** Quantity used for accounting purposes.
+    *   **unitCost:** Cost per unit of the item.
+    *   **currencyUomId:** Currency of the unit cost.
+
+*   **InventoryItemType:** Defines different types of inventory items.
+    *   **inventoryItemTypeId** (Primary Key): Unique identifier for the inventory item type.
+    *   **parentTypeId:** Allows for hierarchical categorization of item types.
+    *   **description:** Description of the item type.
+
+*   **InventoryItemDetail:** Records changes in inventory item quantities and other details over time.
+    *   **inventoryItemId** (Primary Key): References the associated inventory item.
+    *   **inventoryItemDetailSeqId** (Primary Key): Unique sequence ID for each detail record.
+    *   **effectiveDate:** Date and time when the change occurred.
+    *   **quantityOnHandDiff, availableToPromiseDiff, accountingQuantityDiff:** Changes in quantities.
+    *   **reasonEnumId:** Reason for the change (e.g., sale, adjustment).
+
+*   **ItemIssuance:** Represents the issuance of inventory items for various purposes (e.g., production, shipment).
+    *   **itemIssuanceId** (Primary Key): Unique identifier for the issuance.
+    *   **inventoryItemId:** The inventory item being issued.
+    *   **quantity:** Quantity issued.
+
+*   **InventoryItemVariance:** Tracks discrepancies between expected and actual inventory quantities during physical inventory counts.
+    *   **inventoryItemId** (Primary Key): References the associated inventory item.
+    *   **physicalInventoryId** (Primary Key): References the physical inventory count.
+    *   **varianceReasonId:** Reason for the variance.
+    *   **availableToPromiseVar, quantityOnHandVar:** Variance amounts.
+
+*   **PhysicalInventory:** Represents a physical inventory count event.
+    *   **physicalInventoryId** (Primary Key): Unique identifier for the count.
+    *   **physicalInventoryDate:** Date of the count.
+
+*   **VarianceReason:** Provides reasons for inventory variances.
+    *   **varianceReasonId** (Primary Key): Unique identifier for the reason.
+    *   **description:** Description of the reason.
+
