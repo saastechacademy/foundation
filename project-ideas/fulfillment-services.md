@@ -1,5 +1,6 @@
-**rejectShipmentItem Purpose**
+**rejectShipmentItem** 
 
+**Purpose**
 The primary goal of the `rejectShipmentItem` service is to handle the rejection of a specific item within a shipment. This involves updating the shipment item's status, adjusting inventory levels, and potentially canceling associated order items.
 
 **Input Parameters**
@@ -39,7 +40,7 @@ This service is typically used when an item within a shipment is found to be uns
 
 **Error Handling:** The service includes error handling to catch exceptions and return appropriate error messages.
 
-**moveShipmentItem service in the FulfillmentServices**.
+**moveShipmentItem**.
 
 **Purpose**
 
