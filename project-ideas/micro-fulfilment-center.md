@@ -1,22 +1,25 @@
-**API Design for Inventory Management Application in Apache OFBiz**
 
-**Data Model**
+# API Design for Inventory Management Application in Apache OFBiz
+
+## Data Model
 
 The core entities used for modeling facility and location information in our inventory management application are:
 
-*   **Facility:** Represents a physical location where inventory is stored.
-    *   **facilityId** (Primary Key): Unique identifier for the facility.
-    *   **facilityTypeId:** Type of facility (e.g., "RETAIL_STORE", "WAREHOUSE").
-    *   **facilityName:** Name of the facility.
+### Facility
+Represents a physical location where inventory is stored.
+- **facilityId** (Primary Key): Unique identifier for the facility.
+- **facilityTypeId:** Type of facility (e.g., "RETAIL_STORE", "WAREHOUSE").
+- **facilityName:** Name of the facility.
 
-*   **FacilityLocation:** Represents a specific location within a facility where inventory can be stored (e.g., aisles, shelves, bins).
-    *   **locationSeqId** (Primary Key): Unique identifier for the location within the facility.
-    *   **locationTypeEnumId:** Type of location (e.g., "FLT_PICKLOC" for picking locations, "FLT_BULK" for bulk storage locations).
-    *   **areaId**, **aisleId**, **sectionId**: Additional identifiers for organizing locations within the facility.
+### FacilityLocation
+Represents a specific location within a facility where inventory can be stored (e.g., aisles, shelves, bins).
+- **locationSeqId** (Primary Key): Unique identifier for the location within the facility.
+- **locationTypeEnumId:** Type of location (e.g., "FLT_PICKLOC" for picking locations, "FLT_BULK" for bulk storage locations).
+- **areaId**, **aisleId**, **sectionId**: Additional identifiers for organizing locations within the facility.
 
-**Sample JSON Data for a Retail Store Facility**
+## Sample JSON Data for a Retail Store Facility
 
-```
+```json
 {
   "facilityId": "FACILITY_1",
   "facilityTypeId": "RETAIL_STORE",
@@ -95,28 +98,31 @@ The core entities used for modeling facility and location information in our inv
   ]
 }
 ```
-**Explanation:**
 
-*   **facilityId:** A unique identifier for the facility.
-*   **facilityTypeId:** Indicates the type of facility, in this case, "RETAIL\_STORE".
-*   **facilityName:** A descriptive name for the facility.
-*   **facilityLocations:** An array containing details of each `FacilityLocation` within the facility.
-    *   **locationSeqId:** A unique sequence ID for the location within the facility.
-    *   **locationTypeEnumId:** The type of location, here it's "FLT\_PICKLOC" for all locations, indicating they are primary picking locations.
-    *   **areaId:** Identifies the area within the facility (e.g., "A", "B", "C").
-    *   **aisleId:** Identifies the aisle within the area (e.g., "01", "02").
-    *   **sectionId:** Identifies the section within the aisle (e.g., "01", "02").
+## Explanation
 
+- **facilityId:** A unique identifier for the facility.
+- **facilityTypeId:** Indicates the type of facility, in this case, "RETAIL_STORE".
+- **facilityName:** A descriptive name for the facility.
+- **facilityLocations:** An array containing details of each `FacilityLocation` within the facility.
+  - **locationSeqId:** A unique sequence ID for the location within the facility.
+  - **locationTypeEnumId:** The type of location, here it's "FLT_PICKLOC" for all locations, indicating they are primary picking locations.
+  - **areaId:** Identifies the area within the facility (e.g., "A", "B", "C").
+  - **aisleId:** Identifies the aisle within the area (e.g., "01", "02").
+  - **sectionId:** Identifies the section within the aisle (e.g., "01", "02").
 
-**Data model Product, association with Facility and storage location in the Facility**
+## Data model Product, association with Facility and storage location in the Facility
 
-*   **Product:** This entity stores the main details of a product, such as its ID, type, name, description, and various attributes like weight, dimensions, and images.
+### Product
+This entity stores the main details of a product, such as its ID, type, name, description, and various attributes like weight, dimensions, and images.
 
-*   **ProductFacility:** This entity establishes the relationship between a product and a facility, indicating that the product is stocked or available at that facility. It also includes additional information like minimum stock levels, reorder quantities, and estimated shipping days.
+### ProductFacility
+This entity establishes the relationship between a product and a facility, indicating that the product is stocked or available at that facility. It also includes additional information like minimum stock levels, reorder quantities, and estimated shipping days.
 
-*   **ProductFacilityLocation:** This entity further refines the product-facility relationship by specifying the exact location(s) within a facility where a particular product is stored. It includes details like minimum stock levels and move quantities for each location.
+### ProductFacilityLocation
+This entity further refines the product-facility relationship by specifying the exact location(s) within a facility where a particular product is stored. It includes details like minimum stock levels and move quantities for each location.
 
-**Sample JSON Data for Products in a Facility**
+## Sample JSON Data for Products in a Facility
 
 ```json
 {
@@ -194,70 +200,75 @@ The core entities used for modeling facility and location information in our inv
 }
 ```
 
-**Explanation:**
+## Explanation
 
-*   **facilityId, facilityTypeId, facilityName:** Same as before, representing the retail store.
-*   **products:** An array containing details of each product.
-    *   **productId, productTypeId, productName:** Basic product information.
-    *   **productFacility:** Details about the product's association with the facility.
-        *   **minimumStock:** Minimum stock level to maintain at the facility.
-        *   **reorderQuantity:** Quantity to reorder when stock falls below the minimum.
-        *   **daysToShip:** Estimated shipping time from the facility.
-    *   **productFacilityLocations:** An array specifying where the product is stored within the facility.
-        *   **locationSeqId:** The location's unique identifier.
-        *   **minimumStock:** Minimum stock level to maintain at this specific location.
-        *   **moveQuantity:** Quantity to move when stock at this location falls below the minimum.
-     
+- **facilityId, facilityTypeId, facilityName:** Same as before, representing the retail store.
+- **products:** An array containing details of each product.
+  - **productId, productTypeId, productName:** Basic product information.
+  - **productFacility:** Details about the product's association with the facility.
+    - **minimumStock:** Minimum stock level to maintain at the facility.
+    - **reorderQuantity:** Quantity to reorder when stock falls below the minimum.
+    - **daysToShip:** Estimated shipping time from the facility.
+  - **productFacilityLocations:** An array specifying where the product is stored within the facility.
+    - **locationSeqId:** The location's unique identifier.
+    - **minimumStock:** Minimum stock level to maintain at this specific location.
+    - **moveQuantity:** Quantity to move when stock at this location falls below the minimum.
+   
+## The Core Entities Used for Modeling Inventory
 
+### InventoryItem
+Represents a specific item in inventory, tracking its quantity, location, status, and other details.
+- **inventoryItemId** (Primary Key): Unique identifier for the inventory item.
+- **inventoryItemTypeId:** Type of inventory item (e.g., raw material, finished good).
+- **productId:** The product associated with the inventory item.
+- **statusId:** Current status of the inventory item (e.g., available, on hold).
+- **facilityId:** The facility where the item is located.
+- **locationSeqId:** The specific location within the facility.
+- **lotId:** The lot or batch the item belongs to.
+- **quantityOnHandTotal:** Total quantity of the item on hand.
+- **availableToPromiseTotal:** Quantity available for reservation or sale.
+- **accountingQuantityTotal:** Quantity used for accounting purposes.
+- **unitCost:** Cost per unit of the item.
+- **currencyUomId:** Currency of the unit cost.
 
-**The core entities used for modeling inventory are:**
+### InventoryItemType
+Defines different types of inventory items.
+- **inventoryItemTypeId** (Primary Key): Unique identifier for the inventory item type.
+- **parentTypeId:** Allows for hierarchical categorization of item types.
+- **description:** Description of the item type.
 
-*   **InventoryItem:** Represents a specific item in inventory, tracking its quantity, location, status, and other details.
-    *   **inventoryItemId** (Primary Key): Unique identifier for the inventory item.
-    *   **inventoryItemTypeId:** Type of inventory item (e.g., raw material, finished good).
-    *   **productId:** The product associated with the inventory item.
-    *   **statusId:** Current status of the inventory item (e.g., available, on hold).
-    *   **facilityId:** The facility where the item is located.
-    *   **locationSeqId:** The specific location within the facility.
-    *   **lotId:** The lot or batch the item belongs to.
-    *   **quantityOnHandTotal:** Total quantity of the item on hand.
-    *   **availableToPromiseTotal:** Quantity available for reservation or sale.
-    *   **accountingQuantityTotal:** Quantity used for accounting purposes.
-    *   **unitCost:** Cost per unit of the item.
-    *   **currencyUomId:** Currency of the unit cost.
+### InventoryItemDetail
+Records changes in inventory item quantities and other details over time.
+- **inventoryItemId** (Primary Key): References the associated inventory item.
+- **inventoryItemDetailSeqId** (Primary Key): Unique sequence ID for each detail record.
+- **effectiveDate:** Date and time when the change occurred.
+- **quantityOnHandDiff, availableToPromiseDiff, accountingQuantityDiff:** Changes in quantities.
+- **reasonEnumId:** Reason for the change (e.g., sale, adjustment).
 
-*   **InventoryItemType:** Defines different types of inventory items.
-    *   **inventoryItemTypeId** (Primary Key): Unique identifier for the inventory item type.
-    *   **parentTypeId:** Allows for hierarchical categorization of item types.
-    *   **description:** Description of the item type.
+### ItemIssuance
+Represents the issuance of inventory items for various purposes (e.g., production, shipment).
+- **itemIssuanceId** (Primary Key): Unique identifier for the issuance.
+- **inventoryItemId:** The inventory item being issued.
+- **quantity:** Quantity issued.
 
-*   **InventoryItemDetail:** Records changes in inventory item quantities and other details over time.
-    *   **inventoryItemId** (Primary Key): References the associated inventory item.
-    *   **inventoryItemDetailSeqId** (Primary Key): Unique sequence ID for each detail record.
-    *   **effectiveDate:** Date and time when the change occurred.
-    *   **quantityOnHandDiff, availableToPromiseDiff, accountingQuantityDiff:** Changes in quantities.
-    *   **reasonEnumId:** Reason for the change (e.g., sale, adjustment).
+### InventoryItemVariance
+Tracks discrepancies between expected and actual inventory quantities during physical inventory counts.
+- **inventoryItemId** (Primary Key): References the associated inventory item.
+- **physicalInventoryId** (Primary Key): References the physical inventory count.
+- **varianceReasonId:** Reason for the variance.
+- **availableToPromiseVar, quantityOnHandVar:** Variance amounts.
 
-*   **ItemIssuance:** Represents the issuance of inventory items for various purposes (e.g., production, shipment).
-    *   **itemIssuanceId** (Primary Key): Unique identifier for the issuance.
-    *   **inventoryItemId:** The inventory item being issued.
-    *   **quantity:** Quantity issued.
+### PhysicalInventory
+Represents a physical inventory count event.
+- **physicalInventoryId** (Primary Key): Unique identifier for the count.
+- **physicalInventoryDate:** Date of the count.
 
-*   **InventoryItemVariance:** Tracks discrepancies between expected and actual inventory quantities during physical inventory counts.
-    *   **inventoryItemId** (Primary Key): References the associated inventory item.
-    *   **physicalInventoryId** (Primary Key): References the physical inventory count.
-    *   **varianceReasonId:** Reason for the variance.
-    *   **availableToPromiseVar, quantityOnHandVar:** Variance amounts.
+### VarianceReason
+Provides reasons for inventory variances.
+- **varianceReasonId** (Primary Key): Unique identifier for the reason.
+- **description:** Description of the reason.
 
-*   **PhysicalInventory:** Represents a physical inventory count event.
-    *   **physicalInventoryId** (Primary Key): Unique identifier for the count.
-    *   **physicalInventoryDate:** Date of the count.
-
-*   **VarianceReason:** Provides reasons for inventory variances.
-    *   **varianceReasonId** (Primary Key): Unique identifier for the reason.
-    *   **description:** Description of the reason.
-
-**InventoryItem and InventoryItemDetail sample data**
+## InventoryItem and InventoryItemDetail Sample Data
 
 ```json
 [
@@ -396,7 +407,7 @@ The core entities used for modeling facility and location information in our inv
 ]
 ```
 
-**Explanation:**
+## Explanation
 
 *   This JSON data provides sample records for the `InventoryItem` and `InventoryItemDetail` entities, building upon the previously established product and facility data.
 *   Each `InventoryItem` represents a specific instance of a product ("FG001", "FG002", "FG003") at a particular location within the facility ("FACILITY\_1").
@@ -411,7 +422,7 @@ The core entities used for modeling facility and location information in our inv
 
 The `PhysicalInventory` and `InventoryItemVariance` entities work together to manage and track discrepancies in inventory levels during physical inventory counts, with the `VarianceReason` entity providing context for those discrepancies.
 
-### **PhysicalInventory**
+### PhysicalInventory
 
 *   Represents a specific physical inventory count event.
 *   Key attributes:
@@ -420,7 +431,7 @@ The `PhysicalInventory` and `InventoryItemVariance` entities work together to ma
     *   `partyId`: The person responsible for conducting the count.
     *   `generalComments`: General notes or observations about the count.
 
-### **InventoryItemVariance**
+### InventoryItemVariance
 
 *   Represents a discrepancy found for a specific inventory item during a physical inventory count.
 *   Key attributes:
@@ -431,7 +442,7 @@ The `PhysicalInventory` and `InventoryItemVariance` entities work together to ma
     *   `quantityOnHandVar`: The difference between the expected and actual quantity on hand (QOH).
     *   `comments`: Additional notes about the variance.
 
-### **VarianceReason**
+### VarianceReason
 
 *   Provides predefined reasons for inventory variances.
 *   Key attributes:
@@ -448,7 +459,7 @@ The `PhysicalInventory` and `InventoryItemVariance` entities work together to ma
     *   "VAR\_MISSHIP\_ORDERED": Mis-shipped Item Ordered (+)
     *   "VAR\_MISSHIP\_SHIPPED": Mis-shipped Item Shipped (-)
 
-### **How They Work Together**
+## How They Work Together
 
 1.  **Physical Inventory Count:** A `PhysicalInventory` record is created to document the count.
 2.  **Variance Discovery:** If a discrepancy is found for an item, an `InventoryItemVariance` record is created, linked to the `PhysicalInventory` and the specific `InventoryItem`.
@@ -456,7 +467,7 @@ The `PhysicalInventory` and `InventoryItemVariance` entities work together to ma
 4.  **Variance Recording:** The `availableToPromiseVar` and `quantityOnHandVar` fields are populated with the differences in ATP and QOH quantities, respectively.
 5.  **Analysis and Action:** The variances are analyzed to identify patterns and trends. Corrective actions are taken based on the variance reasons (e.g., security measures for theft, improved handling for damage).
 
-### **Business Requirement Fulfillment**
+## Business Requirement Fulfillment
 
 *   **Accurate Inventory Records:** Identifying and correcting variances ensures accurate inventory data.
 *   **Loss Prevention and Root Cause Analysis:** Variance reasons help pinpoint the causes of discrepancies, enabling targeted loss prevention measures.
@@ -465,7 +476,7 @@ The `PhysicalInventory` and `InventoryItemVariance` entities work together to ma
 
 By leveraging these entities and their relationships, businesses can effectively manage inventory discrepancies, improve accuracy, and optimize inventory processes. The `VarianceReason` entity adds valuable context to variances, facilitating informed decision-making and targeted actions to address inventory issues.
 
-**Sample data**
+## Sample data
 
 ```json
 {
@@ -494,7 +505,7 @@ By leveraging these entities and their relationships, businesses can effectively
 }
 ```
 
-**Explanation:**
+## Explanation
 
 *   **`physicalInventoryId`:** A unique identifier for this specific inventory count event (PI\_20240715).
 *   **`physicalInventoryDate`:** The date and time the inventory count was conducted (2024-07-15 10:00:00).
@@ -514,11 +525,9 @@ By leveraging these entities and their relationships, businesses can effectively
         *   **`quantityOnHandVar`:** -2 (the on-hand quantity decreased by two).
         *   **`comments`:** "Two units damaged during shipping" (additional details about the variance).
 
+## packShipment
 
-
-### **packShipment**
-
-**Detailed Logic**
+### Detailed Logic
 
 1.  **Input:**
     *   Receive `shipmentId` as the input parameter.
@@ -541,7 +550,7 @@ By leveraging these entities and their relationships, businesses can effectively
     *   Update the `itemStatusId` of these `PicklistItem` entities to `PICKITEM_PICKED`, indicating they have been picked for the packed shipment.
 
 
-**Java Code Skeleton**
+## Java Code Skeleton
 
 ```java
 public static Map<String, Object> packShipment(DispatchContext dctx, Map<String, Object> context) {
@@ -580,14 +589,14 @@ public static Map<String, Object> packShipment(DispatchContext dctx, Map<String,
 }
 ```
 
-**Key Corrections:**
+### Key Corrections
 
 *   **Shipment Status:** The precondition is now correctly checked for `SHIPMENT_APPROVED`, and the postcondition updates the status to `SHIPMENT_PACKED`.
 *   **OFBiz Conventions:** The code adheres to OFBiz conventions for entity queries and updates.
 
-### **unpackOrderItems**
+## unpackOrderItems
 
-**Detailed Logic**
+### Detailed Logic
 
 1.  **Input:**
     *   Receive `shipmentId` as the input parameter.
@@ -614,7 +623,7 @@ public static Map<String, Object> packShipment(DispatchContext dctx, Map<String,
     *   Return a success message if all updates are successful.
     *   Return an error message with details if any errors occur.
 
-**Java Code Skeleton**
+## Java Code Skeleton
 
 ```java
 public static Map<String, Object> unpackShipment(DispatchContext dctx, Map<String, Object> context) {
@@ -664,21 +673,21 @@ public static Map<String, Object> unpackShipment(DispatchContext dctx, Map<Strin
 }
 ```
 
-**Key Changes from `unpackOrderItems`:**
+### Key Changes from `unpackOrderItems`
 
 *   **Input:** Takes `shipmentId` instead of `orderId` and `picklistBinId`.
 *   **Shipment Status Update:** Updates the shipment status to `SHIPMENT_APPROVED` instead of `SHIPMENT_CANCELLED`.
 *   **PicklistItem Query:** The query for `PicklistItem` is modified to filter by `shipmentId` (obtained from `OrderShipment`) instead of `picklistBinId`.
 
-### **reinitializeShipment**
+### reinitializeShipment
 
 The `reinitializeShipment` service is designed to reset a shipment to its initial state, specifically to the `SHIPMENT_INPUT` status. This is often done when modifications need to be made to a shipment after it has been approved or partially processed.
 
-**Input Parameters**
+### Input Parameters
 
 *   `shipmentId` (String): The ID of the shipment that needs to be reinitialized.
 
-**Use Cases**
+### Use Cases
 
 This service is typically used in scenarios where:
 
@@ -689,7 +698,7 @@ This service is typically used in scenarios where:
 *   **Processing ready-to-pack items:** In the `updateInProgressOrder` function, if an item needs to be moved to a different shipment, both the original and new shipments are reinitialized.
 *   **Handling item rejections:** In the `updateInProgressOrder` function, the shipment is reinitialized for items with specific rejection reasons.
 
-**Workflow**
+### Workflow
 
 1.  **Fetch Shipment Details:** The service retrieves the shipment record from the database using the provided `shipmentId`.
 
@@ -703,21 +712,21 @@ This service is typically used in scenarios where:
     *   If the shipment has associated route segments (`ShipmentRouteSegment`), the service updates them as well.
     *   The `shipmentMethodTypeId` and `carrierPartyId` of each route segment are set to the original values retrieved in step 2.
 
-**Key Points**
+### Key Points
 
 *   The service focuses on resetting the shipment status and restoring original shipping details.
 *   It ensures consistency by updating both the shipment and its associated route segments.
 *   It provides a way to revert a shipment to an editable state for further modifications.
 
 
-### **cancelOrderItemInvResQty**
+## cancelOrderItemInvResQty
 The `cancelOrderItemInvResQty` service in the Apache OFBiz framework is designed to handle the cancellation of inventory reservations associated with a specific order item. Inventory reservations are typically made when an order is placed to ensure that the required quantity of a product is available for fulfillment.
 
-**Purpose**
+### Purpose
 
 The primary goal of this service is to adjust inventory reservations and potentially release reserved inventory back into the available pool. This is crucial in scenarios where an order item is canceled, modified, or rejected, and the reserved inventory needs to be updated accordingly.
 
-**Workflow**
+### Workflow
 
 1.  **Input Validation:** The service validates the input parameters, including `orderId`, `orderItemSeqId`, `shipGroupSeqId`, and `cancelQuantity`. It ensures that these parameters are valid and that the specified quantity to cancel doesn't exceed the reserved quantity.
 
@@ -735,7 +744,7 @@ The primary goal of this service is to adjust inventory reservations and potenti
     *   If all updates are successful, the service returns a success message.
     *   If any errors occur during the process (e.g., invalid input, database issues), the service returns an error message.
 
-**Key Points**
+### Key Points
 
 *   **Inventory Management:** This service plays a crucial role in maintaining accurate inventory levels by adjusting reservations based on order changes.
 *   **Service Chaining:** It interacts with other services like `deleteOrderItemShipGrpInvRes` to handle the actual deletion of inventory reservation records.
@@ -827,16 +836,15 @@ The primary goal of this service is to adjust inventory reservations and potenti
 
 ```
 
-
-### **rejectOrderItem**
+## rejectOrderItem
 
 The "Process Non-Kit Item Rejection" of the `rejectOrderItem`.
 
-**Purpose**
+### Purpose
 
 This section of the code handles the rejection of individual order items that are not part of a kit (i.e., standalone products). The goal is to update the order item's association with the shipment group, adjust inventory levels, and log the rejection.
 
-**Workflow**
+### Workflow
 
 1.  **Fetch Ship Groups:** The code retrieves all `OrderItemShipGroupAssoc` records associated with the order item (`orderId` and `orderItemSeqId`) that are in a shippable state (`quantity` greater than zero).
 
@@ -852,7 +860,7 @@ This section of the code handles the rejection of individual order items that ar
 
 4.  **Set Auto Cancel Date:** If the `setAutoCancelDate` flag is set to "Y," the service calculates and sets an auto-cancel date for the order item based on the product store's configuration. This is typically used to automatically cancel orders that haven't been paid for within a certain timeframe.
 
-**Key Points**
+### Key Points
 
 *   **Targeted Rejection:** The service focuses on rejecting only the specified order item within the given ship group(s).
 *   **Inventory and Order Management:** It handles inventory reservation cancellations, facility changes, and order history updates.
@@ -900,14 +908,14 @@ Once again:
     *   If `excludeOrderFacilityDuration` is provided, creates an `ExcludedOrderFacility` record to prevent future orders from being fulfilled from the rejected facility for a specified duration.
 
 
-### **Record Variance Service Notes**
+## Record Variance Service Notes
 
-**Purpose:**
+### Purpose
 
 *   Accurately record inventory variances (discrepancies) when order items are rejected.
 *   Provide a detailed history of adjustments for auditing and analysis.
 
-**Inputs:**
+### Inputs
 
 *   `orderId` (String): The ID of the order containing the rejected item.
 *   `orderItemSeqId` (String): The sequence ID of the rejected order item.
@@ -915,12 +923,12 @@ Once again:
 *   `rejectReason` (String): The reason for the rejection (enum ID).
 *   `rejectComments` (String, optional): Additional comments about the rejection.
 
-**Outputs:**
+### Outputs
 
 *   `success` (Boolean): Indicates whether the variance recording was successful.
 *   `errorMessage` (String, optional): Provides details about any errors encountered.
 
-**Core Logic:**
+### Core Logic
 
 1.  **Determine Variance Quantity:**
     *   Fetch the `Enumeration` record for `rejectReason`.
@@ -951,7 +959,7 @@ Once again:
             *   Set `orderId` and `orderItemSeqId`.
         *   If the total variance is accounted for, break the loop.
 
-**Additional Considerations:**
+### Additional Considerations
 
 *   **Transaction Management:** Wrap the entire operation in a transaction to ensure data consistency.
 *   **Concurrency:** Consider potential concurrency issues if multiple users reject items simultaneously.
@@ -961,7 +969,7 @@ Once again:
     *   Specific logic for handling damaged items and updating `quantityOnHand`.
 *   **Logging:** Implement detailed logging for debugging and auditing.
 
-**Code Structure (Enhancements):**
+## Code Structure (Enhancements)
 
 ```java
 Map<String, Object> recordVariance(DispatchContext dctx, Map<String, Object> context) {
@@ -978,15 +986,15 @@ Map<String, Object> recordVariance(DispatchContext dctx, Map<String, Object> con
     return ServiceUtil.returnSuccess(); // or ServiceUtil.returnError() with message
 }
 ```
-### **createPhysicalInventoryAndVariance**
+## createPhysicalInventoryAndVariance
 
 The `createPhysicalInventoryAndVariance` service in the Apache OFBiz framework is designed to record discrepancies between the expected and actual inventory levels of a product at a particular facility. This discrepancy is known as an inventory variance.
 
-**Purpose**
+### Purpose
 
 The primary goal of this service is to create a physical inventory count record and, if necessary, an associated variance record to track adjustments to inventory levels. This is crucial for maintaining accurate inventory records and identifying potential issues like theft, damage, or errors in previous counts.
 
-**Workflow**
+### Workflow
 
 1.  **Input Validation:** The service validates the input parameters, including:
     *   `inventoryItemId`: The ID of the inventory item being adjusted.
@@ -1011,7 +1019,7 @@ The primary goal of this service is to create a physical inventory count record 
     *   If all operations are successful, the service returns a success message.
     *   If any errors occur during the process (e.g., invalid input, database issues), the service returns an error message.
 
-**Key Points**
+### Key Points
 
 *   **Inventory Accuracy:** This service is essential for maintaining accurate inventory records by documenting and correcting discrepancies.
 *   **Traceability:** The variance records provide a history of adjustments, helping to identify trends or patterns in inventory discrepancies.
@@ -1037,14 +1045,13 @@ The primary goal of this service is to create a physical inventory count record 
     </simple-method>
 ```
 
+## createInventoryItemVariance
 
-### **createInventoryItemVariance**
-
-**Purpose**
+### Purpose
 
 The `createInventoryItemVariance` service is designed to create a record of a discrepancy between the expected and actual quantity of an inventory item. This discrepancy is known as an inventory variance. It's a crucial part of inventory management, helping businesses track losses, damages, or other unexpected changes in inventory levels.
 
-**Workflow**
+### Workflow
 
 1.  **Input Validation:** The service begins by validating the input parameters, ensuring they are not empty or null and contain valid data types.  The key input parameters include:
     *   `inventoryItemId`: The ID of the inventory item with the variance.
@@ -1068,7 +1075,7 @@ The `createInventoryItemVariance` service is designed to create a record of a di
 6.  **Return Result:**
     *   The service returns a `Map` indicating the success or failure of the operation. If successful, it will include the ID of the created or updated `InventoryItemVariance` record.
 
-**Key Points**
+### Key Points
 
 *   **Inventory Accuracy:** This service is vital for maintaining accurate inventory records, which is essential for efficient business operations.
 *   **Traceability:** The creation of variance and detail records provides a clear audit trail of inventory adjustments, helping to identify patterns or issues.
