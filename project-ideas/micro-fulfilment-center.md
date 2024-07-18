@@ -459,7 +459,7 @@ The `PhysicalInventory` and `InventoryItemVariance` entities work together to ma
     *   "VAR\_MISSHIP\_ORDERED": Mis-shipped Item Ordered (+)
     *   "VAR\_MISSHIP\_SHIPPED": Mis-shipped Item Shipped (-)
 
-### How They Work Together
+## How They Work Together
 
 1.  **Physical Inventory Count:** A `PhysicalInventory` record is created to document the count.
 2.  **Variance Discovery:** If a discrepancy is found for an item, an `InventoryItemVariance` record is created, linked to the `PhysicalInventory` and the specific `InventoryItem`.
@@ -525,9 +525,9 @@ By leveraging these entities and their relationships, businesses can effectively
         *   **`quantityOnHandVar`:** -2 (the on-hand quantity decreased by two).
         *   **`comments`:** "Two units damaged during shipping" (additional details about the variance).
 
-### packShipment
+## packShipment
 
-**Detailed Logic**
+### Detailed Logic
 
 1.  **Input:**
     *   Receive `shipmentId` as the input parameter.
@@ -550,7 +550,7 @@ By leveraging these entities and their relationships, businesses can effectively
     *   Update the `itemStatusId` of these `PicklistItem` entities to `PICKITEM_PICKED`, indicating they have been picked for the packed shipment.
 
 
-## Java Code Skeleton**
+## Java Code Skeleton
 
 ```java
 public static Map<String, Object> packShipment(DispatchContext dctx, Map<String, Object> context) {
@@ -589,14 +589,14 @@ public static Map<String, Object> packShipment(DispatchContext dctx, Map<String,
 }
 ```
 
-## Key Corrections:
+### Key Corrections
 
 *   **Shipment Status:** The precondition is now correctly checked for `SHIPMENT_APPROVED`, and the postcondition updates the status to `SHIPMENT_PACKED`.
 *   **OFBiz Conventions:** The code adheres to OFBiz conventions for entity queries and updates.
 
-### **unpackOrderItems**
+## unpackOrderItems
 
-**Detailed Logic**
+### Detailed Logic
 
 1.  **Input:**
     *   Receive `shipmentId` as the input parameter.
@@ -673,17 +673,17 @@ public static Map<String, Object> unpackShipment(DispatchContext dctx, Map<Strin
 }
 ```
 
-## Key Changes from `unpackOrderItems`
+### Key Changes from `unpackOrderItems`
 
 *   **Input:** Takes `shipmentId` instead of `orderId` and `picklistBinId`.
 *   **Shipment Status Update:** Updates the shipment status to `SHIPMENT_APPROVED` instead of `SHIPMENT_CANCELLED`.
 *   **PicklistItem Query:** The query for `PicklistItem` is modified to filter by `shipmentId` (obtained from `OrderShipment`) instead of `picklistBinId`.
 
-### **reinitializeShipment**
+### reinitializeShipment
 
 The `reinitializeShipment` service is designed to reset a shipment to its initial state, specifically to the `SHIPMENT_INPUT` status. This is often done when modifications need to be made to a shipment after it has been approved or partially processed.
 
-**Input Parameters**
+### Input Parameters
 
 *   `shipmentId` (String): The ID of the shipment that needs to be reinitialized.
 
@@ -986,7 +986,7 @@ Map<String, Object> recordVariance(DispatchContext dctx, Map<String, Object> con
     return ServiceUtil.returnSuccess(); // or ServiceUtil.returnError() with message
 }
 ```
-## **createPhysicalInventoryAndVariance**
+## createPhysicalInventoryAndVariance
 
 The `createPhysicalInventoryAndVariance` service in the Apache OFBiz framework is designed to record discrepancies between the expected and actual inventory levels of a product at a particular facility. This discrepancy is known as an inventory variance.
 
