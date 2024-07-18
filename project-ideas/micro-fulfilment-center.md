@@ -1126,24 +1126,24 @@ The `createInventoryItemVariance` service is designed to create a record of a di
 **Purpose:** Defines a specific workflow or process. It outlines the permissible paths and sequences of statuses an entity can traverse.
 **Example:** An "Order Fulfillment" workflow might have steps like creation, approval, processing, shipping, and completion.
 **Key Fields:**
-statusFlowId: Unique identifier (e.g., "ORDER_FULFILLMENT").
-description: Describes the overall purpose of the workflow.
+    *   statusFlowId: Unique identifier (e.g., "ORDER_FULFILLMENT").
+    *   description: Describes the overall purpose of the workflow.
 
 2) StatusFlowItem:
 
 **Purpose:** The glue that connects individual statuses (StatusItem) to specific workflows (StatusFlow). It defines which statuses are valid within a particular workflow.
 **Key Fields:**
-statusFlowId: The ID of the workflow the status belongs to.
-statusId: The ID of the status item.
+    *   statusFlowId: The ID of the workflow the status belongs to.
+    *   statusId: The ID of the status item.
 
 3) StatusFlowTransition:
 
 **Purpose:** Governs the rules for transitioning between statuses within a StatusFlow. It dictates which changes are allowed and under what conditions.
 **Example:** A transition might be defined from "Processing" to "Shipped" only if inventory is available.
 **Key Fields:**
-statusFlowId: The ID of the workflow.
-statusId: The current status.
-transitionName: A descriptive name for the transition (e.g., "Ship Order").
-targetStatusId: The status the entity will have after the transition.
-conditionExpr: (Currently unused) Placeholder for future conditional logic.
+    *   statusFlowId: The ID of the workflow.
+    *   statusId: The current status.
+    *   transitionName: A descriptive name for the transition (e.g., "Ship Order").
+    *   targetStatusId: The status the entity will have after the transition.
+    *   conditionExpr: (Currently unused) Placeholder for future conditional logic.
 
