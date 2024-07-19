@@ -1,80 +1,6 @@
-**Fulfillment Application Design Document**
+# **Fulfillment Application Design Document**
 
-**I. Data Model**
-
-The data model defines the structure for storing and managing information related to shipments within the Order Management System.
-
-**Entities:**
-
-1.  **Shipment:**
-    *   Shipment ID (Primary Key)
-    *   Shipment Date
-    *   Shipment Tracking Number (Optional)
-    *   Shipping Address
-    *   Customer ID (Foreign Key referencing Customer entity)
-    *   ShipmentType ID (Foreign Key referencing ShipmentType entity)
-    *   ShipmentStatus ID (Foreign Key referencing ShipmentStatus entity)
-
-2.  **ShipmentType:**
-    *   ShipmentType ID (Primary Key)
-    *   ShipmentType Name
-
-3.  **ShipmentStatus:**
-    *   ShipmentStatus ID (Primary Key)
-    *   ShipmentStatus Name
-
-4.  **ShipmentItem:**
-    *   ShipmentItem ID (Primary Key)
-    *   Shipment ID (Foreign Key referencing Shipment entity)
-    *   Order Item ID (Foreign Key referencing OrderItem entity in the Order Management System)
-    *   Quantity
-
-5.  **ShipmentPackage:**
-    *   ShipmentPackage ID (Primary Key)
-    *   Shipment ID (Foreign Key referencing Shipment entity)
-    *   Tracking Number (Optional)
-    *   Weight
-    *   Dimensions
-
-6.  **ShipmentRouteSegment:**
-    *   ShipmentRouteSegment ID (Primary Key)
-    *   Shipment ID (Foreign Key referencing Shipment entity)
-    *   Sequence Number
-    *   Location From
-    *   Location To
-    *   Estimated Arrival
-
-7.  **ShipmentPackageContent:**
-    *   ShipmentPackageContent ID (Primary Key)
-    *   ShipmentPackage ID (Foreign Key referencing ShipmentPackage entity)
-    *   ShipmentItem ID (Foreign Key referencing ShipmentItem entity)
-
-8.  **ItemIssuance:**
-    *   ItemIssuance ID (Primary Key)
-    *   ShipmentItem ID (Foreign Key referencing ShipmentItem entity)
-    *   Quantity
-    *   Timestamp
-
-9.  **PickListBin:**
-    *   PickListBin ID (Primary Key)
-    *   Bin Location
-    *   Shipment ID (Foreign Key referencing Shipment entity)
-
-10. **OrderItemShipGrpInvRes:**  *(Requires clarification on attributes and purpose)*
-
-11. **ItemIssuanceRole:**
-    *   ItemIssuanceRole ID (Primary Key)
-    *   ItemIssuanceRole Name
-
-**Relationships:**
-
-*   A **Shipment** has one **ShipmentType**, one **ShipmentStatus**, and many **ShipmentItems**, **ShipmentPackages**, and **ShipmentRouteSegments**.
-*   A **ShipmentItem** belongs to one **Shipment** and relates to one **OrderItem** (from the Order Management System).
-*   A **ShipmentPackage** belongs to one **Shipment**.
-*   A **ShipmentRouteSegment** belongs to one **Shipment**.
-
-
-**II. Fulfillment Workflow**
+### **Fulfillment Workflow**
 
 1.  **Start Packing:** Packer enters picklist bin ID or scans item.
 2.  **System Response:** System displays items in the picklist or in "INPUT" status. 
@@ -95,7 +21,7 @@ The data model defines the structure for storing and managing information relate
 9. **System Updates:** System processes payment, marks shipment as "Shipped."
 10. **Complete Packing:** Packer packs packages and places them in "PACKAGES" area.
 
-**Important Considerations:**
+### **Important Considerations:**
 
 *   Integrate inventory deduction.
 *   Add exception handling branches.
@@ -103,7 +29,7 @@ The data model defines the structure for storing and managing information relate
 *   Detail integration with Order Management System.
 
 
-**Shipment Status Workflow Analysis**
+### **Shipment Status Workflow Analysis**
 
 The XML defines the statuses a shipment can go through, the valid transitions between these statuses, and additional rules for the transitions.
 
@@ -206,7 +132,7 @@ The XML defines the statuses a shipment can go through, the valid transitions be
     <StatusValidChange statusId='SHIPMENT_SHIPPED' statusIdTo='SHIPMENT_DELIVERED' transitionName='Deliver' sequenceNum='01' />
 ```
 
-**Enhanced Entity Definitions** 
+### **Entity Definitions** 
 
 1.  **Shipment:**
     *   Shipment ID (Primary Key)
@@ -279,6 +205,12 @@ The XML defines the statuses a shipment can go through, the valid transitions be
     *   `issuedByUserLoginId`: The user who issued the item.
     *   `issuedDateTime`: Date and time the item was issued.
 
+**Relationships:**
+
+*   A **Shipment** has one **ShipmentType**, one **ShipmentStatus**, and many **ShipmentItems**, **ShipmentPackages**, and **ShipmentRouteSegments**.
+*   A **ShipmentItem** belongs to one **Shipment** and relates to one **OrderItem** (from the Order Management System).
+*   A **ShipmentPackage** belongs to one **Shipment**.
+*   A **ShipmentRouteSegment** belongs to one **Shipment**.
 
 **Additional Notes**
 
@@ -317,7 +249,7 @@ The XML defines the statuses a shipment can go through, the valid transitions be
 
 ```
 
-**Comprehensive Data Validation Requirements**
+### **Comprehensive Data Validation Requirements**
 
 1.  **External Shipment ID (externalId):**
 
@@ -596,7 +528,7 @@ Let's say a user tries to change the status of a shipment that's already been ma
 *   **Valid Product:** The provided `productId` or the `productId` derived from the `sku` must exist in the `Product` entity. If not, an error is added to the `errorList`.
 *   **Quantity Conversion:** The `quantity` must be convertible to a `BigDecimal`. While the code doesn't explicitly handle a `NumberFormatException`, it's good practice to add error handling for this scenario.
 
-**Prepares data to  `createOrderShipment`**
+### **Prepares data to  `createOrderShipment`**
 
 2.  **Order and Ship Group Information:**
     *   Check if both `orderId` (the ID of the order) and `shipGroupSeqId` (the sequence ID of the shipment group within the order) are available. If so, it proceeds to create `OrderShipment` entities.
