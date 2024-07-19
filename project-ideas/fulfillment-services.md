@@ -1,4 +1,4 @@
-**rejectShipmentItem** 
+### **rejectShipmentItem** 
 
 **Purpose**
 The primary goal of the `rejectShipmentItem` service is to handle the rejection of a specific item within a shipment. This involves updating the shipment item's status, adjusting inventory levels, and potentially canceling associated order items.
@@ -40,7 +40,7 @@ This service is typically used when an item within a shipment is found to be uns
 
 **Error Handling:** The service includes error handling to catch exceptions and return appropriate error messages.
 
-**moveShipmentItem**.
+### **moveShipmentItem**.
 
 **Purpose**
 
@@ -74,7 +74,8 @@ This service is typically used in the following scenarios:
 
 **Error Handling:** The service includes error handling to catch exceptions and return appropriate error messages if any issues occur during the process.
 
-**rejectItemFromAllOrders**
+### **rejectItemFromAllOrders**
+
 The `rejectItemFromAllOrders` service in the `StoreFulfillmentEvents.txt` file is designed to reject a specific product from all orders within a given facility where it's part of an in-progress shipment. This action is typically taken when a product is found to be defective, unavailable, or needs to be removed from pending fulfillments due to other reasons.
 
 **Key points and logic:**
