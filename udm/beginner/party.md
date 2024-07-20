@@ -59,11 +59,11 @@ Sample JSON Data
     },
     {
       "contactMechId": "PHONE001",
-      "contactMechTypeId": "EMAIL_ADDRESS",
+      "contactMechTypeId": "TELECOM_NUMBER",
     },
     {
       "contactMechId": "ADDR001",
-      "contactMechTypeId": "EMAIL_ADDRESS",
+      "contactMechTypeId": "POSTAL_ADDRESS",
     }
   ],
 "TelecomNumber":{
