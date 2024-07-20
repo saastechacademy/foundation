@@ -47,18 +47,31 @@ Sample JSON Data
     "partyId": "CUST123",
     "roleTypeId": "CUSTOMER"
   },
+	
+   "PartyContactmech":{ 
+     "PartyId": "10000",
+     "Contactmechid": "10000"},
   "ContactMech": [
+  {
+      "contactMechId": "EMAIL001",
+      "contactMechTypeId": "EMAIL_ADDRESS",
+      "infoString": "sharmapgaashish@gmail.com"
+    },
     {
       "contactMechId": "PHONE001",
-      "contactMechTypeId": "TELECOM_NUMBER",
-      "infoString": "555-1234"
+      "contactMechTypeId": "EMAIL_ADDRESS",
     },
     {
       "contactMechId": "ADDR001",
-      "contactMechTypeId": "POSTAL_ADDRESS",
-      "infoString": "123 Elm Street, Springfield, 12345, USA"
+      "contactMechTypeId": "EMAIL_ADDRESS",
     }
   ],
+"TelecomNumber":{
+ "contactMechId": "PHONE001",
+"countryCode: "+91",
+"contactNumber: ""9876543210",
+"Contactmechid": "10000"
+},
   "PostalAddress": {
     "contactMechId": "ADDR001",
     "address1": "123 Elm Street",
@@ -69,11 +82,11 @@ Sample JSON Data
   "ContactMechPurpose": [
     {
       "contactMechId": "ADDR001",
-      "contactMechPurposeTypeId": "BILLING"
+      "contactMechPurposeTypeId": "BILLING_LOCATION"
     },
     {
       "contactMechId": "ADDR001",
-      "contactMechPurposeTypeId": "SHIPPING"
+      "contactMechPurposeTypeId": "SHIPPING_LOCATION"
     }
   ]
 }
