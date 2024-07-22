@@ -50,8 +50,7 @@ Sample JSON Data
   "ContactMech": [
     {
       "contactMechId": "PHONE001",
-      "contactMechTypeId": "TELECOM_NUMBER",
-      "infoString": "555-1234"
+      "contactMechTypeId": "TELECOM_NUMBER"
     },
     {
       "contactMechId": "ADDR001",
@@ -59,6 +58,11 @@ Sample JSON Data
       "infoString": "123 Elm Street, Springfield, 12345, USA"
     }
   ],
+  "TelecomNumber" : {
+    "contactMechId": "PHONE002",
+    "CountryCode" : "+1",
+    "ContactNumber" : "555-6789"
+},
   "PostalAddress": {
     "contactMechId": "ADDR001",
     "address1": "123 Elm Street",
@@ -100,7 +104,6 @@ Sample JSON Data
     {
       "contactMechId": "PHONE002",
       "contactMechTypeId": "TELECOM_NUMBER",
-      "infoString": "555-6789"
     },
     {
       "contactMechId": "ADDR002",
@@ -108,6 +111,11 @@ Sample JSON Data
       "infoString": "456 Oak Avenue, Metropolis, 54321, USA"
     }
   ],
+"TelecomNumber" : {
+  "contactMechId": "PHONE002",
+  "CountryCode" : "+1",
+  "ContactNumber" : "555-6789"
+},
   "PostalAddress": {
     "contactMechId": "ADDR002",
     "address1": "456 Oak Avenue",
@@ -118,11 +126,11 @@ Sample JSON Data
   "ContactMechPurpose": [
     {
       "contactMechId": "ADDR002",
-      "contactMechPurposeTypeId": "BILLING"
+      "contactMechPurposeTypeId": "BILLING_LOCATION"
     },
     {
       "contactMechId": "ADDR002",
-      "contactMechPurposeTypeId": "SHIPPING"
+      "contactMechPurposeTypeId": "SHIPPING_LOCATION"
     }
   ]
 }
