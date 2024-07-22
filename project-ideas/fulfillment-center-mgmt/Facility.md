@@ -171,14 +171,12 @@ This entity further refines the product-facility relationship by specifying the 
 
 ## Explanation
 
-- **facilityId, facilityTypeId, facilityName:** Same as before, representing the retail store.
-- **products:** An array containing details of each product.
-  - **productId, productTypeId, productName:** Basic product information.
-  - **productFacility:** Details about the product's association with the facility.
-    - **minimumStock:** Minimum stock level to maintain at the facility.
-    - **reorderQuantity:** Quantity to reorder when stock falls below the minimum.
-    - **daysToShip:** Estimated shipping time from the facility.
-  - **productFacilityLocations:** An array specifying where the product is stored within the facility.
-    - **locationSeqId:** The location's unique identifier.
-    - **minimumStock:** Minimum stock level to maintain at this specific location.
-    - **moveQuantity:** Quantity to move when stock at this location falls below the minimum.
+- **productId, productTypeId, productName:** Basic product information.
+- **productFacility:** Details about the product's association with the facility.
+  - **minimumStock:** Minimum stock level to maintain at the facility.
+  - **reorderQuantity:** Quantity to reorder when stock falls below the minimum.
+  - **daysToShip:** Estimated shipping time from the facility.
+- **productFacilityLocations:** An array specifying where the product is stored within the facility.
+  - **locationSeqId:** The location's unique identifier.
+  - **minimumStock:** Minimum stock level to maintain at this specific location.
+  - **moveQuantity:** Quantity to move when stock at this location falls below the minimum.
