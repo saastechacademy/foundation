@@ -118,85 +118,55 @@ This entity stores the main details of a product, such as its ID, type, name, de
 ### ProductFacility
 This entity establishes the relationship between a product and a facility, indicating that the product is stocked or available at that facility. It also includes additional information like minimum stock levels, reorder quantities, and estimated shipping days.
 
-### ProductFacilityLocation
-This entity further refines the product-facility relationship by specifying the exact location(s) within a facility where a particular product is stored. It includes details like minimum stock levels and move quantities for each location.
-
 ## Sample JSON Data for Products in a Facility
 
 ```json
-{
-  "facilityId": "FACILITY_1",
-  "facilityTypeId": "RETAIL_STORE",
-  "facilityName": "Main Street Store",
-  "products": [
-    {
-      "productId": "FG001",
-      "productTypeId": "FINISHED_GOOD",
-      "productName": "Product 1",
-      "productFacility": {
-        "minimumStock": 10,
-        "reorderQuantity": 50,
-        "daysToShip": 3
-      },
-      "productFacilityLocations": [
-        {
-          "locationSeqId": "0001",
-          "minimumStock": 5,
-          "moveQuantity": 10
-        },
-        {
-          "locationSeqId": "0005",
-          "minimumStock": 5,
-          "moveQuantity": 10
-        }
-      ]
-    },
-    {
-      "productId": "FG002",
-      "productTypeId": "FINISHED_GOOD",
-      "productName": "Product 2",
-      "productFacility": {
-        "minimumStock": 15,
-        "reorderQuantity": 60,
-        "daysToShip": 2
-      },
-      "productFacilityLocations": [
-        {
-          "locationSeqId": "0003",
-          "minimumStock": 8,
-          "moveQuantity": 15
-        },
-        {
-          "locationSeqId": "0007",
-          "minimumStock": 7,
-          "moveQuantity": 15
-        }
-      ]
-    },
-    {
-      "productId": "FG003",
-      "productTypeId": "FINISHED_GOOD",
-      "productName": "Product 3",
-      "productFacility": {
-        "minimumStock": 20,
-        "reorderQuantity": 70,
-        "daysToShip": 5
-      },
-      "productFacilityLocations": [
-        {
-          "locationSeqId": "0002",
-          "minimumStock": 10,
-          "moveQuantity": 20
-        },
-        {
-          "locationSeqId": "0006",
-          "minimumStock": 10,
-          "moveQuantity": 20
-        }
-      ]
-    }
-  ]
-}
+[
+  {
+    "productId": "P100",
+    "facilityId": "23763",
+    "minimumStock": 10,
+    "reorderQuantity": 50,
+    "daysToShip": 3,
+    "lastInventoryCount": 120
+  },
+  {
+    "productId": "P200",
+    "facilityId": "23763",
+    "minimumStock": 5,
+    "reorderQuantity": 30,
+    "daysToShip": 2,
+    "lastInventoryCount": 85
+  }
+]
+```
+### ProductFacilityLocation
+This entity further refines the product-facility relationship by specifying the exact location(s) within a facility where a particular product is stored. It includes details like minimum stock levels and move quantities for each location.
+
+```json
+[
+  {
+    "productId": "P100",
+    "facilityId": "23763",
+    "locationSeqId": "ZONE1", 
+    "minimumStock": 5,       
+    "moveQuantity": 10       
+  },
+  {
+    "productId": "P100",
+    "facilityId": "23763",
+    "locationSeqId": "ZONE2", 
+    "minimumStock": 8,       
+    "moveQuantity": 15       
+  },
+  {
+    "productId": "P200",
+    "facilityId": "23763",
+    "locationSeqId": "SHELF1",
+    "minimumStock": 2,       
+    "moveQuantity": 5        
+  }
+]
 ```
 
 ## Explanation
