@@ -118,55 +118,33 @@ This entity stores the main details of a product, such as its ID, type, name, de
 ### ProductFacility
 This entity establishes the relationship between a product and a facility, indicating that the product is stocked or available at that facility. It also includes additional information like minimum stock levels, reorder quantities, and estimated shipping days.
 
-## Sample JSON Data for Products in a Facility
-
-```json
-[
-  {
-    "productId": "P100",
-    "facilityId": "23763",
-    "minimumStock": 10,
-    "reorderQuantity": 50,
-    "daysToShip": 3,
-    "lastInventoryCount": 120
-  },
-  {
-    "productId": "P200",
-    "facilityId": "23763",
-    "minimumStock": 5,
-    "reorderQuantity": 30,
-    "daysToShip": 2,
-    "lastInventoryCount": 85
-  }
-]
-```
 ### ProductFacilityLocation
 This entity further refines the product-facility relationship by specifying the exact location(s) within a facility where a particular product is stored. It includes details like minimum stock levels and move quantities for each location.
 
 ```json
-[
-  {
-    "productId": "P100",
-    "facilityId": "23763",
-    "locationSeqId": "ZONE1", 
-    "minimumStock": 5,       
-    "moveQuantity": 10       
-  },
-  {
-    "productId": "P100",
-    "facilityId": "23763",
-    "locationSeqId": "ZONE2", 
-    "minimumStock": 8,       
-    "moveQuantity": 15       
-  },
-  {
-    "productId": "P200",
-    "facilityId": "23763",
-    "locationSeqId": "SHELF1",
-    "minimumStock": 2,       
-    "moveQuantity": 5        
+{
+    "productId": "10000",
+    "minimumStock": 20.0,
+    "reorderQuantity": 10.0,
+    "daysToShip": 5,
+    "facilityId":"100165",
+    "productFacilityLocations": [
+      {
+        "productId": "10000",
+        "facilityId":"100165",
+        "locationSeqId": "L001",
+        "minimumStock": 10.0,
+        "moveQuantity": 20.0
+      },
+      {
+        "productId": "10000",
+        "facilityId":"100165",
+        "locationSeqId": "L002",
+        "minimumStock": 15.0,
+        "moveQuantity": 30.0
+      }
+    ]
   }
-]
 ```
 
 ## Explanation
