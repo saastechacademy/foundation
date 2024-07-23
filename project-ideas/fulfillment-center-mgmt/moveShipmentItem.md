@@ -9,6 +9,8 @@ moving shipment item is two step process
 1. deleted shipmentItem from existing shipment and then add it to other shipment. 
 2. in some cases the shipmentItem is moved to new shipment, in such case we may have to create shipment. 
 3. in case second shipment exists them simply add shipmentItem to the shipment. 
+
+
 **Input Parameters**
 
 *   **`shipmentId` (String):** The ID of the original shipment from which the item is being moved.
