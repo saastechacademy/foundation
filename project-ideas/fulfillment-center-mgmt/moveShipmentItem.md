@@ -4,6 +4,11 @@
 
 The primary goal of the `moveShipmentItem` service is to transfer a specific item from one shipment to another within the same order. This is useful in scenarios where items need to be rearranged or consolidated during the fulfillment process.
 
+check if shipment is in input status, if not move it to input status before editing its content. 
+moving shipment item is two step process 
+1. deleted shipmentItem from existing shipment and then add it to other shipment. 
+2. in some cases the shipmentItem is moved to new shipment, in such case we may have to create shipment. 
+3. in case second shipment exists them simply add shipmentItem to the shipment. 
 **Input Parameters**
 
 *   **`shipmentId` (String):** The ID of the original shipment from which the item is being moved.
