@@ -70,9 +70,190 @@ These data objects are then stored in the `storeOrderCtx` map, which is passed a
 
 These lists and maps serve to structure and organize the order data in a way that is compatible with the HotWax Commerce data model and the requirements of the `storeOrder` service. By separating the data into different lists and maps, the code improves readability and maintainability. It also makes it easier to pass the data to the `storeOrder` service, which expects a specific format for its input.
 
+The service expects a JSON payload in the following format:
+
+```json
+{
+  "order": {
+    // Order Details
+    "externalId": "string", 
+    "orderName": "string",
+    "orderTypeId": "SALES_ORDER" | "PURCHASE_ORDER" | (others), 
+    "channel": "UNKNWN_SALES_CHANNEL" | "WEB_SALES_CHANNEL" | (others),
+    "webSiteId": "string",
+    "productStoreId": "string", 
+    "customerExternalId": "string",
+    "customerId": "string",
+    "firstName": "string",
+    "lastName": "string",
+    "orderDate": "datetime (yyyy-MM-dd HH:mm:ss)",
+    "expireDate": "datetime (yyyy-MM-dd HH:mm:ss)", 
+    "orderStatusDatetime": "datetime (yyyy-MM-dd HH:mm:ss)",
+    "currencyCode": "string",
+    "presentmentCurrencyCode": "string",
+    "originFacilityId": "string",
+    "originExternalFacilityId": "string",
+    "priority": "integer",
+    "transactionId": "string",
+    "customerClassificationId": "string",
+    "email": "string",
+    "phone": "string",
+    "grandTotal": "decimal",
+
+    // Nested Objects (see detailed descriptions below)
+    "orderContacts": {
+        "email": {
+            "id": "string" 
+        },
+        "phone": {
+            "id": "string" 
+        }
+    },
+    "shipGroup": [
+        {
+            "facilityId": "string",
+            "externalId": "string",
+            "maySplit": "Y" | "N",
+            "shipByDate": "datetime (yyyy-MM-dd HH:mm:ss)",
+            "shipAfterDate": "datetime (yyyy-MM-dd HH:mm:ss)",
+            "carrierPartyId": "string",
+            "trackingNumber": "string",
+            "shipmentMethodTypeId": "string",
+            "orderFacilityId": "string",
+            "shipFrom": {
+                "postalAddress": {
+                    "id": "string",
+                    "name": "string",
+                    "country": "string",
+                    "state": "string",
+                    "city": "string",
+                    "zip": "string"
+                },
+                "phoneNumber": {
+                    "id": "string",
+                    "contactNumber": "string"
+                },
+                "email": {
+                    "id": "string",
+                    "infoString": "string"
+                }
+            },
+            "shipTo": {
+                "postalAddress": {
+                    "id": "string",
+                    "additionalPurpose": "HOME_LOCATION" | "WORK_LOCATION" | (others)
+                },
+                "phoneNumber": {
+                    "id": "string",
+                    "contactNumber": "string"
+                },
+                "email": {
+                    "id": "string",
+                    "infoString": "string"
+                }
+            },
+            "items": [
+                {
+                    "productId": "string",
+                    "sku": "string",
+                    "idType": "string",
+                    "idValue": "string",
+                    "status": "ITEM_CREATED" | "ITEM_APPROVED" | (others),
+                    "description": "string",
+                    "autoCancelDate": "datetime (yyyy-MM-dd HH:mm:ss)",
+                    "dontCancelSetDate": "datetime (yyyy-MM-dd HH:mm:ss)",
+                    "quantity": "decimal",
+                    "unitListPrice": "decimal",
+                    "unitPrice": "decimal",
+                    "taxCode": "string",
+                    "itemAdjustments": [
+                        {
+                            "type": "SALES_TAX" | "PROMOTION_ADJUSTMENT" | (others),
+                            "amount": "decimal",
+                            "exemptAmount": "decimal",
+                            "sourcePercentage": "decimal",
+                            "comments": "string",
+                            "adj_attr_name": "string",
+                            "adj_attr_value": "string",
+                            "setShipGroup": "Y" | "N"
+                        }
+                    ],
+                    "orderItemAttributes": [
+                        {
+                            "attrName": "string",
+                            "attrValue": "string",
+                            "attrDescription": "string"
+                        }
+                    ],
+                    "orderItemAssociations": [
+                        {
+                            "toOrderId": "string",
+                            "toOrderExternalId": "string",
+                            "toOrderItemSeqId": "string",
+                            "toShipGroupSeqId": "string",
+                            "orderItemAssocTypeId": "string",
+                            "quantity": "decimal"
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "orderAdjustments": [
+        {
+            "type": "SALES_TAX" | "PROMOTION_ADJUSTMENT" | (others),
+            "amount": "decimal",
+            "exemptAmount": "decimal",
+            "sourcePercentage": "decimal",
+            "comments": "string",
+            "adj_attr_name": "string",
+            "adj_attr_value": "string"
+        }
+    ],
+    "orderPaymentPref": [
+        {
+            "paymentMethodTypeId": "CREDIT_CARD" | "GIFT_CARD" | (others),
+            "maxAmount": "decimal",
+            "statusId": "PAYMENT_NOT_RECEIVED" | "PAYMENT_AUTHORIZED" | (others),
+            "paymentMode": "string",
+            "cardName": "string",
+            "code": "string",
+            "manualAuthCode": "string",
+            "manualRefNum": "string",
+            "requestId": "string",
+            "applicationIdentifier": "string"
+        }
+    ],
+    "billTo": {
+        "postalAddress": {
+            "id": "string",
+            "name": "string",
+            "country": "string",
+            "state": "string",
+            "city": "string",
+            "zip": "string"
+        },
+        "phoneNumber": {
+            "id": "string",
+            "contactNumber": "string"
+        },
+        "email": {
+            "id": "string",
+            "externalId": "string",
+            "infoString": "string"
+        }
+    },
+    "orderAdditionalPartyRoleMap": {
+        "roleTypeId": "partyId" 
+    }
+  },
+  "userLogin": {
+    "userLoginId": "string",
+    "currentPassword": "string" 
+  }
+}
 ```
-Sample order json
-```
+
 
 
 **1. orderContactMechs (List<GenericValue>)**
@@ -507,189 +688,6 @@ POST /service/createSalesOrder
 
 ### Request Body
 
-The service expects a JSON payload in the following format:
-
-```json
-{
-  "order": {
-    // Order Details
-    "externalId": "string", 
-    "orderName": "string",
-    "orderTypeId": "SALES_ORDER" | "PURCHASE_ORDER" | (others), 
-    "channel": "UNKNWN_SALES_CHANNEL" | "WEB_SALES_CHANNEL" | (others),
-    "webSiteId": "string",
-    "productStoreId": "string", 
-    "customerExternalId": "string",
-    "customerId": "string",
-    "firstName": "string",
-    "lastName": "string",
-    "orderDate": "datetime (yyyy-MM-dd HH:mm:ss)",
-    "expireDate": "datetime (yyyy-MM-dd HH:mm:ss)", 
-    "orderStatusDatetime": "datetime (yyyy-MM-dd HH:mm:ss)",
-    "currencyCode": "string",
-    "presentmentCurrencyCode": "string",
-    "originFacilityId": "string",
-    "originExternalFacilityId": "string",
-    "priority": "integer",
-    "transactionId": "string",
-    "customerClassificationId": "string",
-    "email": "string",
-    "phone": "string",
-    "grandTotal": "decimal",
-
-    // Nested Objects (see detailed descriptions below)
-    "orderContacts": {
-        "email": {
-            "id": "string" 
-        },
-        "phone": {
-            "id": "string" 
-        }
-    },
-    "shipGroup": [
-        {
-            "facilityId": "string",
-            "externalId": "string",
-            "maySplit": "Y" | "N",
-            "shipByDate": "datetime (yyyy-MM-dd HH:mm:ss)",
-            "shipAfterDate": "datetime (yyyy-MM-dd HH:mm:ss)",
-            "carrierPartyId": "string",
-            "trackingNumber": "string",
-            "shipmentMethodTypeId": "string",
-            "orderFacilityId": "string",
-            "shipFrom": {
-                "postalAddress": {
-                    "id": "string",
-                    "name": "string",
-                    "country": "string",
-                    "state": "string",
-                    "city": "string",
-                    "zip": "string"
-                },
-                "phoneNumber": {
-                    "id": "string",
-                    "contactNumber": "string"
-                },
-                "email": {
-                    "id": "string",
-                    "infoString": "string"
-                }
-            },
-            "shipTo": {
-                "postalAddress": {
-                    "id": "string",
-                    "additionalPurpose": "HOME_LOCATION" | "WORK_LOCATION" | (others)
-                },
-                "phoneNumber": {
-                    "id": "string",
-                    "contactNumber": "string"
-                },
-                "email": {
-                    "id": "string",
-                    "infoString": "string"
-                }
-            },
-            "items": [
-                {
-                    "productId": "string",
-                    "sku": "string",
-                    "idType": "string",
-                    "idValue": "string",
-                    "status": "ITEM_CREATED" | "ITEM_APPROVED" | (others),
-                    "description": "string",
-                    "autoCancelDate": "datetime (yyyy-MM-dd HH:mm:ss)",
-                    "dontCancelSetDate": "datetime (yyyy-MM-dd HH:mm:ss)",
-                    "quantity": "decimal",
-                    "unitListPrice": "decimal",
-                    "unitPrice": "decimal",
-                    "taxCode": "string",
-                    "itemAdjustments": [
-                        {
-                            "type": "SALES_TAX" | "PROMOTION_ADJUSTMENT" | (others),
-                            "amount": "decimal",
-                            "exemptAmount": "decimal",
-                            "sourcePercentage": "decimal",
-                            "comments": "string",
-                            "adj_attr_name": "string",
-                            "adj_attr_value": "string",
-                            "setShipGroup": "Y" | "N"
-                        }
-                    ],
-                    "orderItemAttributes": [
-                        {
-                            "attrName": "string",
-                            "attrValue": "string",
-                            "attrDescription": "string"
-                        }
-                    ],
-                    "orderItemAssociations": [
-                        {
-                            "toOrderId": "string",
-                            "toOrderExternalId": "string",
-                            "toOrderItemSeqId": "string",
-                            "toShipGroupSeqId": "string",
-                            "orderItemAssocTypeId": "string",
-                            "quantity": "decimal"
-                        }
-                    ]
-                }
-            ]
-        }
-    ],
-    "orderAdjustments": [
-        {
-            "type": "SALES_TAX" | "PROMOTION_ADJUSTMENT" | (others),
-            "amount": "decimal",
-            "exemptAmount": "decimal",
-            "sourcePercentage": "decimal",
-            "comments": "string",
-            "adj_attr_name": "string",
-            "adj_attr_value": "string"
-        }
-    ],
-    "orderPaymentPref": [
-        {
-            "paymentMethodTypeId": "CREDIT_CARD" | "GIFT_CARD" | (others),
-            "maxAmount": "decimal",
-            "statusId": "PAYMENT_NOT_RECEIVED" | "PAYMENT_AUTHORIZED" | (others),
-            "paymentMode": "string",
-            "cardName": "string",
-            "code": "string",
-            "manualAuthCode": "string",
-            "manualRefNum": "string",
-            "requestId": "string",
-            "applicationIdentifier": "string"
-        }
-    ],
-    "billTo": {
-        "postalAddress": {
-            "id": "string",
-            "name": "string",
-            "country": "string",
-            "state": "string",
-            "city": "string",
-            "zip": "string"
-        },
-        "phoneNumber": {
-            "id": "string",
-            "contactNumber": "string"
-        },
-        "email": {
-            "id": "string",
-            "externalId": "string",
-            "infoString": "string"
-        }
-    },
-    "orderAdditionalPartyRoleMap": {
-        "roleTypeId": "partyId" 
-    }
-  },
-  "userLogin": {
-    "userLoginId": "string",
-    "currentPassword": "string" 
-  }
-}
-```
 
 ### Response Body
 
