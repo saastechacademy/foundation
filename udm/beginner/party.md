@@ -8,7 +8,7 @@ Party Data Model Overview
 
 Entities
 1. Party
-Description: Represents any entity that can enter into a relationship. This includes individuals, groups, or organizations.
+: Represents any entity that can enter into a relationship. This includes individuals, groups, or organizations.
 * Key Attributes: Unique identifier (partyId).
 2. Person
 * Description: A specialization of Party, representing individual human beings.
@@ -47,18 +47,31 @@ Sample JSON Data
     "partyId": "CUST123",
     "roleTypeId": "CUSTOMER"
   },
+	
+   "PartyContactmech":{ 
+     "PartyId": "10000",
+     "Contactmechid": "10000"},
   "ContactMech": [
+  {
+      "contactMechId": "EMAIL001",
+      "contactMechTypeId": "EMAIL_ADDRESS",
+      "infoString": "sharmapgaashish@gmail.com"
+    },
     {
       "contactMechId": "PHONE001",
       "contactMechTypeId": "TELECOM_NUMBER",
-      "infoString": "555-1234"
     },
     {
       "contactMechId": "ADDR001",
       "contactMechTypeId": "POSTAL_ADDRESS",
-      "infoString": "123 Elm Street, Springfield, 12345, USA"
     }
   ],
+"TelecomNumber":{
+ "contactMechId": "PHONE001",
+"countryCode: "+91",
+"contactNumber: ""9876543210",
+"Contactmechid": "10000"
+},
   "PostalAddress": {
     "contactMechId": "ADDR001",
     "address1": "123 Elm Street",
@@ -69,11 +82,11 @@ Sample JSON Data
   "ContactMechPurpose": [
     {
       "contactMechId": "ADDR001",
-      "contactMechPurposeTypeId": "BILLING"
+      "contactMechPurposeTypeId": "BILLING_LOCATION"
     },
     {
       "contactMechId": "ADDR001",
-      "contactMechPurposeTypeId": "SHIPPING"
+      "contactMechPurposeTypeId": "SHIPPING_LOCATION"
     }
   ]
 }
