@@ -70,7 +70,10 @@ These data objects are then stored in the `storeOrderCtx` map, which is passed a
 
 These lists and maps serve to structure and organize the order data in a way that is compatible with the HotWax Commerce data model and the requirements of the `storeOrder` service. By separating the data into different lists and maps, the code improves readability and maintainability. It also makes it easier to pass the data to the `storeOrder` service, which expects a specific format for its input.
 
-**Break down the lists and maps prepared in the `createSalesOrder` function.**
+```
+Sample order json
+```
+
 
 **1. orderContactMechs (List<GenericValue>)**
 
@@ -324,10 +327,36 @@ These lists and maps serve to structure and organize the order data in a way tha
     *   Values: Party IDs associated with the role.
 
 
+**Entity mapping**
 
+1.  **Order Identification:**
+    *   The specification mentions `orderIdentifications` as a list of maps, but the code actually handles individual identification fields like `externalId` and `transactionId` directly, not within a nested list.
+    *   The specification could be clarified to indicate that `externalId` and `transactionId` are used for order identification, not the `orderIdentifications` list.
 
+2.  **Order Attributes:**
+    *   The specification correctly describes `orderAttributes` as a list of maps containing attribute details.
+    *   The code implementation aligns with this, using the `orderAttributes` list to create `OrderAttribute` entities.
 
-The `createShopifyOrder` function is a core component of the Shopify-HotWax Commerce integration. Its primary purpose is to take a JSON representation of a Shopify order and transform it into a sales order within the HotWax Commerce system, adhering to the Apache OFBiz data model that HotWax extends.
+3.  **Ship Groups:**
+    *   The specification accurately outlines the structure of the `shipGroup` list and its nested elements.
+    *   The code implementation closely follows this structure, extracting data from the `shipGroup` list to create `OrderItemShipGroup` and `OrderItemShipGroupAssoc` entities.
+
+4.  **Order Adjustments:**
+    *   The specification correctly describes `orderAdjustments` as a list of maps containing adjustment details.
+    *   The code implementation aligns with this, using the `orderAdjustments` list to create `OrderAdjustment` entities.
+
+5.  **Order Payment Preferences:**
+    *   The specification accurately describes `orderPaymentPrefList` as a list of maps containing payment preference details.
+    *   The code implementation aligns with this, using the `orderPaymentPrefList` to create `OrderPaymentPreference` entities.
+
+6.  **Order Item Attributes:**
+    *   The specification correctly describes `orderItemAttributes` as a list of maps containing attribute details.
+    *   The code implementation aligns with this, using the `orderItemAttributes` list to create `OrderItemAttribute` entities.
+
+7.  **Additional Party Roles:**
+    *   The specification mentions `orderAdditionalPartyRoleMap` as a map of role type IDs to party IDs.
+    *   The code implementation directly uses this map when creating the order, so the specification is accurate.
+
 
 **Workflow**
 
@@ -462,35 +491,6 @@ The `createSalesOrder` function prepares several lists and maps to organize data
 
 
 
-**Entity mapping**
-
-1.  **Order Identification:**
-    *   The specification mentions `orderIdentifications` as a list of maps, but the code actually handles individual identification fields like `externalId` and `transactionId` directly, not within a nested list.
-    *   The specification could be clarified to indicate that `externalId` and `transactionId` are used for order identification, not the `orderIdentifications` list.
-
-2.  **Order Attributes:**
-    *   The specification correctly describes `orderAttributes` as a list of maps containing attribute details.
-    *   The code implementation aligns with this, using the `orderAttributes` list to create `OrderAttribute` entities.
-
-3.  **Ship Groups:**
-    *   The specification accurately outlines the structure of the `shipGroup` list and its nested elements.
-    *   The code implementation closely follows this structure, extracting data from the `shipGroup` list to create `OrderItemShipGroup` and `OrderItemShipGroupAssoc` entities.
-
-4.  **Order Adjustments:**
-    *   The specification correctly describes `orderAdjustments` as a list of maps containing adjustment details.
-    *   The code implementation aligns with this, using the `orderAdjustments` list to create `OrderAdjustment` entities.
-
-5.  **Order Payment Preferences:**
-    *   The specification accurately describes `orderPaymentPrefList` as a list of maps containing payment preference details.
-    *   The code implementation aligns with this, using the `orderPaymentPrefList` to create `OrderPaymentPreference` entities.
-
-6.  **Order Item Attributes:**
-    *   The specification correctly describes `orderItemAttributes` as a list of maps containing attribute details.
-    *   The code implementation aligns with this, using the `orderItemAttributes` list to create `OrderItemAttribute` entities.
-
-7.  **Additional Party Roles:**
-    *   The specification mentions `orderAdditionalPartyRoleMap` as a map of role type IDs to party IDs.
-    *   The code implementation directly uses this map when creating the order, so the specification is accurate.
 
 
 ## createSalesOrder API Documentation (Expanded)
