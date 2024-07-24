@@ -1,40 +1,3 @@
-The `createShopifyOrder` function is a core component of the Shopify-HotWax Commerce integration. Its primary purpose is to take a JSON representation of a Shopify order and transform it into a sales order within the HotWax Commerce system, adhering to the Apache OFBiz data model that HotWax extends.
-
-**Workflow**
-
-1.  **Input:** The function receives a `context` object containing the Shopify order data in JSON format, along with other contextual information like the userLogin and locale.
-
-2.  **Order Identification:** It first checks if the order already exists in HotWax Commerce by looking for a matching Shopify order ID. If the order exists, it skips further processing.
-
-3.  **Data Extraction and Mapping:** The code extracts essential details from the Shopify order JSON, such as:
-    *   Order ID, creation date, customer information, billing/shipping addresses
-    *   Line items (products ordered), quantities, prices, discounts, taxes
-    *   Fulfillment details, notes, tags, and other relevant attributes
-
-    It then maps these Shopify fields to the corresponding fields and entities in the Order data model.
-
-4.  **Customer Handling:** If the customer associated with the Shopify order doesn't exist in HotWax Commerce, the code creates a new customer record.
-
-5.  **Order Creation:** The function constructs a `serviceCtx` map, which is essentially a collection of parameters required by the HotWax Commerce `createSalesOrder` service. This map includes:
-    *   Customer information
-    *   Order date, status, and totals
-    *   Order items with their details
-    *   Shipping and billing information
-    *   Order adjustments (discounts, taxes, etc.)
-
-6.  **Service Call:** Finally, it invokes the `createSalesOrder` service using the `serviceCtx` map. If successful, the service returns the newly created order ID in HotWax Commerce.
-
-**Additional Functionality**
-
-*   **Order Identification:** The code uses various identification types (Shopify order number, name, ID) to link the Shopify order to its HotWax counterpart.
-*   **Order Status Handling:** It determines the appropriate order status in HotWax based on the Shopify order's state (created, canceled, closed).
-*   **Order Adjustments:** It handles discounts, taxes, and tips as order adjustments.
-
-**Key Considerations**
-
-*   **Extensibility:** The code is structured in a way that allows for customization and extension. You can modify the data mapping logic, add more error handling, or integrate with other HotWax Commerce services as needed.
-*   **Shopify API Dependency:** The function relies heavily on the structure of the Shopify Order API JSON response. Any changes in the API might require adjustments to the code.
-
 **Order data model of Apache OFBiz, HotWax Commerce**
 
 *   OrderHeader
@@ -83,6 +46,45 @@ The following Shopify order data is mapped to `OrderAttribute` or `OrderItemAttr
     *   `properties`: Custom properties associated with line items in Shopify, such as "custom engraving" or other product customizations. These are stored as `OrderItemAttribute` entities.
     *   Pre-order and backorder tags: If a product is tagged as "ON\_PRE\_ORDER\_PROD" or "ON\_BACK\_ORDER\_PROD" in Shopify, this information is stored in `OrderItemAttribute` to indicate that the item is a pre-order or backorder.
     *   Store pickup property: If a line item has a property indicating store pickup, this is also stored in `OrderItemAttribute`.
+
+
+The `createShopifyOrder` function is a core component of the Shopify-HotWax Commerce integration. Its primary purpose is to take a JSON representation of a Shopify order and transform it into a sales order within the HotWax Commerce system, adhering to the Apache OFBiz data model that HotWax extends.
+
+**Workflow**
+
+1.  **Input:** The function receives a `context` object containing the Shopify order data in JSON format, along with other contextual information like the userLogin and locale.
+
+2.  **Order Identification:** It first checks if the order already exists in HotWax Commerce by looking for a matching Shopify order ID. If the order exists, it skips further processing.
+
+3.  **Data Extraction and Mapping:** The code extracts essential details from the Shopify order JSON, such as:
+    *   Order ID, creation date, customer information, billing/shipping addresses
+    *   Line items (products ordered), quantities, prices, discounts, taxes
+    *   Fulfillment details, notes, tags, and other relevant attributes
+
+    It then maps these Shopify fields to the corresponding fields and entities in the Order data model.
+
+4.  **Customer Handling:** If the customer associated with the Shopify order doesn't exist in HotWax Commerce, the code creates a new customer record.
+
+5.  **Order Creation:** The function constructs a `serviceCtx` map, which is essentially a collection of parameters required by the HotWax Commerce `createSalesOrder` service. This map includes:
+    *   Customer information
+    *   Order date, status, and totals
+    *   Order items with their details
+    *   Shipping and billing information
+    *   Order adjustments (discounts, taxes, etc.)
+
+6.  **Service Call:** Finally, it invokes the `createSalesOrder` service using the `serviceCtx` map. If successful, the service returns the newly created order ID in HotWax Commerce.
+
+**Additional Functionality**
+
+*   **Order Identification:** The code uses various identification types (Shopify order number, name, ID) to link the Shopify order to its HotWax counterpart.
+*   **Order Status Handling:** It determines the appropriate order status in HotWax based on the Shopify order's state (created, canceled, closed).
+*   **Order Adjustments:** It handles discounts, taxes, and tips as order adjustments.
+
+**Key Considerations**
+
+*   **Extensibility:** The code is structured in a way that allows for customization and extension. You can modify the data mapping logic, add more error handling, or integrate with other HotWax Commerce services as needed.
+*   **Shopify API Dependency:** The function relies heavily on the structure of the Shopify Order API JSON response. Any changes in the API might require adjustments to the code.
+
 
 
 The following HotWax Commerce internal services are called from the `createShopifyOrder` function:
