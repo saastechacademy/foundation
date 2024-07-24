@@ -179,7 +179,11 @@ storeOrderCtx.put("shipToCustomerPartyId", customerId);
 
 **Lists and Maps to organize data and call storeOrder**
 
-The `createSalesOrder` function prepares several lists and maps to organize data before it's used to create a sales order in HotWax Commerce. These data objects are then stored in the `storeOrderCtx` map, which is passed as input to the `storeOrder` service. Here's a breakdown of the key data objects:
+The `createSalesOrder` function prepares several lists and maps to organize data before it's used to create a sales order in HotWax Commerce. 
+
+##**storeOrderCtx**
+
+These data objects are then stored in the `storeOrderCtx` map, which is passed as input to the `storeOrder` service. Here's a breakdown of the key data objects:
 
 1.  **Lists:**
     *   `orderItemShipGroupInfo`: Stores information about the shipping groups associated with the order, including the facility ID, shipping dates, carrier, and other details.
