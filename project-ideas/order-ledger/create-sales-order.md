@@ -48,139 +48,6 @@ The following Shopify order data is mapped to `OrderAttribute` or `OrderItemAttr
     *   Store pickup property: If a line item has a property indicating store pickup, this is also stored in `OrderItemAttribute`.
 
 
-The `createShopifyOrder` function is a core component of the Shopify-HotWax Commerce integration. Its primary purpose is to take a JSON representation of a Shopify order and transform it into a sales order within the HotWax Commerce system, adhering to the Apache OFBiz data model that HotWax extends.
-
-**Workflow**
-
-1.  **Input:** The function receives a `context` object containing the Shopify order data in JSON format, along with other contextual information like the userLogin and locale.
-
-2.  **Order Identification:** It first checks if the order already exists in HotWax Commerce by looking for a matching Shopify order ID. If the order exists, it skips further processing.
-
-3.  **Data Extraction and Mapping:** The code extracts essential details from the Shopify order JSON, such as:
-    *   Order ID, creation date, customer information, billing/shipping addresses
-    *   Line items (products ordered), quantities, prices, discounts, taxes
-    *   Fulfillment details, notes, tags, and other relevant attributes
-
-    It then maps these Shopify fields to the corresponding fields and entities in the Order data model.
-
-4.  **Customer Handling:** If the customer associated with the Shopify order doesn't exist in HotWax Commerce, the code creates a new customer record.
-
-5.  **Order Creation:** The function constructs a `serviceCtx` map, which is essentially a collection of parameters required by the HotWax Commerce `createSalesOrder` service. This map includes:
-    *   Customer information
-    *   Order date, status, and totals
-    *   Order items with their details
-    *   Shipping and billing information
-    *   Order adjustments (discounts, taxes, etc.)
-
-6.  **Service Call:** Finally, it invokes the `createSalesOrder` service using the `serviceCtx` map. If successful, the service returns the newly created order ID in HotWax Commerce.
-
-**Additional Functionality**
-
-*   **Order Identification:** The code uses various identification types (Shopify order number, name, ID) to link the Shopify order to its HotWax counterpart.
-*   **Order Status Handling:** It determines the appropriate order status in HotWax based on the Shopify order's state (created, canceled, closed).
-*   **Order Adjustments:** It handles discounts, taxes, and tips as order adjustments.
-
-**Key Considerations**
-
-*   **Extensibility:** The code is structured in a way that allows for customization and extension. You can modify the data mapping logic, add more error handling, or integrate with other HotWax Commerce services as needed.
-*   **Shopify API Dependency:** The function relies heavily on the structure of the Shopify Order API JSON response. Any changes in the API might require adjustments to the code.
-
-
-
-The following HotWax Commerce internal services are called from the `createShopifyOrder` function:
-
-1.  `customerDataSetup`
-2.  `createTelecomNumber`
-3.  `createContactMech`
-4.  `createCommunicationEvent`
-5.  `createSalesOrder`
-6.  `checkAndAddProductComponents` (run asynchronously)
-7.  `createShopifyShopOrder` (run asynchronously)
-8.  `getPaidTransactionsAndCreateOrderPayment` (run asynchronously)
-9.  `createOrderPaymentPreference` (may be called depending on order status)
-10. `createCommunicationEventOrder` (run asynchronously, if applicable)
-
-**Adjustments**  
-
-The `itemAdjustments` data in HotWax Commerce is primarily derived from two sections of the Shopify Order JSON:
-
-1.  **discount\_allocations:** This section within each line item details the discounts applied to that specific product. The code iterates through these allocations, extracts the discount amount and any associated discount code, and creates `EXT_PROMO_ADJUSTMENT` entries in `itemAdjustments`.
-
-2.  **tax\_lines:** This section within each line item provides information about the taxes applied to the product. The code extracts the tax title, price, and rate, and creates `SALES_TAX` entries in `itemAdjustments`.
-
-**Mapping**
-
-| Shopify Order Field (within line\_items) | HotWax Commerce Field (in itemAdjustments) |
-| :--------------------------------------- | :----------------------------------------- |
-| discount\_allocations.amount             | amount (negated)                           |
-| discount\_allocations.discount\_application\_index | Used to look up the discount code in `discounts` map |
-| tax\_lines.title                         | comments                                   |
-| tax\_lines.price                         | amount                                     |
-| tax\_lines.rate                          | sourcePercentage                           |
-
-
-## createSalesOrder ##
-
-The `createSalesOrder` service in HotWax Commerce is a complex service that handles the creation of a new sales order. It takes a map called `orderEntryMap` as input, which contains all the necessary information to create the order. Let's break down the key parameters within this map:
-
-1.  **order:** This is a nested map that contains the bulk of the order details. It includes:
-    *   **channel:** The sales channel through which the order was placed (e.g., "web," "Shopify").
-    *   **webSiteId:** The ID of the website associated with the order.
-    *   **customerId:** The ID of the customer placing the order.
-    *   **orderContacts:** A map containing contact information (email, phone) for the order.
-    *   **tags:** A list of tags associated with the order.
-    *   **orderDate:** The date and time the order was placed.
-    *   **statusId:** The initial status of the order (e.g., "ORDER\_CREATED").
-    *   **orderStatusDatetime:** The date and time the order reached its initial status.
-    *   **productStoreId:** The ID of the product store where the order was placed.
-    *   **currencyCode:** The currency used for the order.
-    *   **presentmentCurrencyCode:** The currency used to display prices to the customer.
-    *   **grandTotal:** The total amount of the order.
-    *   **orderIdentifications:** A list of maps, each containing an identification type (e.g., "SHOPIFY\_ORD\_ID") and its corresponding value.
-    *   **orderAttributes:** A list of maps, each containing an attribute name, value, and optional description for the order.
-    *   **shipGroup:** A list of maps, each representing a shipment group within the order. Each ship group map contains:
-        *   **facilityId:** The ID of the facility from which the items will be shipped.
-        *   **shipFrom:** A map with contact information for the shipping origin.
-        *   **shipTo:** A map with contact information for the shipping destination.
-        *   **shipmentMethodTypeId:** The type of shipping method (e.g., "STANDARD").
-        *   **carrierPartyId:** The ID of the carrier responsible for shipping.
-        *   **items:** A list of maps, each representing a line item within the ship group. Each line item map contains:
-            *   **productId:** The ID of the product.
-            *   **quantity:** The quantity ordered.
-            *   **unitPrice:** The price per unit.
-            *   **itemAdjustments:** A list of maps, each representing an adjustment (discount, tax) to the item.
-    *   **orderAdjustments:** A list of maps, each representing an adjustment (discount, tax) to the entire order.
-    *   **billTo:** A map with contact information for the billing address.
-    *   **billFrom:** A map with contact information for the billing origin.
-    *   **locale:** The locale associated with the order.
-    *   **originFacilityId:** The ID of the facility where the order originated.
-
-2.  **userLogin:** A `GenericValue` representing the user who initiated the service call. This is used for authentication and authorization purposes within the `createSalesOrder` service.
-
-The `createSalesOrder` service processes this `orderEntryMap` to create the sales order, its associated items, adjustments, and any other necessary records in the HotWax Commerce database. It also handles tasks like inventory reservation, tax calculation, and order status updates.
-
-**Example: Customer Handling**
-
-In the Shopify integration code (`createShopifyOrder`), you'll find this line:
-
-```java
-result = dispatcher.runSync("customerDataSetup", serviceCtx);
-```
-
-This line calls the `customerDataSetup` service to either create a new customer in HotWax Commerce (if the customer doesn't exist) or retrieve the existing customer's ID. The `customerId` is then included in the `serviceCtx` map passed to `createSalesOrder`.
-
-In the `createSalesOrder` function, you'll see that the `customerId` is used to associate the order with the correct customer record:
-
-```java
-storeOrderCtx.put("partyId", customerId);
-storeOrderCtx.put("billToCustomerPartyId", customerId);
-storeOrderCtx.put("shipToCustomerPartyId", customerId);
-```
-
-**Lists and Maps to organize data and call storeOrder**
-
-The `createSalesOrder` function prepares several lists and maps to organize data before it's used to create a sales order in HotWax Commerce. 
-
 ## **storeOrderCtx**
 
 These data objects are then stored in the `storeOrderCtx` map, which is passed as input to the `storeOrder` service. Here's a breakdown of the key data objects:
@@ -455,6 +322,144 @@ These lists and maps serve to structure and organize the order data in a way tha
 *   **Structure:**
     *   Keys: Role type IDs (e.g., "SALES\_REP," "GIFT\_GIVER").
     *   Values: Party IDs associated with the role.
+
+
+
+
+
+The `createShopifyOrder` function is a core component of the Shopify-HotWax Commerce integration. Its primary purpose is to take a JSON representation of a Shopify order and transform it into a sales order within the HotWax Commerce system, adhering to the Apache OFBiz data model that HotWax extends.
+
+**Workflow**
+
+1.  **Input:** The function receives a `context` object containing the Shopify order data in JSON format, along with other contextual information like the userLogin and locale.
+
+2.  **Order Identification:** It first checks if the order already exists in HotWax Commerce by looking for a matching Shopify order ID. If the order exists, it skips further processing.
+
+3.  **Data Extraction and Mapping:** The code extracts essential details from the Shopify order JSON, such as:
+    *   Order ID, creation date, customer information, billing/shipping addresses
+    *   Line items (products ordered), quantities, prices, discounts, taxes
+    *   Fulfillment details, notes, tags, and other relevant attributes
+
+    It then maps these Shopify fields to the corresponding fields and entities in the Order data model.
+
+4.  **Customer Handling:** If the customer associated with the Shopify order doesn't exist in HotWax Commerce, the code creates a new customer record.
+
+5.  **Order Creation:** The function constructs a `serviceCtx` map, which is essentially a collection of parameters required by the HotWax Commerce `createSalesOrder` service. This map includes:
+    *   Customer information
+    *   Order date, status, and totals
+    *   Order items with their details
+    *   Shipping and billing information
+    *   Order adjustments (discounts, taxes, etc.)
+
+6.  **Service Call:** Finally, it invokes the `createSalesOrder` service using the `serviceCtx` map. If successful, the service returns the newly created order ID in HotWax Commerce.
+
+**Additional Functionality**
+
+*   **Order Identification:** The code uses various identification types (Shopify order number, name, ID) to link the Shopify order to its HotWax counterpart.
+*   **Order Status Handling:** It determines the appropriate order status in HotWax based on the Shopify order's state (created, canceled, closed).
+*   **Order Adjustments:** It handles discounts, taxes, and tips as order adjustments.
+
+**Key Considerations**
+
+*   **Extensibility:** The code is structured in a way that allows for customization and extension. You can modify the data mapping logic, add more error handling, or integrate with other HotWax Commerce services as needed.
+*   **Shopify API Dependency:** The function relies heavily on the structure of the Shopify Order API JSON response. Any changes in the API might require adjustments to the code.
+
+
+
+The following HotWax Commerce internal services are called from the `createShopifyOrder` function:
+
+1.  `customerDataSetup`
+2.  `createTelecomNumber`
+3.  `createContactMech`
+4.  `createCommunicationEvent`
+5.  `createSalesOrder`
+6.  `checkAndAddProductComponents` (run asynchronously)
+7.  `createShopifyShopOrder` (run asynchronously)
+8.  `getPaidTransactionsAndCreateOrderPayment` (run asynchronously)
+9.  `createOrderPaymentPreference` (may be called depending on order status)
+10. `createCommunicationEventOrder` (run asynchronously, if applicable)
+
+**Adjustments**  
+
+The `itemAdjustments` data in HotWax Commerce is primarily derived from two sections of the Shopify Order JSON:
+
+1.  **discount\_allocations:** This section within each line item details the discounts applied to that specific product. The code iterates through these allocations, extracts the discount amount and any associated discount code, and creates `EXT_PROMO_ADJUSTMENT` entries in `itemAdjustments`.
+
+2.  **tax\_lines:** This section within each line item provides information about the taxes applied to the product. The code extracts the tax title, price, and rate, and creates `SALES_TAX` entries in `itemAdjustments`.
+
+**Mapping**
+
+| Shopify Order Field (within line\_items) | HotWax Commerce Field (in itemAdjustments) |
+| :--------------------------------------- | :----------------------------------------- |
+| discount\_allocations.amount             | amount (negated)                           |
+| discount\_allocations.discount\_application\_index | Used to look up the discount code in `discounts` map |
+| tax\_lines.title                         | comments                                   |
+| tax\_lines.price                         | amount                                     |
+| tax\_lines.rate                          | sourcePercentage                           |
+
+
+## createSalesOrder ##
+
+The `createSalesOrder` service in HotWax Commerce is a complex service that handles the creation of a new sales order. It takes a map called `orderEntryMap` as input, which contains all the necessary information to create the order. Let's break down the key parameters within this map:
+
+1.  **order:** This is a nested map that contains the bulk of the order details. It includes:
+    *   **channel:** The sales channel through which the order was placed (e.g., "web," "Shopify").
+    *   **webSiteId:** The ID of the website associated with the order.
+    *   **customerId:** The ID of the customer placing the order.
+    *   **orderContacts:** A map containing contact information (email, phone) for the order.
+    *   **tags:** A list of tags associated with the order.
+    *   **orderDate:** The date and time the order was placed.
+    *   **statusId:** The initial status of the order (e.g., "ORDER\_CREATED").
+    *   **orderStatusDatetime:** The date and time the order reached its initial status.
+    *   **productStoreId:** The ID of the product store where the order was placed.
+    *   **currencyCode:** The currency used for the order.
+    *   **presentmentCurrencyCode:** The currency used to display prices to the customer.
+    *   **grandTotal:** The total amount of the order.
+    *   **orderIdentifications:** A list of maps, each containing an identification type (e.g., "SHOPIFY\_ORD\_ID") and its corresponding value.
+    *   **orderAttributes:** A list of maps, each containing an attribute name, value, and optional description for the order.
+    *   **shipGroup:** A list of maps, each representing a shipment group within the order. Each ship group map contains:
+        *   **facilityId:** The ID of the facility from which the items will be shipped.
+        *   **shipFrom:** A map with contact information for the shipping origin.
+        *   **shipTo:** A map with contact information for the shipping destination.
+        *   **shipmentMethodTypeId:** The type of shipping method (e.g., "STANDARD").
+        *   **carrierPartyId:** The ID of the carrier responsible for shipping.
+        *   **items:** A list of maps, each representing a line item within the ship group. Each line item map contains:
+            *   **productId:** The ID of the product.
+            *   **quantity:** The quantity ordered.
+            *   **unitPrice:** The price per unit.
+            *   **itemAdjustments:** A list of maps, each representing an adjustment (discount, tax) to the item.
+    *   **orderAdjustments:** A list of maps, each representing an adjustment (discount, tax) to the entire order.
+    *   **billTo:** A map with contact information for the billing address.
+    *   **billFrom:** A map with contact information for the billing origin.
+    *   **locale:** The locale associated with the order.
+    *   **originFacilityId:** The ID of the facility where the order originated.
+
+2.  **userLogin:** A `GenericValue` representing the user who initiated the service call. This is used for authentication and authorization purposes within the `createSalesOrder` service.
+
+The `createSalesOrder` service processes this `orderEntryMap` to create the sales order, its associated items, adjustments, and any other necessary records in the HotWax Commerce database. It also handles tasks like inventory reservation, tax calculation, and order status updates.
+
+**Example: Customer Handling**
+
+In the Shopify integration code (`createShopifyOrder`), you'll find this line:
+
+```java
+result = dispatcher.runSync("customerDataSetup", serviceCtx);
+```
+
+This line calls the `customerDataSetup` service to either create a new customer in HotWax Commerce (if the customer doesn't exist) or retrieve the existing customer's ID. The `customerId` is then included in the `serviceCtx` map passed to `createSalesOrder`.
+
+In the `createSalesOrder` function, you'll see that the `customerId` is used to associate the order with the correct customer record:
+
+```java
+storeOrderCtx.put("partyId", customerId);
+storeOrderCtx.put("billToCustomerPartyId", customerId);
+storeOrderCtx.put("shipToCustomerPartyId", customerId);
+```
+
+**Lists and Maps to organize data and call storeOrder**
+
+The `createSalesOrder` function prepares several lists and maps to organize data before it's used to create a sales order in HotWax Commerce. 
+
 
 
 **Entity mapping**
