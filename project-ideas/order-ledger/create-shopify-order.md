@@ -29,12 +29,42 @@ The order JSON includes several nested objects that provide more detailed inform
 * **`shipping_lines`:**  An array of shipping methods chosen for the order, with their associated prices and other details.
 * **`tax_lines`:** An array of tax line objects, each of which details the taxes applicable to the order.
 
-**Additional Fields**
+**Customer Information**
 
-The order JSON also contains many other fields, including:
+* **customer:** An object containing the customer's details:
+*  'id'
+*  'email'
+*  'first_name', 'last_name'
+*  'accepts_marketing'
+*  'addresses' (an array of addresses)
 
-* **`discount_applications`, `discount_codes`:** Provide information about discounts applied to the order.
-* **`fulfillments`:**  Details about order fulfillment, including tracking numbers and shipping status.
-* **`refunds`:**  Information about any refunds issued for the order.
-* **`note`, `note_attributes`:** Allow you to store notes or custom attributes related to the order.
+**Billing and Shipping Addresses**
+
+*   `billing_address`:  The billing address of the customer.
+*   `shipping_address`: The shipping address (if different from billing).
+
+**Line Items**
+
+*   `line_items`: An array of objects representing the products ordered:
+    *   `id`
+    *   `product_id`, `variant_id`
+    *   `title`
+    *   `quantity`, `fulfillable_quantity`
+    *   `price`, `total_discount` 
+    *   `sku`
+    *   `grams` (weight)
+    *   `tax_lines` (taxes applied)
+    *   `properties` (custom attributes like engraving)
+
+**Other Important Fields**
+
+*   `discount_codes`: Codes applied to the order for discounts.
+*   `shipping_lines`:  Details of shipping methods and costs.
+*   `tax_lines`: Taxes applied to the order.
+*   `fulfillments`: An array tracking the fulfillment process of items in the order.
+*   `refunds`: An array of any refunds issued.
+*   `note`: Notes added to the order by the merchant.
+*   `note_attributes`: Key-value pairs for structured notes.
+*   `tags`: Tags associated with the order.
+*   `test`: A boolean indicating if the order is a test order.
 
