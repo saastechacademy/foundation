@@ -1,4 +1,4 @@
-NotNaked is fashion brand for Gen Z is called Gen Alpha in America. NotNaked is digital first company, has retail locations in following cities 
+NotNaked is fashion brand for Gen Z and Gen Alpha in America. NotNaked is digital first company, has retail locations in following cities 
 
 1) New York 
 2) Boston
