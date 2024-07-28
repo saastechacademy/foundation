@@ -125,9 +125,13 @@ The service expects a JSON payload in the following format:
                             "exemptAmount": "decimal",
                             "sourcePercentage": "decimal",
                             "comments": "string",
-                            "adj_attr_name": "string",
-                            "adj_attr_value": "string",
-                            "setShipGroup": "Y" | "N"
+                            "setShipGroup": "Y" | "N",
+                            "attributes": [
+                              {
+                                "attrName": "description",
+                                "attrValue": "Early bird discount"
+                              }
+                            ]
                         }
                     ],
                     "orderItemAttributes": [
