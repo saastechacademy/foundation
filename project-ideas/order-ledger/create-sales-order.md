@@ -162,8 +162,12 @@ The service expects a JSON payload in the following format:
             "exemptAmount": "decimal",
             "sourcePercentage": "decimal",
             "comments": "string",
-            "adj_attr_name": "string",
-            "adj_attr_value": "string"
+            "attributes": [
+               {
+                 "attrName": "taxAuthority",
+                 "attrValue": "State of California"
+               }
+             ]
         }
     ],
     "orderPaymentPref": [
