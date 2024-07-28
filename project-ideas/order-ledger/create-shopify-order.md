@@ -91,4 +91,84 @@ The preprocessing stage is the first step in the integration process. It focuses
 * **Flexibility:** The `ShopifyServiceConfig` properties file allows for easy customization of which orders to import based on specific tags. This can be useful for filtering test orders, orders from specific sales channels, or any other order criteria you want to define.
 * **Data Integrity:** The duplicate check is crucial for preventing duplicate orders in your HotWax Commerce system, ensuring data consistency and accuracy.
 
+**Understanding `ShopifyHelper.getShopifyTypeMappedValue`**
+
+This helper function seems designed to bridge the gap between Shopify's data model and HotWax Commerce's data model. It takes the following arguments:
+
+1.  `delegator`: The OfBiz delegator for database operations.
+2.  `shopId`: The ID of the Shopify shop.
+3.  `mappedTypeId`: A string indicating the type of mapping being performed (e.g., "SHOPIFY_ORDER_SOURCE", "SHOP_ORD_CUST_CLASS", "SHOPIFY_PAYMENT_TYPE").
+4.  `mappedKey`: The value from the Shopify order that needs to be mapped.
+5.  `defaultValue`: A default value to return if no mapping is found.
+
+The function  queries a database table (`ShopifyShopTypeMapping`) to find a corresponding `mappedValue` in HotWax Commerce for the given `mappedKey` and `mappedTypeId`. If no mapping exists, it returns the `defaultValue`.
+
+**Scenarios in `createShopifyOrder`**
+
+1.  **Sales Channel Mapping:**
+    *   `mappedTypeId`: "SHOPIFY_ORDER_SOURCE"
+    *   `mappedKey`: The value of the `source_name` field in the Shopify order (e.g., "web", "pos", "mobile_app").
+    *   Purpose: Determine the sales channel in HotWax Commerce based on where the order originated in Shopify.
+
+2.  **Customer Classification Mapping:**
+    *   `mappedTypeId`: "SHOP_ORD_CUST_CLASS"
+    *   `mappedKey`: Tags from the Shopify order.
+    *   Purpose: Assign a customer classification in HotWax Commerce based on tags applied to the order in Shopify. This could be used for segmentation or reporting.
+
+3.  **Payment Method Mapping:**
+    *   `mappedTypeId`: "SHOPIFY_PAYMENT_TYPE"
+    *   `mappedKey`: The payment gateway name from the Shopify order (e.g., "shopify_payments", "paypal").
+    *   Purpose: Determine the payment method type in HotWax Commerce based on the payment gateway used in Shopify.
+
+In the `createShopifyOrder` service, the `ShopifyHelper` class is utilized in the following additional scenarios:
+
+1.  **Product and Variant Mapping:**
+    *   The `ShopifyHelper.getProductId` function is used to retrieve the HotWax Commerce product ID corresponding to a Shopify variant ID. This is essential for associating order line items with the correct products in the HotWax system.
+    *   If the product ID is not found and product creation is allowed, the service creates a new product in HotWax Commerce and associates it with the Shopify variant ID using `createShopifyShopProduct`.
+
+2.  **Facility Mapping:**
+    *   The `ShopifyHelper.getFacilityId` function is used to determine the HotWax Commerce facility ID based on the Shopify location ID where the order was fulfilled. This helps in managing inventory and fulfillment processes.
+
+3.  **Pre-Order and Backorder Tag Mapping:**
+    *   The `ShopifyHelper.getShopifyTypeMappedValue` function is used with `mappedTypeId` "SHOPIFY_PRODUCT_TAG" to retrieve the tags used in Shopify to indicate pre-order or backorder products. These tags are then used to determine if an order item should be marked as a pre-order or backorder in HotWax Commerce.
+
+
+**Understanding use of SHOPIFY_PRODUCT_TAG**
+
+**Purpose**
+In this context, Shopify tags should be considered as indicators of pre-order or backorder products in HotWax Commerce.
+
+**Parameters**
+
+*   `mappedTypeId`: "SHOPIFY_PRODUCT_TAG"
+    *   This tells the function to look for mappings related to product tags in the `ShopifyShopTypeMapping` table.
+*   `mappedKey`: "ON_PRE_ORDER_PROD" or "ON_BACK_ORDER_PROD"
+    *   These are the specific Shopify product tags you're interested in. 
+
+**Logic**
+
+1.  **Mapping Lookup:** The `getShopifyTypeMappedValue` function queries the `ShopifyShopTypeMapping` table. It searches for rows where:
+    *   `mappedTypeId` is "SHOPIFY_PRODUCT_TAG"
+    *   `mappedKey` is either "ON_PRE_ORDER_PROD" or "ON_BACK_ORDER_PROD"
+
+2.  **Tag Retrieval:**  If matching rows are found, the function returns the corresponding `mappedValue` for each tag. These `mappedValue` strings are the tags that HotWax Commerce recognizes as indicating pre-order or backorder status.
+
+3.  **Order Item Status:** The retrieved tags are then used to determine the availability status of the order items in HotWax Commerce.
+
+    *   If a line item's product in Shopify has a tag that matches the mapped pre-order tag, the corresponding order item in HotWax Commerce is marked as a pre-order.
+    *   Similarly, if a line item's product has a tag matching the mapped backorder tag, the HotWax Commerce order item is marked as a backorder.
+
+**Example**
+
+Let's say your `ShopifyShopTypeMapping` table has these entries:
+
+| shopId   | mappedTypeId        | mappedKey            | mappedValue             |
+| -------- | ------------------- | -------------------- | ----------------------- |
+| "your-shop-id" | "SHOPIFY_PRODUCT_TAG" | "ON_PRE_ORDER_PROD" | "PreOrder"             |
+| "your-shop-id" | "SHOPIFY_PRODUCT_TAG" | "ON_BACK_ORDER_PROD"  | "BackOrder"   |
+
+In this scenario:
+
+*   If a Shopify product has the tag "ON_PRE_ORDER_PROD", the corresponding HotWax Commerce order item will be marked as a pre-order.
+*   If a Shopify product has the tag "ON_BACK_ORDER_PROD", the HotWax Commerce order item will be marked as a backorder.
 
