@@ -1,17 +1,17 @@
 ### **rejectShipmentItem** 
 
 **Purpose**
-The primary goal of the `rejectShipmentItem` service is to handle the rejection of a specific item within a shipment. This involves updating the shipment item's status, adjusting inventory levels, and potentially canceling associated order items.
+The primary goal of the `rejectShipmentItem` service is to handle the rejection of a specific item within a shipment. This involves cancelling  the shipment item, put the order items in the brokering queue and adjusting inventory levels.
 
 **Input Parameters**
 
 *   **`shipmentId` (String):** The ID of the shipment containing the item to be rejected.
 *   **`shipmentItemSeqId` (String):** The sequence ID of the specific item within the shipment.
 *   **`quantity` (BigDecimal):** The quantity of the item being rejected. If not provided, the entire quantity of the shipment item is assumed to be rejected.
-*   **`recordVariance` (String):** A flag ("Y" or "N") indicating whether to record an inventory variance for the rejected item.
+*   **`recordVariance` (String):** A flag ("Y" or "N") indicating whether to record an inventory variance for the rejected item. Default to "N".
 *   **`rejectionReasonId` (String):** The ID of the reason for the rejection (e.g., "DAMAGED," "INCORRECT_ITEM").
 *   **`rejectionComments` (String):** Additional comments about the rejection.
-*   **`setAutoCancelDate` (String):** A flag ("Y" or "N") indicating whether to automatically set a cancellation date for the associated order item.
+*   **`setAutoCancelDate` (String):** A flag ("Y" or "N") indicating whether to automatically set a cancellation date for the associated order item. Default to "N"
 *   **`excludeOrderFacilityDuration` (Integer):** An optional parameter used in calculating the cancellation date (if `setAutoCancelDate` is "Y").
 *   **`userLogin` (GenericValue):** The userLogin object representing the user performing the action.
 
@@ -26,7 +26,7 @@ This service is typically used when an item within a shipment is found to be uns
 
 **Workflow**
 
-1.  **Input Validation:** The service first validates the input parameters, ensuring that the `shipmentId` and `shipmentItemSeqId` are valid, and the `recordVariance` and `setAutoCancelDate` flags are either "Y" or "N."
+1.  **Input Validation:** The service first validates the input parameters, ensuring that the `shipmentId` and `shipmentItemSeqId` are valid.
 
 2.  **Fetch Shipment and Order Details:** It retrieves the `Shipment` and `OrderHeader` records associated with the given `shipmentId`.
 
