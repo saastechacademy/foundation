@@ -28,15 +28,13 @@ This service is typically used when an item within a shipment is found to be uns
 
 1.  **Input Validation:** The service first validates the input parameters, ensuring that the `shipmentId` and `shipmentItemSeqId` are valid.
 
-2.  **Fetch Shipment and Order Details:** It retrieves the `Shipment` and `OrderHeader` records associated with the given `shipmentId`.
+2.  **Fetch Shipment and Order Details:** It retrieves the `Shipment` and `OrderHeader` records associated with the given `shipmentId`. Lookup related OrderItem via, the OrderShipment entity. It holds relationship between ShipmentItem and OrderItem entity. 
 
 3.  **Handle Kit/Component Items:** If the rejected item is part of a kit, the service removes all associated order shipment records for the kit's components.
 
-4.  **Reject Order Item:** The service calls the `rejectOrderItem` service (not shown in the provided code) to handle the actual rejection of the order item. This likely involves updating the order item status, adjusting inventory levels, and potentially triggering other actions.
+4.  **Reject Order Item:** The service calls the `rejectOrderItem` service to handle the actual rejection of the order item. This likely involves updating the order item status, adjusting inventory levels, enquiuing the OrderItem for rebroketing or put it in the rejected orderItem queue.
 
 5.  **Record Inventory Variance (Optional):** If `recordVariance` is "Y," the service records an inventory variance to track the adjustment in inventory due to the rejection.
 
 6.  **Set Cancellation Date (Optional):** If `setAutoCancelDate` is "Y," the service calculates and sets a cancellation date for the associated order item.
-
-**Error Handling:** The service includes error handling to catch exceptions and return appropriate error messages.
 
