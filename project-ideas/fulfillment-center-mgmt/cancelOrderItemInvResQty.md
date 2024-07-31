@@ -1,3 +1,6 @@
+# We don't think this service. Instead use `deleteOrderItemShipGrpInvRes`
+
+
 ## cancelOrderItemInvResQty
 The `cancelOrderItemInvResQty` service in the Apache OFBiz framework is designed to handle the cancellation of inventory reservations associated with a specific order item. Inventory reservations are typically made when an order is placed to ensure that the required quantity of a product is available for fulfillment.
 
