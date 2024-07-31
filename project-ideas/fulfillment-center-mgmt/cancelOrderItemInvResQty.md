@@ -9,25 +9,14 @@ The primary goal of this service is to adjust inventory reservations and potenti
 
 1.  **Input Validation:** The service validates the input parameters, including `orderId`, `orderItemSeqId`, `shipGroupSeqId`, and `cancelQuantity`. It ensures that these parameters are valid and that the specified quantity to cancel doesn't exceed the reserved quantity.
 
-2.  **Fetch Order Item Ship Group Assoc:** It retrieves the `OrderItemShipGroupAssoc` record, which links the order item to its shipment group and contains information about the reserved inventory.
-
-3.  **Calculate New Reserved Quantity:** It calculates the new reserved quantity by subtracting the `cancelQuantity` from the existing `quantity` in the `OrderItemShipGroupAssoc` record.
-
-4.  **Update Order Item Ship Group Assoc:** It updates the `OrderItemShipGroupAssoc` record with the new reserved quantity.
-
 5.  **Release Inventory (If Applicable):**
     *   If the new reserved quantity is zero, it means the entire reservation for that order item is being canceled.
     *   In this case, the service calls the `deleteOrderItemShipGrpInvRes` service to remove the inventory reservation record (`OrderItemShipGrpInvRes`) associated with the order item. This effectively releases the reserved inventory back into the available pool.
 
-6.  **Success or Error:**
-    *   If all updates are successful, the service returns a success message.
-    *   If any errors occur during the process (e.g., invalid input, database issues), the service returns an error message.
 
 ### Key Points
 
-*   **Inventory Management:** This service plays a crucial role in maintaining accurate inventory levels by adjusting reservations based on order changes.
 *   **Service Chaining:** It interacts with other services like `deleteOrderItemShipGrpInvRes` to handle the actual deletion of inventory reservation records.
-*   **Error Handling:** It includes error handling to ensure data integrity and provide informative error messages.
 
 ```
     <simple-method method-name="cancelOrderItemInvResQty" short-description="Cancel Inventory Reservation Qty For An Item">
