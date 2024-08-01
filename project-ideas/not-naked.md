@@ -86,10 +86,27 @@ The NotNaked allows Omnichannel shopping experience where the,
     * Customer cancles Ship to home order within 10 mins of placing order (only if allowed on Shopify)
     * Customer returns 1 of many (e.g 3) ordered items on Shopify
     * Customer exchanges 1 of many (e.g 3) ordered items on Shopify
+    * Customer can place order for pre-orders and back-order items.
 
 
+Products Types sold by NotNaked
+NotNaked has curated list of products that meets their customer needs. The products in the catalog are best descripted by following four product types. 
 
+1) Finished goods
 
+2) Marketing packages 
+
+3) Digital 
+
+4) Services 
+
+Inventory policy 
+
+NotNaked accepts online order for inventory at 
+Warehouse
+Stores
+Pre-Order (new launch on order) 
+Back-order (polular products out of stock)
 
 
 
@@ -106,7 +123,7 @@ Prepare list of scenarios
                 If config allows to choose Product for BOPIS from givin Facility
         You are testing the system configuration.
         
-        How do we decide what to asset on?
+        How do we decide what to assert on?
         Starts with, What are we testing?
         In above example we are testing BOPIS configuration for a given client. We want to be sure that client system is configured to allow set of products for BOPIS order to be fulfilled from limited set of facilities/stores.
 
