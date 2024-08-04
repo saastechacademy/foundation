@@ -1,6 +1,10 @@
-Here's the content formatted in Markdown:
+#**OrderItemShipGrpInvRes**
+Reserve inventory for the OrderItem from fulfillment location. 
 
----
+## Workflow
+*  Create OrderItemShipGrpInvRes
+*  Create InventoryItemDetail
+*  Compute ATP and update ProductFacility table. 
 
 ## Data State Changes
 
@@ -52,4 +56,3 @@ Here's the content formatted in Markdown:
 | 10000   | 00001           | 00003          | 2101             | 7        |
 | 10000   | 00001           | 00004          | 2318             | 1        |
 
----
