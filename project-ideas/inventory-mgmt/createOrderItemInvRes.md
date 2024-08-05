@@ -58,12 +58,12 @@ Reserve inventory for the OrderItem from fulfillment location.
 
 
 **InventoryItemDetail**
-|inventoryItemDetailSeqId|| orderId | shipGroupSeqId | orderItemSeqId | inventoryItemId | availableToPromiseDiff |
-|-------------------------|---------|-----------------|----------------|----------------|---------------------------|
-| 36075                   | 10000   | 00001           | 00001          | 2001           | -1                        |
-| 36076                   | 10000   | 00001           | 00002          | 2004           | -1                        |
-| 36077                   | 10000   | 00001           | 00003          | 2101           | -1                        |
-| 36078                   | 10000   | 00001           | 00004          | 2318           | -1                        |
+|inventoryItemDetailSeqId|| orderId | shipGroupSeqId  | orderItemSeqId | inventoryItemId | availableToPromiseDiff |
+|-------------------------|---------|-----------------|----------------|---------------- |------------------------|
+| 36075                   | 10000   | 00001           | 00001          | 2001            | -1                     |
+| 36076                   | 10000   | 00001           | 00002          | 2004            | -1                     |
+| 36077                   | 10000   | 00001           | 00003          | 2101            | -1                     |
+| 36078                   | 10000   | 00001           | 00004          | 2318            | -1                     |
 
 
 
