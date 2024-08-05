@@ -1,14 +1,14 @@
-#**OrderItemShipGrpInvRes**
-Reserve inventory for the OrderItem from fulfillment location. 
+# **OrderItemShipGrpInvRes**
+Reserve inventory for the OrderItem from the fulfillment location. 
 
 ## Workflow
-*  Create OrderItemShipGrpInvRes
-*  Create InventoryItemDetail
-*  Compute ATP and update ProductFacility table. 
+- Create OrderItemShipGrpInvRes
+- Create InventoryItemDetail
+- Compute ATP and update ProductFacility table. 
 
 ## Data State Changes
 
-### Before Reservation Process:
+### Before Reservation Process
 
 **OrderHeader**
 | orderId | orderTypeId | statusId        |
@@ -26,9 +26,9 @@ Reserve inventory for the OrderItem from fulfillment location.
 **OrderItemShipGroup**
 | orderId | shipGroupSeqId | shipmentMethodTypeId | carrierPartyId | carrierRoleTypeId |
 |---------|-----------------|----------------------|----------------|-------------------|
-| 10000   | 00001           | PROIRITY             | USPS           | CARRIER           |
+| 10000   | 00001           | PRIORITY             | USPS           | CARRIER           |
 
-### After Reservation Process:
+### After Reservation Process
 
 **OrderHeader**
 | orderId | orderTypeId | statusId        |
@@ -46,7 +46,7 @@ Reserve inventory for the OrderItem from fulfillment location.
 **OrderItemShipGroup**
 | orderId | shipGroupSeqId | shipmentMethodTypeId | carrierPartyId | carrierRoleTypeId |
 |---------|-----------------|----------------------|----------------|-------------------|
-| 10000   | 00001           | PROIRITY             | USPS           | CARRIER           |
+| 10000   | 00001           | PRIORITY             | USPS           | CARRIER           |
 
 **OrderItemShipGrpInvRes**
 | orderId | shipGroupSeqId | orderItemSeqId | inventoryItemId | quantity |
@@ -56,15 +56,10 @@ Reserve inventory for the OrderItem from fulfillment location.
 | 10000   | 00001           | 00003          | 2101             | 1        |
 | 10000   | 00001           | 00004          | 2318             | 1        |
 
-
 **InventoryItemDetail**
-|inventoryItemDetailSeqId|| orderId | shipGroupSeqId  | orderItemSeqId | inventoryItemId | availableToPromiseDiff |
-|-------------------------|---------|-----------------|----------------|---------------- |------------------------|
-| 36075                   | 10000   | 00001           | 00001          | 2001            | -1                     |
-| 36076                   | 10000   | 00001           | 00002          | 2004            | -1                     |
-| 36077                   | 10000   | 00001           | 00003          | 2101            | -1                     |
-| 36078                   | 10000   | 00001           | 00004          | 2318            | -1                     |
-
-
-
-
+| inventoryItemDetailSeqId | orderId | shipGroupSeqId  | orderItemSeqId | inventoryItemId | availableToPromiseDiff |
+|--------------------------|---------|-----------------|----------------|---------------- |------------------------|
+| 36075                    | 10000   | 00001           | 00001          | 2001            | -1                     |
+| 36076                    | 10000   | 00001           | 00002          | 2004            | -1                     |
+| 36077                    | 10000   | 00001           | 00003          | 2101            | -1                     |
+| 36078                    | 10000   | 00001           | 00004          | 2318            | -1                     |
