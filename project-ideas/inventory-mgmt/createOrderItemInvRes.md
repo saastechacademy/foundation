@@ -18,9 +18,9 @@ Reserve inventory for the OrderItem from fulfillment location.
 **OrderItem**
 | orderId | orderItemSeqId | productId | quantity |
 |---------|-----------------|-----------|----------|
-| 10000   | 00001           | prod-01   | 4        |
-| 10000   | 00002           | prod-02   | 12       |
-| 10000   | 00003           | prod-03   | 7        |
+| 10000   | 00001           | prod-01   | 1        |
+| 10000   | 00002           | prod-02   | 1        |
+| 10000   | 00003           | prod-03   | 1        |
 | 10000   | 00004           | prod-04   | 1        |
 
 **OrderItemShipGroup**
@@ -38,9 +38,9 @@ Reserve inventory for the OrderItem from fulfillment location.
 **OrderItem**
 | orderId | orderItemSeqId | productId | quantity |
 |---------|-----------------|-----------|----------|
-| 10000   | 00001           | prod-01   | 4        |
-| 10000   | 00002           | prod-02   | 12       |
-| 10000   | 00003           | prod-03   | 7        |
+| 10000   | 00001           | prod-01   | 1        |
+| 10000   | 00002           | prod-02   | 1        |
+| 10000   | 00003           | prod-03   | 1        |
 | 10000   | 00004           | prod-04   | 1        |
 
 **OrderItemShipGroup**
@@ -51,8 +51,20 @@ Reserve inventory for the OrderItem from fulfillment location.
 **OrderItemShipGrpInvRes**
 | orderId | shipGroupSeqId | orderItemSeqId | inventoryItemId | quantity |
 |---------|-----------------|----------------|------------------|----------|
-| 10000   | 00001           | 00001          | 2001             | 4        |
-| 10000   | 00001           | 00002          | 2004             | 12       |
-| 10000   | 00001           | 00003          | 2101             | 7        |
+| 10000   | 00001           | 00001          | 2001             | 1        |
+| 10000   | 00001           | 00002          | 2004             | 1        |
+| 10000   | 00001           | 00003          | 2101             | 1        |
 | 10000   | 00001           | 00004          | 2318             | 1        |
+
+
+**InventoryItemDetail**
+|inventoryItemDetailSeqId|| orderId | shipGroupSeqId | orderItemSeqId | inventoryItemId | availableToPromiseDiff |
+|-------------------------|---------|-----------------|----------------|----------------|---------------------------|
+| 36075                   | 10000   | 00001           | 00001          | 2001           | -1                        |
+| 36076                   | 10000   | 00001           | 00002          | 2004           | -1                        |
+| 36077                   | 10000   | 00001           | 00003          | 2101           | -1                        |
+| 36078                   | 10000   | 00001           | 00004          | 2318           | -1                        |
+
+
+
 
