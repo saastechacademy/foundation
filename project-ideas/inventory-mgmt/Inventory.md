@@ -312,23 +312,6 @@ By leveraging these entities and their relationships, businesses can effectively
         *   **`comments`:** "Two units damaged during shipping" (additional details about the variance).
 
 
-### Workflow
 
-1.  **Fetch Shipment Details:** The service retrieves the shipment record from the database using the provided `shipmentId`.
-
-2.  **Fetch Order Item Ship Group:** It retrieves the associated `OrderItemShipGroup` record to determine the original `carrierPartyId` (the carrier responsible for the shipment) and `shipmentMethodTypeId` (the method of shipment).
-
-3.  **Update Shipment:**
-    *   The shipment's `statusId` is changed to `SHIPMENT_INPUT`.
-    *   The original `carrierPartyId` and `shipmentMethodTypeId` are restored to the shipment record.
-
-4.  **Update Shipment Route Segments:**
-    *   If the shipment has associated route segments (`ShipmentRouteSegment`), the service updates them as well.
-    *   The `shipmentMethodTypeId` and `carrierPartyId` of each route segment are set to the original values retrieved in step 2.
-
-
-*   The service focuses on resetting the shipment status and restoring original shipping details.
-*   It ensures consistency by updating both the shipment and its associated route segments.
-*   It provides a way to revert a shipment to an editable state for further modifications.
 
 
