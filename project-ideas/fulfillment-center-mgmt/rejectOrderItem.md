@@ -20,4 +20,24 @@ This section of the code handles the rejection of individual order items that ar
 
 *   **Targeted Rejection:** The service focuses on rejecting only the specified order item within the given ship group(s).
 *   **Inventory and Order Management:** It handles inventory reservation cancellations, facility changes, and order history updates.
-*   **Integration with Other Services:** It relies on other services like `cancelOrderItemInvResQty` and `createUpdateExternalFulfillmentOrderItem` to perform specific actions.
+*   **OrderFacilityChange:** Record changes between an orderItem and its fulfillment facilityit. It might trigger a need to re-evaluate the order's fulfillment at the current facility.
+
+```
+OrderFacilityChange.
+if (naFacilityId.equals(orderShipGroup.get("oisgFacilityId"))) {
+                        serviceCtx.put("orderId", orderId);
+                        serviceCtx.put("orderItemSeqId", orderItemSeqId);
+                        serviceCtx.put("fromFacilityId", oisgFacilityId);
+                        serviceCtx.put("facilityId", naFacilityId);
+                        serviceCtx.put("shipGroupSeqId", shipGroupSeqId);
+                        serviceCtx.put("changeReasonEnumId", "NOT_IN_STOCK"); // deduce based on rejection reason. Or just map to rejection reason.
+                        StringBuilder comment = new StringBuilder("[Store Rejected] ");
+                        if(facility != null && UtilValidate.isNotEmpty(facility.getString("facilityName")))
+                            comment.append("[Rejected from ").append(facility.getString("facilityName")).append("]");
+                        serviceCtx.put("comments", comment.toString());
+                        serviceCtx.put("changeUserLogin", userLogin.getString("userLoginId"));
+                        serviceCtx.put("changeDatetime", UtilDateTime.nowTimestamp());
+                        serviceCtx.put("userLogin", userLogin);
+                        serviceCtx.put("routerUserLogin", userLogin.getString("userLoginId"));
+                        serviceResult = dispatcher.runSync("createOrderFacilityChange", serviceCtx);
+```
