@@ -1,4 +1,4 @@
-# API Design for Inventory Management Application in Apache OFBiz
+# Design notes Inventory Management Application
   
 ## The Core Entities Used for Modeling Inventory
 
@@ -326,7 +326,6 @@ By leveraging these entities and their relationships, businesses can effectively
     *   If the shipment has associated route segments (`ShipmentRouteSegment`), the service updates them as well.
     *   The `shipmentMethodTypeId` and `carrierPartyId` of each route segment are set to the original values retrieved in step 2.
 
-### Key Points
 
 *   The service focuses on resetting the shipment status and restoring original shipping details.
 *   It ensures consistency by updating both the shipment and its associated route segments.
