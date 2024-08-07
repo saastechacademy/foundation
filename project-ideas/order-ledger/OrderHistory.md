@@ -6,10 +6,12 @@ OrderFacilityChange is responsible for recording logs of facility change in orde
 Data in both tables are similar, but only in the case of brokering.
 
 So in an event like item rejection from fulfillment, entries in both table are made. 
+*  Record in OrderHistory is made because its an event in order's life cycle that order was rejected after brokering. 
+*  Record in OrderFacilityChange is made because, facility of an order is changed after rejection.
 
-Record in OrderHistory is made because its an event in order's life cycle that order was rejected after brokering. 
-
-And record in OrderFacilityChange is made because, facility of an order is changed after rejection.
+Similarly when order is brokered, entries are made in both table, because order is brokered:
+*  that is an event in order's lifecycle and when order itemis brokered
+*  facility of an order is also changed.
 
 
 ```
