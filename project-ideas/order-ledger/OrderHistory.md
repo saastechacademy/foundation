@@ -1,6 +1,7 @@
 
 **OrderHistory** 
-  Entity keeps logs of order's lifecycle events. 
+  Entity keeps logs of order's lifecycle events.
+  
 **OrderFacilityChange**
   Entity keeps logs of fulfillment facility change in order's lifecycle.
 
