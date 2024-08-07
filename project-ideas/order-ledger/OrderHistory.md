@@ -12,7 +12,7 @@ Record in OrderHistory is made because its an event in order's life cycle that o
 And record in OrderFacilityChange is made because, facility of an order is changed after rejection.
 
 
-```markdown
+```
 | Enum Id         | Enum Type Id       | Enum Code  | Enum Name           | Description        |
 |-----------------|--------------------|------------|---------------------|---------------------|
 | view            | ITEM_BKD_REJECTED  | ORDER_EVENT_TYPE | Brokering Rejected  |                    |
@@ -21,7 +21,7 @@ And record in OrderFacilityChange is made because, facility of an order is chang
 | view            | ITEM_SHIPPED       | ORDER_EVENT_TYPE | Shipped             |                    |
 ```
 
-```markdown
+```
 | Enum Id | Enum Type Id         | Enum Code         | Enum Name              | Description                      |
 |---------|----------------------|-------------------|------------------------|----------------------------------|
 | view    | BROKERED             | BROKERING_REASN_TYPE | Brokered              |                                  |
