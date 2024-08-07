@@ -1,9 +1,8 @@
 
-OrderHistory table is responsible for recording logs of order's lifecycle. 
-
-OrderFacilityChange is responsible for recording logs of facility change in order's lifecycle.
-
-Data in both tables are similar, but only in the case of brokering.
+**OrderHistory** 
+  Entity keeps logs of order's lifecycle events. 
+**OrderFacilityChange**
+  Entity keeps logs of fulfillment facility change in order's lifecycle.
 
 So in an event like item rejection from fulfillment, entries in both table are made. 
 *  Record in OrderHistory is made because its an event in order's life cycle that order was rejected after brokering. 
