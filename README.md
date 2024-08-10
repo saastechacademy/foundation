@@ -23,8 +23,14 @@ The skillset includes skills in following categories
 
 
 ## Business Processes
+*  [Universal Business Process Library](https://www.moqui.org/m/docs/mantle/Business+Process+Library)
+*  [Story of Online Retail Company](https://www.moqui.org/m/docs/mantle/Business%20Process%20Library/Story%20of%20Online%20Retail%20Company)
 
-3. First five chapters of the book: The Data Model Resource Book, Vol. 1
+
+## Data Modeling
+*  [What is data modeling?](https://www.ibm.com/topics/data-modeling)
+*  Universal Data Model, First five chapters of the book: The Data Model Resource Book, Vol. 1
+ 
 4. https://github.com/saastechacademy/foundation/tree/main/cs-fundamentals#dbms-basics
 5. https://github.com/saastechacademy/foundation/tree/main/udm
 6. https://github.com/saastechacademy/foundation/tree/main/ubpl
