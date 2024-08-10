@@ -1,13 +1,35 @@
-## Getting Started
+#What?
+Learn building business automation sofware. 
 
-### Fundamentals
-1. https://www.scaler.com/topics/git/ 
-2. First five chapters of the book: The Data Model Resource Book, Vol. 1
-3. https://github.com/saastechacademy/foundation/tree/main/cs-fundamentals#dbms-basics
-4. https://github.com/saastechacademy/foundation/tree/main/udm
-5. https://github.com/saastechacademy/foundation/tree/main/ubpl
+The skillset includes skills in following categories 
+*  Sotware Development
+*  System Design
+*  Business processes
+*  Data Modeling
+*  Process engineering
 
-### UDM Basics
+## Software Development Fundamentals
+
+### RCS
+* [Git](https://www.scaler.com/topics/git/)
+
+### Databases
+* [DBMS](https://www.scaler.com/topics/dbms/)
+* [SQL](https://www.scaler.com/topics/sql/)
+* [MySQL](https://www.scaler.com/topics/course/sql-using-mysql-course/)
+
+### Programming Languages 
+* [Java](https://www.scaler.com/topics/java/)
+
+
+## Business Processes
+
+3. First five chapters of the book: The Data Model Resource Book, Vol. 1
+4. https://github.com/saastechacademy/foundation/tree/main/cs-fundamentals#dbms-basics
+5. https://github.com/saastechacademy/foundation/tree/main/udm
+6. https://github.com/saastechacademy/foundation/tree/main/ubpl
+
+## UDM Basics
 1. https://github.com/saastechacademy/foundation/blob/main/udm/beginner/party.md
 2. https://github.com/saastechacademy/foundation/blob/main/udm/beginner/contact-mech.md
 3. https://github.com/saastechacademy/foundation/blob/main/udm/beginner/activity.md#party-data-model
@@ -19,7 +41,7 @@
 9. https://github.com/saastechacademy/foundation/blob/main/udm/beginner/order.md
 10. https://github.com/saastechacademy/foundation/blob/main/udm/beginner/activity.md#order
 
-### SQL Assignments
+## SQL Assignments
 1. https://github.com/saastechacademy/foundation/blob/main/udm/intermediate/sql-assignment-1.md
 2. https://github.com/saastechacademy/foundation/blob/main/udm/intermediate/sql-assignment-2.md
 3. https://github.com/saastechacademy/foundation/blob/main/udm/intermediate/sql-assignment-3.md
