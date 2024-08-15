@@ -5,7 +5,7 @@ The goal of this task is to examine the existing design of our Universal Data Mo
 
 **Assignment:**
 
-1. **Review the Data Model:** Start by studying the current Universal Data Model used at HotWax Systems. Pay close attention to how the data is structured and organized.
+1. **Review the Data Model:** Start by studying the Universal Data Model. Pay close attention to how the data is structured and organized.
 
 2. **Focus on Type Entities:** Specifically analyze the “type” entities within the data model. These entities often categorize other data and play a crucial role in the model's flexibility and scalability.
 
