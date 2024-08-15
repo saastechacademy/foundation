@@ -31,9 +31,19 @@ The skillset includes skills in following categories
 *  [What is data modeling?](https://www.ibm.com/topics/data-modeling)
 *  Universal Data Model, First five chapters of the book: The Data Model Resource Book, Vol. 1
  
-4. https://github.com/saastechacademy/foundation/tree/main/cs-fundamentals#dbms-basics
-5. https://github.com/saastechacademy/foundation/tree/main/udm
-6. https://github.com/saastechacademy/foundation/tree/main/ubpl
+* https://github.com/saastechacademy/foundation/tree/main/cs-fundamentals#dbms-basics
+* https://github.com/saastechacademy/foundation/tree/main/udm
+* https://github.com/saastechacademy/foundation/tree/main/ubpl
+
+### Data Modeling activities 
+
+* https://github.com/saastechacademy/foundation/blob/main/udm/intermediate/activity-design-cdp.md
+* https://github.com/saastechacademy/foundation/blob/main/udm/intermediate/activity-design-fulfillment.md
+* https://github.com/saastechacademy/foundation/blob/main/udm/intermediate/activity-design-order.md
+* https://github.com/saastechacademy/foundation/blob/main/udm/intermediate/activity-design-pim.md
+
+**Resources**
+* https://github.com/saastechacademy/foundation/tree/main/udm/intermediate/shopify-samples
 
 ## UDM Basics
 1. https://github.com/saastechacademy/foundation/blob/main/udm/beginner/party.md
