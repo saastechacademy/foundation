@@ -20,3 +20,6 @@
 
 *  https://github.com/saastechacademy/foundation/blob/main/udm/beginner/order.md
 
+## Activites
+
+*  https://github.com/saastechacademy/foundation/blob/main/udm/beginner/activity.md
