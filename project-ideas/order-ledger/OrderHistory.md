@@ -5,13 +5,16 @@
 ## **OrderFacilityChange**
   Entity keeps logs of fulfillment facility change in order's lifecycle.
 
-So in an event like item rejection from fulfillment, entries in both table are made. 
-*  Record in OrderHistory is made because its an event in order's life cycle that order was rejected after brokering. 
-*  Record in OrderFacilityChange is made because, facility of an order is changed after rejection.
+### Use Scenarios
 
-Similarly when order is brokered, entries are made in both table, because order is brokered:
-*  that is an event in order's lifecycle and when order itemis brokered
-*  facility of an order is also changed.
+1. **Event: Item Rejection from Fulfillment**
+    - A record in `OrderHistory` is made because it's an event in the order's lifecycle; the order was rejected after brokering.
+    - A record in `OrderFacilityChange` is made because the facility of the order is changed after rejection.
+
+2. **Event: Order Brokering**
+    - Entries are made in both tables because the order is brokered:
+        - This is an event in the order's lifecycle when the order item is brokered.
+        - The facility of the order is also changed.
 
 
 ```
