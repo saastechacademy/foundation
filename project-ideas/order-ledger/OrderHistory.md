@@ -1,8 +1,8 @@
 
-**OrderHistory** 
+## **OrderHistory** 
   Entity keeps logs of order's lifecycle events.
   
-**OrderFacilityChange**
+## **OrderFacilityChange**
   Entity keeps logs of fulfillment facility change in order's lifecycle.
 
 So in an event like item rejection from fulfillment, entries in both table are made. 
