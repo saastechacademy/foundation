@@ -1,8 +1,8 @@
 # Customer Data Platform
 
-## Define Customer Data Platform?
+## Define Customer Data Platform.
 
-## Design Data Model 
+## Design Data Model
 
 ## Create mapping with Shopify Customer API.
 
