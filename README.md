@@ -1,7 +1,7 @@
 # What?
 Learn building business automation sofware. 
 
-The skillset includes skills in following categories 
+Build skills in following categories 
 *  Sotware Development
 *  System Design
 *  Business processes
