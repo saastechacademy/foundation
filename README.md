@@ -30,10 +30,8 @@ Build skills in following categories
 ## Data Modeling
 *  [What is data modeling?](https://www.ibm.com/topics/data-modeling)
 *  Universal Data Model, First five chapters of the book: The Data Model Resource Book, Vol. 1
- 
-* https://github.com/saastechacademy/foundation/tree/main/cs-fundamentals#dbms-basics
-* https://github.com/saastechacademy/foundation/tree/main/udm
-* https://github.com/saastechacademy/foundation/tree/main/ubpl
+*  https://github.com/saastechacademy/foundation/tree/main/udm
+*  https://github.com/saastechacademy/foundation/tree/main/ubpl
 
 ### Data Modeling activities 
 
