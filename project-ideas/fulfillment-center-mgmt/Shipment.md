@@ -61,10 +61,7 @@
     *   `orderItemSeqId`: Sequence ID of the order item.
     *   `shipGroupSeqId`:  Sequence ID of the shipment group within the order.
 
-7.  **OrderItemShipGroupAssoc:**
-    *   This entity seems to associate order items with shipment groups, but the XML data doesn't provide additional details. We'll keep the existing definition.
-
-8.  **ItemIssuance:**
+7.  **ItemIssuance:**
     *   ItemIssuance ID (Primary Key)
     *   ShipmentItem ID (Foreign Key referencing ShipmentItem entity)
     *   Quantity
@@ -87,9 +84,8 @@
 *   The `ShipmentStatus` data demonstrates how the status of a shipment changes over time, as captured in multiple entries for the same `shipmentId`. 
 
 ```
-
-
 <ShipmentType createdStamp="2024-06-13 09:38:33.061" createdTxStamp="2024-06-13 09:38:32.542" description="Sales Shipment" hasTable="N" lastUpdatedStamp="2024-06-13 09:38:33.061" lastUpdatedTxStamp="2024-06-13 09:38:32.542" parentTypeId="OUTGOING_SHIPMENT" shipmentTypeId="SALES_SHIPMENT"/>
+
 <Shipment carrierPartyId="_NA_" createdByUserLogin="hotwax.user" createdDate="2024-06-26 01:57:03.815" createdStamp="2024-06-26 01:57:03.815" createdTxStamp="2024-06-26 01:57:03.804" destinationContactMechId="11825" estimatedShipCost="0.00" lastModifiedByUserLogin="hotwax.user" lastModifiedDate="2024-06-26 01:57:03.936" lastUpdatedStamp="2024-06-26 01:57:03.936" lastUpdatedTxStamp="2024-06-26 01:57:03.804" originContactMechId="10005" originFacilityId="RIVERDALE" partyIdFrom="COMPANY" partyIdTo="10295" primaryOrderId="10203" primaryShipGroupSeqId="00001" shipmentId="10013" shipmentMethodTypeId="STANDARD" shipmentTypeId="SALES_SHIPMENT" statusId="SHIPMENT_SHIPPED"/>
 
 <ShipmentStatus changeByUserLoginId="hotwax.user" createdStamp="2024-06-26 01:57:03.901" createdTxStamp="2024-06-26 01:57:03.901" lastUpdatedStamp="2024-06-26 01:57:03.901" lastUpdatedTxStamp="2024-06-26 01:57:03.901" shipmentId="10013" shipmentStatusId="10051" statusDate="2024-06-26 01:57:03.901" statusId="SHIPMENT_INPUT"/>
@@ -108,9 +104,6 @@
 
 <OrderShipment createdStamp="2024-06-26 01:57:03.92" createdTxStamp="2024-06-26 01:57:03.901" lastUpdatedStamp="2024-06-26 01:57:03.92" lastUpdatedTxStamp="2024-06-26 01:57:03.901" orderId="10203" orderItemSeqId="00102" quantity="1.000000" shipGroupSeqId="00001" shipmentId="10013" shipmentItemSeqId="00002"/>
 <OrderShipment createdStamp="2024-06-26 01:57:03.887" createdTxStamp="2024-06-26 01:57:03.804" lastUpdatedStamp="2024-06-26 01:57:03.887" lastUpdatedTxStamp="2024-06-26 01:57:03.804" orderId="10203" orderItemSeqId="00101" quantity="1.000000" shipGroupSeqId="00001" shipmentId="10013" shipmentItemSeqId="00001"/>
-
-<OrderItemShipGroupAssoc createdStamp="2024-06-26 01:52:08.586" createdTxStamp="2024-06-26 01:52:08.49" lastUpdatedStamp="2024-06-26 01:52:08.586" lastUpdatedTxStamp="2024-06-26 01:52:08.49" orderId="10203" orderItemSeqId="00101" quantity="1.000000" shipGroupSeqId="00001"/>
-<OrderItemShipGroupAssoc createdStamp="2024-06-26 01:52:08.587" createdTxStamp="2024-06-26 01:52:08.49" lastUpdatedStamp="2024-06-26 01:52:08.587" lastUpdatedTxStamp="2024-06-26 01:52:08.49" orderId="10203" orderItemSeqId="00102" quantity="1.000000" shipGroupSeqId="00001"/> 
 
 <ItemIssuance createdStamp="2024-06-26 01:57:03.972" createdTxStamp="2024-06-26 01:57:03.804" inventoryItemId="21850" issuedByUserLoginId="hotwax.user" issuedDateTime="2024-06-26 01:57:03.972" itemIssuanceId="10004" lastUpdatedStamp="2024-06-26 01:57:03.972" lastUpdatedTxStamp="2024-06-26 01:57:03.804" orderId="10203" orderItemSeqId="00101" quantity="1.000000" shipGroupSeqId="00001" shipmentId="10013" shipmentItemSeqId="00001"/> 
 <ItemIssuance createdStamp="2024-06-26 01:57:04.054" createdTxStamp="2024-06-26 01:57:03.804" inventoryItemId="21070" issuedByUserLoginId="hotwax.user" issuedDateTime="2024-06-26 01:57:04.054" itemIssuanceId="10005" lastUpdatedStamp="2024-06-26 01:57:04.054" lastUpdatedTxStamp="2024-06-26 01:57:03.804" orderId="10203" orderItemSeqId="00102" quantity="1.000000" shipGroupSeqId="00001" shipmentId="10013" shipmentItemSeqId="00002"/>
