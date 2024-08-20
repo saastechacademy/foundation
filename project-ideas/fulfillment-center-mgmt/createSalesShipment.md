@@ -19,6 +19,13 @@
     "estimatedReadyDate": "2024-07-15 10:00:00",
     "estimatedShipDate": "2024-07-16 14:30:00",
     "estimatedArrivalDate": "2024-07-20 16:45:00",
+    "shipmentItems": [ 
+        {
+            "productId": "(Optional) String - Product ID",
+            "sku": "(Optional) String - Product SKU",
+            "quantity": "Number - Quantity of the product"
+        }
+    ],
     "shipmentPackage": {
          "shipmentPackageSeqId": "00001",
          "boxTypeId": "YOURPACKNG",
@@ -28,13 +35,28 @@
          "boxLength": 12,
          "boxHeight": 8,
          "boxWidth": 10,
-     }
+         "shipmentPackageContents": [
+                {
+                    "shipmentItemSeqId": "00001",
+                    "quantity": 1
+                }
+            ]
+         },
     "shipmentRouteSegments": [
         {
             "shipmentRouteSegmentId": "00001",
             "originFacilityId": "WAREHOUSE_A",
             "destinationFacilityId": "HUB_B",
             "estimatedArrival": "2024-07-17 09:00:00"
+        }
+    ],
+    "orderShipments":[
+        {
+            orderId: "OR12345",
+            orderItemSeqId: "001",
+            shipGroupSeqId: "001",
+            shipmentId: "",
+            shipmentItemSeqId: ""
         }
     ]
 }
@@ -88,12 +110,12 @@
     *   **Postal Address:** If provided, the postal address ID (`id`) or external ID (`externalId`) must be valid.
     *   **Phone Number:** If provided, the phone number ID (`id`) or external ID (`externalId`) must be valid.
 
-11. **Items (items):**
+11. **Items (shipmentItems):**
 
     *   **Product Identification:** For each item, either `productId` or `sku` is required.
     *   **Product/SKU Validity:** The provided `productId` or `sku` must exist in the `Product` entity.
 
-12. **Packages (packages):**
+12. **Package (shipmentPackage):**
 
     *   **Package Details:** For each package, validations are performed for:
         *   `dimensionUomId`: Must be a valid unit of measurement for length.
@@ -102,6 +124,14 @@
         *   `boxLength`, `boxHeight`, `boxWidth`, `weight`: If provided, must be convertible to BigDecimal.
 
     *   **Package Items:** If `items` are included within a package, the same validations as for the top-level `items` list are applied.
+
+13. **OrderShipmentItems (OrderShipments):**
+
+    *   **OrderId:** For each item, `orderId`.
+    *   **OrderItemSeqid:** 
+    *   **ShipGroupSeqId:**
+    *   **ShipmentId**
+    *   **ShipmentItemSeqId**
 
 **Additional Considerations:**
 
