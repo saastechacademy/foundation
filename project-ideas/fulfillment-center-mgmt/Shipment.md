@@ -70,6 +70,29 @@
     *   `issuedByUserLoginId`: The user who issued the item.
     *   `issuedDateTime`: Date and time the item was issued.
 
+**Status Definitions**
+
+8.   **StatusItem:**
+    *   Defines the individual statuses a shipment can have.
+    *   Attributes:
+        *   `description`: Human-readable description of the status.
+        *   `sequenceId`:  Likely used for ordering the statuses.
+        *   `statusCode`: A short code for the status (e.g., "APPROVED").
+        *   `statusId`: A unique identifier for the status (e.g., "SHIPMENT_APPROVED").
+        *   `statusTypeId`: Identifies the type of status ("SHIPMENT_STATUS" for shipment statuses).
+
+**Valid Status Changes**
+
+9.   **StatusValidChange:**
+    *   Defines allowed transitions between statuses.
+    *   Attributes:
+        *   `statusId`: The initial status.
+        *   `statusIdTo`: The status the shipment can transition to.
+        *   `transitionName`: A name for the transition (e.g., "Pack").
+        *   `sequenceNum`: (Optional) A number indicating the order of valid transitions for a status.
+        *   `conditionExpression`: (Optional) A conditional expression that must be true for the transition to be allowed.
+
+
 **Relationships:**
 
 *   A **Shipment** has one **ShipmentType**, one **ShipmentStatus**, and many **ShipmentItems**, **ShipmentPackages**, and **ShipmentRouteSegments**.
@@ -80,7 +103,6 @@
 **Additional Notes**
 
 *   The provided XML confirms the existence of the `ShipmentType` entity with "SALES_SHIPMENT" as a type.
-
 *   The `ShipmentStatus` data demonstrates how the status of a shipment changes over time, as captured in multiple entries for the same `shipmentId`. 
 
 ```
@@ -109,5 +131,37 @@
 <ItemIssuance createdStamp="2024-06-26 01:57:04.054" createdTxStamp="2024-06-26 01:57:03.804" inventoryItemId="21070" issuedByUserLoginId="hotwax.user" issuedDateTime="2024-06-26 01:57:04.054" itemIssuanceId="10005" lastUpdatedStamp="2024-06-26 01:57:04.054" lastUpdatedTxStamp="2024-06-26 01:57:03.804" orderId="10203" orderItemSeqId="00102" quantity="1.000000" shipGroupSeqId="00001" shipmentId="10013" shipmentItemSeqId="00002"/>
 
 ```
+
+### **Shipment Status Workflow**
+
+1.  **Initial Status:**  A shipment starts in the `SHIPMENT_INPUT` status (Created).
+
+2.  **Possible Transitions:**
+    *   From `SHIPMENT_INPUT`:
+        *   It can be Scheduled (`SHIPMENT_SCHEDULED`), Picked (`SHIPMENT_PICKED`), or Packed (`SHIPMENT_PACKED`).
+        *   It can also be Canceled (`SHIPMENT_CANCELLED`) or Approved (`SHIPMENT_APPROVED`).
+
+    *   From `SHIPMENT_APPROVED`:
+        *   It can be Packed (`SHIPMENT_PACKED`), Shipped (`SHIPMENT_SHIPPED`), or Cancelled (`SHIPMENT_CANCELLED`).
+
+    *   From `SHIPMENT_SCHEDULED`:
+        *   It can be Picked (`SHIPMENT_PICKED`), Packed (`SHIPMENT_PACKED`), or Cancelled (`SHIPMENT_CANCELLED`).
+
+    *   From `SHIPMENT_PICKED`:
+        *   It can be Packed (`SHIPMENT_PACKED`) or Cancelled (`SHIPMENT_CANCELLED`).
+
+    *   From `SHIPMENT_PACKED`:
+        *   It can be Shipped (`SHIPMENT_SHIPPED`), Cancelled (`SHIPMENT_CANCELLED`), or moved back to Input (`SHIPMENT_INPUT`) under certain conditions.
+
+    *   From `SHIPMENT_SHIPPED`:
+        *   It can be Delivered (`SHIPMENT_DELIVERED`).
+
+**Conditions and Rules**
+
+*   Some transitions have conditional expressions:
+    *   `directStatusChange == false`: This suggests that some transitions can only happen indirectly (through other intermediate statuses) and cannot be directly changed by the user.
+
+**References**
+*   Shipment and related entities can be found in Data model resource book vol -1 , Chapter - 5. 
 
 
