@@ -29,60 +29,6 @@
 *   Detail integration with Order Management System.
 
 
-### **Shipment Status Workflow Analysis**
-
-The XML defines the statuses a shipment can go through, the valid transitions between these statuses, and additional rules for the transitions.
-
-**Status Definitions**
-
-*   **StatusItem:**
-    *   Defines the individual statuses a shipment can have.
-    *   Attributes:
-        *   `description`: Human-readable description of the status.
-        *   `sequenceId`:  Likely used for ordering the statuses.
-        *   `statusCode`: A short code for the status (e.g., "APPROVED").
-        *   `statusId`: A unique identifier for the status (e.g., "SHIPMENT_APPROVED").
-        *   `statusTypeId`: Identifies the type of status ("SHIPMENT_STATUS" for shipment statuses).
-
-**Valid Status Changes**
-
-*   **StatusValidChange:**
-    *   Defines allowed transitions between statuses.
-    *   Attributes:
-        *   `statusId`: The initial status.
-        *   `statusIdTo`: The status the shipment can transition to.
-        *   `transitionName`: A name for the transition (e.g., "Pack").
-        *   `sequenceNum`: (Optional) A number indicating the order of valid transitions for a status.
-        *   `conditionExpression`: (Optional) A conditional expression that must be true for the transition to be allowed.
-
-**Interpreting the Workflow**
-
-1.  **Initial Status:**  A shipment starts in the `SHIPMENT_INPUT` status (Created).
-
-2.  **Possible Transitions:**
-    *   From `SHIPMENT_INPUT`:
-        *   It can be Scheduled (`SHIPMENT_SCHEDULED`), Picked (`SHIPMENT_PICKED`), or Packed (`SHIPMENT_PACKED`).
-        *   It can also be Canceled (`SHIPMENT_CANCELLED`) or Approved (`SHIPMENT_APPROVED`).
-
-    *   From `SHIPMENT_APPROVED`:
-        *   It can be Packed (`SHIPMENT_PACKED`), Shipped (`SHIPMENT_SHIPPED`), or Cancelled (`SHIPMENT_CANCELLED`).
-
-    *   From `SHIPMENT_SCHEDULED`:
-        *   It can be Picked (`SHIPMENT_PICKED`), Packed (`SHIPMENT_PACKED`), or Cancelled (`SHIPMENT_CANCELLED`).
-
-    *   From `SHIPMENT_PICKED`:
-        *   It can be Packed (`SHIPMENT_PACKED`) or Cancelled (`SHIPMENT_CANCELLED`).
-
-    *   From `SHIPMENT_PACKED`:
-        *   It can be Shipped (`SHIPMENT_SHIPPED`), Cancelled (`SHIPMENT_CANCELLED`), or moved back to Input (`SHIPMENT_INPUT`) under certain conditions.
-
-    *   From `SHIPMENT_SHIPPED`:
-        *   It can be Delivered (`SHIPMENT_DELIVERED`).
-
-**Conditions and Rules**
-
-*   Some transitions have conditional expressions:
-    *   `directStatusChange == false`: This suggests that some transitions can only happen indirectly (through other intermediate statuses) and cannot be directly changed by the user.
 
 **Diagrammatic Representation**
 [Image of a state diagram illustrating the shipment status workflow]
