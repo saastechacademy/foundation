@@ -235,61 +235,6 @@ Prepare data for creating a new `Shipment` entity in the database. Let's break d
     *   **Significance:** Estimated dates for arrival, readiness, and shipping.
     *   **Rule:** Included only if provided in the input and converted to Timestamp objects.
 
-
-Enforce constraints on when the status of a shipment can be changed. Prevent invalid status transitions, particularly those that would revert a shipment to an earlier stage after it has reached specific milestones.
-
-**Requirement**
-
-1. **Scenario 1:** If the desired transition is from any status to "SHIPMENT_SHIPPED" and the current status of the `testShipment` is already "SHIPMENT_SHIPPED," the transition is not allowed.
-
-2. **Scenario 2:** If the desired transition is from any status to "SHIPMENT_DELIVERED" and the current status of the `testShipment` is already "SHIPMENT_SHIPPED" or "SHIPMENT_DELIVERED," the transition is not allowed.
-
-**How It Helps Manage Shipment Data**
-
-*   **Prevents Invalid Transitions:** The method enforces business rules that prevent a shipment from moving backward in its lifecycle. Once a shipment is shipped or delivered, it shouldn't be possible to change its status to something that implies it's still in the warehouse.
-
-*   **Data Integrity:** By restricting invalid status changes, the method helps maintain the integrity of the shipment data. It ensures that the status accurately reflects the shipment's progress.
-
-*   **User Guidance:** The error message provides feedback to the user, explaining why the requested operation is not allowed. This helps users understand the system's constraints and make appropriate decisions.
-
-**Example**
-
-Let's say a user tries to change the status of a shipment that's already been marked as "Shipped" back to "Packed." Detect invalid transition, generate an error message like "Cannot perform operation Pack when the shipment is in the Shipped status," and add it to the `error_list`. This prevents the invalid status change and informs the user of the reason.
-
-
-**Set originContactMechId based on originFacilityId**
-
-1.  **Set Origin Information:**
-    *   If the `originFacilityId` is present in the shipment:
-        *   If `originContactMechId` is empty, it finds a contact mechanism associated with the origin facility with the purpose "PRIMARY_LOCATION" or "SHIP_ORIG_LOCATION" and sets it as the `originContactMechId`.
-        *   If `originTelecomNumberId` is empty, it finds a contact mechanism associated with the origin facility with the purpose "PRIMARY_PHONE" and sets it as the `originTelecomNumberId`.
-
-**How It Helps Manage Shipment Data**
-
-*   **Automation:** The method automates the process of filling in missing contact and telecom information, saving time and reducing manual effort.
-*   **Data Completeness:** It ensures that shipments have complete contact information for both origin and destination, which is crucial for communication and tracking.
-*   **Accuracy:** By deriving information directly from the associated facilities, it reduces the risk of errors in manually entering contact details.
-*   **Efficiency:** The method only updates the shipment if changes were made, avoiding unnecessary database writes.
-
-**Update shipment details based on the primary order associated with it**
-
-3.  **Set Party Information (From/To):**
-    *   Fetche `OrderRole` entities associated with the order.
-    *   If `partyIdFrom` (the party shipping the goods) is not set, try to find it from the order roles with the "SHIP_FROM_VENDOR" role types.
-    *   If `partyIdTo` (the party receiving the goods) is not set, try to find it from the order roles with the "SHIP_TO_CUSTOMER" or "CUSTOMER" role types.
-
-4.  **Set Contact Information:**
-    *   Fetche `OrderContactMech` entities associated with the order.
-    *   If `destinationContactMechId` (shipping address) is not set, it tries to find it from the order contact mechanisms with the "SHIPPING_LOCATION" purpose.
-    *   If `originContactMechId` is not set, it tries to find it from the order contact mechanisms with the "SHIP_ORIG_LOCATION" purpose.
-    *   Similary set `destinationTelecomNumberId` and `originTelecomNumberId` (phone numbers).
-
-5.  **Handle Special Case for Store Pickup:**
-    *   If the order is a "SALES_ORDER" and the shipment method is "STOREPICKUP," the `destinationContactMechId` is set to the same value as `originContactMechId`.
-
-6. **Create Shipment Route Segment:**
-    *   If no `ShipmentRouteSegment` exists for the shipment, it create one using the gathered information (origin/destination facilities, contact mechanisms, shipping method, carrier, etc.).
-
 **Prepare data for ShipmentItem**
 
 1.  **Extraction of Item Details:**
