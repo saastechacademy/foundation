@@ -52,11 +52,11 @@
     ],
     "orderShipments":[
         {
-            orderId: "OR12345",
-            orderItemSeqId: "001",
-            shipGroupSeqId: "001",
-            shipmentId: "",
-            shipmentItemSeqId: ""
+            "orderId": "OR12345",
+            "orderItemSeqId": "001",
+            "shipGroupSeqId": "001",
+            "shipmentId": "",
+            "shipmentItemSeqId": ""
         }
     ]
 }
