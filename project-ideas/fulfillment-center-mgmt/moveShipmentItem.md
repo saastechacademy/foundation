@@ -7,7 +7,7 @@ This is API method is part of the order fulfillment applications facade.
 The primary goal of the `moveShipmentItem` service is to transfer a specific item from one shipment to another within the same order. This is useful in scenarios where items need to be rearranged or consolidated during the fulfillment process.
 
 **Context**
-*  Shipment allows adding or removeing ShipmentItem when it is in SHIPMENT_INPUT status.
+*  Shipment allows adding or removing ShipmentItem when it is in SHIPMENT_INPUT status.
 *  An Order can have one or more Shipments
 *  An OrderItem can be fulfilled/shipped by one ShipmentItem. No partial OrderItem fulfillment is allowed.
 *  A Shipment can have one ShipmentPackage.
