@@ -100,6 +100,9 @@
 *   A **ShipmentPackage** belongs to one **Shipment**.
 *   A **ShipmentRouteSegment** belongs to one **Shipment**.
 
+![ERD](Shipment_ER_Diagram.png)
+
+
 **Additional Notes**
 
 *   The provided XML confirms the existence of the `ShipmentType` entity with "SALES_SHIPMENT" as a type.
