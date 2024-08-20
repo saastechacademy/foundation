@@ -3,7 +3,6 @@
 ```json
 {
     "shipmentId": "10025",
-    "shipmentTypeId": "SALES_SHIPMENT",
     "statusId": "SHIPMENT_INPUT",
     "primaryOrderId": "OR12345",
     "primaryShipGroupSeqId": "00001",
@@ -125,7 +124,7 @@
 
     *   **Package Items:** If `items` are included within a package, the same validations as for the top-level `items` list are applied.
 
-13. **OrderShipmentItems (OrderShipments):**
+13. **OrderShipments (orderShipments):**
 
     *   **OrderId:** For each item, `orderId`.
     *   **OrderItemSeqid:** 
@@ -163,14 +162,6 @@ The service should take extra care to ensure that numeric values, especially tho
     *   **Conversion:** Again, `ObjectType.simpleTypeConvert` is used to convert the input quantity to `BigDecimal`.
     *   **Usage:** The `BigDecimal` quantities are used when creating `ShipmentItem` and `ShipmentPackageContent` entities.
 
-**Explanation and Requirements**
-
-*   **Why BigDecimal?**  `BigDecimal` is used for its arbitrary precision, ensuring accurate representation of decimal numbers. This is essential for financial calculations and inventory management where even small errors can accumulate.
-
-*   **Conversion:** The `ObjectType.simpleTypeConvert` method is a utility function in OFBiz that handles the conversion of various data types. In this case, it's used to safely convert the input values (which might be strings, numbers, or other objects) into the desired `BigDecimal` format.
-
-*   **Locale:** The locale is passed to `simpleTypeConvert` to handle potential differences in decimal separators (e.g., "." vs ",").
-
 
 Prepare data for creating a new `Shipment` entity in the database. Let's break down the data elements it includes, their significance, and any associated rules:
 
@@ -184,25 +175,10 @@ Prepare data for creating a new `Shipment` entity in the database. Let's break d
     *   **Significance:** An optional external identifier for the shipment, potentially used for integration with other systems.
     *   **Rule:** If provided in the input, it's included as-is.
 
-3.  **shipmentTypeId:**
-
-    *   **Significance:** The type of shipment (e.g., "SALES_SHIPMENT").
-    *   **Rule:** If not provided in the input, it defaults to "SALES_SHIPMENT".
-
 4.  **statusId:**
 
     *   **Significance:** The initial status of the shipment.
     *   **Rule:** If not provided in the input, it defaults to "SHIPMENT_INPUT."
-
-5.  **primaryOrderId:**
-
-    *   **Significance:** The ID of the primary order associated with the shipment.
-    *   **Rule:** Included only if the `orderId` is provided in the input.
-
-6.  **picklistBinId:**
-
-    *   **Significance:** The ID of the picklist bin from which items were picked for the shipment.
-    *   **Rule:** Included only if the `picklistBinId` is provided in the input.
 
 7.  **primaryShipGroupSeqId:**
 
@@ -297,16 +273,6 @@ Let's say a user tries to change the status of a shipment that's already been ma
 
 **Update shipment details based on the primary order associated with it**
 
-1.  **Retrieve Shipment and Order Data:**
-    *   If `Shipment.primaryOrderId` and `primaryShipGroupSeqId` are present in the shipment, fetch the corresponding `OrderHeader` and `OrderItemShipGroup` entities. These entities hold details about the order and the specific group of items within the order that the shipment is fulfilling.
-
-1.  **Set Shipment Type:**
-    *   Determines the `shipmentTypeId` based on the `orderTypeId` of the associated order:
-        *   If the order is a "SALES_ORDER," the shipment type is set to "SALES_SHIPMENT."
- 
-2.  **Set Origin Facility (For Store Shipments):**
-    *   If the shipment is a "SALES_SHIPMENT" from a store with a single inventory facility, and the `originFacilityId` is not already set, retrieve the `ProductStore` entity and set the `originFacilityId` to the store's `inventoryFacilityId`.
-
 3.  **Set Party Information (From/To):**
     *   Fetche `OrderRole` entities associated with the order.
     *   If `partyIdFrom` (the party shipping the goods) is not set, try to find it from the order roles with the "SHIP_FROM_VENDOR" role types.
@@ -351,23 +317,14 @@ Let's say a user tries to change the status of a shipment that's already been ma
 
 ### **Prepares data to  `createOrderShipment`**
 
-2.  **Order and Ship Group Information:**
-    *   Check if both `orderId` (the ID of the order) and `shipGroupSeqId` (the sequence ID of the shipment group within the order) are available. If so, it proceeds to create `OrderShipment` entities.
-
 3.  **Order Shipment Context Creation:**
     *   A `createOrderShipmentCtx` map is created to hold the data for the `createOrderShipment` service call.
     *   The map is populated with the following key-value pairs:
         *   `"shipmentId"`: The ID of the shipment.
         *   `"shipmentItemSeqId"`: The sequence ID of the shipment item obtained in step 1.
         *   `"orderId"`: The ID of the order.
+        *   `"orderItemSeqId":` 
         *   `"userLogin"`: The userLogin object representing the user performing the operation.
-
-4.  **OrderItemShipGroup Retrieval:**
-    *   The code queries the database for an `OrderItemShipGroup` entity that matches the `orderId`, `productId` (of the current item), `shipGroupSeqId`, and has a `statusId` of either "ITEM_APPROVED" or "ITEM_CREATED."
-    *   This entity represents the association between an order item and a shipment group.
-
-6.  **Order Shipment Creation:**
-    *   If an `OrderItemShipGroup` entity is found, use `shipGroupSeqId` and `orderItemSeqId`.
 
 1.  **Package Details Extraction:**
     *   Package as following details:
@@ -394,58 +351,4 @@ Let's say a user tries to change the status of a shipment that's already been ma
         *   `"dimensionUomId"`: The unit of measurement for dimensions.
         *   `"weightUomId"`: The unit of measurement for weight.
         *   `"userLogin"`: The userLogin object representing the user performing the operation.
-
-**Rules and Error Handling:**
-
-*   **Dimension and Weight UoM Validation:** The `dimensionUomId` and `weightUomId` are validated against the `Uom` entity to ensure they are valid units of measurement for length and weight, respectively.
-*   **Box Type Validation:** If `boxTypeId` is provided, it's validated against the `ShipmentBoxType` entity.
-
-
-The code that prepares data `ShipmentPackageContent`: 
-
-1.  **Outer Loop (Packages):** Iterates over each package in the `packages` list from the input.
-
-2.  **Inner Loop (Package Items):** Iterates over the `items` list within each package.
-
-1.  **Shipment and Package IDs:**
-    *   The `shipmentId` (of the overall shipment) and `shipmentPackageSeqId` (of the current package) are obtained from the outer scope.
-
-2.  **Product ID Resolution:**
-    *   For each item in the package, the code checks if `productId` is provided. If not, and `sku` is available, it fetche the corresponding `productId` from the `Product` entity using the `internalName` (assumed to be the SKU).
-
-3.  **Shipment Item Sequence ID Resolution:**
-    *   If `shipmentItemSeqId` (the sequence ID of the shipment item) is not provided, find it by querying the `ShipmentItem` entity based on the `shipmentId` and `productId`. This assumes that the `ShipmentItem` entities were already created earlier.
-
-4.  **Quantity Conversion:**
-    *   If the `quantity` of the item in the package is provided, it's converted to a `BigDecimal` for precision.
-
-5.  **Context Map Creation:**
-    *   the `shipmentPackageContent` map is populated with:
-        *   `"shipmentId"`
-        *   `"shipmentPackageSeqId"`
-        *   `"shipmentItemSeqId"` (if found)
-        *   `"quantity"` (if provided and converted to `BigDecimal`)
-
-**Rules and Error Handling:**
-
-*   **Product ID or SKU Required:** Either `productId` or `sku` must be provided for each item in the package.
-*   **Valid Product:** The `productId` (whether provided directly or derived from the `sku`) must exist in the `Product` entity.
-*   **Shipment Item Existence:** The `shipmentItemSeqId` must correspond to an existing `ShipmentItem` within the shipment.
-
-
-
-
-**Key Points and Explanations:**
-
-*   **Shipment:**  Core shipment details like ID, type, status, order information, parties involved, facility information, contact information, estimated cost, and dates.
-*   **shipmentStatus:** An array to capture the history of status changes for the shipment. In this sample, it only has the initial "SHIPMENT_INPUT" status.
-*   **shipmentItems:** An array listing the items in the shipment with their quantities.
-*   **shipmentPackages:** An array of packages, each with details like dimensions, weight, box type, and a list of its contents (`shipmentPackageContents`).
-*   **shipmentRouteSegments:** An array defining the route segments (legs) of the shipment, with origin/destination facilities and estimated arrival times.
-
-**Additional Notes:**
-
-*   The `OrderItemShipGroupAssoc` and `ItemIssuance` entities are not included in this JSON structure as they would be created and managed separately within the system.
-*   The actual values in this JSON are placeholders. You'd replace them with real data based on your specific shipment. 
-*   The structure aligns with the entity relationships defined in the ER diagram
 
