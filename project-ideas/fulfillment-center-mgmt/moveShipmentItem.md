@@ -6,8 +6,14 @@ This is API method is part of the order fulfillment applications facade.
 
 The primary goal of the `moveShipmentItem` service is to transfer a specific item from one shipment to another within the same order. This is useful in scenarios where items need to be rearranged or consolidated during the fulfillment process.
 
+**Context**
+*  Shipment allows adding or removeing ShipmentItem when it is in SHIPMENT_INPUT status.
+*  An Order can have one or more Shipments
+*  An OrderItem can be fulfilled/shipped by one ShipmentItem. No partial OrderItem fulfillment is allowed.
+*  A Shipment can have one ShipmentPackage.
+
 **Workflow**
-*  Shipment can be edited in INPUT status. Check if shipment is in input status, if not move it to input status before editing its content. 
+*  Shipment can be edited in SHIPMENT_INPUT status. Check if shipment is in input status, if not move it to input status before editing its content. 
 
 *  Moving shipment item is three step process 
   1. Delete shipmentItem from existing shipment and then add it to other shipment. 
