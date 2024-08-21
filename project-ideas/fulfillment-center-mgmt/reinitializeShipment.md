@@ -9,10 +9,14 @@ The `reinitializeShipment` service is designed to reset a shipment to its initia
 
 1. **Shipment Status Update:**
 
-* Set the shipment's `statusId` to "SHIPMENT_INPUT". 
+* Set the shipment's `statusId` to "SHIPMENT_INPUT".
+* Get the related `OrderItemShipGroup`. Update `shipmentMethodTypeId` and `carrierPartyId`.
 
 2. **Shipment Route Segment Update:**
 * Get the related `OrderItemShipGroup`. 
 * Retrieve the `ShipmentRouteSegment` record associated with the shipment.
-* Updates `shipmentMethodTypeId` and `carrierPartyId`.
+* Update `shipmentMethodTypeId` and `carrierPartyId`.
+* Update `ShipmentRouteSegment` status to SHRSCS_NOT_STARTED
 
+NOTE: 
+It's possible that ShipmentRouteSegment status (SHRSCS_NOT_STARTED) is not honered in legacy code. 
