@@ -6,12 +6,15 @@ Order fulfillment is 3 step process,
 *   Step 3: Once shipment is created, an optionally background process is initiated to get shipping labels from the shipping provider.
 
 Shipment is created in SHIPMENT_INPUT, then SHIPMENT_APPROVED to SHIPMENT_PACKED and then SHIPMENT_SHIPPED
-*        On the SHIPMENT_APPROVED status event of Shipment lifecycle,  systems triggers the process to get Shipping Label from the logistics company.
-*        Once we have Shipping label, Shipment can be moved to SHIPMENT_PACKED status. 
-*        Once shipment is packed, this indicates that the shipping label was accepted and so update the ShipmentRouteSegment status to SHRSCS_CONFIRMED. 
 
-1.        If the Approved shipment, should be edited, The Shipment should be [reinitializeShipment](reinitializeShipment.md). 
-2.        In case the Packed shipment should be edited, It is first [Unpacked](unpackOrderItems.md). The Unpacking process moves the shipment to Approved status. 
+* On the SHIPMENT_APPROVED status event of Shipment lifecycle,  systems triggers the process to get Shipping Label from the logistics company.
+* Once we have Shipping label, Shipment can be moved to SHIPMENT_PACKED status. 
+* Once shipment is packed, this indicates that the shipping label was accepted and so update the ShipmentRouteSegment status to SHRSCS_CONFIRMED. 
+
+Updating a Shipment. 
+
+1. If the Approved shipment, should be edited, The Shipment should be [reinitializeShipment](reinitializeShipment.md). 
+2. In case the Packed shipment should be edited, It is first [Unpacked](unpackOrderItems.md). The Unpacking process moves the shipment to Approved status. 
 
 ```
 <StatusType description="Shipment" hasTable="N"  statusTypeId="SHIPMENT_STATUS"/>
