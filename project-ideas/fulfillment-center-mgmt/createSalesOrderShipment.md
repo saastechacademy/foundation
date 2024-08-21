@@ -2,12 +2,12 @@
 
 **Purpose:**
 
-*   Create a new shipment if one doesn't exist for the given order and ship group.
+*   Prepare Shipment data using the OrderItems data. The service takes list of OrderItem to be shipped in one shipment, using the OrderItem data, it prepares the data needed to call [createShipment](createShipment.md).
 
 **Inputs:**
 
-*   `orderId` (optional): The ID of the order for which the shipment is being initialized.
-*   `shipGroupSeqId` (optional): The sequence ID of the ship group within the order.
+*   `orderItems` : List of orderItems to be shipped.
+
 
 **Entities**
 
