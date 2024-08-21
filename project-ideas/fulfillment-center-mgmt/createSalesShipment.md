@@ -33,13 +33,7 @@
          "dimensionUomId": "LEN_in",
          "boxLength": 12,
          "boxHeight": 8,
-         "boxWidth": 10,
-         "shipmentPackageContents": [
-                {
-                    "shipmentItemSeqId": "00001",
-                    "quantity": 1
-                }
-            ]
+         "boxWidth": 10
          },
     "shipmentRouteSegments": [
         {
