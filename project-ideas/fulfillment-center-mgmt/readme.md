@@ -8,8 +8,8 @@ Order fulfillment is 3 step process,
 Shipment is created in SHIPMENT_INPUT, then SHIPMENT_APPROVED to SHIPMENT_PACKED and then SHIPMENT_SHIPPED
 
 * On the SHIPMENT_APPROVED status event of Shipment lifecycle,  systems triggers the process to get Shipping Label from the logistics company.
+* On successful execution of shipping label RateShopping, update the update ShipmentRouteSegment. Set `shipmentMethodTypeId`, `carrierPartyId`, `actualCost`, `carrierServiceStatusId` (SHRSCS_CONFIRMED). 
 * Once we have Shipping label, Shipment can be moved to SHIPMENT_PACKED status. 
-* Once shipment is packed, this indicates that the shipping label was accepted and so update the ShipmentRouteSegment status to SHRSCS_CONFIRMED. 
 
 Updating a Shipment. 
 
