@@ -16,7 +16,7 @@ This service is typically used in the following scenarios:
 *   **Splitting Shipments:** If a shipment becomes too large, heavy, all items cannot fit in one package. Few items can be moved to a new package. 
 
 **Context**
-*  Shipment should be in SHIPMENT_INPUT staus for adding or removing ShipmentItem.
+*  Shipment should be in SHIPMENT_INPUT status for adding or removing ShipmentItem.
 *  An Order can have one or more Shipments
 *  An OrderItem can be fulfilled/shipped by one ShipmentItem. No partial OrderItem fulfillment is allowed.
 *  A Shipment can have one ShipmentPackage.
