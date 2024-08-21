@@ -157,7 +157,7 @@ Let's outline the design for a service that creates `Shipment`, `ShipmentItem`, 
 ### **Example Code (Illustrative)**
 
 ```java
-public static Map<String, Object> createShipmentFromOrderItems(DispatchContext dctx, Map<String, ? extends Object> context) {
+public static Map<String, Object> createSalesOrderShipment(DispatchContext dctx, Map<String, ? extends Object> context) {
     Delegator delegator = dctx.getDelegator();
     LocalDispatcher dispatcher = dctx.getDispatcher();
     List<GenericValue> orderItems = (List<GenericValue>) context.get("orderItems");
