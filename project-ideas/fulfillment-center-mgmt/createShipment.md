@@ -3,6 +3,7 @@
 ```json
 {
     "shipmentId": "10025",
+    "shipmentTypeId": "SALES_SHIPMENT",
     "statusId": "SHIPMENT_INPUT",
     "primaryOrderId": "OR12345",
     "primaryShipGroupSeqId": "00001",
