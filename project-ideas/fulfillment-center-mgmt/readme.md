@@ -5,6 +5,10 @@ Order fulfillment is 3 step process,
 *   Step 2: Shipments are created for orders. Based on the inventory allocation rules inventory from a certain location is assigned to Shipment. The shipment data is then used to prepare a picklist based on preferred picking strategy. 
 *   Step 3: Once shipment is created, an optionally background process is initiated to get shipping labels from the shipping provider.
 
+Shipment is created in SHIPMENT_INPUT, then SHIPMENT_APPROVED to SHIPMENT_PACKED and then SHIPMENT_SHIPPED
+Once Shipment is SHIPMENT_APPROVED, systems triggers the process to get Shipping Label from the logistics company.
+Once we have Shipping label, Shipment can be moved to SHIPMENT_PACKED status. 
+Once shipment is packed, this indicates that the shipping label was accepted and so update the ShipmentRouteSegment status to SHRSCS_CONFIRMED. 
 
 
 
