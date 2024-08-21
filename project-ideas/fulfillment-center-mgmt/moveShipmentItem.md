@@ -22,10 +22,11 @@ This service is typically used in the following scenarios:
 
 **Workflow**
 *  Shipment can be edited in SHIPMENT_INPUT status. Check if shipment is in input status, if not move it to input status before editing its content. 
+  1. What does this mean? If ShippingLabel was generated, it should be voided. Anything else?
 *  Moving shipment item is three step process 
-  1. Delete shipmentItem from existing shipment. 
-  2. In some cases the shipmentItem is moved to new shipment, in such case we may have to create shipment. [createShipmentForOrder](createShipmentForOrder.md) 
-  3. Add shipmentItem to the shipment. 
+  1. Delete shipmentItem from existing shipment. Delete OrderShipment record along with ShipmentItem. Anything else?
+  2. In some cases the shipmentItem is moved to new shipment, in such case we may have to create shipment [createShipmentForOrder](createShipmentForOrder.md). 
+  3. Add shipmentItem to the shipment. Adding a ShipmentItem to Shipment, also creates record in OrderShipment entity.
 
 
 **Input Parameters**
