@@ -15,7 +15,8 @@ Updating a Shipment.
 
 1. If the Approved shipment, should be edited, The Shipment should be [reinitializeShipment](reinitializeShipment.md). 
 2. In case the Packed shipment should be edited, It is first [Unpacked](unpackOrderItems.md). The Unpacking process moves the shipment to Approved status.
-3. If Shipment package contents are modified, [voidShipmentPackageLabel](voidShipmentPackageLabel.md). Recompute the [ShipmentPackageWeight](setShipmentPackageWeight.md). 
+3. If Shipment package contents are modified, [voidShipmentPackageLabel](voidShipmentPackageLabel.md). Recompute the [ShipmentPackageWeight](setShipmentPackageWeight.md).
+4. In some cases, after edits we may have hanging some Shipments without any ShipmentItem. Use [cancelEmptyShipments](cancelEmptyShipments.md) to cancel them. 
 
 ```
 <StatusType description="Shipment" hasTable="N"  statusTypeId="SHIPMENT_STATUS"/>
