@@ -11,6 +11,39 @@
 
 **Entities**
 
+The `OrderItem` entity in HotWax Commerce is an extension of the standard `OrderItem` entity in Apache OFBiz. It represents a single item within a customer's order, capturing details about the product, quantity, pricing, and fulfillment status. HotWax Commerce has customized this entity to include additional fields and relationships that cater to their specific business needs.
+
+**Key Attributes and Relationships**
+
+*   **Core OFBiz Attributes:**
+    *   `orderId` (id): Unique identifier of the order.
+    *   `orderItemSeqId` (id): Sequential ID to distinguish multiple items within an order.
+    *   `productId` (id): ID of the product being ordered.
+    *   `quantity` (fixed-point): Quantity of the product ordered.
+    *   `cancelQuantity` (fixed-point): Quantity of the item canceled.
+    *   `unitPrice` (currency-precise): Price per unit of the product.
+    *   `statusId` (id): Current status of the order item (e.g., created, approved, shipped).
+
+*   **HotWax Commerce Extensions:**
+    *   `shipGroupSeqId` (id): Identifies the ship group the item belongs to within the order.
+    *   `returnTillDate` (date-time): Last date for returning the item.
+    *   `requestedDeliveryDate` (date), `requestedDeliveryTime` (time): Customer's requested delivery date and time.
+    *   `requestedShipMethTypeId` (id): Customer's requested shipping method.
+    *   `deliveryWindow` (floating-point): Delivery window in days or hours.
+
+*   **Relationships:**
+    *   **Core OFBiz Relationships:**
+        *   `OrderHeader`: Connects the item to its parent order.
+        *   `Product`: Links the item to the product details.
+        *   `StatusItem`: Defines the possible statuses for the order item.
+
+
+**Key Customizations in HotWax Commerce**
+
+*   **Ship Group:** The `shipGroupSeqId` allows for grouping items within an order for shipping purposes, enabling features like split shipments or handling different shipping methods/addresses within the same order.
+*   **Customer Preferences:** `requestedDeliveryDate`, `requestedDeliveryTime`, and `requestedShipMethTypeId` capture customer preferences for delivery and shipping.
+
+
 The `OrderItemShipGroup` entity in Apache OFBiz represents a group of order items that will be shipped together. It's a way to organize items within an order for fulfillment purposes, especially when an order might have items that need to be shipped separately (e.g., from different warehouses or with different shipping methods).
 
 **Key attributes of the OrderItemShipGroup entity:**
