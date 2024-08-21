@@ -116,8 +116,6 @@
         *   `boxTypeId`: If provided, must be a valid shipment box type.
         *   `boxLength`, `boxHeight`, `boxWidth`, `weight`: If provided, must be convertible to BigDecimal.
 
-    *   **Package Items:** If `items` are included within a package, the same validations as for the top-level `items` list are applied.
-
 13. **OrderShipments (orderShipments):**
 
     *   **OrderId:** For each item, `orderId`.
