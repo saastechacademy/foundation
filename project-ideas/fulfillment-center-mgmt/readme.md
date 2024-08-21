@@ -14,7 +14,8 @@ Shipment is created in SHIPMENT_INPUT, then SHIPMENT_APPROVED to SHIPMENT_PACKED
 Updating a Shipment. 
 
 1. If the Approved shipment, should be edited, The Shipment should be [reinitializeShipment](reinitializeShipment.md). 
-2. In case the Packed shipment should be edited, It is first [Unpacked](unpackOrderItems.md). The Unpacking process moves the shipment to Approved status. 
+2. In case the Packed shipment should be edited, It is first [Unpacked](unpackOrderItems.md). The Unpacking process moves the shipment to Approved status.
+3. If Shipment package contents are modified, [voidShipmentPackageLabel](voidShipmentPackageLabel.md). Recompute the [ShipmentPackageWeight](setShipmentPackageWeight.md). 
 
 ```
 <StatusType description="Shipment" hasTable="N"  statusTypeId="SHIPMENT_STATUS"/>
