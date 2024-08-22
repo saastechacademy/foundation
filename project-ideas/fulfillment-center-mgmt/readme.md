@@ -8,7 +8,7 @@ Order fulfillment is 3 step process,
 *   Step 3: User marks Shipment shipped.   
 
 
-
+### [Shipment lifecycle](ShipmentStatusWorkflow.md)
 Shipment is created in SHIPMENT_INPUT, then SHIPMENT_APPROVED to SHIPMENT_PACKED and then SHIPMENT_SHIPPED
 
 * On the SHIPMENT_APPROVED status event of Shipment lifecycle,  systems triggers the process to get Shipping Label (doRateShopping) from the logistics company.
