@@ -171,5 +171,6 @@
 
 **Order lifecyle**
 
-[Order Fulfillment workflow](Order-fulfillment-Page-1.drawio.png)
+Order-fulfillment-Page-1.drawio.png
+
 https://app.diagrams.net/#G0BykZZYyGnR7UQlpsc3MwUGtfRVU
