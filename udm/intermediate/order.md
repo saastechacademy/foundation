@@ -171,6 +171,6 @@
 
 **Order lifecyle**
 
-![Order Fulfillment lifecycle]Order-fulfillment-Page-1.drawio.png)
+![Order Fulfillment lifecycle](Order-fulfillment-Page-1.drawio.png)
 
 https://app.diagrams.net/#G0BykZZYyGnR7UQlpsc3MwUGtfRVU
