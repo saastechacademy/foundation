@@ -21,7 +21,7 @@
      * **Order Items Processing:**  
        * Initializes `picklistOrderItemsList` to store the order items.  
        * Iterates over each `item` in the `orderItems`.  
-       * Adds each item directly to `picklistOrderItemsList` (commented code suggests possible detailed mapping of item fields).  
+       * Adds each item directly to `picklistOrderItemsList` 
        * Assigns `picklistOrderItemsList` to the `picklistOrderItems` field in `picklistMap`.  
 2. **Service Call: `co.hotwax.poorti.FulfillmentServices.create#Picklist`**  
    * **Operation:** Creates a picklist using the `picklistMap`.  
