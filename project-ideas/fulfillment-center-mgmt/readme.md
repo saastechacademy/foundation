@@ -1,10 +1,13 @@
 # **Fulfillment Application Design Document**
 
 Order fulfillment is 3 step process,
-*   Step 1: The staff gets the list of [Outstanding orders](https://github.com/hotwax/oms-documentation/blob/user-guides-pub/documents/integrate-with-hotwax/api/fulfillment/apis/outstanding-orders.md). The user then starts the fulfillment process for set of orders by creating a [Fulfillment wave of orders](createOrderFulfillmentWave.md). A [PickList](PickList.md) is returned for the user to go pick items for preparing the shipments.  
+*   Step 1: The staff gets the list of [Outstanding orders](https://github.com/hotwax/oms-documentation/blob/user-guides-pub/documents/integrate-with-hotwax/api/fulfillment/apis/outstanding-orders.md). The user then starts the fulfillment process for set of orders by creating a [Fulfillment wave of orders](createOrderFulfillmentWave.md). A [PickList](PickList.md) is returned for the user to go pick items for preparing the shipments. On success of createOrderFulfillmentWave the Orders are tagged "Fulfillment started" in SOLR doc.   
+
 *   Step 1 - Background process: [Shipments](createShipment.md) are created for orders. Based on the inventory allocation rules inventory from a certain location is assigned to [Shipment](/udm/intermediate/Shipment.md), a background process is initiated to get shipping labels from the shipping provider.
 *   Step 2: User completes the Packing.
 *   Step 3: User marks Shipment shipped.   
+
+
 
 Shipment is created in SHIPMENT_INPUT, then SHIPMENT_APPROVED to SHIPMENT_PACKED and then SHIPMENT_SHIPPED
 
