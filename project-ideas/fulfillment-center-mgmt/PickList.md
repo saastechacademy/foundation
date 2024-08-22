@@ -1,6 +1,16 @@
 ## **PickList Entity Design**
 
-## **PickList workflow management**
+NOTE: Simplied version of Picklist datamodel.
+
+* **Purpose:** The central entity representing a list of items to be picked from inventory, typically to fulfill customer orders.
+* **Key Fields:**
+    * `picklistId`: Unique identifier for the picklist
+    * `description`: Description of the picklist
+    * `facilityId`: The facility from which items will be picked
+    * `shipmentMethodTypeId`: The method used to ship the picked items
+    * `statusId`: The current status of the picklist (e.g., created, printed, picked)
+    * `picklistDate`: The date the picklist was created
+
 
 ## **PickListOrderItem Entity Design**
 
