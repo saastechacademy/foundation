@@ -1,5 +1,13 @@
 ### **Detailed Actions for `createOrderFulfillmentWave` Service**
 
+#### Input Parameters
+
+- facilityId
+- shipmentMethodTypeId
+- statusId
+- pickers" type=List
+- orderItems" type=Map
+
 1. **Initialize the Picklist Map:**  
    * **Operation:** Constructs a map named `picklistMap` to hold the details required for creating a picklist.  
    * **Steps:**  
