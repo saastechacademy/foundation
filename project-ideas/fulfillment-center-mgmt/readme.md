@@ -2,7 +2,7 @@
 
 Order fulfillment is 3 step process,
 *   Step 1: The staff at the fulfillment center starts the fulfillment process with a [batch of orders](createOrderFulfillmentWave.md). 
-*   Step 2: [Shipments](udm/intermediate/Shipment.md) are created for orders. Based on the inventory allocation rules inventory from a certain location is assigned to Shipment. The shipment data is then used to prepare a picklist based on preferred picking strategy. 
+*   Step 2: [Shipments](/udm/intermediate/Shipment.md) are created for orders. Based on the inventory allocation rules inventory from a certain location is assigned to Shipment. The shipment data is then used to prepare a picklist based on preferred picking strategy. 
 *   Step 3: Once shipment is created, an optionally background process is initiated to get shipping labels from the shipping provider.
 
 Shipment is created in SHIPMENT_INPUT, then SHIPMENT_APPROVED to SHIPMENT_PACKED and then SHIPMENT_SHIPPED
