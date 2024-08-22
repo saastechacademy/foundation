@@ -1,12 +1,52 @@
 ### **Detailed Actions for `createOrderFulfillmentWave` Service**
 
+#### Sample Input JSON
+```
+{
+  "facilityId": "23763",
+  "shipmentMethodTypeId": "OVERNIGHT_SHIPPING",
+  "statusId": "PICKLIST_IN_PROGRESS",
+  "pickers": 
+    [{
+        "partyId":"1001",
+        "roleTypeId":"WAREHOUSE_PICKER"
+    }],
+  "orderItems": [
+    {
+      "orderId": "10000",
+      "orderItemSeqId": "00101",
+      "productId": "10001",
+      "shipGroupSeqId":"00002",
+      "inventoryItemId":"10000",
+      "quantity": 1.5
+    },
+    {
+      "orderId": "10000",
+      "orderItemSeqId": "00102",
+      "productId": "10017",
+      "shipGroupSeqId":"00002",
+      "inventoryItemId":"10000",
+      "quantity": 2
+    },
+    {
+      "orderId": "10010",
+      "orderItemSeqId": "00101",
+      "productId": "10001",
+      "shipGroupSeqId":"00002",
+      "inventoryItemId":"10010",
+      "quantity": 2
+    }
+  ]
+}
+```
+
 #### Input Parameters
 
 - facilityId
 - shipmentMethodTypeId
 - statusId
-- pickers" type=List
-- orderItems" type=Map
+- pickers
+- orderItems
 
 1. **Initialize the Picklist Map:**  
    * **Operation:** Constructs a map named `picklistMap` to hold the details required for creating a picklist.  
