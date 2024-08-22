@@ -1,5 +1,8 @@
 # **Fulfillment Application Design Document**
 
+## [Store Fulfillment Lifecycle](https://docs.hotwax.co/documents/v/learn-hotwax-oms/business-process-models/store.fulfillment)
+
+
 Order fulfillment is 3 step process,
 *   Step 1: The staff gets the list of [Outstanding orders](https://github.com/hotwax/oms-documentation/blob/user-guides-pub/documents/integrate-with-hotwax/api/fulfillment/apis/outstanding-orders.md). The user then starts the fulfillment process for set of orders by creating a [Fulfillment wave of orders](createOrderFulfillmentWave.md). A [PickList](PickList.md) is returned for the user to go pick items for preparing the shipments. On success of createOrderFulfillmentWave the OrderItems are tagged "isPicked: Y" in SOLR doc. Alternatively the user can choose to [rejectOrderItem](rejectOrderItem.md) if for some reason orderItem cannot be fulfilled.
 
