@@ -18,7 +18,7 @@
       "productId": "10001",
       "shipGroupSeqId":"00002",
       "inventoryItemId":"10000",
-      "quantity": 1.5
+      "quantity": 1
     },
     {
       "orderId": "10000",
@@ -26,7 +26,7 @@
       "productId": "10017",
       "shipGroupSeqId":"00002",
       "inventoryItemId":"10000",
-      "quantity": 2
+      "quantity": 1
     },
     {
       "orderId": "10010",
@@ -34,7 +34,7 @@
       "productId": "10001",
       "shipGroupSeqId":"00002",
       "inventoryItemId":"10010",
-      "quantity": 2
+      "quantity": 1
     }
   ]
 }
