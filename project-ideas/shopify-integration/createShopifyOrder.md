@@ -283,18 +283,6 @@ The function  queries a database table (`ShopifyShopTypeMapping`) to find a corr
     *   `mappedKey`: The payment gateway name from the Shopify order (e.g., "shopify_payments", "paypal").
     *   Purpose: Determine the payment method type in HotWax Commerce based on the payment gateway used in Shopify.
 
-In the `createShopifyOrder` service, the `ShopifyHelper` class is utilized in the following additional scenarios:
-
-1.  **Product and Variant Mapping:**
-    *   The `ShopifyHelper.getProductId` function is used to retrieve the HotWax Commerce product ID corresponding to a Shopify variant ID. This is essential for associating order line items with the correct products in the HotWax system.
-    *   If the product ID is not found and product creation is allowed, the service creates a new product in HotWax Commerce and associates it with the Shopify variant ID using `createShopifyShopProduct`.
-
-2.  **Facility Mapping:**
-    *   The `ShopifyHelper.getFacilityId` function is used to determine the HotWax Commerce facility ID based on the Shopify location ID where the order was fulfilled. This helps in managing inventory and fulfillment processes.
-
-3.  **Pre-Order and Backorder Tag Mapping:**
-    *   The `ShopifyHelper.getShopifyTypeMappedValue` function is used with `mappedTypeId` "SHOPIFY_PRODUCT_TAG" to retrieve the tags used in Shopify to indicate pre-order or backorder products. These tags are then used to determine if an order item should be marked as a pre-order or backorder in HotWax Commerce.
-
 
 **Understanding use of SHOPIFY_PRODUCT_TAG**
 
@@ -335,6 +323,19 @@ In this scenario:
 *   If a Shopify product has the tag "ON_PRE_ORDER_PROD", the corresponding HotWax Commerce order item will be marked as a pre-order.
 *   If a Shopify product has the tag "ON_BACK_ORDER_PROD", the HotWax Commerce order item will be marked as a backorder.
 
+In the `createShopifyOrder` service, the `ShopifyHelper` class is utilized in the following additional scenarios:
+
+1.  **Product and Variant Mapping:**
+    *   The `ShopifyHelper.getProductId` function is used to retrieve the HotWax Commerce product ID corresponding to a Shopify variant ID. This is essential for associating order line items with the correct products in the HotWax system.
+    *   If the product ID is not found and product creation is allowed, the service creates a new product in HotWax Commerce and associates it with the Shopify variant ID using `createShopifyShopProduct`.
+
+2.  **Facility Mapping:**
+    *   The `ShopifyHelper.getFacilityId` function is used to determine the HotWax Commerce facility ID based on the Shopify location ID where the order was fulfilled. This helps in managing inventory and fulfillment processes.
+
+3.  **Pre-Order and Backorder Tag Mapping:**
+    *   The `ShopifyHelper.getShopifyTypeMappedValue` function is used with `mappedTypeId` "SHOPIFY_PRODUCT_TAG" to retrieve the tags used in Shopify to indicate pre-order or backorder products. These tags are then used to determine if an order item should be marked as a pre-order or backorder in HotWax Commerce.
+
+
 **Explanation of the facilityId computation Logic**
 
 1.  **Prioritize Shopify Location (If Applicable):** The code first attempts to determine the `facilityId` based on the `location_id` present in the Shopify order, but only if the order is not tagged as "SENDSALE". This is done using the `ShopifyHelper.getFacilityId` function, which looks up a mapping between Shopify locations and HotWax Commerce facilities.
@@ -344,20 +345,6 @@ In this scenario:
 3.  **Use Default Facility:** If the product store has inventory reservation enabled (`reserveInventory` is "Y") *and* a default inventory facility (`inventoryFacilityId`) is specified, then that facility is used as the `facilityId`.
 
 4.  **Fallback to "_NA_" Facility:** If none of the above conditions are met (i.e., no location ID, no location-to-facility mapping, no inventory reservation, or no default facility), the code defaults the `facilityId` to "_NA_". This ensures that the `facilityId` variable always has a value, even if it's a placeholder representing an unallocated order in the HotWax Commerce OMS.
-
-
-The following HotWax Commerce internal services are called from the `createShopifyOrder` function:
-
-1.  `customerDataSetup`
-2.  `createTelecomNumber`
-3.  `createContactMech`
-4.  `createCommunicationEvent`
-5.  `createSalesOrder`
-6.  `checkAndAddProductComponents` (run asynchronously)
-7.  `createShopifyShopOrder` (run asynchronously)
-8.  `getPaidTransactionsAndCreateOrderPayment` (run asynchronously)
-9.  `createOrderPaymentPreference` (may be called depending on order status)
-10. `createCommunicationEventOrder` (run asynchronously, if applicable)
 
 
 **Adjustments**  
@@ -380,9 +367,8 @@ The `itemAdjustments` data in HotWax Commerce is primarily derived from two sect
 
 
 
-**Example: Customer Handling**
+### **Customer Handling**
 
-In the Shopify integration code (`createShopifyOrder`), you'll find this line:
 
 ```java
 result = dispatcher.runSync("customerDataSetup", serviceCtx);
@@ -390,7 +376,6 @@ result = dispatcher.runSync("customerDataSetup", serviceCtx);
 
 This line calls the `customerDataSetup` service to either create a new customer in HotWax Commerce (if the customer doesn't exist) or retrieve the existing customer's ID. The `customerId` is then included in the `serviceCtx` map passed to `createSalesOrder`.
 
-In the `createSalesOrder` function, you'll see that the `customerId` is used to associate the order with the correct customer record:
 
 ```java
 storeOrderCtx.put("partyId", customerId);
@@ -398,32 +383,7 @@ storeOrderCtx.put("billToCustomerPartyId", customerId);
 storeOrderCtx.put("shipToCustomerPartyId", customerId);
 ```
 
-**Line Items**
-
-*   `line_items`: This array contains objects representing each product in the order:
-    *   `id`: (669751112) The unique identifier for the line item in Shopify.
-    *   `product_id`: (7513594) The ID of the product in Shopify. This would need to be mapped to the corresponding product ID in HotWax.
-    *   `variant_id`: (4264112) The ID of the product variant in Shopify.
-    *   `title`: ("IPod Nano - Pink") The title of the product.
-    *   `quantity`: (1) The quantity ordered.
-    *   `price`: ("199.99") The price per unit. This would be mapped to the `unitPrice` field in HotWax.
-    *   `sku`: ("IPOD-342-N") The SKU of the product. This could be used to identify the product in HotWax.
-    *   `grams`: (500) The weight of the item in grams.
-    *   `tax_lines`: This array contains information about taxes applied to the item. This would be used to create `OrderAdjustment` entries in HotWax.
-    *   `total_discount`: ("5.00") The total discount applied to the item. This would be used to create `OrderAdjustment` entries in HotWax.
-
-**Other Fields**
-
-*   `discount_codes`: This array contains information about discount codes applied to the order. This would be used to create `OrderAdjustment` entries in HotWax.
-*   `shipping_lines`: This array contains information about shipping methods and costs. This would be used to populate the `shipGroup` list in HotWax.
-*   `tax_lines`: This array contains information about taxes applied to the entire order. This would be used to create `OrderAdjustment` entries in HotWax.
-*   `total_discounts`: ("0.00") The total discount applied to the order.
-*   `total_weight`: (300) The total weight of the order in grams.
-*   `note`: ("Customer changed their mind.") Notes added to the order. This could be mapped to the `note` field in HotWax.
-*   `tags`: ("imported, vip") Tags associated with the order. These could be mapped to the `tags` field in HotWax.
-
-
-**"POS sales channel"**
+### **"POS sales channel"**
 
 Handle POS orders, assign them a specific shipping method "POS_COMPLETED".
 
@@ -447,17 +407,11 @@ if (isCashSaleOrder) {
 }
 ```
 
-The following Shopify order data is mapped to `OrderAttribute` in HotWax Commerce:
-
-*   **`note_attributes`:** Any custom note attributes present in the Shopify order JSON are mapped as individual `OrderAttribute` entities in HotWax Commerce. The `name` and `value` fields from each `note_attributes` entry are directly used as the `attrName` and `attrValue` in the `OrderAttribute` entity.
-*   **`user_id`:** The ID of the staff member who created the order in Shopify is stored as an `OrderAttribute` with the name `shopify_user_id`.
-
-
 ### Order Attributes:
 
+*   **`note_attributes`:** Any custom note attributes present in the Shopify order JSON are mapped as individual `OrderAttribute` entities in HotWax Commerce. The `name` and `value` fields from each `note_attributes` entry are directly used as the `attrName` and `attrValue` in the `OrderAttribute` entity.
+
 *   **`note_attributes`:**
-    *   Any custom note attributes present in the Shopify order JSON are mapped as individual `OrderAttribute` entities in HotWax Commerce.
-    *   The `name` and `value` fields from each `note_attributes` entry are directly used as the `attrName` and `attrValue` in the `OrderAttribute` entity.
     *   Example from sample JSON:
         ```json
         "note_attributes": [
@@ -474,7 +428,7 @@ The following Shopify order data is mapped to `OrderAttribute` in HotWax Commerc
 
 
 
-The Shopify Order attributes that are mapped to `OrderItemAttributes` in HotWax Commerce, according to the provided code, are:
+### The Shopify Order Item attributes:
 
 *   **`properties`:** Custom properties associated with line items in the Shopify order are mapped as `OrderItemAttribute` entities in HotWax Commerce. The `name` and `value` fields from each `properties` entry are used as the `attrName` and `attrValue` in the `OrderItemAttribute` entity.
 *   **Pre-order and Backorder Tags:** If a product in the Shopify order is tagged as "ON\_PRE\_ORDER\_PROD" or "ON\_BACK\_ORDER\_PROD," this information is stored in an `OrderItemAttribute` with the name "PreOrderItemProperty" or "BackOrderItemProperty" respectively.
@@ -501,6 +455,8 @@ The Shopify Order attributes that are mapped to `OrderItemAttributes` in HotWax 
 
 
 ### Override the default order line item fulfillment facility
+
+The enums `PRE_SLCTD_FAC_TAG`, `ORD_ITM_PICKUP_FAC`, and `ORD_ITM_SHIP_FAC` are used to define settings in the `ProductStoreSetting` entity. These settings play a crucial role in customizing the order fulfillment process within the HotWax Commerce OMS.
 
 Overriding the default fulfillment facility for an order item based on specific properties set within the Shopify line item. If the Shopify order and its line items meet certain conditions (tags and property names), the system will look for a designated property in the line item's properties and use its value to determine the fulfillment facility, potentially enabling more flexible and customized fulfillment workflows.
 
@@ -545,6 +501,18 @@ if (UtilValidate.isNotEmpty(properties) && UtilValidate.isNotEmpty(tagsList) &&
    * If such a property is found, its value is extracted and assigned to the `fromFacilityId` variable. This value likely represents the ID or identifier of the desired fulfillment facility.
 
 
+### **Explanation of Enums and their Usage**
+
+1.  **`PRE_SLCTD_FAC_TAG`**
+    *   **Purpose:** This enum defines a setting in the `ProductStoreSetting` entity to store the name of a specific tag used in Shopify orders. When an order from Shopify contains this tag, it triggers the `createShopifyOrder` service to check for pre-selected facilities for fulfilling the line items within that order.
+
+2.  **`ORD_ITM_PICKUP_FAC`**
+    *   **Purpose:** This enum defines another setting in the `ProductStoreSetting` entity to store the property name used within Shopify line items to indicate the pre-selected facility for store pickup orders.
+
+3.  **`ORD_ITM_SHIP_FAC`**
+    *   **Purpose:** Similar to `ORD_ITM_PICKUP_FAC`, this enum defines a setting to store the property name used in Shopify line items to indicate the pre-selected facility for same-day shipping orders.
+
+
 ### Customer Classification 
 
 HotWax Commerce employs a systematic process to deduce the `customerClassificationId` from a Shopify order. It leverages the `ShopifyShopTypeMapping` entity, which acts as a bridge between Shopify customer tags and their corresponding classifications within the HotWax Commerce system.
@@ -570,3 +538,19 @@ HotWax Commerce employs a systematic process to deduce the `customerClassificati
 **In Conclusion**
 
 The process of deducing the `customerClassificationId` in the `createShopifyOrder` service involves retrieving relevant mappings from the `ShopifyShopTypeMapping` entity, comparing the Shopify order tags with these mappings, and extracting the corresponding HotWax Commerce classification ID if a match is found. This enables the system to categorize customers based on their Shopify tags, facilitating targeted marketing, personalized experiences, and streamlined order management within the HotWax Commerce OMS.
+
+
+
+The following HotWax Commerce internal services are called from the `createShopifyOrder` function:
+
+1.  `customerDataSetup`
+2.  `createTelecomNumber`
+3.  `createContactMech`
+4.  `createCommunicationEvent`
+5.  `createSalesOrder`
+6.  `checkAndAddProductComponents` (run asynchronously)
+7.  `createShopifyShopOrder` (run asynchronously)
+8.  `getPaidTransactionsAndCreateOrderPayment` (run asynchronously)
+9.  `createOrderPaymentPreference` (may be called depending on order status)
+10. `createCommunicationEventOrder` (run asynchronously, if applicable)
+
