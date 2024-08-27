@@ -81,13 +81,6 @@ The preprocessing stage is the first step in the integration process. It focuses
    * **Load Properties:** The service reads the `ShopifyServiceConfig` properties file and looks up the property named `<productStoreId>.skip.order.import.tags`. This property value is expected to be a comma-separated list of tags.
    * **Tag-Based Filtering:** The service then compares the tags associated with the Shopify order to the tags in the `skip.order.import.tags` list. If a match is found, the order is marked as skipped and won't be imported.
 
-2. **Order Identification and Duplicate Check**
-
-   * **Extract Shopify Order ID:** The service retrieves the Shopify order ID (e.g., "450789469") from the input JSON data using the `order.get("id")` method.
-   * **Check for Duplicates:** It then queries the `OrderIdentification` entity in HotWax Commerce to see if an order with this Shopify ID has already been imported.
-   * **Skip if Duplicate:** If a matching order is found, the current order is marked as a duplicate and will be skipped to prevent redundant data in the system.
-
-
 
 The `ShopifyConfig` data is used in the `createShopifyOrder` service to retrieve configuration details necessary for processing the Shopify order. 
 
@@ -133,8 +126,11 @@ Here's a step-by-step explanation of how `ShopifyConfig` data is utilized:
 
 ### Business Requirements for Skip Order 
 
-1. **Check for Existing Order:**
-   - Query the `OrderIdentification` entity to see if an order with the same Shopify Order ID already exists. If it exists, skip the process.
+1. **Order Identification and Duplicate Check**
+
+   * **Extract Shopify Order ID:** The service retrieves the Shopify order ID (e.g., "450789469") from the input JSON data using the `order.get("id")` method.
+   * **Check for Duplicates:** It then queries the `OrderIdentification` entity in HotWax Commerce to see if an order with this Shopify ID has already been imported.
+   * **Skip if Duplicate:** If a matching order is found, the current order is marked as a duplicate and will be skipped to prevent redundant data in the system.
 
 2. **Filter Orders Based on Tags:**
    - Extract and clean tags from the order.
