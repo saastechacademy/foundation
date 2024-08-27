@@ -545,3 +545,28 @@ if (UtilValidate.isNotEmpty(properties) && UtilValidate.isNotEmpty(tagsList) &&
    * If such a property is found, its value is extracted and assigned to the `fromFacilityId` variable. This value likely represents the ID or identifier of the desired fulfillment facility.
 
 
+### Customer Classification 
+
+HotWax Commerce employs a systematic process to deduce the `customerClassificationId` from a Shopify order. It leverages the `ShopifyShopTypeMapping` entity, which acts as a bridge between Shopify customer tags and their corresponding classifications within the HotWax Commerce system.
+
+**Process Breakdown**
+
+1.  **Retrieve Customer Class Mappings:**
+    *   The service begins by fetching a list of `customerClassMappings` from the `ShopifyShopTypeMapping` entity. These mappings are specifically filtered to include only those with the `mappedTypeId` of "SHOP_ORD_CUST_CLASS," indicating their relevance to customer classification.
+    *   The `shopId` associated with the Shopify order is also used to ensure that the retrieved mappings are specific to the relevant Shopify shop.
+
+2.  **Check for Tags and Mappings:**
+    *   The service then verifies if both the `customerClassMappings` list and the `tags` associated with the Shopify order are not empty. This check is essential to proceed with the mapping process only if relevant data is available.
+
+3.  **Match Tags with Mappings:**
+    *   If both tags and mappings exist, the service iterates through the `customerClassMappings` and attempts to find a mapping whose `mappedKey` (representing a Shopify tag) matches any of the tags present in the order.
+    *   The matching is performed in a case-insensitive manner using `equalsIgnoreCase`.
+
+4.  **Extract and Set `customerClassificationId`**:
+    *   If a matching mapping is found, it signifies that the Shopify order contains a tag that corresponds to a predefined customer classification in HotWax Commerce.
+    *   The `mappedValue` from the matching `customerClassEnum` (which represents the HotWax Commerce `customerClassificationId`) is then extracted and placed into the `serviceCtx` map.
+    *   This `serviceCtx` is subsequently used when creating the sales order in HotWax Commerce, ensuring that the customer associated with the order is assigned the appropriate classification.
+
+**In Conclusion**
+
+The process of deducing the `customerClassificationId` in the `createShopifyOrder` service involves retrieving relevant mappings from the `ShopifyShopTypeMapping` entity, comparing the Shopify order tags with these mappings, and extracting the corresponding HotWax Commerce classification ID if a match is found. This enables the system to categorize customers based on their Shopify tags, facilitating targeted marketing, personalized experiences, and streamlined order management within the HotWax Commerce OMS.
