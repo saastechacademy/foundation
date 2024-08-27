@@ -332,7 +332,7 @@ In the `createShopifyOrder` service, the `ShopifyHelper` class is utilized in th
     *   The `ShopifyHelper.getShopifyTypeMappedValue` function is used with `mappedTypeId` "SHOPIFY_PRODUCT_TAG" to retrieve the tags used in Shopify to indicate pre-order or backorder products. These tags are then used to determine if an order item should be marked as a pre-order or backorder in HotWax Commerce.
 
 
-**Explanation of the facilityId computation Logic**
+### **FacilityId computation Logic**
 
 1.  **Prioritize Shopify Location (If Applicable):** The code first attempts to determine the `facilityId` based on the `location_id` present in the Shopify order, but only if the order is not tagged as "SENDSALE". This is done using the `ShopifyHelper.getFacilityId` function, which looks up a mapping between Shopify locations and HotWax Commerce facilities.
 
@@ -343,7 +343,66 @@ In the `createShopifyOrder` service, the `ShopifyHelper` class is utilized in th
 4.  **Fallback to "_NA_" Facility:** If none of the above conditions are met (i.e., no location ID, no location-to-facility mapping, no inventory reservation, or no default facility), the code defaults the `facilityId` to "_NA_". This ensures that the `facilityId` variable always has a value, even if it's a placeholder representing an unallocated order in the HotWax Commerce OMS.
 
 
-**Adjustments**  
+### Override the default order line item fulfillment facility
+
+The enums `PRE_SLCTD_FAC_TAG`, `ORD_ITM_PICKUP_FAC`, and `ORD_ITM_SHIP_FAC` are used to define settings in the `ProductStoreSetting` entity. These settings play a crucial role in customizing the order fulfillment process within the HotWax Commerce OMS.
+
+Overriding the default fulfillment facility for an order item based on specific properties set within the Shopify line item. If the Shopify order and its line items meet certain conditions (tags and property names), the system will look for a designated property in the line item's properties and use its value to determine the fulfillment facility, potentially enabling more flexible and customized fulfillment workflows.
+
+
+Overriding the default fulfillment facility based on item-specific properties is as follows:
+
+```java
+List<String> lineItemNameSettings = EntityQuery.use(delegator).from("ProductStoreSetting")
+        .where(EntityCondition.makeCondition("productStoreId", productStoreId), 
+               EntityCondition.makeCondition("settingTypeEnumId", EntityOperator.IN, UtilMisc.toList("ORD_ITM_PICKUP_FAC", "ORD_ITM_SHIP_FAC")))
+        .getFieldList("settingValue");
+
+if (UtilValidate.isNotEmpty(properties) && UtilValidate.isNotEmpty(tagsList) && 
+    UtilValidate.isNotEmpty(lineItemNameSettings) && UtilValidate.isNotEmpty(preSelectedFacTag) && 
+    tagsList.stream().anyMatch(preSelectedFacTag::equalsIgnoreCase)) {
+
+    Optional<Map<String, String>> facilityOpt = properties.stream()
+            .filter(property -> lineItemNameSettings.contains(property.get("name")))
+            .findFirst();
+
+    if (facilityOpt.isPresent()) {
+        fromFacilityId = facilityOpt.get().get("value");
+    }
+}
+```
+
+1. **Retrieve Facility-Related Settings:**
+   * The code starts by fetching the values of two product store settings: "ORD_ITM_PICKUP_FAC" and "ORD_ITM_SHIP_FAC". These settings define the property names used within Shopify line items to specify the desired pickup or shipping facility.
+   * The `lineItemNameSettings` list now contains these property names.
+
+2. **Check for Pre-Selected Facility Tag:**
+   * The code then checks if certain conditions are met:
+     * The `properties` list (extracted from the Shopify line item) is not empty.
+     * The `tagsList` (extracted from the Shopify order) is not empty.
+     * The `lineItemNameSettings` list is not empty.
+     * The `preSelectedFacTag` (another product store setting, likely indicating a tag that triggers this facility override logic) is not empty.
+     * At least one tag in the `tagsList` matches the `preSelectedFacTag`.
+
+3. **Extract Facility ID from Properties:**
+   * If all the conditions in step 2 are true, it means the order is eligible for facility override based on item properties.
+   * The code then filters the `properties` list to find a property whose name matches one of the facility-related setting values (either "ORD_ITM_PICKUP_FAC" or "ORD_ITM_SHIP_FAC").
+   * If such a property is found, its value is extracted and assigned to the `fromFacilityId` variable. This value likely represents the ID or identifier of the desired fulfillment facility.
+
+
+### **Explanation of Enums and their Usage**
+
+1.  **`PRE_SLCTD_FAC_TAG`**
+    *   **Purpose:** This enum defines a setting in the `ProductStoreSetting` entity to store the name of a specific tag used in Shopify orders. When an order from Shopify contains this tag, it triggers the `createShopifyOrder` service to check for pre-selected facilities for fulfilling the line items within that order.
+
+2.  **`ORD_ITM_PICKUP_FAC`**
+    *   **Purpose:** This enum defines another setting in the `ProductStoreSetting` entity to store the property name used within Shopify line items to indicate the pre-selected facility for store pickup orders.
+
+3.  **`ORD_ITM_SHIP_FAC`**
+    *   **Purpose:** Similar to `ORD_ITM_PICKUP_FAC`, this enum defines a setting to store the property name used in Shopify line items to indicate the pre-selected facility for same-day shipping orders.
+
+
+### **Item Adjustments**  
 
 The `itemAdjustments` data in HotWax Commerce is primarily derived from two sections of the Shopify Order JSON:
 
@@ -378,6 +437,33 @@ storeOrderCtx.put("partyId", customerId);
 storeOrderCtx.put("billToCustomerPartyId", customerId);
 storeOrderCtx.put("shipToCustomerPartyId", customerId);
 ```
+
+### Customer Classification 
+
+HotWax Commerce employs a systematic process to deduce the `customerClassificationId` from a Shopify order. It leverages the `ShopifyShopTypeMapping` entity, which acts as a bridge between Shopify customer tags and their corresponding classifications within the HotWax Commerce system.
+
+**Process Breakdown**
+
+1.  **Retrieve Customer Class Mappings:**
+    *   The service begins by fetching a list of `customerClassMappings` from the `ShopifyShopTypeMapping` entity. These mappings are specifically filtered to include only those with the `mappedTypeId` of "SHOP_ORD_CUST_CLASS," indicating their relevance to customer classification.
+    *   The `shopId` associated with the Shopify order is also used to ensure that the retrieved mappings are specific to the relevant Shopify shop.
+
+2.  **Check for Tags and Mappings:**
+    *   The service then verifies if both the `customerClassMappings` list and the `tags` associated with the Shopify order are not empty. This check is essential to proceed with the mapping process only if relevant data is available.
+
+3.  **Match Tags with Mappings:**
+    *   If both tags and mappings exist, the service iterates through the `customerClassMappings` and attempts to find a mapping whose `mappedKey` (representing a Shopify tag) matches any of the tags present in the order.
+    *   The matching is performed in a case-insensitive manner using `equalsIgnoreCase`.
+
+4.  **Extract and Set `customerClassificationId`**:
+    *   If a matching mapping is found, it signifies that the Shopify order contains a tag that corresponds to a predefined customer classification in HotWax Commerce.
+    *   The `mappedValue` from the matching `customerClassEnum` (which represents the HotWax Commerce `customerClassificationId`) is then extracted and placed into the `serviceCtx` map.
+    *   This `serviceCtx` is subsequently used when creating the sales order in HotWax Commerce, ensuring that the customer associated with the order is assigned the appropriate classification.
+
+**In Conclusion**
+
+The process of deducing the `customerClassificationId` in the `createShopifyOrder` service involves retrieving relevant mappings from the `ShopifyShopTypeMapping` entity, comparing the Shopify order tags with these mappings, and extracting the corresponding HotWax Commerce classification ID if a match is found. This enables the system to categorize customers based on their Shopify tags, facilitating targeted marketing, personalized experiences, and streamlined order management within the HotWax Commerce OMS.
+
 
 ### **"POS sales channel"**
 
@@ -450,90 +536,6 @@ if (isCashSaleOrder) {
         This would be stored as an `OrderItemAttribute` with `attrName` = "custom engraving" and `attrValue` = "Happy Birthday Mom!"
 
 
-### Override the default order line item fulfillment facility
-
-The enums `PRE_SLCTD_FAC_TAG`, `ORD_ITM_PICKUP_FAC`, and `ORD_ITM_SHIP_FAC` are used to define settings in the `ProductStoreSetting` entity. These settings play a crucial role in customizing the order fulfillment process within the HotWax Commerce OMS.
-
-Overriding the default fulfillment facility for an order item based on specific properties set within the Shopify line item. If the Shopify order and its line items meet certain conditions (tags and property names), the system will look for a designated property in the line item's properties and use its value to determine the fulfillment facility, potentially enabling more flexible and customized fulfillment workflows.
-
-
-Overriding the default fulfillment facility based on item-specific properties is as follows:
-
-```java
-List<String> lineItemNameSettings = EntityQuery.use(delegator).from("ProductStoreSetting")
-        .where(EntityCondition.makeCondition("productStoreId", productStoreId), 
-               EntityCondition.makeCondition("settingTypeEnumId", EntityOperator.IN, UtilMisc.toList("ORD_ITM_PICKUP_FAC", "ORD_ITM_SHIP_FAC")))
-        .getFieldList("settingValue");
-
-if (UtilValidate.isNotEmpty(properties) && UtilValidate.isNotEmpty(tagsList) && 
-    UtilValidate.isNotEmpty(lineItemNameSettings) && UtilValidate.isNotEmpty(preSelectedFacTag) && 
-    tagsList.stream().anyMatch(preSelectedFacTag::equalsIgnoreCase)) {
-
-    Optional<Map<String, String>> facilityOpt = properties.stream()
-            .filter(property -> lineItemNameSettings.contains(property.get("name")))
-            .findFirst();
-
-    if (facilityOpt.isPresent()) {
-        fromFacilityId = facilityOpt.get().get("value");
-    }
-}
-```
-
-1. **Retrieve Facility-Related Settings:**
-   * The code starts by fetching the values of two product store settings: "ORD_ITM_PICKUP_FAC" and "ORD_ITM_SHIP_FAC". These settings define the property names used within Shopify line items to specify the desired pickup or shipping facility.
-   * The `lineItemNameSettings` list now contains these property names.
-
-2. **Check for Pre-Selected Facility Tag:**
-   * The code then checks if certain conditions are met:
-     * The `properties` list (extracted from the Shopify line item) is not empty.
-     * The `tagsList` (extracted from the Shopify order) is not empty.
-     * The `lineItemNameSettings` list is not empty.
-     * The `preSelectedFacTag` (another product store setting, likely indicating a tag that triggers this facility override logic) is not empty.
-     * At least one tag in the `tagsList` matches the `preSelectedFacTag`.
-
-3. **Extract Facility ID from Properties:**
-   * If all the conditions in step 2 are true, it means the order is eligible for facility override based on item properties.
-   * The code then filters the `properties` list to find a property whose name matches one of the facility-related setting values (either "ORD_ITM_PICKUP_FAC" or "ORD_ITM_SHIP_FAC").
-   * If such a property is found, its value is extracted and assigned to the `fromFacilityId` variable. This value likely represents the ID or identifier of the desired fulfillment facility.
-
-
-### **Explanation of Enums and their Usage**
-
-1.  **`PRE_SLCTD_FAC_TAG`**
-    *   **Purpose:** This enum defines a setting in the `ProductStoreSetting` entity to store the name of a specific tag used in Shopify orders. When an order from Shopify contains this tag, it triggers the `createShopifyOrder` service to check for pre-selected facilities for fulfilling the line items within that order.
-
-2.  **`ORD_ITM_PICKUP_FAC`**
-    *   **Purpose:** This enum defines another setting in the `ProductStoreSetting` entity to store the property name used within Shopify line items to indicate the pre-selected facility for store pickup orders.
-
-3.  **`ORD_ITM_SHIP_FAC`**
-    *   **Purpose:** Similar to `ORD_ITM_PICKUP_FAC`, this enum defines a setting to store the property name used in Shopify line items to indicate the pre-selected facility for same-day shipping orders.
-
-
-### Customer Classification 
-
-HotWax Commerce employs a systematic process to deduce the `customerClassificationId` from a Shopify order. It leverages the `ShopifyShopTypeMapping` entity, which acts as a bridge between Shopify customer tags and their corresponding classifications within the HotWax Commerce system.
-
-**Process Breakdown**
-
-1.  **Retrieve Customer Class Mappings:**
-    *   The service begins by fetching a list of `customerClassMappings` from the `ShopifyShopTypeMapping` entity. These mappings are specifically filtered to include only those with the `mappedTypeId` of "SHOP_ORD_CUST_CLASS," indicating their relevance to customer classification.
-    *   The `shopId` associated with the Shopify order is also used to ensure that the retrieved mappings are specific to the relevant Shopify shop.
-
-2.  **Check for Tags and Mappings:**
-    *   The service then verifies if both the `customerClassMappings` list and the `tags` associated with the Shopify order are not empty. This check is essential to proceed with the mapping process only if relevant data is available.
-
-3.  **Match Tags with Mappings:**
-    *   If both tags and mappings exist, the service iterates through the `customerClassMappings` and attempts to find a mapping whose `mappedKey` (representing a Shopify tag) matches any of the tags present in the order.
-    *   The matching is performed in a case-insensitive manner using `equalsIgnoreCase`.
-
-4.  **Extract and Set `customerClassificationId`**:
-    *   If a matching mapping is found, it signifies that the Shopify order contains a tag that corresponds to a predefined customer classification in HotWax Commerce.
-    *   The `mappedValue` from the matching `customerClassEnum` (which represents the HotWax Commerce `customerClassificationId`) is then extracted and placed into the `serviceCtx` map.
-    *   This `serviceCtx` is subsequently used when creating the sales order in HotWax Commerce, ensuring that the customer associated with the order is assigned the appropriate classification.
-
-**In Conclusion**
-
-The process of deducing the `customerClassificationId` in the `createShopifyOrder` service involves retrieving relevant mappings from the `ShopifyShopTypeMapping` entity, comparing the Shopify order tags with these mappings, and extracting the corresponding HotWax Commerce classification ID if a match is found. This enables the system to categorize customers based on their Shopify tags, facilitating targeted marketing, personalized experiences, and streamlined order management within the HotWax Commerce OMS.
 
 
 
