@@ -74,22 +74,23 @@ The order JSON includes several nested objects that provide more detailed inform
 
 The preprocessing stage is the first step in the integration process. It focuses on preparing the incoming Shopify order data for conversion into a HotWax Commerce order. Here's a breakdown of the key steps:
 
-1. **Order Identification and Duplicate Check**
-
-   * **Extract Shopify Order ID:** The service retrieves the Shopify order ID (e.g., "450789469") from the input JSON data using the `order.get("id")` method.
-   * **Check for Duplicates:** It then queries the `OrderIdentification` entity in HotWax Commerce to see if an order with this Shopify ID has already been imported.
-   * **Skip if Duplicate:** If a matching order is found, the current order is marked as a duplicate and will be skipped to prevent redundant data in the system.
-
-2. **Configuration Retrieval and Filtering**
+1. **Configuration Retrieval and Filtering**
 
    * **Fetch Shopify Config:** The service retrieves the configuration for the specific Shopify store integration using the `shopifyConfigId` passed as an input parameter.
    * **Get Product Store ID:** From the `ShopifyConfig` entity, the service extracts the `productStoreId`, which is used in the next step.
    * **Load Properties:** The service reads the `ShopifyServiceConfig` properties file and looks up the property named `<productStoreId>.skip.order.import.tags`. This property value is expected to be a comma-separated list of tags.
    * **Tag-Based Filtering:** The service then compares the tags associated with the Shopify order to the tags in the `skip.order.import.tags` list. If a match is found, the order is marked as skipped and won't be imported.
 
+2. **Order Identification and Duplicate Check**
+
+   * **Extract Shopify Order ID:** The service retrieves the Shopify order ID (e.g., "450789469") from the input JSON data using the `order.get("id")` method.
+   * **Check for Duplicates:** It then queries the `OrderIdentification` entity in HotWax Commerce to see if an order with this Shopify ID has already been imported.
+   * **Skip if Duplicate:** If a matching order is found, the current order is marked as a duplicate and will be skipped to prevent redundant data in the system.
 
 
-The `ShopifyConfig` data is used in the `createShopifyOrder` service to retrieve configuration details necessary for processing the Shopify order. Here's a step-by-step explanation of how `ShopifyConfig` data is utilized:
+
+The `ShopifyConfig` data is used in the `createShopifyOrder` service to retrieve configuration details necessary for processing the Shopify order. 
+
 
 1. **Retrieve Shopify Configuration:**
    - The service queries the `ShopifyConfig` entity using the `shopifyConfigId` provided in the context to get the configuration details.
@@ -97,15 +98,6 @@ The `ShopifyConfig` data is used in the `createShopifyOrder` service to retrieve
 
 2. **Set Product Store:**
    - The `productStoreId` from the `ShopifyConfig` is used to set the product store for the order.
-
-3. **Filter Orders Based on Tags:**
-   - The service checks if the order should be skipped based on tags and configuration settings from `ShopifyConfig`.
-
-4. **Determine Facility Details:**
-   - The `productStoreId` is used to retrieve the default facility ID from the product store configuration.
-
-5. **Order Processing Logic:**
-   - The `shopId` from the `ShopifyConfig` is used to map the Shopify order source to a channel ID.
 
 ### Pseudocode
 
@@ -119,10 +111,87 @@ The `ShopifyConfig` data is used in the `createShopifyOrder` service to retrieve
    String productStoreId = shopifyConfig.getString("productStoreId");
    ```
 
+Here's a step-by-step explanation of how `ShopifyConfig` data is utilized:
+
+3. **Filter Orders Based on Tags:**
+   - The service checks if the order should be skipped based on tags and configuration settings from `ShopifyConfig`.
+
+
+4. **Determine Facility Details:**
+   - The `productStoreId` is used to retrieve the default facility ID from the product store configuration.
+
+5. **Order Processing Logic:**
+   - The `shopId` from the `ShopifyConfig` is used to map the Shopify order source to a channel ID.
+
+### Pseudocode
+
 3. **Filter Orders Based on Tags:**
    ```java
    String skipOrdersTags = EntityUtilProperties.getPropertyValue("ShopifyServiceConfig", productStoreId + ".skip.order.import.tags", delegator);
    ```
+
+
+### Business Requirements for Skip Order 
+
+1. **Check for Existing Order:**
+   - Query the `OrderIdentification` entity to see if an order with the same Shopify Order ID already exists. If it exists, skip the process.
+
+2. **Filter Orders Based on Tags:**
+   - Extract and clean tags from the order.
+   - Check if the order should be skipped based on tags and configuration.
+
+### Implementation Detail Design for Skip Order Tags
+
+#### Pseudocode:
+
+a. **Extract Tags from Order:**
+   - Retrieve the tags from the `order` map.
+   - Clean and process the tags.
+
+b. **Retrieve Skip Tags Configuration:**
+   - Fetch the skip tags configuration from the `ShopifyServiceConfig` properties file.
+
+c. **Check Tags Against Configuration:**
+   - Compare the tags from the order with the skip tags configuration.
+   - If any tag matches the skip tags, set a flag to skip the order.
+
+d. **Skip Order if Necessary:**
+   - If the flag is set, skip the order creation process.
+
+#### Code:
+
+```java
+// Extract and clean tags from the order
+List<String> tags = UtilGenerics.checkList(order.get("tags"));
+tags = tags.stream().map(String::trim).collect(Collectors.toList());
+
+// Retrieve skip tags configuration from properties file
+String skipTagsConfig = EntityUtilProperties.getPropertyValue("ShopifyServiceConfig", "skip.order.tags", delegator);
+List<String> skipTags = Arrays.asList(skipTagsConfig.split(","));
+
+// Check if the order should be skipped based on tags and configuration
+boolean skipOrder = tags.stream().map(String::toLowerCase).anyMatch(skipTags::contains);
+
+
+if (!skipOrder) {
+    // Proceed with order creation
+} else {
+    // Skip the process
+}
+```
+
+### Summary
+
+- **Extract Tags from Order:** The tags are extracted from the `order` map and cleaned by trimming any whitespace.
+- **Retrieve Skip Tags Configuration:** The skip tags configuration is fetched from the `ShopifyServiceConfig` properties file using the key `skip.order.tags`.
+- **Check Tags Against Configuration:** The tags from the order are compared with the skip tags configuration. If any tag matches the skip tags, the `skipOrder` flag is set to `true`, and the order creation process is skipped.
+
+
+**Key Points and Considerations**
+
+* **Flexibility:** The `ShopifyServiceConfig` properties file allows for easy customization of which orders to import based on specific tags. This can be useful for filtering test orders, orders from specific sales channels, or any other order criteria you want to define.
+* **Data Integrity:** The duplicate check is crucial for preventing duplicate orders in your HotWax Commerce system, ensuring data consistency and accuracy.
+
 
 4. **Determine Facility Details:**
    ```java
@@ -176,69 +245,14 @@ BigDecimal grandTotal = (BigDecimal) ObjectType.simpleTypeConvert(order.get("tot
 
 // Add Locale to service context for subsequent service calls
 serviceCtx.put("locale", locale);
+
+                        //get customer locale details
+                        if (UtilValidate.isNotEmpty(order.get("customer_locale"))){
+                            String customerLocale = (String) order.get("customer_locale");
+                            String baseLocale = new Locale(Locale.forLanguageTag(customerLocale).getLanguage(), "").toString();
+
 ```
 
-
-### Business Requirements for Skip Order 
-
-1. **Check for Existing Order:**
-   - Query the `OrderIdentification` entity to see if an order with the same Shopify Order ID already exists. If it exists, skip the process.
-
-2. **Filter Orders Based on Tags:**
-   - Extract and clean tags from the order.
-   - Check if the order should be skipped based on tags and configuration.
-
-### Implementation Detail Design for Skip Order Tags
-
-#### Pseudocode:
-
-1. **Extract Tags from Order:**
-   - Retrieve the tags from the `order` map.
-   - Clean and process the tags.
-
-2. **Retrieve Skip Tags Configuration:**
-   - Fetch the skip tags configuration from the `ShopifyServiceConfig` properties file.
-
-3. **Check Tags Against Configuration:**
-   - Compare the tags from the order with the skip tags configuration.
-   - If any tag matches the skip tags, set a flag to skip the order.
-
-4. **Skip Order if Necessary:**
-   - If the flag is set, skip the order creation process.
-
-#### Code:
-
-```java
-// Extract and clean tags from the order
-List<String> tags = UtilGenerics.checkList(order.get("tags"));
-tags = tags.stream().map(String::trim).collect(Collectors.toList());
-
-// Retrieve skip tags configuration from properties file
-String skipTagsConfig = EntityUtilProperties.getPropertyValue("ShopifyServiceConfig", "skip.order.tags", delegator);
-List<String> skipTags = Arrays.asList(skipTagsConfig.split(","));
-
-// Check if the order should be skipped based on tags and configuration
-boolean skipOrder = tags.stream().map(String::toLowerCase).anyMatch(skipTags::contains);
-
-
-if (!skipOrder) {
-    // Proceed with order creation
-} else {
-    // Skip the process
-}
-```
-
-### Summary
-
-- **Extract Tags from Order:** The tags are extracted from the `order` map and cleaned by trimming any whitespace.
-- **Retrieve Skip Tags Configuration:** The skip tags configuration is fetched from the `ShopifyServiceConfig` properties file using the key `skip.order.tags`.
-- **Check Tags Against Configuration:** The tags from the order are compared with the skip tags configuration. If any tag matches the skip tags, the `skipOrder` flag is set to `true`, and the order creation process is skipped.
-
-
-**Key Points and Considerations**
-
-* **Flexibility:** The `ShopifyServiceConfig` properties file allows for easy customization of which orders to import based on specific tags. This can be useful for filtering test orders, orders from specific sales channels, or any other order criteria you want to define.
-* **Data Integrity:** The duplicate check is crucial for preventing duplicate orders in your HotWax Commerce system, ensuring data consistency and accuracy.
 
 **Understanding `ShopifyHelper.getShopifyTypeMappedValue`**
 
@@ -345,6 +359,7 @@ The following HotWax Commerce internal services are called from the `createShopi
 9.  `createOrderPaymentPreference` (may be called depending on order status)
 10. `createCommunicationEventOrder` (run asynchronously, if applicable)
 
+
 **Adjustments**  
 
 The `itemAdjustments` data in HotWax Commerce is primarily derived from two sections of the Shopify Order JSON:
@@ -363,35 +378,6 @@ The `itemAdjustments` data in HotWax Commerce is primarily derived from two sect
 | tax\_lines.price                         | amount                                     |
 | tax\_lines.rate                          | sourcePercentage                           |
 
-
-
-
-
-****Shopify Order API** Analyze its key components and how they might map to the HotWax Commerce `createSalesOrder` API.
-
-**Core Order Details**
-
-*   `id`: (450789469) The unique identifier for this order within Shopify. This would typically be mapped to the `externalId` field in the HotWax `createSalesOrder` API.
-*   `name`: ("#1001") The human-readable order name in Shopify. This could be mapped to the `orderName` field in HotWax.
-*   `order_number`: (1001) The sequential order number within the Shopify store. This could potentially be used as another identifier in HotWax, perhaps in the `orderAttributes` list.
-*   `created_at`, `updated_at`, `processed_at`: These timestamps indicate when the order was created, last updated, and processed in Shopify. The `created_at` value could be mapped to the `orderDate` field in HotWax.
-*   `financial_status`: ("authorized") This indicates the financial state of the order. It would likely be mapped to the `statusId` field in HotWax, potentially with some translation between Shopify's statuses and HotWax's statuses.
-*   `fulfillment_status`: ("partial") This shows the fulfillment status of the order. It could be used to determine the initial value of the `statusId` field in HotWax.
-*   `currency`: ("USD") The currency used for the order in Shopify. This would be mapped to the `currencyCode` field in HotWax.
-*   `presentment_currency`: ("CAD") The currency used to display prices to the customer in Shopify. This would be mapped to the `presentmentCurrencyCode` field in HotWax.
-*   `total_price`, `subtotal_price`, `total_tax`: These fields represent the total price, subtotal, and total tax of the order in Shopify. They would be mapped to the `grandTotal`, a calculated subtotal (derived from line items), and a calculated total tax (derived from tax lines) in HotWax, respectively.
-
-**Customer Information**
-
-*   `customer`: This object contains detailed customer information:
-    *   `id`: (207119551) The customer's unique identifier in Shopify. This would be mapped to the `customerExternalId` field in HotWax.
-    *   `email`: ("bob.norman@mail.example.com") The customer's email address. This could be used to create or link a customer record in HotWax.
-    *   `first_name`, `last_name`: The customer's first and last name. These would be used to create or link a customer record in HotWax.
-    *   `phone`: ("+13125551212") The customer's phone number. This could be used to create a contact mechanism in HotWax.
-
-**Addresses**
-
-*   `billing_address`, `shipping_address`: These objects contain the billing and shipping addresses, respectively. The relevant fields (e.g., `address1`, `city`, `zip`, `country_code`) would be used to create `PostalAddress` contact mechanisms in HotWax.
 
 
 **Example: Customer Handling**
@@ -439,6 +425,8 @@ storeOrderCtx.put("shipToCustomerPartyId", customerId);
 
 **"POS sales channel"**
 
+Handle POS orders, assign them a specific shipping method "POS_COMPLETED".
+
 ```java
 boolean isCashSaleOrder = (UtilValidate.isEmpty(order.get("shipping_lines")) && "POS_SALES_CHANNEL".equals(channelId) && "fulfilled".equals(order.get("fulfillment_status")));
 ```
@@ -459,31 +447,11 @@ if (isCashSaleOrder) {
 }
 ```
 
-This suggests that the code is prepared to handle POS orders and assign them a specific shipping method. However, it doesn't explicitly map the sales channel to "POS\_SALES\_CHANNEL" as you mentioned.
-
-To fully implement the desired logic, you would need to modify the code to:
-
-1.  Explicitly map the sales channel to "POS\_SALES\_CHANNEL" when `isCashSaleOrder` is true.
-2.  Ensure that "POS\_COMPLETED" is the correct shipping method ID for your "pos completed" shipping method in HotWax Commerce.
-
-The Shopify Order attributes that are mapped to `OrderItemAttributes` in HotWax Commerce, according to the provided code, are:
-
-*   **`properties`:** Custom properties associated with line items in the Shopify order are mapped as `OrderItemAttribute` entities in HotWax Commerce. The `name` and `value` fields from each `properties` entry are used as the `attrName` and `attrValue` in the `OrderItemAttribute` entity.
-*   **Pre-order and Backorder Tags:** If a product in the Shopify order is tagged as "ON\_PRE\_ORDER\_PROD" or "ON\_BACK\_ORDER\_PROD," this information is stored in an `OrderItemAttribute` with the name "PreOrderItemProperty" or "BackOrderItemProperty" respectively.
-*   **Store Pickup Property:** If a line item in the Shopify order has a property indicating store pickup, this information is stored in an `OrderItemAttribute` with the name "StorePickupItemProperty."
-
-The Shopify Order data elements that map to `OrderItemAttributes` in HotWax Commerce are:
-
-*   **`properties`:** Custom properties associated with line items in the Shopify order.
-*   **Pre-order and Backorder Tags:** Tags indicating if a product is on pre-order ("ON\_PRE\_ORDER\_PROD") or backorder ("ON\_BACK\_ORDER\_PROD").
-*   **Store Pickup Property:** A property indicating if a line item is for store pickup.
-
-Based on the provided code (`createShopifyOrder.txt`) and the Shopify Order API documentation, the following Shopify order data is mapped to `OrderAttribute` in HotWax Commerce:
+The following Shopify order data is mapped to `OrderAttribute` in HotWax Commerce:
 
 *   **`note_attributes`:** Any custom note attributes present in the Shopify order JSON are mapped as individual `OrderAttribute` entities in HotWax Commerce. The `name` and `value` fields from each `note_attributes` entry are directly used as the `attrName` and `attrValue` in the `OrderAttribute` entity.
 *   **`user_id`:** The ID of the staff member who created the order in Shopify is stored as an `OrderAttribute` with the name `shopify_user_id`.
 
-Based on the provided code (`createShopifyOrder.txt`) and the Shopify Order API documentation, the following Shopify order attributes are mapped to `OrderAttribute` or `OrderItemAttribute` in HotWax Commerce:
 
 ### Order Attributes:
 
@@ -504,6 +472,17 @@ Based on the provided code (`createShopifyOrder.txt`) and the Shopify Order API 
 *   **`user_id`:**
     *   The ID of the staff member who created the order in Shopify is stored as an `OrderAttribute` with the name `shopify_user_id`.
 
+
+
+The Shopify Order attributes that are mapped to `OrderItemAttributes` in HotWax Commerce, according to the provided code, are:
+
+*   **`properties`:** Custom properties associated with line items in the Shopify order are mapped as `OrderItemAttribute` entities in HotWax Commerce. The `name` and `value` fields from each `properties` entry are used as the `attrName` and `attrValue` in the `OrderItemAttribute` entity.
+*   **Pre-order and Backorder Tags:** If a product in the Shopify order is tagged as "ON\_PRE\_ORDER\_PROD" or "ON\_BACK\_ORDER\_PROD," this information is stored in an `OrderItemAttribute` with the name "PreOrderItemProperty" or "BackOrderItemProperty" respectively.
+*   **Store Pickup Property:** If a line item in the Shopify order has a property indicating store pickup, this information is stored in an `OrderItemAttribute` with the name "StorePickupItemProperty."
+*   **Group order items based on custom attributes or properties.**
+*   **Override the default order line item fulfillment facility**
+
+
 ### Order Item Attributes:
 
 *   **`properties`:**
@@ -520,8 +499,49 @@ Based on the provided code (`createShopifyOrder.txt`) and the Shopify Order API 
         ```
         This would be stored as an `OrderItemAttribute` with `attrName` = "custom engraving" and `attrValue` = "Happy Birthday Mom!"
 
-*   **Pre-order and Backorder Tags:**
-    *   If a product in the Shopify order is tagged as "ON\_PRE\_ORDER\_PROD" or "ON\_BACK\_ORDER\_PROD," this information is stored in an `OrderItemAttribute` with the name "PreOrderItemProperty" or "BackOrderItemProperty" respectively.
 
-*   **Store Pickup Property:**
-    *   If a line item in the Shopify order has a property indicating store pickup, this information is stored in an `OrderItemAttribute` with the name "StorePickupItemProperty."
+### Override the default order line item fulfillment facility
+
+Overriding the default fulfillment facility for an order item based on specific properties set within the Shopify line item. If the Shopify order and its line items meet certain conditions (tags and property names), the system will look for a designated property in the line item's properties and use its value to determine the fulfillment facility, potentially enabling more flexible and customized fulfillment workflows.
+
+
+Overriding the default fulfillment facility based on item-specific properties is as follows:
+
+```java
+List<String> lineItemNameSettings = EntityQuery.use(delegator).from("ProductStoreSetting")
+        .where(EntityCondition.makeCondition("productStoreId", productStoreId), 
+               EntityCondition.makeCondition("settingTypeEnumId", EntityOperator.IN, UtilMisc.toList("ORD_ITM_PICKUP_FAC", "ORD_ITM_SHIP_FAC")))
+        .getFieldList("settingValue");
+
+if (UtilValidate.isNotEmpty(properties) && UtilValidate.isNotEmpty(tagsList) && 
+    UtilValidate.isNotEmpty(lineItemNameSettings) && UtilValidate.isNotEmpty(preSelectedFacTag) && 
+    tagsList.stream().anyMatch(preSelectedFacTag::equalsIgnoreCase)) {
+
+    Optional<Map<String, String>> facilityOpt = properties.stream()
+            .filter(property -> lineItemNameSettings.contains(property.get("name")))
+            .findFirst();
+
+    if (facilityOpt.isPresent()) {
+        fromFacilityId = facilityOpt.get().get("value");
+    }
+}
+```
+
+1. **Retrieve Facility-Related Settings:**
+   * The code starts by fetching the values of two product store settings: "ORD_ITM_PICKUP_FAC" and "ORD_ITM_SHIP_FAC". These settings define the property names used within Shopify line items to specify the desired pickup or shipping facility.
+   * The `lineItemNameSettings` list now contains these property names.
+
+2. **Check for Pre-Selected Facility Tag:**
+   * The code then checks if certain conditions are met:
+     * The `properties` list (extracted from the Shopify line item) is not empty.
+     * The `tagsList` (extracted from the Shopify order) is not empty.
+     * The `lineItemNameSettings` list is not empty.
+     * The `preSelectedFacTag` (another product store setting, likely indicating a tag that triggers this facility override logic) is not empty.
+     * At least one tag in the `tagsList` matches the `preSelectedFacTag`.
+
+3. **Extract Facility ID from Properties:**
+   * If all the conditions in step 2 are true, it means the order is eligible for facility override based on item properties.
+   * The code then filters the `properties` list to find a property whose name matches one of the facility-related setting values (either "ORD_ITM_PICKUP_FAC" or "ORD_ITM_SHIP_FAC").
+   * If such a property is found, its value is extracted and assigned to the `fromFacilityId` variable. This value likely represents the ID or identifier of the desired fulfillment facility.
+
+
