@@ -3,6 +3,7 @@
 Think of the order JSON as a comprehensive snapshot of a customer's purchase on your Shopify store. It includes everything from basic details about the order itself to information about the customer, the products they bought, shipping details, payment information, and much more.
 
 
+
 **Top-Level Structure**
 
 The top level of the JSON contains essential order attributes:
