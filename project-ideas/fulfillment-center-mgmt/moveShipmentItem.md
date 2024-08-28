@@ -25,7 +25,7 @@ This service is typically used in the following scenarios:
 *  Shipment can be edited in SHIPMENT_INPUT status. Check if shipment is in SHIPMENT_INPUT status, if not, stop futher process and return error.
 *  Moving shipment item is three step process 
   1. Delete shipmentItem from existing shipment. Delete OrderShipment record along with ShipmentItem. Anything else?
-  2. In some cases the shipmentItem is moved to new shipment, in such case we may have to create shipment [createShipmentForOrder](createShipmentForOrder.md). 
+  2. In some cases the shipmentItem is moved to new shipment, in such case we may have to create shipment [createSalesOrderShipment](createSalesOrderShipment.md). 
   3. Add shipmentItem to the shipment. Adding a ShipmentItem to Shipment, also creates record in OrderShipment entity.
 
 
