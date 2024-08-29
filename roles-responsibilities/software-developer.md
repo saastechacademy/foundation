@@ -1,7 +1,9 @@
 # Software Developer role in [B2B SaaS](https://encharge.io/what-is-b2b-saas/) company
 
-# What do you do?
-Build business automation sofware. 
+### What do you do?
+Build business automation sofware, for example work on development [Add Bulk Recount/Reject](https://github.com/hotwax/inventory-count/issues/411).
+
+
 
 Build skills in following categories 
 *  Software Development Fundamentals
