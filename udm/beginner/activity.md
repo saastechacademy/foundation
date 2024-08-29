@@ -129,6 +129,13 @@ Do the following from party manager and then from webtools with observation from
      - Sales Channel: Web Sales
      - Invoice and Order Approval: Automatic
 
+### Activity - 5
+Reset local OFBiz database. 
+Repeat activity 1 thru 4, use webtools to create data. Observe the Company, Company Roles, Product Store Group, Product Store using OFBiz admin screens.
+
+### Activity - 6
+Reset local OFBiz database. 
+Repeat activity 1 thru 4, prepare data as xml file and load data using webtools. Observe the Company, Company Roles, Product Store Group, Product Store using OFBiz admin screens.
 
 
 ## Catalog:
@@ -203,11 +210,18 @@ Categories:
     — C-1 with Color: White, Brown Size: 2, 3, 4, 5
     — C-2 with Color: Red, Black Size: 2, 3, 5
 
+### Activity - 4
+Reset local OFBiz database. 
+Repeat activity 1 thru 3, use webtools to create data. Observe the Catalog, Categories, Features, Products, Promotion using OFBiz admin screens.
 
+### Activity - 5
+Reset local OFBiz database. 
+Repeat activity 1 thru 3, prepare data as xml file and load data using webtools. Observe the Catalog, Categories, Features, Products, Promotion using OFBiz admin screens.
 
 ## Order 
 
 ### Activity 1
+Create new order
 
     Order Id: HWMDEMO1000
     Order Status: Created
@@ -231,6 +245,7 @@ Categories:
     Phone: 877.736.4080
 
 ### Activity 2
+Create new order, and then approve the order
 
     Order Id: HWMDEMO1001
     Order Status: Approved
@@ -254,6 +269,7 @@ Categories:
     Phone: 877.736.4080
 
 ### Activity 3
+Cancel an order item
 
 
     Order Id: HWMDEMO1001
@@ -278,6 +294,7 @@ Categories:
     Phone: 877.736.4080
 
 ### Activity 4
+Fulfill order and move the order to completed status.
 
     Order Id: HWMDEMO1001
     Order Status: Completed
@@ -307,3 +324,10 @@ Categories:
     shipmentId: HwmDemo1000
 
 
+### Activity - 5
+Reset local OFBiz database. 
+Repeat activity 1 thru 4, use webtools to create data. Observe the created, approved, order with cancelled items, shipment and completed order on OFBiz admin screens.
+
+### Activity - 6
+Reset local OFBiz database. 
+Repeat activity 1 thru 4, prepare data as xml file and load data using webtools. Observe the created, approved, order with cancelled items, shipment and completed order OFBiz admin screens.

@@ -1,0 +1,382 @@
+{
+  "order": {
+    "id": 5524204486909,
+    "admin_graphql_api_id": "gid://shopify/Order/5524204486909",
+    "app_id": 580111,
+    "browser_ip": "111.118.250.178",
+    "buyer_accepts_marketing": false,
+    "cancel_reason": null,
+    "cancelled_at": null,
+    "cart_token": "",
+    "checkout_id": 34877557113085,
+    "checkout_token": "",
+    "client_details": {
+      "accept_language": "en-IN",
+      "browser_height": null,
+      "browser_ip": "111.118.250.178",
+      "browser_width": null,
+      "session_hash": null,
+      "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    },
+    "closed_at": null,
+    "company": null,
+    "confirmed": true,
+    "contact_email": "customer@example.com",
+    "created_at": "2024-02-12T06:06:13-05:00",
+    "currency": "USD",
+    "current_subtotal_price": "46.20",
+    "current_subtotal_price_set": {
+      "shop_money": {
+        "amount": "46.20",
+        "currency_code": "USD"
+      },
+      "presentment_money": {
+        "amount": "46.20",
+        "currency_code": "USD"
+      }
+    },
+    "current_total_additional_fees_set": null,
+    "current_total_discounts": "0.00",
+    "current_total_discounts_set": {
+      "shop_money": {
+        "amount": "0.00",
+        "currency_code": "USD"
+      },
+      "presentment_money": {
+        "amount": "0.00",
+        "currency_code": "USD"
+      }
+    },
+    "current_total_duties_set": null,
+    "current_total_price": "46.20",
+    "current_total_price_set": {
+      "shop_money": {
+        "amount": "46.20",
+        "currency_code": "USD"
+      },
+      "presentment_money": {
+        "amount": "46.20",
+        "currency_code": "USD"
+      }
+    },
+    "current_total_tax": "0.00",
+    "current_total_tax_set": {
+      "shop_money": {
+        "amount": "0.00",
+        "currency_code": "USD"
+      },
+      "presentment_money": {
+        "amount": "0.00",
+        "currency_code": "USD"
+      }
+    },
+    "customer_locale": "en-IN",
+    "device_id": null,
+    "discount_codes": [],
+    "email": "customer@example.com",
+    "estimated_taxes": false,
+    "financial_status": "authorized",
+    "fulfillment_status": null,
+    "landing_site": "/",
+    "landing_site_ref": null,
+    "location_id": null,
+    "merchant_of_record_app_id": null,
+    "name": "#2009",
+    "note": null,
+    "note_attributes": [],
+    "number": 1009,
+    "order_number": 2009,
+    "order_status_url": "https://hc-sandbox.myshopify.com/",
+    "original_total_additional_fees_set": null,
+    "original_total_duties_set": null,
+    "payment_gateway_names": [
+      "shopify_payments"
+    ],
+    "phone": null,
+    "presentment_currency": "USD",
+    "processed_at": "2024-02-12T06:06:07-05:00",
+    "reference": "bac2f2cfa5e410edd5add90802d8b0e5",
+    "referring_site": "",
+    "source_identifier": "bac2f2cfa5e410edd5add90802d8b0e5",
+    "source_name": "web",
+    "source_url": null,
+    "subtotal_price": "46.20",
+    "subtotal_price_set": {
+      "shop_money": {
+        "amount": "46.20",
+        "currency_code": "USD"
+      },
+      "presentment_money": {
+        "amount": "46.20",
+        "currency_code": "USD"
+      }
+    },
+    "tags": "",
+    "tax_lines": [],
+    "taxes_included": false,
+    "test": true,
+    "token": "",
+    "total_discounts": "0.00",
+    "total_discounts_set": {
+      "shop_money": {
+        "amount": "0.00",
+        "currency_code": "USD"
+      },
+      "presentment_money": {
+        "amount": "0.00",
+        "currency_code": "USD"
+      }
+    },
+    "total_line_items_price": "46.20",
+    "total_line_items_price_set": {
+      "shop_money": {
+        "amount": "46.20",
+        "currency_code": "USD"
+      },
+      "presentment_money": {
+        "amount": "46.20",
+        "currency_code": "USD"
+      }
+    },
+    "total_outstanding": "0.00",
+    "total_price": "46.20",
+    "total_price_set": {
+      "shop_money": {
+        "amount": "46.20",
+        "currency_code": "USD"
+      },
+      "presentment_money": {
+        "amount": "46.20",
+        "currency_code": "USD"
+      }
+    },
+    "total_shipping_price_set": {
+      "shop_money": {
+        "amount": "0.00",
+        "currency_code": "USD"
+      },
+      "presentment_money": {
+        "amount": "0.00",
+        "currency_code": "USD"
+      }
+    },
+    "total_tax": "0.00",
+    "total_tax_set": {
+      "shop_money": {
+        "amount": "0.00",
+        "currency_code": "USD"
+      },
+      "presentment_money": {
+        "amount": "0.00",
+        "currency_code": "USD"
+      }
+    },
+    "total_tip_received": "0.00",
+    "total_weight": 318,
+    "updated_at": "2024-02-12T06:06:18-05:00",
+    "user_id": null,
+    "billing_address": {
+      "first_name": "Muskan",
+      "address1": "12th Street Northwest",
+      "phone": null,
+      "city": "Washington",
+      "zip": "20008",
+      "province": "District of Columbia",
+      "country": "United States",
+      "last_name": "Pahwa",
+      "address2": null,
+      "company": null,
+      "latitude": null,
+      "longitude": null,
+      "name": "Muskan Pahwa",
+      "country_code": "US",
+      "province_code": "DC"
+    },
+    "customer": {
+      "id": 7133450502397,
+      "email": "customer@example.com",
+      "created_at": "2024-01-19T04:06:05-05:00",
+      "updated_at": "2024-02-12T06:11:22-05:00",
+      "first_name": "Muskan",
+      "last_name": "Pahwa",
+      "state": "disabled",
+      "note": null,
+      "verified_email": true,
+      "multipass_identifier": null,
+      "tax_exempt": false,
+      "phone": null,
+      "email_marketing_consent": {
+        "state": "not_subscribed",
+        "opt_in_level": "single_opt_in",
+        "consent_updated_at": null
+      },
+      "sms_marketing_consent": null,
+      "tags": "",
+      "currency": "USD",
+      "accepts_marketing": false,
+      "accepts_marketing_updated_at": "2024-01-19T04:06:05-05:00",
+      "marketing_opt_in_level": null,
+      "tax_exemptions": [],
+      "admin_graphql_api_id": "gid://shopify/Customer/7133450502397",
+      "default_address": {
+        "id": 8819900711165,
+        "customer_id": 7133450502397,
+        "first_name": "Muskan",
+        "last_name": "Pahwa",
+        "company": null,
+        "address1": "12th Street Northwest",
+        "address2": null,
+        "city": "Washington",
+        "province": "District of Columbia",
+        "country": "United States",
+        "zip": "20008",
+        "phone": null,
+        "name": "Muskan Pahwa",
+        "province_code": "DC",
+        "country_code": "US",
+        "country_name": "United States",
+        "default": true
+      }
+    },
+    "discount_applications": [],
+    "fulfillments": [],
+    "line_items": [
+      {
+        "id": 13665338687741,
+        "admin_graphql_api_id": "gid://shopify/LineItem/13665338687741",
+        "fulfillable_quantity": 1,
+        "fulfillment_service": "manual",
+        "fulfillment_status": null,
+        "gift_card": false,
+        "grams": 318,
+        "name": "Beaumont Summit Kit - S / Orange",
+        "price": "46.20",
+        "price_set": {
+          "shop_money": {
+            "amount": "46.20",
+            "currency_code": "USD"
+          },
+          "presentment_money": {
+            "amount": "46.20",
+            "currency_code": "USD"
+          }
+        },
+        "product_exists": true,
+        "product_id": 8115662684413,
+        "properties": [],
+        "quantity": 1,
+        "requires_shipping": true,
+        "sku": "",
+        "taxable": true,
+        "title": "Beaumont Summit Kit",
+        "total_discount": "0.00",
+        "total_discount_set": {
+          "shop_money": {
+            "amount": "0.00",
+            "currency_code": "USD"
+          },
+          "presentment_money": {
+            "amount": "0.00",
+            "currency_code": "USD"
+          }
+        },
+        "variant_id": 44004667949309,
+        "variant_inventory_management": "shopify",
+        "variant_title": "S / Orange",
+        "vendor": "HC Demo",
+        "tax_lines": [
+          {
+            "channel_liable": false,
+            "price": "0.00",
+            "price_set": {
+              "shop_money": {
+                "amount": "0.00",
+                "currency_code": "USD"
+              },
+              "presentment_money": {
+                "amount": "0.00",
+                "currency_code": "USD"
+              }
+            },
+            "rate": "0.0n_____",
+            "title": "District of Columbia State Tax"
+          }
+        ],
+        "duties": [],
+        "discount_allocations": []
+      }
+    ],
+    "payment_terms": null,
+    "refunds": [],
+    "shipping_address": {
+      "first_name": "Muskan",
+      "address1": "12th Street Northwest",
+      "phone": null,
+      "city": "Washington",
+      "zip": "20008",
+      "province": "District of Columbia",
+      "country": "United States",
+      "last_name": "Pahwa",
+      "address2": null,
+      "company": null,
+      "latitude": null,
+      "longitude": null,
+      "name": "Muskan Pahwa",
+      "country_code": "US",
+      "province_code": "DC"
+    },
+    "shipping_lines": [
+      {
+        "id": 4546505638141,
+        "carrier_identifier": "650f1a14fa979ec5c74d063e968411d4",
+        "code": "Store Pickup",
+        "delivery_category": null,
+        "discounted_price": "0.00",
+        "discounted_price_set": {
+          "shop_money": {
+            "amount": "0.00",
+            "currency_code": "USD"
+          },
+          "presentment_money": {
+            "amount": "0.00",
+            "currency_code": "USD"
+          }
+        },
+        "phone": null,
+        "price": "0.00",
+        "price_set": {
+          "shop_money": {
+            "amount": "0.00",
+            "currency_code": "USD"
+          },
+          "presentment_money": {
+            "amount": "0.00",
+            "currency_code": "USD"
+          }
+        },
+        "requested_fulfillment_service_id": null,
+        "source": "shopify",
+        "title": "Store Pickup",
+        "tax_lines": [
+          {
+            "channel_liable": false,
+            "price": "0.00",
+            "price_set": {
+              "shop_money": {
+                "amount": "0.00",
+                "currency_code": "USD"
+              },
+              "presentment_money": {
+                "amount": "0.00",
+                "currency_code": "USD"
+              }
+            },
+            "rate": "0.0n_____",
+            "title": "District of Columbia State Tax"
+          }
+        ],
+        "discount_allocations": []
+      }
+    ]
+  }
+}

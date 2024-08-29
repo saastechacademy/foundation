@@ -1,0 +1,21 @@
+### List of subjects
+
+- Computer Programming
+- Object Oriented Programming Systems
+- Computer Architecture
+- Economics for Engineers
+- Programming Practices
+- Data Structures
+- Software Engineering
+- Computer Workshop
+- Operating System
+- Theory of Computation
+- Data Base Management Systems
+- Computer Networks
+- Agile Software Methodology
+- Machine Learning
+- Foundation of Information Security
+- Design & Analysis of Algorithms
+- Internet of Things
+- Systems Programming
+- Internet & Web Technology

@@ -1,0 +1,87 @@
+{
+  "product": {
+    "id": 8279602168061,
+    "title": "Inter Miami Messi Away Jersey",
+    "body_html": "<meta charset=\"utf-8\">\n<p>Elevate your fanhood with the exclusive Inter Messi Away Jersey, showcasing the brilliance of soccer legend Lionel Messi. This officially licensed jersey combines style and performance, designed to honor the club's spirit and Messi's extraordinary talent.</p>\n<p><strong>Features:</strong></p>\n<ul>\n<li>Official Inter Miami CF and Messi branding.</li>\n<li>High-quality, breathable fabric for optimal comfort during matches or everyday wear.</li>\n<li>Unique design elements reflecting the club's identity and Messi's iconic presence.</li>\n<li>Durable construction for long-lasting performance.</li>\n<li>Perfect for showing your support on match days or displaying your admiration for one of the greatest footballers of our time.</li>\n</ul>",
+    "vendor": "HC Demo",
+    "product_type": "T-Shirt",
+    "created_at": "2024-02-08T05:38:04-05:00",
+    "handle": "inter-miami-messi-away-jersey",
+    "updated_at": "2024-02-13T08:30:27-05:00",
+    "published_at": "2024-02-08T05:38:04-05:00",
+    "template_suffix": "",
+    "published_scope": "global",
+    "tags": "Men",
+    "status": "active",
+    "admin_graphql_api_id": "gid://shopify/Product/8279602168061",
+    "variants": [
+      {
+        "id": 44502451716349,
+        "product_id": 8279602168061,
+        "title": "Default Title",
+        "price": "50.00",
+        "sku": "123456789",
+        "position": 2,
+        "inventory_policy": "deny",
+        "compare_at_price": null,
+        "fulfillment_service": "manual",
+        "inventory_management": "shopify",
+        "option1": "Default Title",
+        "option2": null,
+        "option3": null,
+        "created_at": "2024-02-08T05:38:05-05:00",
+        "updated_at": "2024-02-13T08:30:27-05:00",
+        "taxable": true,
+        "barcode": "987654321",
+        "grams": 50,
+        "weight": "50.0n_____",
+        "weight_unit": "g",
+        "inventory_item_id": 46602550083837,
+        "inventory_quantity": 196,
+        "old_inventory_quantity": 196,
+        "requires_shipping": true,
+        "admin_graphql_api_id": "gid://shopify/ProductVariant/44502451716349",
+        "image_id": null
+      }
+    ],
+    "options": [
+      {
+        "id": 10515615383805,
+        "product_id": 8279602168061,
+        "name": "Title",
+        "position": 1,
+        "values": [
+          "Default Title"
+        ]
+      }
+    ],
+    "images": [
+      {
+        "id": 40158103437565,
+        "alt": null,
+        "position": 1,
+        "product_id": 8279602168061,
+        "created_at": "2024-02-08T05:38:04-05:00",
+        "updated_at": "2024-02-08T05:38:07-05:00",
+        "admin_graphql_api_id": "gid://shopify/ProductImage/40158103437565",
+        "width": 392,
+        "height": 369,
+        "src": "https://cdn.shopify.com/s/files/1/0069/7384/9727/files/Screenshot2024-02-08at3.59.07PM.png?v=1707388687",
+        "variant_ids": []
+      }
+    ],
+    "image": {
+      "id": 40158103437565,
+      "alt": null,
+      "position": 1,
+      "product_id": 8279602168061,
+      "created_at": "2024-02-08T05:38:04-05:00",
+      "updated_at": "2024-02-08T05:38:07-05:00",
+      "admin_graphql_api_id": "gid://shopify/ProductImage/40158103437565",
+      "width": 392,
+      "height": 369,
+      "src": "https://cdn.shopify.com/s/files/1/0069/7384/9727/files/Screenshot2024-02-08at3.59.07PM.png?v=1707388687",
+      "variant_ids": []
+    }
+  }
+}

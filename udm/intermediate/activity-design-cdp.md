@@ -1,4 +1,11 @@
-# Design Customer Data Platform and Create mapping with Shopify Customer API.
+# Customer Data Platform
+
+## Define Customer Data Platform.
+
+## Design Data Model
+
+## Create mapping with Shopify Customer API.
+
 
 Learning objectives 
 * Design Customer Data Model, with UDM foundation
