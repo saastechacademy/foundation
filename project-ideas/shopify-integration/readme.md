@@ -21,3 +21,8 @@ Transformation --> Data Mapping --> Store
 **Task 1:** 
 Write JOLT transformation to map Shopify order json to HotWax Order JSON. 
 
+### **Skip processing filters** 
+
+The data sync process ensure, no duplicate record is created. The sync process should also allow configuration for content based skipping of objects e.g Orders tagged Re-Curate should be not be synched with HC. 
+The data sync pipeline should preferably filter objects and only process data sync for select set of orders. 
+ 
