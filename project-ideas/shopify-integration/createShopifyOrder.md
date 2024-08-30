@@ -4,7 +4,7 @@ Think of the order JSON as a comprehensive snapshot of a customer's purchase on 
 
 
 
-**Top-Level Structure**
+### **Top-Level Structure**
 
 The top level of the JSON contains essential order attributes:
 
@@ -12,6 +12,8 @@ The top level of the JSON contains essential order attributes:
 * `name`:  A human-readable order name (e.g., "#1001").
 * `order_number`: A sequential order number (e.g., 1001).
 * `created_at`, `updated_at`:  Timestamps indicating when the order was created and last modified.
+* `cancelled_at`: The date and time when the order was canceled. Returns null if the order isn't canceled.
+* `closed_at`: The date and time (ISO 8601 format) when the order was closed. Returns null if the order isn't closed.
 * `financial_status`:  Reflects the payment status of the order (e.g., "paid", "pending", "authorized").
 * `fulfillment_status`: Indicates whether the order has been shipped or is still pending (e.g., "fulfilled", "partial").
 * `total_price`:  The total amount the customer paid, including taxes and shipping.
@@ -19,14 +21,15 @@ The top level of the JSON contains essential order attributes:
 * `currency`: The three-letter code (ISO 4217) for the currency used in the order.
 * `presentment_currency`: The currency used for the order.
 * `customer_locale`: The locale of the customer placing the order.
-* `current_total_price_set`:  Set of the current total price.
+* `tags`: Tags attached to the order, formatted as a string of comma-separated values. Tags are additional short descriptors, commonly used for filtering and searching
 
-**Nested Objects**
+### **Nested Objects**
 
 The order JSON includes several nested objects that provide more detailed information:
 
-* **`customer`:** Holds information about the customer who placed the order, including their ID, name, email address, and marketing preferences.
+* **`customer`:** Holds information about the customer who placed the order, including their ID, name, email address, and marketing preferences. This value might be null if the order was created through Shopify POS.
 * **`billing_address`, `shipping_address`:** Contain the billing and shipping address details, respectively. Each address has fields like `name`, `address1`, `city`, `province`, `zip`, and `country`.
+* **`discount_applications`:** Contain the information about discounts applied to the order. It have fields like `type`, `value`, `description`.
 * **`line_items`:** An array listing each product purchased in the order. Each line item includes details like `product_id`, `variant_id`, `quantity`, `price`, and tax information.
 * **`shipping_lines`:**  An array of shipping methods chosen for the order, with their associated prices and other details.
 * **`tax_lines`:** An array of tax line objects, each of which details the taxes applicable to the order.
@@ -37,26 +40,30 @@ The order JSON includes several nested objects that provide more detailed inform
 *  'id'
 *  'email'
 *  'first_name', 'last_name'
-*  'accepts_marketing'
-*  'addresses' (an array of addresses)
+*  'state'
+*  'email'
+*  'phone'
+*  'addresses'
 
 **Billing and Shipping Addresses**
 
-*   `billing_address`:  The billing address of the customer.
-*   `shipping_address`: The shipping address (if different from billing).
+*   **billing_address**:  The billing address of the customer.
+*   **shipping_address**: The shipping address (if different from billing).
 
 **Line Items**
 
-*   `line_items`: An array of objects representing the products ordered:
-    *   `id`
-    *   `product_id`, `variant_id`
-    *   `title`
-    *   `quantity`, `fulfillable_quantity`
-    *   `price`, `total_discount` 
-    *   `sku`
-    *   `grams` (weight)
-    *   `tax_lines` (taxes applied)
-    *   `properties` (custom attributes like engraving)
+*   **line_items**: An array of objects representing the products ordered:
+    *   'id'
+    *   'product_id', 'variant_id'
+    *   'title'
+    *   'quantity'
+    *   'fulfillable_quantity' (The amount available to fulfill)
+    *   'fulfillment_status' (Valid values: null, fulfilled, partial, and not_eligible)
+    *   'origin_location'
+    *   'price', 'total_discount'
+    *   'tax_lines' (taxes applied)
+    *   'properties' (An array of custom information for the item that has been added to the cart. Often used to provide product customization options)
+    *   'discount_allocations'
 
 **Other Important Fields**
 
@@ -71,20 +78,28 @@ The order JSON includes several nested objects that provide more detailed inform
 *   `test`: A boolean indicating if the order is a test order.
 
 
-**Preprocessing in the `createShopifyOrder` Service**
+## **Processing in the `createShopifyOrder` Service**
 
 The preprocessing stage is the first step in the integration process. It focuses on preparing the incoming Shopify order data for conversion into a HotWax Commerce order. Here's a breakdown of the key steps:
 
-1. **Configuration Retrieval and Filtering**
+### Business Requirements for Skip Order 
 
-   * **Fetch Shopify Config:** The service retrieves the configuration for the specific Shopify store integration using the `shopifyConfigId` passed as an input parameter.
-   * **Get Product Store ID:** From the `ShopifyConfig` entity, the service extracts the `productStoreId`, which is used in the next step.
-   * **Load Properties:** The service reads the `ShopifyServiceConfig` properties file and looks up the property named `<productStoreId>.skip.order.import.tags`. This property value is expected to be a comma-separated list of tags.
-   * **Tag-Based Filtering:** The service then compares the tags associated with the Shopify order to the tags in the `skip.order.import.tags` list. If a match is found, the order is marked as skipped and won't be imported.
+1. **Order Identification and Duplicate Check**
 
+    *  The duplicate check is crucial for preventing duplicate orders in your HotWax Commerce system, ensuring data consistency and accuracy.
+
+   * **Extract Shopify Order ID:** The service retrieves the Shopify order ID (e.g., "450789469") from the input JSON data using the `order.get("id")` method.
+
+   * **Check for Duplicates:** It then queries the `OrderIdentification` entity in HotWax Commerce to see if an order with this Shopify ID has already been imported.
+
+   * **Skip if Duplicate:** If a matching order is found, the current order is marked as a duplicate and will be skipped to prevent redundant data in the system.
+
+2.  **Filter Orders Based on Tags:**
+    *  Extract and clean tags from the order.
+Check if the order should be skipped based on tags and configuration.
+### Configuration Retrieval and Filtering
 
 The `ShopifyConfig` data is used in the `createShopifyOrder` service to retrieve configuration details necessary for processing the Shopify order. 
-
 
 1. **Retrieve Shopify Configuration:**
    - The service queries the `ShopifyConfig` entity using the `shopifyConfigId` provided in the context to get the configuration details.
@@ -93,53 +108,23 @@ The `ShopifyConfig` data is used in the `createShopifyOrder` service to retrieve
 2. **Set Product Store:**
    - The `productStoreId` from the `ShopifyConfig` is used to set the product store for the order.
 
-### Pseudocode
+3. **Filter Orders Based on Tags:**
+   - Extract and clean tags from the order.
+   - Check if the order should be skipped based on tags and configuration.
 
-1. **Retrieve Shopify Configuration:**
+ **Pseudocode**
+
+- **Retrieve Shopify Configuration:**
    ```java
    GenericValue shopifyConfig = EntityQuery.use(delegator).from("ShopifyConfig").where("shopifyConfigId", shopifyConfigId).queryOne();
    ```
 
-2. **Set Product Store:**
+-  **Set Product Store:**
    ```java
    String productStoreId = shopifyConfig.getString("productStoreId");
    ```
 
-Here's a step-by-step explanation of how `ShopifyConfig` data is utilized:
-
-3. **Filter Orders Based on Tags:**
-   - The service checks if the order should be skipped based on tags and configuration settings from `ShopifyConfig`.
-
-
-4. **Determine Facility Details:**
-   - The `productStoreId` is used to retrieve the default facility ID from the product store configuration.
-
-5. **Order Processing Logic:**
-   - The `shopId` from the `ShopifyConfig` is used to map the Shopify order source to a channel ID.
-
-### Pseudocode
-
-3. **Filter Orders Based on Tags:**
-   ```java
-   String skipOrdersTags = EntityUtilProperties.getPropertyValue("ShopifyServiceConfig", productStoreId + ".skip.order.import.tags", delegator);
-   ```
-
-
-### Business Requirements for Skip Order 
-
-1. **Order Identification and Duplicate Check**
-
-   * **Extract Shopify Order ID:** The service retrieves the Shopify order ID (e.g., "450789469") from the input JSON data using the `order.get("id")` method.
-   * **Check for Duplicates:** It then queries the `OrderIdentification` entity in HotWax Commerce to see if an order with this Shopify ID has already been imported.
-   * **Skip if Duplicate:** If a matching order is found, the current order is marked as a duplicate and will be skipped to prevent redundant data in the system.
-
-2. **Filter Orders Based on Tags:**
-   - Extract and clean tags from the order.
-   - Check if the order should be skipped based on tags and configuration.
-
-### Implementation Detail Design for Skip Order Tags
-
-#### Pseudocode:
+**Implementation Detail Design for Skip Order Tags**
 
 a. **Extract Tags from Order:**
    - Retrieve the tags from the `order` map.
@@ -163,7 +148,8 @@ List<String> tags = UtilGenerics.checkList(order.get("tags"));
 tags = tags.stream().map(String::trim).collect(Collectors.toList());
 
 // Retrieve skip tags configuration from properties file
-String skipTagsConfig = EntityUtilProperties.getPropertyValue("ShopifyServiceConfig", "skip.order.tags", delegator);
+String skipOrdersTags = EntityUtilProperties.getPropertyValue("ShopifyServiceConfig", productStoreId + ".skip.order.import.tags", delegator);
+
 List<String> skipTags = Arrays.asList(skipTagsConfig.split(","));
 
 // Check if the order should be skipped based on tags and configuration
@@ -176,79 +162,26 @@ if (!skipOrder) {
     // Skip the process
 }
 ```
-
-### Summary
-
-- **Extract Tags from Order:** The tags are extracted from the `order` map and cleaned by trimming any whitespace.
-- **Retrieve Skip Tags Configuration:** The skip tags configuration is fetched from the `ShopifyServiceConfig` properties file using the key `skip.order.tags`.
-- **Check Tags Against Configuration:** The tags from the order are compared with the skip tags configuration. If any tag matches the skip tags, the `skipOrder` flag is set to `true`, and the order creation process is skipped.
-
-
 **Key Points and Considerations**
 
-* **Flexibility:** The `ShopifyServiceConfig` properties file allows for easy customization of which orders to import based on specific tags. This can be useful for filtering test orders, orders from specific sales channels, or any other order criteria you want to define.
-* **Data Integrity:** The duplicate check is crucial for preventing duplicate orders in your HotWax Commerce system, ensuring data consistency and accuracy.
+* **Flexibility:** The properties file allows for easy customization of which orders to import based on specific tags. This can be useful for filtering test orders, orders from specific sales channels, or any other order criteria you want to define.
+
+### Configuration Setting used during Order Import 
+
+Here's how `SystemPropery` , `ProductStore` and `ProductStoreSetting` entities are utilized for various configuration accross the order import process.
+
+1. **Determine Default Facility:**
+   - The `productStoreId` is used to retrieve the default facility ID from the product store entity when `reserveInventory` is `Y`.
 
 
-4. **Determine Facility Details:**
-   ```java
-   GenericValue productStore = ProductStoreWorker.getProductStore(productStoreId, delegator);
-   String defaultFacilityId = productStore.getString("inventoryFacilityId");
-   ```
+2. **Allow split setting for shipGroups:**
+   - The `ProductStore` entity includes a setting that determines whether splitting is allowed. This flag controls whether a ship group can be split during the subsequent fulfillment process.
 
-5. **Order Source Processing Logic:**
-   ```java
-   String channelId = ShopifyHelper.getShopifyTypeMappedValue(delegator, shopId, "SHOPIFY_ORDER_SOURCE", (String) order.get("source_name"), "UNKNWN_SALES_CHANNEL");
-   ```
+3. **Auto Approval of Order:**
+    - An open order becomes eligible for the fulfillment process only when it is approved. This setting of `ProductStore` allows the order to be automatically approved upon creation.
 
-
-### Explanation of Code to Get Customer Locale Details
-
-1. **Retrieve Customer Locale:**
-   - The code checks if the `order` map contains a non-empty value for the key `customer_locale`.
-   - If it does, it retrieves the `customer_locale` value and stores it in the `customerLocale` variable.
-   - It then creates a `Locale` object using the `Locale.forLanguageTag` method, which converts the `customerLocale` string to a `Locale` object.
-   - The `Locale` object is then converted to a string representation and stored in the `baseLocale` variable.
-   - Finally, the `baseLocale` is put into the `serviceCtx` map with the key `locale`.
-
-### Code
-```java
-// Get customer locale details
-if (UtilValidate.isNotEmpty(order.get("customer_locale"))) {
-    String customerLocale = (String) order.get("customer_locale");
-    String baseLocale = new Locale(Locale.forLanguageTag(customerLocale).getLanguage(), "").toString();
-    serviceCtx.put("locale", baseLocale);
-}
-```
-
-### How Locale is Used in Ofbiz Framework
-
-1. **Locale Initialization:**
-   - The `Locale` object is initialized from the `serviceCtx` map using the key `locale`.
-
-2. **Locale-Specific Data Conversion:**
-   - The `Locale` object is used to convert data types, such as converting the `total_price` from the order to a `BigDecimal`.
-
-3. **Service Context:**
-   - The `Locale` object is added to the `serviceCtx` map, which is then used in subsequent service calls to ensure locale-specific data handling.
-
-### Code Example
-```java
-// Initialize Locale from service context
-Locale locale = (Locale) context.get("locale");
-
-// Use Locale for data conversion
-BigDecimal grandTotal = (BigDecimal) ObjectType.simpleTypeConvert(order.get("total_price"), "BigDecimal", null, locale);
-
-// Add Locale to service context for subsequent service calls
-serviceCtx.put("locale", locale);
-
-                        //get customer locale details
-                        if (UtilValidate.isNotEmpty(order.get("customer_locale"))){
-                            String customerLocale = (String) order.get("customer_locale");
-                            String baseLocale = new Locale(Locale.forLanguageTag(customerLocale).getLanguage(), "").toString();
-
-```
+4. **Bill Information of Order:**
+   - Check `ProductStoreSetting` of type - **SAVE_BILL_TO_INF**. If it is **Y** then only save Billing info of customer in Order
 
 
 **Understanding `ShopifyHelper.getShopifyTypeMappedValue`**
@@ -268,12 +201,12 @@ The function  queries a database table (`ShopifyShopTypeMapping`) to find a corr
 1.  **Sales Channel Mapping:**
     *   `mappedTypeId`: "SHOPIFY_ORDER_SOURCE"
     *   `mappedKey`: The value of the `source_name` field in the Shopify order (e.g., "web", "pos", "mobile_app").
-    *   Purpose: Determine the sales channel in HotWax Commerce based on where the order originated in Shopify.
+    *   **Purpose**: Determine the sales channel in HotWax Commerce based on where the order originated in Shopify.
 
 2.  **Customer Classification Mapping:**
     *   `mappedTypeId`: "SHOP_ORD_CUST_CLASS"
     *   `mappedKey`: Tags from the Shopify order.
-    *   Purpose: Assign a customer classification in HotWax Commerce based on tags applied to the order in Shopify. This could be used for segmentation or reporting.
+    *   **Purpose**: Assign a customer classification in HotWax Commerce based on tags applied to the order in Shopify. This could be used for segmentation or reporting.
 
 3.  **Payment Method Mapping:**
     *   `mappedTypeId`: "SHOPIFY_PAYMENT_TYPE"
@@ -281,192 +214,12 @@ The function  queries a database table (`ShopifyShopTypeMapping`) to find a corr
     *   Purpose: Determine the payment method type in HotWax Commerce based on the payment gateway used in Shopify.
 
 
-**Understanding use of SHOPIFY_PRODUCT_TAG**
-
-**Purpose**
-In this context, Shopify tags should be considered as indicators of pre-order or backorder products in HotWax Commerce.
-
-**Parameters**
-
-*   `mappedTypeId`: "SHOPIFY_PRODUCT_TAG"
-    *   This tells the function to look for mappings related to product tags in the `ShopifyShopTypeMapping` table.
-*   `mappedKey`: "ON_PRE_ORDER_PROD" or "ON_BACK_ORDER_PROD"
-    *   These are the specific Shopify product tags you're interested in. 
-
-**Logic**
-
-1.  **Mapping Lookup:** The `getShopifyTypeMappedValue` function queries the `ShopifyShopTypeMapping` table. It searches for rows where:
-    *   `mappedTypeId` is "SHOPIFY_PRODUCT_TAG"
-    *   `mappedKey` is either "ON_PRE_ORDER_PROD" or "ON_BACK_ORDER_PROD"
-
-2.  **Tag Retrieval:**  If matching rows are found, the function returns the corresponding `mappedValue` for each tag. These `mappedValue` strings are the tags that HotWax Commerce recognizes as indicating pre-order or backorder status.
-
-3.  **Order Item Status:** The retrieved tags are then used to determine the availability status of the order items in HotWax Commerce.
-
-    *   If a line item's product in Shopify has a tag that matches the mapped pre-order tag, the corresponding order item in HotWax Commerce is marked as a pre-order.
-    *   Similarly, if a line item's product has a tag matching the mapped backorder tag, the HotWax Commerce order item is marked as a backorder.
-
-**Example**
-
-Let's say your `ShopifyShopTypeMapping` table has these entries:
-
-| shopId   | mappedTypeId        | mappedKey            | mappedValue             |
-| -------- | ------------------- | -------------------- | ----------------------- |
-| "your-shop-id" | "SHOPIFY_PRODUCT_TAG" | "ON_PRE_ORDER_PROD" | "PreOrder"             |
-| "your-shop-id" | "SHOPIFY_PRODUCT_TAG" | "ON_BACK_ORDER_PROD"  | "BackOrder"   |
-
-In this scenario:
-
-*   If a Shopify product has the tag "ON_PRE_ORDER_PROD", the corresponding HotWax Commerce order item will be marked as a pre-order.
-*   If a Shopify product has the tag "ON_BACK_ORDER_PROD", the HotWax Commerce order item will be marked as a backorder.
-
-In the `createShopifyOrder` service, the `ShopifyHelper` class is utilized in the following additional scenarios:
-
-1.  **Product and Variant Mapping:**
-    *   The `ShopifyHelper.getProductId` function is used to retrieve the HotWax Commerce product ID corresponding to a Shopify variant ID. This is essential for associating order line items with the correct products in the HotWax system.
-    *   If the product ID is not found and product creation is allowed, the service creates a new product in HotWax Commerce and associates it with the Shopify variant ID using `createShopifyShopProduct`.
-
-2.  **Facility Mapping:**
-    *   The `ShopifyHelper.getFacilityId` function is used to determine the HotWax Commerce facility ID based on the Shopify location ID where the order was fulfilled. This helps in managing inventory and fulfillment processes.
-
-3.  **Pre-Order and Backorder Tag Mapping:**
-    *   The `ShopifyHelper.getShopifyTypeMappedValue` function is used with `mappedTypeId` "SHOPIFY_PRODUCT_TAG" to retrieve the tags used in Shopify to indicate pre-order or backorder products. These tags are then used to determine if an order item should be marked as a pre-order or backorder in HotWax Commerce.
-
-
-### **FacilityId computation Logic**
-
-1.  **Prioritize Shopify Location (If Applicable):** The code first attempts to determine the `facilityId` based on the `location_id` present in the Shopify order, but only if the order is not tagged as "SENDSALE". This is done using the `ShopifyHelper.getFacilityId` function, which looks up a mapping between Shopify locations and HotWax Commerce facilities.
-
-2.  **Check Inventory Reservation Setting:** If the Shopify order doesn't have a `location_id`, or it's tagged as "SENDSALE", or no mapping is found, the code then checks the `reserveInventory` flag of the associated product store.
-
-3.  **Use Default Facility:** If the product store has inventory reservation enabled (`reserveInventory` is "Y") *and* a default inventory facility (`inventoryFacilityId`) is specified, then that facility is used as the `facilityId`.
-
-4.  **Fallback to "_NA_" Facility:** If none of the above conditions are met (i.e., no location ID, no location-to-facility mapping, no inventory reservation, or no default facility), the code defaults the `facilityId` to "_NA_". This ensures that the `facilityId` variable always has a value, even if it's a placeholder representing an unallocated order in the HotWax Commerce OMS.
-
-
-### Override the default order line item fulfillment facility
-
-The enums `PRE_SLCTD_FAC_TAG`, `ORD_ITM_PICKUP_FAC`, and `ORD_ITM_SHIP_FAC` are used to define settings in the `ProductStoreSetting` entity. These settings play a crucial role in customizing the order fulfillment process within the HotWax Commerce OMS.
-
-Overriding the default fulfillment facility for an order item based on specific properties set within the Shopify line item. If the Shopify order and its line items meet certain conditions (tags and property names), the system will look for a designated property in the line item's properties and use its value to determine the fulfillment facility, potentially enabling more flexible and customized fulfillment workflows.
-
-
-Overriding the default fulfillment facility based on item-specific properties is as follows:
-
-```java
-List<String> lineItemNameSettings = EntityQuery.use(delegator).from("ProductStoreSetting")
-        .where(EntityCondition.makeCondition("productStoreId", productStoreId), 
-               EntityCondition.makeCondition("settingTypeEnumId", EntityOperator.IN, UtilMisc.toList("ORD_ITM_PICKUP_FAC", "ORD_ITM_SHIP_FAC")))
-        .getFieldList("settingValue");
-
-if (UtilValidate.isNotEmpty(properties) && UtilValidate.isNotEmpty(tagsList) && 
-    UtilValidate.isNotEmpty(lineItemNameSettings) && UtilValidate.isNotEmpty(preSelectedFacTag) && 
-    tagsList.stream().anyMatch(preSelectedFacTag::equalsIgnoreCase)) {
-
-    Optional<Map<String, String>> facilityOpt = properties.stream()
-            .filter(property -> lineItemNameSettings.contains(property.get("name")))
-            .findFirst();
-
-    if (facilityOpt.isPresent()) {
-        fromFacilityId = facilityOpt.get().get("value");
-    }
-}
-```
-
-1. **Retrieve Facility-Related Settings:**
-   * The code starts by fetching the values of two product store settings: "ORD_ITM_PICKUP_FAC" and "ORD_ITM_SHIP_FAC". These settings define the property names used within Shopify line items to specify the desired pickup or shipping facility.
-   * The `lineItemNameSettings` list now contains these property names.
-
-2. **Check for Pre-Selected Facility Tag:**
-   * The code then checks if certain conditions are met:
-     * The `properties` list (extracted from the Shopify line item) is not empty.
-     * The `tagsList` (extracted from the Shopify order) is not empty.
-     * The `lineItemNameSettings` list is not empty.
-     * The `preSelectedFacTag` (another product store setting, likely indicating a tag that triggers this facility override logic) is not empty.
-     * At least one tag in the `tagsList` matches the `preSelectedFacTag`.
-
-3. **Extract Facility ID from Properties:**
-   * If all the conditions in step 2 are true, it means the order is eligible for facility override based on item properties.
-   * The code then filters the `properties` list to find a property whose name matches one of the facility-related setting values (either "ORD_ITM_PICKUP_FAC" or "ORD_ITM_SHIP_FAC").
-   * If such a property is found, its value is extracted and assigned to the `fromFacilityId` variable. This value likely represents the ID or identifier of the desired fulfillment facility.
-
-
-### **Explanation of Enums and their Usage**
-
-1.  **`PRE_SLCTD_FAC_TAG`**
-    *   **Purpose:** This enum defines a setting in the `ProductStoreSetting` entity to store the name of a specific tag used in Shopify orders. When an order from Shopify contains this tag, it triggers the `createShopifyOrder` service to check for pre-selected facilities for fulfilling the line items within that order.
-
-2.  **`ORD_ITM_PICKUP_FAC`**
-    *   **Purpose:** This enum defines another setting in the `ProductStoreSetting` entity to store the property name used within Shopify line items to indicate the pre-selected facility for store pickup orders.
-
-3.  **`ORD_ITM_SHIP_FAC`**
-    *   **Purpose:** Similar to `ORD_ITM_PICKUP_FAC`, this enum defines a setting to store the property name used in Shopify line items to indicate the pre-selected facility for same-day shipping orders.
-
-
-### **Item Adjustments**  
-
-The `itemAdjustments` data in HotWax Commerce is primarily derived from two sections of the Shopify Order JSON:
-
-1.  **discount\_allocations:** This section within each line item details the discounts applied to that specific product. The code iterates through these allocations, extracts the discount amount and any associated discount code, and creates `EXT_PROMO_ADJUSTMENT` entries in `itemAdjustments`.
-
-2.  **tax\_lines:** This section within each line item provides information about the taxes applied to the product. The code extracts the tax title, price, and rate, and creates `SALES_TAX` entries in `itemAdjustments`.
-
-**Mapping**
-
-| Shopify Order Field (within line\_items) | HotWax Commerce Field (in itemAdjustments) |
-| :--------------------------------------- | :----------------------------------------- |
-| discount\_allocations.amount             | amount (negated)                           |
-| discount\_allocations.discount\_application\_index | Used to look up the discount code in `discounts` map |
-| tax\_lines.title                         | comments                                   |
-| tax\_lines.price                         | amount                                     |
-| tax\_lines.rate                          | sourcePercentage                           |
-
-
-
-### **Customer Handling**
-
-
-```java
-result = dispatcher.runSync("customerDataSetup", serviceCtx);
-```
-
-This line calls the `customerDataSetup` service to either create a new customer in HotWax Commerce (if the customer doesn't exist) or retrieve the existing customer's ID. The `customerId` is then included in the `serviceCtx` map passed to `createSalesOrder`.
-
-
-```java
-storeOrderCtx.put("partyId", customerId);
-storeOrderCtx.put("billToCustomerPartyId", customerId);
-storeOrderCtx.put("shipToCustomerPartyId", customerId);
-```
-
-### Customer Classification 
-
-HotWax Commerce employs a systematic process to deduce the `customerClassificationId` from a Shopify order. It leverages the `ShopifyShopTypeMapping` entity, which acts as a bridge between Shopify customer tags and their corresponding classifications within the HotWax Commerce system.
-
-**Process Breakdown**
-
-1.  **Retrieve Customer Class Mappings:**
-    *   The service begins by fetching a list of `customerClassMappings` from the `ShopifyShopTypeMapping` entity. These mappings are specifically filtered to include only those with the `mappedTypeId` of "SHOP_ORD_CUST_CLASS," indicating their relevance to customer classification.
-    *   The `shopId` associated with the Shopify order is also used to ensure that the retrieved mappings are specific to the relevant Shopify shop.
-
-2.  **Check for Tags and Mappings:**
-    *   The service then verifies if both the `customerClassMappings` list and the `tags` associated with the Shopify order are not empty. This check is essential to proceed with the mapping process only if relevant data is available.
-
-3.  **Match Tags with Mappings:**
-    *   If both tags and mappings exist, the service iterates through the `customerClassMappings` and attempts to find a mapping whose `mappedKey` (representing a Shopify tag) matches any of the tags present in the order.
-    *   The matching is performed in a case-insensitive manner using `equalsIgnoreCase`.
-
-4.  **Extract and Set `customerClassificationId`**:
-    *   If a matching mapping is found, it signifies that the Shopify order contains a tag that corresponds to a predefined customer classification in HotWax Commerce.
-    *   The `mappedValue` from the matching `customerClassEnum` (which represents the HotWax Commerce `customerClassificationId`) is then extracted and placed into the `serviceCtx` map.
-    *   This `serviceCtx` is subsequently used when creating the sales order in HotWax Commerce, ensuring that the customer associated with the order is assigned the appropriate classification.
-
-**In Conclusion**
-
-The process of deducing the `customerClassificationId` in the `createShopifyOrder` service involves retrieving relevant mappings from the `ShopifyShopTypeMapping` entity, comparing the Shopify order tags with these mappings, and extracting the corresponding HotWax Commerce classification ID if a match is found. This enables the system to categorize customers based on their Shopify tags, facilitating targeted marketing, personalized experiences, and streamlined order management within the HotWax Commerce OMS.
-
-
-### **"POS sales channel"**
+### Order Source Processing Logic:
+   ```java
+   String channelId = ShopifyHelper.getShopifyTypeMappedValue(delegator, shopId, "SHOPIFY_ORDER_SOURCE", (String) order.get("source_name"), "UNKNWN_SALES_CHANNEL");
+   ```
+
+### POS Sales Channel
 
 Handle POS orders, assign them a specific shipping method "POS_COMPLETED".
 
@@ -489,8 +242,165 @@ if (isCashSaleOrder) {
     shipmentMethodTypeId = "POS_COMPLETED";
 }
 ```
+### **FacilityId computation Logic**
 
-### Order Attributes:
+1.  **Prioritize Shopify Location (If Applicable):** The code first attempts to determine the `facilityId` based on the `location_id` present in the Shopify order, but only if the order is not tagged as "**SENDSALE**". 
+    - When locationId is not empty and **isCashSaleOrder** is true then using the `ShopifyHelper.getFacilityId` function, which looks up a mapping between Shopify locations and HotWax Commerce facilities.
+
+2.  **Use Default Facility:** If isCashSaleOrder is not true and the product store has inventory reservation enabled (`reserveInventory` is "Y") *and* a default inventory facility (`inventoryFacilityId`) is specified, then that facility is used as the `facilityId`.
+
+3.  **Fallback to "_NA_" Facility:** If none of the above conditions are met (i.e., no location ID, no location-to-facility mapping, no inventory reservation, or no default facility), the code defaults the `facilityId` to "_NA_". This ensures that the `facilityId` variable always has a value, even if it's a placeholder representing an unallocated order in the HotWax Commerce OMS.
+
+```java
+if (UtilValidate.isNotEmpty(locationId)) {
+    if (isCashSaleOrder) {
+        facilityId = ShopifyHelper.getFacilityId(delegator, shopifyConfigId, locationId);
+    } else {
+        facilityId = defaultFacilityId;
+    }
+} else {
+    facilityId = "_NA_";
+}
+```
+
+### Managing Customer Data in the System
+
+This section of code handles the integration of customer data from Shopify into the system. It involves retrieving customer information from the order, checking for existing customers, and creating new customer records if necessary. Here's a breakdown of the logic and purpose behind each part:
+
+1. **Retrieving Customer Data:**
+   - The customer data is fetched from the Shopify order using `order.get("customer")`.
+   - `UtilGenerics.checkMap(order.get("customer"))` ensures that the data is cast to a `Map<String, Object>`, making it easier to work with.
+
+2. **Handling the Customer External ID:**
+   - If the customer data is not empty, the `customerExternalId` is extracted from the Shopify customer ID (`customer.get("id").toString()`).
+
+3. **Checking for Existing Customers:**
+   - The system checks if a customer with the same Shopify ID (`SHOPIFY_CUST_ID`) already exists in the `PartyIdentification` entity.
+   - If an existing party is found, the `partyId` is added to the `serviceCtx` to associate the order with this customer.
+
+4. **Party Classification:**
+   - The system checks if the `PartyClassificationGroup` associated with `channelId` exists. If it does, the customer is classified under this group.
+   - This classification helps in organizing customers based on the sales channel or other criteria.
+   ```java
+    GenericValue partyClassificationGroup = EntityQuery.use(delegator).from("PartyClassificationGroup")
+        .where("partyClassificationGroupId", channelId)
+        .cache().queryOne();
+    if (partyClassificationGroup != null) serviceCtx.put("partyClassifications", UtilMisc.toList(channelId));
+
+5. **Setting Up Party Identifications and Other Data:**
+   - The customer's external ID is set as a party identification with the type `SHOPIFY_CUST_ID`.
+   - Other essential data, such as the customer's role (`roleTypeId`), first name, last name, status, email, and phone number, are also added to the `serviceCtx`.
+
+6. **Enabling or Disabling the Customer:**
+   - The customer's status is checked, and if the status is "disabled" in Shopify, the customer is marked as disabled (`enabled = "N"`).
+
+7. **Creating or Updating the Customer:**
+   - The `customerDataSetup` service is called with the prepared `serviceCtx` to create or update the customer in the system.
+   - If the service is successful, the `customerPartyId` is retrieved and used for further processing.
+
+8. **Handling Missing Customer Data:**
+   - If the customer data is empty, `customerPartyId` is set to `_NA_`, indicating that no valid customer data was found.
+
+
+### Customer Classification 
+
+HotWax Commerce employs a systematic process to deduce the `customerClassificationId` from a Shopify order. It leverages the `ShopifyShopTypeMapping` entity, which acts as a bridge between Shopify customer tags and their corresponding classifications within the HotWax Commerce system.
+
+#### Process Breakdown
+
+1.  **Retrieve Customer Class Mappings:**
+    *   The service begins by fetching a list of `customerClassMappings` from the `ShopifyShopTypeMapping` entity. These mappings are specifically filtered to include only those with the `mappedTypeId` of "SHOP_ORD_CUST_CLASS," indicating their relevance to customer classification.
+    *   The `shopId` associated with the Shopify order is also used to ensure that the retrieved mappings are specific to the relevant Shopify shop.
+
+2.  **Check for Tags and Mappings:**
+    *   The service then verifies if both the `customerClassMappings` list and the `tags` associated with the Shopify order are not empty. This check is essential to proceed with the mapping process only if relevant data is available.
+
+3.  **Match Tags with Mappings:**
+    *   If both tags and mappings exist, the service iterates through the `customerClassMappings` and attempts to find a mapping whose `mappedKey` (representing a Shopify tag) matches any of the tags present in the order.
+    *   The matching is performed in a case-insensitive manner using `equalsIgnoreCase`.
+
+4.  **Extract and Set `customerClassificationId`**:
+    *   If a matching mapping is found, it signifies that the Shopify order contains a tag that corresponds to a predefined customer classification in HotWax Commerce.
+    *   The `mappedValue` from the matching `customerClassEnum` (which represents the HotWax Commerce `customerClassificationId`) is then extracted and placed into the `serviceCtx` map.
+    *   This `serviceCtx` is subsequently used when creating the sales order in HotWax Commerce, ensuring that the customer associated with the order is assigned the appropriate classification.
+
+```java
+List<GenericValue> customerClassMappings = EntityQuery.use(delegator).from("ShopifyShopTypeMapping").where("shopId", shopId, "mappedTypeId", "SHOP_ORD_CUST_CLASS").cache().queryList();
+
+if (UtilValidate.isNotEmpty(customerClassMappings) && UtilValidate.isNotEmpty(tags)) {
+    GenericValue customerClassEnum = customerClassMappings.stream().filter(m ->
+        tags.stream().anyMatch(t -> t.equalsIgnoreCase(m.getString("mappedKey")))).findFirst().orElse(null);
+    if (customerClassEnum != null) {
+        serviceCtx.put("customerClassificationId", customerClassEnum.getString("mappedValue"));
+    }
+}
+```
+#### In Conclusion
+
+The process of deducing the `customerClassificationId` in the `createShopifyOrder` service involves retrieving relevant mappings from the `ShopifyShopTypeMapping` entity, comparing the Shopify order tags with these mappings, and extracting the corresponding HotWax Commerce classification ID if a match is found. This enables the system to categorize customers based on their Shopify tags, facilitating targeted marketing, personalized experiences, and streamlined order management within the HotWax Commerce OMS.
+
+### Order Email and Phone Details
+
+#### Overview:
+The process involves extracting the phone number and email address from the Shopify order data, validating and formatting these details, and then creating corresponding contactMech in the Hotwax system. The results are stored in the order context for subsequent use.
+
+#### Process Flow:
+
+1. **Extracting and Validating Phone Number:**
+   - **Input**: Phone number from the Shopify order (`order.phone`).
+   - **Validation**: 
+     - The phone number is processed using the **getMapForContactNumber** service. This service validates the format of the phone number and splits it into components such as `countryCode`, `areaCode`, and `contactNumber`.
+     - If the phone number is valid and complete, it proceeds to the next step.
+   - **Output**: 
+     - A telecom number contact mechanism is created in Hotwax using the parsed phone number details.
+     - The resulting `contactMechId` for the phone number is captured.
+
+2. **Extracting and Validating Email Address:**
+   - **Input**: Email address from the Shopify order (`order.email`).
+   - **Validation**:
+     - The email address is checked for non-emptiness.
+   - **Output**:
+     - An email contact mechanism is created in Hotwax, and the corresponding `contactMechId` is obtained.
+
+3. **Mapping Contact Details to the Order:**
+   - **Input**:
+     - The `contactMechId` for both the phone number and email, if available.
+   - **Output**:
+     - A map (`orderContacts`) is created, linking the order to its associated contact mechanisms.
+     - The phone number is mapped under the key `phone`, and the email under `email`, each holding their respective `contactMechId`.
+
+#### Mapping Summary:
+
+| Shopify Field     | Hotwax Field            | Description                           |
+|-------------------|-------------------------|---------------------------------------|
+| order.phone     | TelecomNumber.contactMechId | Phone number parsed and stored as telecom contact. |
+| order.email     | ContactMech.contactMechId   | Email address stored as email contact. |
+
+### Tracking Numbers, User Attributes, and Order Notes from Shopify to Hotwax
+
+#### Objective:
+It extends the process of integrating data from Shopify orders into Hotwax Commerce, focusing on tracking numbers for fulfilled orders, user attributes, and order notes. These elements ensure that critical order information is accurately captured and utilized within the Hotwax system.
+
+#### Overview:
+The process involves three key areas:
+1. Adding tracking numbers to order tags when an order is fulfilled.
+2. Mapping user attributes and note attributes from Shopify to Hotwax.
+3. Sanitizing and storing order notes.
+
+### Process Flow:
+
+#### 1. Adding Tracking Numbers to Tags:
+- **Condition**: 
+  - This step is triggered only if the Shopify order's fulfillment status is `"fulfilled"`.
+- **Input**:
+  - The `fulfillments` list from the Shopify order, containing details about each fulfillment event.
+- **Process**:
+  - For each fulfillment event that includes a tracking number, a tag is created and added to the `tagsList`. 
+  - The tag is formatted as `"TrackingNo-<TrackingCompany>-<TrackingNumber>"`, combining the tracking company name and the tracking number.
+- **Output**:
+  - The `tagsList` is updated with tracking information and added to the service context (`serviceCtx`).
+
+#### 2. Mapping Order Attributes to Note Attributes:
 
 *   **`note_attributes`:** Any custom note attributes present in the Shopify order JSON are mapped as individual `OrderAttribute` entities in HotWax Commerce. The `name` and `value` fields from each `note_attributes` entry are directly used as the `attrName` and `attrValue` in the `OrderAttribute` entity.
 
@@ -507,23 +417,328 @@ if (isCashSaleOrder) {
         This would be stored as an `OrderAttribute` with `attrName` = "custom name" and `attrValue` = "custom value."
 
 *   **`user_id`:**
-    *   The ID of the staff member who created the order in Shopify is stored as an `OrderAttribute` with the name `shopify_user_id`.
+    - The ID of the staff member who created the order in Shopify is stored as an `OrderAttribute` with the name `shopify_user_id`.
+    - This attribute includes a description `"Shopify User Id"`.
 
 
+#### 3. Sanitizing and Storing Order Notes:
+- **Input**: 
+  - The `note` field from the Shopify order.
+- **Process**:
+  - The note is sanitized by removing HTML tags and comments, ensuring that only plain text is stored.
+  - The sanitized note is added to the `noteList`.
+- **Output**:
+  - The `noteList` is added to the service context (`serviceCtx`) if it contains any notes.
 
-### The Shopify Order Item attributes:
+### Mapping Summary:
 
-*   **`properties`:** Custom properties associated with line items in the Shopify order are mapped as `OrderItemAttribute` entities in HotWax Commerce. The `name` and `value` fields from each `properties` entry are used as the `attrName` and `attrValue` in the `OrderItemAttribute` entity.
-*   **Pre-order and Backorder Tags:** If a product in the Shopify order is tagged as "ON\_PRE\_ORDER\_PROD" or "ON\_BACK\_ORDER\_PROD," this information is stored in an `OrderItemAttribute` with the name "PreOrderItemProperty" or "BackOrderItemProperty" respectively.
-*   **Store Pickup Property:** If a line item in the Shopify order has a property indicating store pickup, this information is stored in an `OrderItemAttribute` with the name "StorePickupItemProperty."
-*   **Group order items based on custom attributes or properties.**
-*   **Override the default order line item fulfillment facility**
+| Shopify Field           | Hotwax Field                  | Description                                                      |
+|-------------------------|-------------------------------|------------------------------------------------------------------|
+| `fulfillment_status`     | `tagsList`                    | Tracking numbers are added to tags if the order is fulfilled.    |
+| `user_id`               | `orderAttributes`             | Maps Shopify User ID as an order attribute.                      |
+| `note_attributes`       | `orderAttributes`             | Maps Shopify note attributes, truncating where necessary.        |
+| `note`                  | `noteList`                    |       |
 
+### Processing Order Date, Status, and Store Settings from Shopify to Hotwax
 
-### Order Item Attributes:
+#### Objective:
+This section of the document outlines the process for mapping and processing order dates, statuses, and store-specific settings from a Shopify order into the Hotwax Commerce system. These steps ensure that the order is correctly timestamped, its status is accurately captured, and store-specific configurations are applied.
 
-*   **`properties`:**
-    *   Custom properties associated with line items in the Shopify order are mapped as `OrderItemAttribute` entities in HotWax Commerce.
+#### Overview:
+The process involves several key components:
+1. Converting and mapping order dates.
+2. Handling order status based on Shopify's `created_at`, `cancelled_at`, and `closed_at` fields.
+3. Applying store-specific settings, such as automatic approval and allowing split shipments.
+
+### Process Flow:
+
+#### 1. Mapping Order Date:
+- **Input**: 
+  - The `created_at` field from the Shopify order, representing the order creation date and time.
+- **Process**:
+  - The `created_at` timestamp is converted into a specific date-time pattern using `CommerceDateTime.getOffsetDateTimeInPattern`.
+  - The time zone information is considered during this conversion to ensure accurate date-time representation in the system.
+- **Output**:
+  - The converted `orderDate` is stored in the service context (`serviceCtx`) under the key `"orderDate"`.
+
+#### 2. Handling Order Status:
+- **Input**: 
+  - The `cancelled_at`, `closed_at`, and `created_at` fields from the Shopify order.
+- **Process**:
+  - **Cancelled Orders**:
+    - If the `cancelled_at` field is present, the order status is set to `"ORDER_CANCELLED"`.
+    - The order status date-time is set to the `cancelled_at` value.
+    - The facility ID is set to `"GENERAL_OPS_PARKING"`, indicating that the order should be handled in a specific facility due to its cancellation.
+  - **Completed Orders**:
+    - If the `closed_at` field is present and the order is not cancelled, the status is set to `"ORDER_COMPLETED"`.
+    - The order status date-time is set to the `closed_at` value.
+    - Similarly, the facility ID is set to `"GENERAL_OPS_PARKING"`.
+  - **Created Orders**:
+    - If neither `cancelled_at` nor `closed_at` is present, the order is considered as newly created, and the status is set to `"ORDER_CREATED"`.
+    - The order status date-time remains as the `created_at` value.
+- **Output**:
+  - The `orderStatusDatetime` is stored in `serviceCtx` under the key `"orderStatusDatetime"`.
+  - The `statusId` is also added to `serviceCtx` to reflect the current status of the order.
+
+#### 3. Applying Store-Specific Settings:
+- **Input**:
+  - The `productStore` object containing store-specific settings.
+- **Process**:
+  - **Automatic Approval**:
+    - The `autoApproveOrder` flag is checked from the `productStore`. If it is not null, its value is used to determine if the order should be automatically approved.
+  - **Allowing Split Shipments**:
+    - The `allowSplit` flag is derived from the `productStore`. If this setting is `"N"`, split shipments are disallowed (`allowSplit = false`); otherwise, they are allowed (`allowSplit = true`).
+- **Output**:
+  - The `allowSplit` value determines whether the order can be split during fulfillment and is stored in the process context.
+  - The `productStoreId` is stored in `serviceCtx` to link the order to its originating store.
+  - The currency codes (`currencyCode` and `presentmentCurrencyCode`) and `grandTotal` are also stored in `serviceCtx` to ensure correct financial handling.
+
+### Key Considerations:
+- **Date-Time Accuracy**: The order dates are converted with respect to time zones to ensure accurate tracking and processing within the Hotwax system.
+- **Store Settings**: Handling store-specific configurations allows for flexible order processing, including options like automatic order approval and split shipments.
+- **Order Status Handling**: The system correctly categorizes orders as created, completed, or cancelled, ensuring they are processed accordingly.
+
+### Mapping Summary:
+
+| Shopify Field           | Hotwax Field                  | Description                                                          |
+|-------------------------|-------------------------------|----------------------------------------------------------------------|
+| created_at            | orderDate                   | Order creation date, converted to the specific format.               |
+| cancelled_at          | orderStatusDatetime         | Date when the order was cancelled, if applicable.                    |
+| closed_at             | orderStatusDatetime         | Date when the order was completed, if applicable. 
+| currency        | currencyCode                | Currency used for the order.                                        
+| presentment_currency | presentmentCurrencyCode | Presentment currency code for financial transactions.               |
+| order.total_price            | grandTotal                  | The total amount for the order.                                      |
+
+### Managing Order Identifications from Shopify to Hotwax
+
+#### Objective:
+This section describes how different order identifications from a Shopify order are captured and mapped into the Hotwax Commerce system. The process ensures that unique identifiers, such as order numbers, names, and external IDs, are accurately stored and associated with the order in the system.
+
+#### Overview:
+The system manages three different types of order identifications:
+1. Shopify Order Number (`SHOPIFY_ORD_NO`)
+2. Shopify Order Name (`SHOPIFY_ORD_NAME`)
+3. Shopify Order External ID (`SHOPIFY_ORD_ID`)
+
+These identifiers are stored in a list of maps within the service context (`serviceCtx`), allowing for easy reference and retrieval during order processing.
+
+### Process Flow:
+
+#### 1. Capture Order Number:
+- **Input**: 
+  - The `order_number` field from the Shopify order.
+- **Process**:
+  - If `order_number` is present and not empty, it is extracted and converted to a string.
+  - A new map is created with `orderIdentificationTypeId` set to `"SHOPIFY_ORD_NO"` and `idValue` set to the extracted order number.
+  - This map is added to the `orderIdentifications` list.
+- **Output**:
+  - The Shopify order number is captured and stored in the identification list.
+
+#### 2. Capture Order Name:
+- **Input**: 
+  - The `name` field from the Shopify order.
+- **Process**:
+  - If `name` is present and not empty, it is extracted and converted to a string.
+  - A new map is created with `orderIdentificationTypeId` set to `"SHOPIFY_ORD_NAME"` and `idValue` set to the extracted order name.
+  - This map is added to the `orderIdentifications` list.
+  - The order name is also stored separately in the service context under the key `"orderName"`.
+- **Output**:
+  - The Shopify order name is captured and stored in the identification list and the service context.
+
+#### 3. Capture Order External ID:
+- **Input**: 
+  - The `orderExternalId`, which may have been set earlier in the process.
+- **Process**:
+  - If `orderExternalId` is present and not empty, it is used to create a map with `orderIdentificationTypeId` set to `"SHOPIFY_ORD_ID"` and `idValue` set to the external ID.
+  - This map is added to the `orderIdentifications` list.
+- **Output**:
+  - The Shopify order external ID is captured and stored in the identification list.
+
+### Mapping Summary:
+
+| Shopify Field              | Hotwax Field                   | Description                                                           |
+|----------------------------|--------------------------------|-----------------------------------------------------------------------|
+| order_number             | orderIdentifications['SHOPIFY_ORD_NO'] | Unique order number assigned by Shopify.                             |
+| name                     | orderIdentifications['SHOPIFY_ORD_NAME'] | Order name provided in Shopify, stored for easy reference.           |
+| id                        | orderIdentifications['SHOPIFY_ORD_ID'] | External ID associated with the order, used for tracking.            |
+
+### Handling Order Ship Groups from Shopify to Hotwax
+
+#### Objective:
+This section details the process of managing order ship groups from Shopify orders and how these groups are structured and stored in Hotwax Commerce. The process includes handling fulfillment locations, grouping line items, and managing fulfilled quantities.
+
+#### Overview:
+When processing an order from Shopify, it's crucial to group line items based on specific criteria, such as fulfillment locations, pickup store properties, and other tags configured in the system. This section explains how line items are managed and grouped into ship groups, focusing on the use of properties like `pickupstore`, and configuration settings such as `PRE_SLCTD_FAC_TAG`, `ORD_ITM_PICKUP_FAC`, and `ORD_ITM_SHIP_FAC`.
+
+### Process Flow:
+
+#### 1. Initialize Order Ship Groups:
+- **Input**: 
+  - An empty list `orderShipGroups` is initialized to hold the grouped line items.
+  - A map `shipGroupList` is initialized to store lists of line items grouped by FacilityId.
+  - A map `fulfilledItemMap` is initialized to track the fulfilled quantity of each line item by its ID.
+
+#### 2. Handling Fulfillments:
+- **Input**: 
+  - The `fulfillments` list from the Shopify order.
+- **Process**:
+  - If the `defaultFacilityId` is empty, iterate over each fulfillment.
+  - For each fulfillment with a status of `"success"`, determine the `fulfillmentFacilityId` by converting the `location_id` using `ShopifyHelper`.
+  - Group the line items under their corresponding `fulfillmentFacilityId` in the `shipGroupList`.
+  - Track the fulfilled quantity of each line item in `fulfilledItemMap` by adding up quantities across fulfillments.
+- **Output**:
+  - `shipGroupList` now contains lists of line items grouped by `fulfillmentFacilityId`.
+  - `fulfilledItemMap` tracks the fulfilled quantity of each line item.
+
+#### 3. Managing Line Items in Ship Groups Using Properties
+
+**Line Item Properties and Grouping:**
+Each line item in an order may have associated properties that dictate how it should be processed. The primary property used for grouping in this context is `pickupstore`, which indicates whether the item is intended for store pickup. If an item has this property, it is grouped separately from other items that do not share this characteristic.
+
+- **Pickup Store Grouping:** 
+  - When a line item has the `pickupstore` property, it is separated into its own ship group. This ensures that items meant for pickup are handled differently from items that will be shipped to the customer.
+  - The system checks if the item has already been fulfilled and adjusts the quantity accordingly before adding it to the pickup ship group.
+
+- **Non-Pickup Items:**
+  - Items that do not have the `pickupstore` property are grouped based on their origin location or a pre-selected facility, depending on the configuration settings.
+
+**Using `PRE_SLCTD_FAC_TAG`, `ORD_ITM_PICKUP_FAC`, and `ORD_ITM_SHIP_FAC`:**
+To enhance the flexibility of fulfillment processing, the system allows for pre-selection of fulfillment facilities based on tags and specific settings configured in the product store.
+
+- **PRE_SLCTD_FAC_TAG:**
+  - **Purpose:** This tag is retrieved from the product store settings and indicates a specific tag that, if present in the order, will trigger the use of pre-configured fulfillment facilities.
+  - When the tag is detected in the order, the system checks for line item properties that match settings defined in `ORD_ITM_PICKUP_FAC` and `ORD_ITM_SHIP_FAC`.
+  
+- **ORD_ITM_PICKUP_FAC and ORD_ITM_SHIP_FAC:**
+  - **Purpose:** These settings are specific to the product store and define the criteria for grouping items. They are retrieved from the `ProductStoreSetting` entity and represent the facility assignment for pickup (`ORD_ITM_PICKUP_FAC`) and shipping (`ORD_ITM_SHIP_FAC`).
+  - If a line item property matches any of these settings and the order contains the `PRE_SLCTD_FAC_TAG`, the system assigns the item to the corresponding fulfillment facility. For example:
+    - **`ORD_ITM_PICKUP_FAC`:** Used to identify and group items that should be fulfilled by a designated pickup facility.
+    - **`ORD_ITM_SHIP_FAC`:** Used to identify and group items that should be fulfilled by a designated shipping facility.
+
+**Conclusion:**
+The management of line items into ship groups using properties like `pickupstore`, along with the pre-selection feature driven by `PRE_SLCTD_FAC_TAG`, `ORD_ITM_PICKUP_FAC`, and `ORD_ITM_SHIP_FAC`, provides a robust mechanism for customizing how orders are processed. This approach allows for a seamless and efficient fulfillment process, catering to various scenarios such as store pickups and shipments from specific facilities.
+
+### Key Considerations:
+- **Grouping by Fulfillment Facility**: The process ensures that line items are grouped under their correct fulfillment facility, which is crucial for accurate order processing.
+- **Handling Pickup Store Items**: Special attention is given to line items with the `pickupstore` property to ensure they are processed correctly.
+- **Fulfilled Quantities**: The system tracks the fulfilled quantities of line items to manage partial fulfillments and calculate canceled quantities accurately.
+
+### Ship Group: Setting Up "Ship From" and "Ship To" Details
+
+In this section, the code deals with extracting and populating the "ship from" and "ship to" details for the ship group. These details are critical for processing the shipment correctly, ensuring that items are shipped from the correct facility and delivered to the correct destination.
+
+#### 1. **Fetching Facility Contact Information ("Ship From")**
+   - The code retrieves contact information for the facility from which the items will be shipped. This includes:
+     - **Postal Address**: Identified by `POSTAL_ADDRESS` and `PRIMARY_LOCATION`.
+     - **Phone Number**: Identified by `TELECOM_NUMBER` and `PRIMARY_PHONE`.
+     - **Email Address**: Identified by `EMAIL_ADDRESS` and `PRIMARY_EMAIL`.
+   - Each of these contact mechanisms (`contactMechId`) is retrieved using `WarehouseHelper.getFacilityContactDetail`. If found, they are stored in the respective variables (`facilityAddressContactMechId`, `facilityPhoneContactMechId`, `facilityEmailContactMechId`).
+
+   - These details are then added to a `shipFromMap`:
+     - **Postal Address**: Stored under `postalAddress`.
+     - **Phone Number**: Stored under `phoneNumber`.
+     - **Email Address**: Stored under `email`.
+   - The `shipFromMap` is then added to the `shipGroup` under the `shipFrom` key.
+
+#### 2. **Setting Up "Ship To" Details**
+   - The `shipToMap` is used to store the destination contact information.
+   - **Shipping Address**:
+     - The code first checks for the presence of `shipping_address` in the order. If it exists, various address details like `name`, `address1`, `address2`, `city`, `country`, etc., are extracted.
+     - **Address Parsing**:
+       - If the address line (`address1`) ends with `(R)` or `(B)`, these indicators are used to determine if the address is a `HOME_LOCATION` or `WORK_LOCATION`. The indicators are then stripped from the address.
+     - **Country and Province/State Geo IDs**:
+       - The country code is mapped to a `countryGeoId` using `BuynowUtil.getCountryGeoIdFromGeoCode`.
+       - The province or state is mapped to a `provinceGeoId` using `BuynowUtil.getCountryStateGeo`.
+       - If any of these mappings fail, a communication event is logged, and the relevant geo ID is set to `null`.
+     - **Geo Point**:
+       - If latitude and longitude are present, a `GeoPoint` is created, and its ID (`geoPointId`) is stored in the `shipToMap`.
+     - **Postal Address Creation**:
+       - A postal address is created using the `createPostalAddress` service. If successful, the contact mechanism ID (`shippingContactMechId`) is stored.
+
+   - **Phone Number**:
+     - The phone number associated with the shipping address is extracted. If valid, it is formatted and stored using the `createTelecomNumber` service. The resulting contact mechanism ID is stored in `shipToMap`.
+
+   - **Email Address**:
+     - The email address for the shipping contact is extracted and stored using the `createContactMech` service. The resulting ID is used for both shipping and billing contact mechanisms (`shipToEmailContactMechId` and `billToEmailContactMechId`).
+
+   - Finally, the `shipToMap` is populated with:
+     - **Postal Address**: Including any additional purposes (e.g., `HOME_LOCATION`).
+     - **Phone Number**.
+     - **Email Address**.
+   - This map is added to the `shipGroup` under the `shipTo` key.
+
+#### 3. **Handling Missing Shipping Information**
+   - If `shipping_address` is not present, the code defaults to using the `shipFromMap` (assuming that the shipping address is the same as the shipping origin).
+   - If neither `shipFromMap` nor `shipping_address` is available, an error is logged indicating that the shipping information is missing.
+
+This process ensures that both the origin (`shipFrom`) and destination (`shipTo`) details are thoroughly validated and correctly populated, allowing for accurate and efficient order fulfillment.
+
+### Managing Bill To Contacts Details
+
+This code snippet checks a product store setting called `SAVE_BILL_TO_INF` to determine whether billing information should be saved for a customer's order. If the setting is enabled (`"Y"`), it extracts and processes billing address, phone number, and email details from the order and then saves them in the system. Here’s a breakdown of what the code does:
+
+1. **Check Product Store Setting**: 
+   - The code uses the `StoreWorker.getProductStoreSetting` method to check if the `SAVE_BILL_TO_INF` setting is enabled (`"Y"`).
+   
+2. **Extract and Process Billing Information**:
+   - **Billing Address**:
+     - It retrieves the billing address from the order.
+     - Extracts necessary fields like `name`, `address1`, `address2`, `city`, `country`, `postalCode`, etc.
+     - Validates and converts country and province codes into their respective geo IDs.
+     - If latitude and longitude are present, it creates a geo point in the system.
+     - A postal address is then created with the validated data.
+   - **Phone Number**:
+     - The code retrieves the billing phone number and, if valid, parses it into components like `countryCode`, `areaCode`, and `contactNumber`.
+     - It then creates a telecom number record in the system.
+   - **Email**:
+     - The billing email is not directly retrieved from the order but is instead copied from the shipping email that was previously processed.
+
+3. **Save the Billing Information**:
+   - The `postalAddress`, `phoneNumber`, and `email` are saved into the `billToMap`.
+   - This `billToMap` is added to the `serviceCtx`, making the billing information available for further processing in the order creation service.
+
+### Order Items
+
+This section of the code is focused on processing and managing ship group items for an order in a system integrated with Shopify. Here's a breakdown of the logic:
+
+1. **Ship Group Items Initialization**:
+   - A list named `items` is initialized to store each processed order item as a map.
+
+2. **Iterating Through Ship Group Items**:
+   - The code iterates over each item in `shipGroupItems`, extracting relevant information like `variant_id`, `quantity`, and `id`.
+
+3. **Product Identification**:
+   - The `variant_id` is used to retrieve the `productId` from the local system. If the product is not found, a new product may be created based on configurations (`allowProductCreate`). This handles the scenario where a product is deleted from Shopify but needs to exist in the local system for order processing or when product is not imported from shopify yet.
+
+4. **Creating Products**:
+   - If the product is missing and creation is allowed, the code creates a new product, potentially marking it as a digital good or finished good based on the presence of inventory management for the variant.
+
+5. **Order Item Mapping**:
+   - A map (`orderItemMap`) is prepared for each order item, containing details like `quantity`, `unitPrice`, `productId`, and `status`. The status is determined based on whether the item is fulfilled, cancelled, or in any other state.
+
+6. **Item Adjustments**:
+   
+   Adjustments like discounts and tax lines are processed and added to the `itemAdjustments` list within each `orderItemMap`. This ensures that all financial impacts on the item are recorded accurately.  The `itemAdjustments` data in HotWax Commerce is primarily derived from two sections of the Shopify Order JSON:
+
+    1.  **discount\_allocations:** This section within each line item details the discounts applied to that specific product. The code iterates through these allocations, extracts the discount amount and any associated discount code, and creates `EXT_PROMO_ADJUSTMENT` entries in `itemAdjustments`.
+
+    2.  **tax\_lines:** This section within each line item provides information about the taxes applied to the product. The code extracts the tax title, price, and rate, and creates `SALES_TAX` entries in `itemAdjustments`.
+
+    **Mapping**
+
+    | Shopify Order Field (within line\_items) | HotWax Commerce Field (in itemAdjustments) |
+    | :--------------------------------------- | :----------------------------------------- |
+    | discount\_allocations.amount             | amount (negated)                           |
+    | discount\_allocations.discount\_application\_index | Used to look up the discount code in `discounts` map |
+    | tax\_lines.title                         | comments                                   |
+    | tax\_lines.price                         | amount                                     |
+    | tax\_lines.rate                          | sourcePercentage                           |
+
+        
+    Finally, all adjustments are added to the `itemAdjustments` list within the `orderItemMap`.
+
+7. **Properties and Attributes**:
+   *   Custom properties associated with line items in the Shopify order are mapped as `OrderItemAttribute` entities in HotWax Commerce.
     *   The `name` and `value` fields from each `properties` entry are used as the `attrName` and `attrValue` in the `OrderItemAttribute` entity.
     *   Example from sample JSON:
         ```json
@@ -536,20 +751,166 @@ if (isCashSaleOrder) {
         ```
         This would be stored as an `OrderItemAttribute` with `attrName` = "custom engraving" and `attrValue` = "Happy Birthday Mom!"
 
+    *   The code handles special item properties like preorder or backorder statuses, adding relevant attributes to `orderItemAttributes`. Additionally, custom properties from Shopify (like "StorePickupItemProperty") are converted into attributes.
+
+    1. **Extract Properties**:
+        - The list of properties (`properties`) is extracted from the item.
+        - Property names and values are collected into separate lists (`propertyNames` and `propertyValues`).
+
+    2. **Preorder Check**:
+        - The tag used for preorder is fetched via `ShopifyHelper.getShopifyTypeMappedValue(delegator, shopId, "SHOPIFY_PRODUCT_TAG", "ON_PRE_ORDER_PROD")`.
+        - Checks if the item has the preorder tag or is categorized as a preorder item.
+        - If there's a mismatch between Shopify and the system, a note is added.
+        - If it's a preorder item, the `"PreOrderItemProperty"` attribute is added to `orderItemAttributes`.
+
+    3. **Backorder Check**:
+        - The tag used for backorder is fetched via `ShopifyHelper.getShopifyTypeMappedValue(delegator, shopId, "SHOPIFY_PRODUCT_TAG", "ON_BACK_ORDER_PROD")`.
+        - Checks if the item has the backorder tag or is categorized as a backorder item.
+        - If there's a mismatch between Shopify and the system, a note is added.
+        - If it's a backorder item, the `"BackOrderItemProperty"` attribute is added to `orderItemAttributes`.
+
+    4. **Store Pickup Check**:
+        - Checks if the item is designated for store pickup using a property value fetched from `EntityUtilProperties.getPropertyValue("ShopifyServiceConfig", "storepickup.item.property.name", delegator)`.
+        - If so, the `"StorePickupItemProperty"` attribute is added to `orderItemAttributes`.
+
+    5. **General Property Attributes**:
+        - For each property, an attribute is created and added to `orderItemAttributes`.
+
+    6. **Attach Attributes**:
+        - If any attributes were created, they are attached to the `orderItemMap` under `"orderItemAttributes"`.
+
+8. **Item Associations**:
+   - The code checks for item associations, such as exchanges, and links them to the current order item if applicable.
 
 
+9. **Partial Fulfillment Handling**:
+    - If an item is partially fulfilled (i.e., only part of the quantity is delivered), the item is split, and each part is processed separately, with appropriate statuses (`ITEM_COMPLETED`, etc.).
+
+   - **Condition**: If `explodeOrderItems` is `"Y"` and `fulfillment_status` is `"partial"`.
+   - **Action**: 
+     - Call `CsrOrderHelper.explodeOrderItem(orderItemMap)` to get partially fulfilled items.
+     - Compute `fulfilledQty` by subtracting `fulfillable_quantity` from the total quantity.
+     - For each partially fulfilled item:
+       - Create a copy of `orderItemMap`.
+       - Update status to `"ITEM_COMPLETED"` if there is remaining quantity.
+       - Adjust `fulfilledQty` and update `itemAdjustments` and `quantity`.
+       - Add the updated item map to `items`.
+
+2. **Full Item Addition**:
+   - If the above condition is not met, add `orderItemMap` to `items` directly.
+
+3. **Partial Cancellation Handling**:
+   - **Condition**: If `refundQuantity` is positive and `remainQty` is positive.
+   - **Action**:
+     - Create a new map for the cancelled item.
+     - Set quantity to `refundQuantity` and status to `"ITEM_CANCELLED"`.
+     - Add the map to `items`.
 
 
-The following HotWax Commerce internal services are called from the `createShopifyOrder` function:
+This section ensures that the ship group items are fully processed, handling all potential edge cases like partial fulfillment, missing products, discounts, and tax calculations. It also integrates with Shopify's data structures to map and manage product information, ensuring consistency between systems.
 
-1.  `customerDataSetup`
-2.  `createTelecomNumber`
-3.  `createContactMech`
-4.  `createCommunicationEvent`
-5.  `createSalesOrder`
-6.  `checkAndAddProductComponents` (run asynchronously)
-7.  `createShopifyShopOrder` (run asynchronously)
-8.  `getPaidTransactionsAndCreateOrderPayment` (run asynchronously)
-9.  `createOrderPaymentPreference` (may be called depending on order status)
-10. `createCommunicationEventOrder` (run asynchronously, if applicable)
+### **Order Adjustment Handling**
 
+1. **Order Discount Adjustment**:
+   - **Target**: Only `shipping_line` discounts.
+   - **Discount Code**: Applies discount based on code and percentage if available.
+   - **Direct Value**: Uses direct discount values.
+   - **Example**: A $5 discount on shipping is added as `EXT_SHIP_ADJUSTMENT`.
+
+   ```java
+   List<Map<String, Object>> orderDiscounts = UtilGenerics.cast(order.get("discount_applications"));
+   for (Map<String, Object> orderDiscount : orderDiscounts) {
+       if ("shipping_line".equals(orderDiscount.get("target_type"))) {
+           Map<String, Object> discountAdjustment = new HashMap<>();
+           discountAdjustment.put("type", "EXT_SHIP_ADJUSTMENT");
+           discountAdjustment.put("comments", orderDiscount.get("title"));
+           // Handle discount code or value
+           orderAdjustments.add(discountAdjustment);
+       }
+   }
+   ```
+
+2. **Order Tip**:
+   - **Purpose**: Adjusts for tips received.
+   - **Example**: A $10 tip is added as `DONATION_ADJUSTMENT`.
+
+   ```java
+   BigDecimal amount = (BigDecimal) ObjectType.simpleTypeConvert(order.get("total_tip_received"), "BigDecimal", null, locale);
+   if (amount != null && amount.compareTo(BigDecimal.ZERO) > 0) {
+       Map<String, Object> donationAdjMap = new HashMap<>();
+       donationAdjMap.put("type", "DONATION_ADJUSTMENT");
+       donationAdjMap.put("comments", "Tip");
+       donationAdjMap.put("amount", amount);
+       orderAdjustments.add(donationAdjMap);
+   }
+   ```
+
+3. **Order Shipping Adjustment**:
+   - **Purpose**: Handles shipping charges and taxes.
+   - **Example**: A $15 shipping charge and $2 shipping tax are added.
+
+   ```java
+   List<Map<String, Object>> shippingAdjustments = UtilGenerics.cast(order.get("shipping_lines"));
+   for (Map<String, Object> shippingAdjustment : shippingAdjustments) {
+       // Shipping tax
+       for (Map<String, Object> taxLine : UtilGenerics.cast(shippingAdjustment.get("tax_lines"))) {
+           BigDecimal price = (BigDecimal) ObjectType.simpleTypeConvert(taxLine.get("price"), "BigDecimal", null, locale);
+           if (price != null && price.compareTo(BigDecimal.ZERO) > 0) {
+               Map<String, Object> shipAdjustment = new HashMap<>();
+               shipAdjustment.put("type", "SHIPPING_SALES_TAX");
+               shipAdjustment.put("comments", taxLine.get("title"));
+               shipAdjustment.put("amount", price);
+               orderAdjustments.add(shipAdjustment);
+           }
+       }
+       // Shipping charge
+       BigDecimal price = (BigDecimal) ObjectType.simpleTypeConvert(shippingAdjustment.get("price"), "BigDecimal", null, locale);
+       if (price != null && price.compareTo(BigDecimal.ZERO) > 0) {
+           Map<String, Object> shipAdjustment = new HashMap<>();
+           shipAdjustment.put("type", "SHIPPING_CHARGES");
+           shipAdjustment.put("comments", shippingAdjustment.get("title"));
+           shipAdjustment.put("amount", price);
+           orderAdjustments.add(shipAdjustment);
+       }
+   }
+   ```
+
+**Summary**:
+- **Discounts**: Applied to shipping lines based on codes or values.
+- **Tips**: Added as donation adjustments.
+- **Shipping**: Includes charges and taxes.
+
+### Shipment Method and Carrier Handling
+
+**Overview:**
+This section deals with determining and assigning the appropriate shipment method and carrier for an order.
+
+**Process:**
+
+1. **Default Values**:
+   - **Shipment Method**: Default to "STANDARD" if no specific shipping method is found.
+   - **Carrier**: Default carrier is set based on product store settings.
+
+2. **Lookup Shipment Method**:
+   - **From Shopify Mapping**: Retrieve shipment method details from `ShopifyShopCarrierShipment` entity using the Shopify shipment method description from `shipping_lines[].title`.
+   - **Fallback**: If no match is found in Shopify mappings, look up the shipment method in the product store settings.
+
+3. **Special Cases**:
+   - **Cash Sales Orders**: Set shipment method type to "POS_COMPLETED" for cash sales.
+
+4. **Store Pickup**:
+   - **Property Check**: If order properties include "pickupstore", set the shipment method type to "STOREPICKUP" and carrier to "_NA_".
+
+## Conclusion
+
+In this design document, we have outlined the comprehensive process of transforming and importing Shopify order JSON into Hotwax. This includes detailed explanations of:
+
+1. **Data Transformation**: Mapping Shopify order data to Hotwax's order structure, ensuring that key attributes such as order items, adjustments, and shipping details are accurately reflected.
+
+2. **Handling Special Cases**: Addressing various scenarios such as shipping discounts, shipment methods, and carrier assignments, as well as managing partial fulfillments and cancellations.
+
+3. **Configuration**: Implementing configurations to handle default values and special conditions, including fallback mechanisms for shipment methods and carrier assignments.
+
+4. **Service Integration**: Describing the final step where the transformed order data is passed to the Hotwax service to create the order, ensuring seamless integration between Shopify and Hotwax.
+
+This approach ensures that the order data is accurately and efficiently imported into Hotwax, maintaining consistency and integrity throughout the process.
