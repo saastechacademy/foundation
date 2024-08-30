@@ -4,7 +4,7 @@ Think of the order JSON as a comprehensive snapshot of a customer's purchase on 
 
 
 
-**Top-Level Structure**
+### **Top-Level Structure**
 
 The top level of the JSON contains essential order attributes:
 
@@ -23,7 +23,7 @@ The top level of the JSON contains essential order attributes:
 * `customer_locale`: The locale of the customer placing the order.
 * `tags`: Tags attached to the order, formatted as a string of comma-separated values. Tags are additional short descriptors, commonly used for filtering and searching
 
-**Nested Objects**
+### **Nested Objects**
 
 The order JSON includes several nested objects that provide more detailed information:
 
@@ -112,7 +112,7 @@ The `ShopifyConfig` data is used in the `createShopifyOrder` service to retrieve
    - Extract and clean tags from the order.
    - Check if the order should be skipped based on tags and configuration.
 
-#### Pseudocode
+ **Pseudocode**
 
 - **Retrieve Shopify Configuration:**
    ```java
@@ -809,19 +809,108 @@ This section of the code is focused on processing and managing ship group items 
 
 This section ensures that the ship group items are fully processed, handling all potential edge cases like partial fulfillment, missing products, discounts, and tax calculations. It also integrates with Shopify's data structures to map and manage product information, ensuring consistency between systems.
 
+### **Order Adjustment Handling**
 
+1. **Order Discount Adjustment**:
+   - **Target**: Only `shipping_line` discounts.
+   - **Discount Code**: Applies discount based on code and percentage if available.
+   - **Direct Value**: Uses direct discount values.
+   - **Example**: A $5 discount on shipping is added as `EXT_SHIP_ADJUSTMENT`.
 
+   ```java
+   List<Map<String, Object>> orderDiscounts = UtilGenerics.cast(order.get("discount_applications"));
+   for (Map<String, Object> orderDiscount : orderDiscounts) {
+       if ("shipping_line".equals(orderDiscount.get("target_type"))) {
+           Map<String, Object> discountAdjustment = new HashMap<>();
+           discountAdjustment.put("type", "EXT_SHIP_ADJUSTMENT");
+           discountAdjustment.put("comments", orderDiscount.get("title"));
+           // Handle discount code or value
+           orderAdjustments.add(discountAdjustment);
+       }
+   }
+   ```
 
-The following HotWax Commerce internal services are called from the `createShopifyOrder` function:
+2. **Order Tip**:
+   - **Purpose**: Adjusts for tips received.
+   - **Example**: A $10 tip is added as `DONATION_ADJUSTMENT`.
 
-1.  `customerDataSetup`
-2.  `createTelecomNumber`
-3.  `createContactMech`
-4.  `createCommunicationEvent`
-5.  `createSalesOrder`
-6.  `checkAndAddProductComponents` (run asynchronously)
-7.  `createShopifyShopOrder` (run asynchronously)
-8.  `getPaidTransactionsAndCreateOrderPayment` (run asynchronously)
-9.  `createOrderPaymentPreference` (may be called depending on order status)
-10. `createCommunicationEventOrder` (run asynchronously, if applicable)
+   ```java
+   BigDecimal amount = (BigDecimal) ObjectType.simpleTypeConvert(order.get("total_tip_received"), "BigDecimal", null, locale);
+   if (amount != null && amount.compareTo(BigDecimal.ZERO) > 0) {
+       Map<String, Object> donationAdjMap = new HashMap<>();
+       donationAdjMap.put("type", "DONATION_ADJUSTMENT");
+       donationAdjMap.put("comments", "Tip");
+       donationAdjMap.put("amount", amount);
+       orderAdjustments.add(donationAdjMap);
+   }
+   ```
 
+3. **Order Shipping Adjustment**:
+   - **Purpose**: Handles shipping charges and taxes.
+   - **Example**: A $15 shipping charge and $2 shipping tax are added.
+
+   ```java
+   List<Map<String, Object>> shippingAdjustments = UtilGenerics.cast(order.get("shipping_lines"));
+   for (Map<String, Object> shippingAdjustment : shippingAdjustments) {
+       // Shipping tax
+       for (Map<String, Object> taxLine : UtilGenerics.cast(shippingAdjustment.get("tax_lines"))) {
+           BigDecimal price = (BigDecimal) ObjectType.simpleTypeConvert(taxLine.get("price"), "BigDecimal", null, locale);
+           if (price != null && price.compareTo(BigDecimal.ZERO) > 0) {
+               Map<String, Object> shipAdjustment = new HashMap<>();
+               shipAdjustment.put("type", "SHIPPING_SALES_TAX");
+               shipAdjustment.put("comments", taxLine.get("title"));
+               shipAdjustment.put("amount", price);
+               orderAdjustments.add(shipAdjustment);
+           }
+       }
+       // Shipping charge
+       BigDecimal price = (BigDecimal) ObjectType.simpleTypeConvert(shippingAdjustment.get("price"), "BigDecimal", null, locale);
+       if (price != null && price.compareTo(BigDecimal.ZERO) > 0) {
+           Map<String, Object> shipAdjustment = new HashMap<>();
+           shipAdjustment.put("type", "SHIPPING_CHARGES");
+           shipAdjustment.put("comments", shippingAdjustment.get("title"));
+           shipAdjustment.put("amount", price);
+           orderAdjustments.add(shipAdjustment);
+       }
+   }
+   ```
+
+**Summary**:
+- **Discounts**: Applied to shipping lines based on codes or values.
+- **Tips**: Added as donation adjustments.
+- **Shipping**: Includes charges and taxes.
+
+### Shipment Method and Carrier Handling
+
+**Overview:**
+This section deals with determining and assigning the appropriate shipment method and carrier for an order.
+
+**Process:**
+
+1. **Default Values**:
+   - **Shipment Method**: Default to "STANDARD" if no specific shipping method is found.
+   - **Carrier**: Default carrier is set based on product store settings.
+
+2. **Lookup Shipment Method**:
+   - **From Shopify Mapping**: Retrieve shipment method details from `ShopifyShopCarrierShipment` entity using the Shopify shipment method description from `shipping_lines[].title`.
+   - **Fallback**: If no match is found in Shopify mappings, look up the shipment method in the product store settings.
+
+3. **Special Cases**:
+   - **Cash Sales Orders**: Set shipment method type to "POS_COMPLETED" for cash sales.
+
+4. **Store Pickup**:
+   - **Property Check**: If order properties include "pickupstore", set the shipment method type to "STOREPICKUP" and carrier to "_NA_".
+
+## Conclusion
+
+In this design document, we have outlined the comprehensive process of transforming and importing Shopify order JSON into Hotwax. This includes detailed explanations of:
+
+1. **Data Transformation**: Mapping Shopify order data to Hotwax's order structure, ensuring that key attributes such as order items, adjustments, and shipping details are accurately reflected.
+
+2. **Handling Special Cases**: Addressing various scenarios such as shipping discounts, shipment methods, and carrier assignments, as well as managing partial fulfillments and cancellations.
+
+3. **Configuration**: Implementing configurations to handle default values and special conditions, including fallback mechanisms for shipment methods and carrier assignments.
+
+4. **Service Integration**: Describing the final step where the transformed order data is passed to the Hotwax service to create the order, ensuring seamless integration between Shopify and Hotwax.
+
+This approach ensures that the order data is accurately and efficiently imported into Hotwax, maintaining consistency and integrity throughout the process.
