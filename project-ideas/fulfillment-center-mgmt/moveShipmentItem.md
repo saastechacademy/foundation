@@ -92,7 +92,7 @@ This service is typically used in the following scenarios:
    - The service prepares the `ShipmentItem` and `OrderShipment` maps based on the provided and retrieved data.
    - These maps are then used to either create new records in the `ShipmentItem` and `OrderShipment` entities or update existing ones.
 
-### ** Parameters**
+### **Parameters**
 
 - **`shipmentId` (String, Required):** The ID of the original shipment from which the item is being moved.
 - **`shipmentPackageSeqId` (String):** The sequence ID of the package within the original shipment that contains the item.
