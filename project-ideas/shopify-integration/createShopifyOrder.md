@@ -94,9 +94,10 @@ The preprocessing stage is the first step in the integration process. It focuses
 
    * **Skip if Duplicate:** If a matching order is found, the current order is marked as a duplicate and will be skipped to prevent redundant data in the system.
 
-2.  **Filter Orders Based on Tags:**
+2.  **Filter Orders Based on skip.order.import Tags:**
     *  Extract and clean tags from the order.
-Check if the order should be skipped based on tags and configuration.
+For various reasons, retailer may choose to not process certain category of orders in HotWax Commerce. Ratailer tags such orders in Shopify. These tags when configured in HotWax Commerce are used to filter out such orders during the order import process. 
+
 ### Configuration Retrieval and Filtering
 
 The `ShopifyConfig` data is used in the `createShopifyOrder` service to retrieve configuration details necessary for processing the Shopify order. 
