@@ -90,3 +90,16 @@
 
 *   Where should order adjustment go?
 
+
+## **SQL hands on**
+*   Write SQL queries for requirements given below. 
+
+### **Query for each of the following Order and related details** 
+*   Shipping locations
+*   Shipping Addresses
+*   Order grand total
+*   Order return items
+*   Order return total
+*   Order return tax and shipping
+*   OrderItem adjustments total
+*   Order shipments summary
