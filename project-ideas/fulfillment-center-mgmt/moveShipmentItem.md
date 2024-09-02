@@ -57,7 +57,7 @@ This API method is part of the order fulfillment application's facade.
 
 The primary goal of the `moveShipmentItem` service is to transfer a specific item from one shipment to another within the same order. This is useful in scenarios where items need to be rearranged or consolidated during the fulfillment process.
 
-Shipment should be in the `SHIPMENT_APPROVED` status to add or remove `ShipmentItem`.
+Shipment should be in the `SHIPMENT_INPUT` status to add or remove `ShipmentItem`.
 
 ### **Use Cases**
 
@@ -69,7 +69,7 @@ This service is typically used in the following scenarios:
 
 ### **Context**
 
-- A shipment should be in the `SHIPMENT_APPROVED` status for adding or removing a `ShipmentItem`.
+- A shipment should be in the `SHIPMENT_INPUT` status for adding or removing a `ShipmentItem`.
 - An order can have one or more shipments.
 - An `OrderItem` can be fulfilled/shipped by one `ShipmentItem`. No partial `OrderItem` fulfillment is allowed.
 - A shipment can have one `ShipmentPackage`.
@@ -77,7 +77,7 @@ This service is typically used in the following scenarios:
 ### **Workflow**
 
 1. **Input Validation:** 
-   - Ensure that both the original (`shipmentId`) and destination (`toShipmentId`) shipments are in the `SHIPMENT_APPROVED` status. 
+   - Ensure that both the original (`shipmentId`) and destination (`toShipmentId`) shipments are in the `SHIPMENT_INPUT` status. 
    - Check if the shipments belong to the same order. If they belong to different orders, an error is returned.
 
 2. **Removing the Shipment Item from the Original Shipment:**
@@ -103,7 +103,7 @@ This service is typically used in the following scenarios:
 ### **Workflow**
 
 1. **Validate Shipment Status:**
-   - The service checks if both the `fromShipment` and `destinationShipment` are in `SHIPMENT_APPROVED` status. If either is not, the service returns an error.
+   - The service checks if both the `fromShipment` and `destinationShipment` are in `SHIPMENT_INPUT` status. If either is not, the service returns an error.
 
 2. **Ensure Both Shipments Belong to the Same Order:**
    - The service confirms that the `fromShipment` and `destinationShipment` belong to the same order by comparing their `primaryOrderId` values. If they do not match, the service returns an error.
