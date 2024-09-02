@@ -74,7 +74,7 @@ Savannah, GA 31401
 
 The tech stack of NotNaked is 
 1) Shopify
-2) HotWax Commmerce
+2) OMS HotWax Commmerce
 3) NetSuite. 
 
 NotNaked is organized to sell more and deliver fast, sell store inventory online and fulfill online orders from Store when it makes business sense. 
@@ -114,8 +114,8 @@ Back-order (polular products out of stock)
 TODO:
 
 Prepare list of scenarios 
-    start with basics, the obvious ones, e.g Customer places BOPIS order,
-    Order is received/imported in HC. 
+    Start with basics, the obvious ones, e.g Customer places BOPIS order,
+    Order is received/imported in OMS. 
         The Check if the facility assigned to the order is valid, The facility is configured to fulfill BOPIS order. Check if the orderItem has inventory reservation. Check if Order is listed in fulfillment application. 
         Thinking points: What configurations of HC enable BOPIS feature in OMS? FACT CHECKING
             Con you control 
@@ -129,11 +129,11 @@ Prepare list of scenarios
 
 
 List reports available in Shopify.
-Can any report in Shopify help reconciling data in Shopify with HC?
-HotWax entities has set of Date fields, they are designed to be used for data sync between systems. Know about the attributes on entities and come up with posssible tests to validate integration processes
+Can any report in Shopify help reconciling data in Shopify with OMS?
+OMS entities has set of Date fields, they are designed to be used for data sync between systems. Know about the attributes on entities and come up with posssible tests to validate integration processes
 
 Testing returns
-    Shopify Order facts should be checked with HC Order facts
+    Shopify Order facts should be checked with OMS Order facts
 
 
 
