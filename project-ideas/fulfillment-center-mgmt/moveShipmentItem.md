@@ -53,6 +53,9 @@ This service is typically used in the following scenarios:
 
 This API method is part of the order fulfillment application's facade.
 
+#### Note
+This service expects the Shipment to be in INPUT status, createShipmentFromOrderItems creates Shipment in APPROVED status, we need to figure out when and which services moves it from APPROVED to INPUT. 
+
 ### **Purpose**
 
 The primary goal of the `moveShipmentItem` service is to transfer a specific item from one shipment to another within the same order. This is useful in scenarios where items need to be rearranged or consolidated during the fulfillment process.
