@@ -83,7 +83,7 @@ When creating a `Shipment` entity, many of its fields can be populated using inf
 
 The `OrderItemShipGroup` acts as a bridge between the `OrderHeader` (the overall order) and the `Shipment` (the physical fulfillment of part or all of the order). It provides essential details about how a specific group of items within an order should be shipped, which directly informs the creation and management of the corresponding `Shipment`.
 
-Let's outline the design for a service that creates `Shipment`, `ShipmentItem`, and `OrderShipment` records based on a list of `OrderItem`s belonging to the same `OrderItemShipGroup`.
+Let's outline the design for a service that creates `Shipment`, `ShipmentItem`, `ShipmentRouteSegment` and `OrderShipment` records based on a list of `OrderItem`s belonging to the same `OrderItemShipGroup`.
 
 ### **Service Name**
 
@@ -92,7 +92,7 @@ Let's outline the design for a service that creates `Shipment`, `ShipmentItem`, 
 ### **Purpose**
 
 *   Streamline the shipment creation process when all `OrderItem`s belong to a single `OrderItemShipGroup`.
-*   Leverage the `OrderItem` and `OrderItemShipGroup` data to populate the necessary fields in the `Shipment`, `ShipmentItem`, and `OrderShipment` entities.
+*   Leverage the `OrderItem` and `OrderItemShipGroup` data to populate the necessary fields in the `Shipment`, `ShipmentItem`, `ShipmentRouteSegment` and `OrderShipment` entities.
 
 ### **Inputs**
 
@@ -130,13 +130,16 @@ Let's outline the design for a service that creates `Shipment`, `ShipmentItem`, 
         *   Extract `productId` and `quantity`.
         *   Create a `ShipmentItem` record map associated with the newly created `Shipment`.
 
-5.  **Prepare Order Shipments:**
+5.  **Prepare ShipmentRouteSegment:**
+    *   Extract relevant data from the `OrderItemShipGroup`:.
+
+6.  **Prepare Order Shipments:**
     *   Iterate through the `orderItems` list again.
     *   For each `OrderItem`:
         *   Extract `orderItemSeqId`.
         *   Create an `OrderShipment` map linking the `OrderItem` to the `Shipment`.
 
-6.  **Return Success:**
+7.  **Return Success:**
     *   Return a success message with the created `shipmentId`.
 
 ### **Outputs**
@@ -146,7 +149,7 @@ Let's outline the design for a service that creates `Shipment`, `ShipmentItem`, 
 
 ### **Dependencies**
 
-*   Entity services for creating `Shipment`, `ShipmentItem`, and `OrderShipment`.
+*   Entity services for creating `Shipment`, `ShipmentItem`, `ShipmentRouteSegment`, and `OrderShipment`.
 
 ### **Assumptions**
 
