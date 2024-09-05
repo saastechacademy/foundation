@@ -79,6 +79,13 @@ When creating a `Shipment` entity, many of its fields can be populated using inf
 *   **estimatedShipDate**:  Can be initialized with the `OrderItemShipGroup`'s `estimatedShipDate`
 *   **estimatedDeliveryDate**: Can be initialized with the `OrderItemShipGroup`'s `estimatedDeliveryDate`
 
+Populate origin postal address and telecom information in a Shipment entity based on the associated origin facilities.
+
+*   Find a contact mechanism associated with the origin facility that has the purpose "PRIMARY_LOCATION" and set it as the shipment's `originContactMechId`.
+*   Find a contact mechanism associated with the origin facility that has the purpose "PRIMARY_PHONE" and set it as the shipment's `originTelecomNumberId`.
+
+
+
 **In essence:**
 
 The `OrderItemShipGroup` acts as a bridge between the `OrderHeader` (the overall order) and the `Shipment` (the physical fulfillment of part or all of the order). It provides essential details about how a specific group of items within an order should be shipped, which directly informs the creation and management of the corresponding `Shipment`.
