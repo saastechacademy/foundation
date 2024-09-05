@@ -48,21 +48,74 @@ The `OrderItemShipGroup` entity in Apache OFBiz represents a group of order item
 
 **Key attributes of the OrderItemShipGroup entity:**
 
-*   **orderId** (id): The ID of the order to which this ship group belongs.
-*   **shipGroupSeqId** (id): A sequential ID to distinguish multiple ship groups within the same order.
-*   **shipmentMethodTypeId** (id): The type of shipment method chosen for this ship group (e.g., ground shipping, air shipping).
-*   **carrierPartyId** (id): The ID of the carrier responsible for shipping this group of items.
-*   **carrierRoleTypeId** (id): The role type of the carrier (e.g., CARRIER).
-*   **contactMechId** (id): The contact mechanism ID for the shipping address associated with this ship group.
-*   **telecomContactMechId** (id): The contact mechanism ID for the telephone number associated with this ship group.
-*   **shippingInstructions** (long-varchar): Any special shipping instructions for this group of items.
-*   **giftMessage** (long-varchar): A gift message associated with this ship group, if applicable.
-*   **isGift** (indicator): Indicates whether this ship group is a gift.
-*   **carrierDeliveryZone** (short-varchar): The delivery zone specified by the carrier for this ship group.
-*   **carrierRestrictionCodes** (short-varchar): Any restriction codes imposed by the carrier on this ship group.
-*   **carrierRestrictionDesc** (very-long): A description of any carrier restrictions.
-*   **estimatedShipDate** (date-time): The estimated ship date for this group of items.
-*   **estimatedDeliveryDate** (date-time): The estimated delivery date for this group of items.
+*   **Core OFBiz Attributes:**
+
+    *   **orderId** (id): The ID of the order to which this ship group belongs.
+    *   **shipGroupSeqId** (id): A sequential ID to distinguish multiple ship groups within the same order.
+    *   **shipmentMethodTypeId** (id): The type of shipment method chosen for this ship group (e.g., ground shipping, air shipping).
+    *   **carrierPartyId** (id): The ID of the carrier responsible for shipping this group of items.
+    *   **carrierRoleTypeId** (id): The role type of the carrier (e.g., CARRIER).
+    *   **contactMechId** (id): The contact mechanism ID for the shipping address associated with this ship group.
+    *   **telecomContactMechId** (id): The contact mechanism ID for the telephone number associated with this ship group.
+    *   **shippingInstructions** (long-varchar): Any special shipping instructions for this group of items.
+    *   **giftMessage** (long-varchar): A gift message associated with this ship group, if applicable.
+    *   **isGift** (indicator): Indicates whether this ship group is a gift.
+    *   **carrierDeliveryZone** (short-varchar): The delivery zone specified by the carrier for this ship group.
+    *   **carrierRestrictionCodes** (short-varchar): Any restriction codes imposed by the carrier on this ship group.
+    *   **carrierRestrictionDesc** (very-long): A description of any carrier restrictions.
+    *   **estimatedShipDate** (date-time): The estimated ship date for this group of items.
+    *   **estimatedDeliveryDate** (date-time): The estimated delivery date for this group of items.
+
+*   **HotWax Commerce Extensions**
+
+    *   `carrierAccountNumber`: to store the account number used with the carrier for this shipment group.
+    *   `carrierService`: to capture more specific details about the carrier service chosen (e.g., "FedEx Ground," "UPS 2nd Day Air").
+    *   `orderFacilityId`: information related to the facility from which the order is placed.
+
+
+The `ShipmentRouteSegment` entity in the Apache OFBiz official codebase represents a single leg or step in the transportation of a shipment from its origin to its destination. It captures details about the specific route segment, including the carrier, shipping method, origin and destination facilities, contact information, estimated and actual dates, costs, tracking information, and other relevant attributes.
+
+**Key attributes of the `ShipmentRouteSegment` entity in OFBiz:**
+
+*   `shipmentId`: The ID of the shipment to which this route segment belongs.
+*   `shipmentRouteSegmentId`: A unique identifier for this specific route segment within the shipment.
+*   `deliveryId`: The ID of the delivery associated with this route segment (if applicable).
+*   `originFacilityId` and `destFacilityId`: The IDs of the origin and destination facilities for this segment.
+*   `originContactMechId` and `destContactMechId`: Contact information for the origin and destination.
+*   `originTelecomNumberId` and `destTelecomNumberId`: Telecom contact information (phone numbers) for the origin and destination.
+*   `carrierPartyId`: The ID of the carrier responsible for this route segment.
+*   `shipmentMethodTypeId`: The type of shipping method used for this segment.
+*   `carrierServiceStatusId`: The status of the carrier service for this segment.
+*   `carrierDeliveryZone`: The delivery zone assigned by the carrier.
+*   `carrierRestrictionCodes` and `carrierRestrictionDesc`: Codes and descriptions of any restrictions imposed by the carrier.
+*   `billingWeight` and `billingWeightUomId`: The weight used for billing and its unit of measurement.
+*   `actualTransportCost`, `actualServiceCost`, `actualOtherCost`, and `actualCost`: The actual costs incurred for transport, service, other expenses, and the total cost, respectively.
+*   `currencyUomId`: The currency used for the cost values.
+*   `actualStartDate` and `actualArrivalDate`: The actual start and arrival dates for this segment.
+*   `estimatedStartDate` and `estimatedArrivalDate`: The estimated start and arrival dates.
+*   `trackingIdNumber`: The tracking number for this segment.
+*   `trackingDigest`: A digest or summary of tracking information.
+*   `updatedByUserLoginId` and `lastUpdatedDate`: Information about the last update to this record.
+*   `homeDeliveryType`, `homeDeliveryDate`: Details about home delivery if applicable.
+*   `thirdPartyAccountNumber`, `thirdPartyPostalCode`, `thirdPartyCountryGeoCode`: Information related to third-party accounts or locations.
+*   `upsHighValueReport`: A byte array potentially used for UPS high-value shipment reports.
+
+**HotWax Commerce Custom Extensions**
+
+HotWax Commerce has extended the `ShipmentRouteSegment` entity with the following additional fields:
+
+*   `codReturnLabelImage`: A byte array to store the COD (Cash On Delivery) return label image.
+*   `codReturnLabelHtml`: HTML content of the COD return label.
+*   `codCollectionAmount`: The amount to be collected on delivery.
+*   `carrierAccountNumber`: The carrier account number used for this segment.
+*   `carrierService`: The name of the specific carrier service used.
+*   `isGenerateThirdPartyLabel`: An indicator to specify if a third-party label should be generated.
+*   `isTrackingRequired`: An indicator to specify if tracking is required for this segment.
+*   `referenceNumber`: A reference number for this segment.
+*   `actualCarrierCode`: The actual carrier code used for this segment.
+
+
+
 
 **How it relates to the Shipment entity:**
 
