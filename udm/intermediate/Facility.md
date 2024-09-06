@@ -181,6 +181,35 @@ In the context of shipping and the OMS, the `FacilityParty` entity is crucial fo
 
 3.  **Enabling Rate Shopping:** During the rate shopping process (as seen in the `doRateShopping` service), the system needs to know which carriers are available at the origin facility to request shipping rates from them. The `FacilityParty` entity provides this crucial information.
 
+
+### **ShipmentMethodType in Apache OFBiz**
+
+The `ShipmentMethodType` entity in Apache OFBiz serves as a way to categorize different methods or types of shipment. It provides a structured way to define various shipping options that can be used for fulfilling orders.
+
+**Key Attributes in Standard OFBiz**
+
+*   `shipmentMethodTypeId`: The unique identifier for the shipment method type.
+*   `description`: A textual description of the shipment method type.
+*   `sequenceNum`: A numeric value used to define the order or sequence in which the shipment method types should be displayed or considered.
+
+**Relationships in Standard OFBiz**
+
+*   `ShipmentMethodType` is associated with other entities like `CarrierShipmentMethod` and `ProductStoreShipmentMeth` to link specific carriers and product stores to the available shipment methods.
+
+### **HotWax Commerce Custom Extension**
+
+HotWax Commerce extends the `ShipmentMethodType` entity by adding a new field:
+
+*   `parentTypeId`: This field establishes a hierarchical relationship between shipment method types, allowing for the creation of parent-child relationships.
+
+**Significance of the Extension**
+
+The `parentTypeId` extension in HotWax Commerce introduces the concept of grouping or categorizing shipment methods. This can be useful for:
+
+*   **Organizing Shipment Methods:** It allows for a more structured and hierarchical representation of shipping options, making it easier to manage and present them to users.
+*   **Filtering and Selection:** The parent-child relationship can be leveraged for filtering and selecting shipping methods based on broader categories or groups.
+
+
 ### Role of the `CarrierShipmentMethod` Entity
 
 The `CarrierShipmentMethod` entity in the standard Apache OFBiz framework serves as a bridge between carriers (`Party` entities with the role "CARRIER") and the shipping methods they offer (`ShipmentMethodType` entities). It allows the system to define and manage the specific shipping services that each carrier provides.
