@@ -91,3 +91,6 @@
     *   It uses `getConfiguredCarrierService` to find the right carrier service.
     *   It calls the carrier API to get rates.
 5.  `doRateShopping` compares rates, selects the cheapest, and updates the shipment or returns the result.
+
+
+In the `getShipmentMethods` implementation, the `ProductStoreShipmentMeth` entity is queried to retrieve a list of configured shipping methods for the given `productStoreId`, `partyId` (carrier), and a set of `shipmentMethodTypeIds`. This list is then used to filter the available shipping methods and ensure that only the ones supported by the store are considered during the rate shopping process.
