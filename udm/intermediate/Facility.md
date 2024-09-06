@@ -158,3 +158,62 @@ This entity further refines the product-facility relationship by specifying the 
   - **locationSeqId:** The location's unique identifier.
   - **minimumStock:** Minimum stock level to maintain at this specific location.
   - **moveQuantity:** Quantity to move when stock at this location falls below the minimum.
+
+
+### Role of the `FacilityParty` Entity
+
+The `FacilityParty` entity in Apache OFBiz serves as a bridge to connect `Facility` entities (representing physical locations like warehouses or stores) with `Party` entities (representing various business partners, including carriers in this context). It essentially defines the relationship between a facility and the parties that play specific roles within that facility.
+
+**Key Attributes**
+
+*   `facilityId`: The ID of the facility.
+*   `partyId`: The ID of the party associated with the facility.
+*   `roleTypeId`: The type of role the party plays at the facility (e.g., "CARRIER", "OWNER", "MANAGER").
+*   `fromDate` and `thruDate`: The date range during which this association is valid.
+
+**Significance in Shipping Carrier Management**
+
+In the context of shipping and the OMS, the `FacilityParty` entity is crucial for:
+
+1.  **Identifying Carriers at a Facility:** By querying `FacilityParty` with the `roleTypeId` set to "CARRIER," you can retrieve a list of all carriers that are associated with a specific facility. This information is essential when determining which carriers are available to handle shipments originating from that facility.
+
+2.  **Managing Carrier Relationships:** The entity allows you to track the relationships between facilities and carriers, including the specific roles they play. This can be useful for managing contracts, agreements, and other aspects of the business relationship.
+
+3.  **Enabling Rate Shopping:** During the rate shopping process (as seen in the `doRateShopping` service), the system needs to know which carriers are available at the origin facility to request shipping rates from them. The `FacilityParty` entity provides this crucial information.
+
+### Role of the `CarrierShipmentMethod` Entity
+
+The `CarrierShipmentMethod` entity in the standard Apache OFBiz framework serves as a bridge between carriers (`Party` entities with the role "CARRIER") and the shipping methods they offer (`ShipmentMethodType` entities). It allows the system to define and manage the specific shipping services that each carrier provides.
+
+**Key Attributes in Standard OFBiz**
+
+*   `shipmentMethodTypeId`: The ID of the general shipment method type (e.g., "GROUND," "AIR").
+*   `partyId`: The ID of the carrier party.
+*   `roleTypeId`: The role type of the carrier, typically "CARRIER."
+*   `sequenceNumber`: A numeric value to define the order or priority of this method for the carrier.
+*   `carrierServiceCode`: A code specific to the carrier that identifies this particular service.
+
+**Relationships in Standard OFBiz**
+
+*   The entity has a one-to-one relationship with `ShipmentMethodType` through the `shipmentMethodTypeId` foreign key.
+*   It also has a one-to-one relationship with `Party` (the carrier) through the `partyId` foreign key.
+*   Additionally, it has a one-to-one relationship with `PartyRole` to further specify the carrier's role (usually "CARRIER") using both `partyId` and `roleTypeId`.
+
+**HotWax Commerce Custom Extension**
+
+HotWax Commerce extends the `CarrierShipmentMethod` entity by adding a new field:
+
+*   `deliveryDays`: A numeric field to store the estimated number of days it takes for this shipping method to deliver a shipment.
+
+**Significance of the Extension**
+
+This extension enhances the `CarrierShipmentMethod` entity by incorporating crucial information about the expected delivery time for each shipping method offered by a carrier. This information is valuable for:
+
+*   **Rate Shopping and Selection:** During rate shopping, the system can use `deliveryDays` to filter out shipping methods that don't meet the desired Service Level Agreement (SLA) or delivery timeframe.
+*   **Customer Communication:** The estimated delivery time can be communicated to the customer, setting clear expectations and improving transparency.
+*   **Order Fulfillment Planning:** The system can use `deliveryDays` to plan and optimize the fulfillment process, ensuring timely delivery of shipments.
+
+**Example**
+
+Consider a scenario where a customer wants their order delivered within 3 days. During rate shopping, the system can query `CarrierShipmentMethod` entities and filter them based on the `deliveryDays` field to only consider methods that can fulfill this requirement.
+
