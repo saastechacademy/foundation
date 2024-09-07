@@ -83,3 +83,5 @@ This process involves creating and configuring entities to represent the carrier
     *   If the carrier operates from specific facilities, create `FacilityParty` records to link them, setting `roleTypeId` to "CARRIER."
     *   This is important for the `doRateShopping` service to identify available carriers at the origin facility.
 
+6. **Setup [CustomMethod](/udm/intermediate/CustomMethod.md)**
+
