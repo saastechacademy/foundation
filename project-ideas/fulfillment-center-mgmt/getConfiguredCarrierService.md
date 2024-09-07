@@ -1,6 +1,6 @@
 # getConfiguredCarrierService
 
-The `getConfiguredCarrierService` function in the `WarehouseHelper.java` is a utility function that retrieves the name of the service to be used for interacting with a specific carrier's API for a given shipment method type and request type (e.g., RATE_REQUEST, TRACKING, etc.). It prioritizes carrier-specific configurations defined in the `ShipmentRequest` entity but falls back to default configurations from the `shipment.properties` file if no specific configuration is found.
+The `getConfiguredCarrierService` is a utility function that retrieves the name of the service to be used for interacting with a specific carrier's API for a given shipment method type and request type (e.g., RATE_REQUEST, TRACKING, etc.).
 
 **Functionality Breakdown**
 
@@ -12,14 +12,9 @@ The `getConfiguredCarrierService` function in the `WarehouseHelper.java` is a ut
 
 2.  **Database Lookup:**
     *   The function first attempts to find a matching record in the `ShipmentRequest` entity based on the provided `carrierPartyId`, `shipmentMethodTypeId`, and `requestType`.
-    *   If a record is found, it extracts the `serviceName` from that record. This `serviceName` represents the specific OFBiz service that should be called to interact with the carrier's API for the given request type.
+    *   If a record is found, it extracts the `serviceName` from that record. This `serviceName` represents the specific service that should be called to interact with the carrier's API for the given request type.
 
-3.  **Fallback to Default Configuration:**
-    *   If no matching record is found in the `ShipmentRequest` entity, the function falls back to using a default configuration from the `shipment.properties` file.
-    *   It constructs a property key using the `requestType` and looks up its value in the properties file. The property key format is `shipment.<requestType>.service.name`.
-    *   The retrieved property value is then used as the `serviceName`.
-
-4.  **Return Value:**
+3.  **Return Value:**
     *   The function returns the `serviceName`, which is the name of the OFBiz service to be used for the carrier API interaction.
     *   If no configuration is found in either the database or the properties file, it returns `null`.
 
@@ -35,6 +30,4 @@ In the `getShipmentMethods` function, `getConfiguredCarrierService` is called to
 
 *   If the `carrierPartyId` is "FEDEX," the `shipmentMethodTypeId` is "GROUND," and the `requestType` is "RATE_REQUEST," the function might:
     *   Find a `ShipmentRequest` record with `serviceName` = "fedexRateRequest" and return "fedexRateRequest."
-    *   If no such record exists, it might fall back to the `shipment.properties` file and retrieve the value of the property `shipment.RATE_REQUEST.service.name`, which could be "genericRateRequest" or another default service.
 
-In summary, the `getConfiguredCarrierService` function acts as a crucial configuration lookup mechanism, enabling the `getShipmentMethods` function to dynamically determine the appropriate service for interacting with carrier APIs based on the specific shipment context. This promotes flexibility and adaptability when integrating with multiple carriers and handling various shipment method types.
