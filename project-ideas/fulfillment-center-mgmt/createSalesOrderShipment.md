@@ -142,6 +142,8 @@ The `OrderItemShipGroup` acts as a bridge between the `OrderHeader` (the overall
 
 Let's outline the design for a service that creates `Shipment`, `ShipmentItem`, `ShipmentRouteSegment` and `OrderShipment` records based on a list of `OrderItem`s belonging to the same `OrderItemShipGroup`.
 
+**Key attributes of the `ShipmentPackage` entity in OFBiz:**
+
 The `ShipmentPackage` entity in the Shipment data model holds information about individual packages within a shipment. It captures details such as:
 
 *   **Physical Characteristics:** Dimensions (length, width, height) and weight, along with their respective units of measurement.
@@ -319,4 +321,15 @@ public static Map<String, Object> createSalesOrderShipment(DispatchContext dctx,
 
     return ServiceUtil.returnSuccess("Shipment created successfully with ID: " + shipmentId);
 }
+```
+
+***NOTE:***
+
+*This service assumes following data exists in the system*
+
+```
+<ShipmentBoxType shipmentBoxTypeId="YOURPACKNG" description="Your Packaging" dimensionUomId="LEN_in" boxLength="15" boxWidth="10" boxHeight="5"/>
+<CarrierShipmentMethBoxType partyId="_NA_" shipmentBoxTypeId="YOURPACKNG" shipmentMethodTypeId="NO_SHIPPING"/>
+<CarrierShipmentMethBoxType partyId="_NA_" shipmentBoxTypeId="YOURPACKNG" shipmentMethodTypeId="STANDARD"/>
+
 ```
