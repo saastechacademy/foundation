@@ -114,9 +114,6 @@ HotWax Commerce has extended the `ShipmentRouteSegment` entity with the followin
 *   `referenceNumber`: A reference number for this segment.
 *   `actualCarrierCode`: The actual carrier code used for this segment.
 
-
-
-
 **How it relates to the Shipment entity:**
 
 When creating a `Shipment` entity, many of its fields can be populated using information from the corresponding `OrderItemShipGroup`. This includes:
@@ -144,6 +141,15 @@ Populate origin postal address and telecom information in a Shipment entity base
 The `OrderItemShipGroup` acts as a bridge between the `OrderHeader` (the overall order) and the `Shipment` (the physical fulfillment of part or all of the order). It provides essential details about how a specific group of items within an order should be shipped, which directly informs the creation and management of the corresponding `Shipment`.
 
 Let's outline the design for a service that creates `Shipment`, `ShipmentItem`, `ShipmentRouteSegment` and `OrderShipment` records based on a list of `OrderItem`s belonging to the same `OrderItemShipGroup`.
+
+The `ShipmentPackage` entity in the Shipment data model holds information about individual packages within a shipment. It captures details such as:
+
+*   **Physical Characteristics:** Dimensions (length, width, height) and weight, along with their respective units of measurement.
+*   **Packaging Type:** The type of box or container used for the package (`shipmentBoxTypeId`).
+*   **Store Package-Level Information:** The `ShipmentPackage` entity is responsible for storing all the relevant details about a physical package within a shipment.
+*   **Facilitate Rate Calculation:** The dimensions and weight stored in this entity are crucial for calculating accurate shipping rates from carrier APIs.
+
+
 
 ### **Service Name**
 
@@ -193,6 +199,11 @@ Let's outline the design for a service that creates `Shipment`, `ShipmentItem`, 
 5.  **Prepare ShipmentRouteSegment:**
     *   Extract relevant data from the `OrderItemShipGroup`:.
 
+5.  **Prepare ShipmentPackage:**
+    *   `weight`: Calculate OrderItemShipgroup Package Weight.
+    *   `shipmentBoxTypeId`: `YOURPACKNG` The type of box or container used for the package.
+
+
 6.  **Prepare Order Shipments:**
     *   Iterate through the `orderItems` list again.
     *   For each `OrderItem`:
@@ -216,6 +227,66 @@ Let's outline the design for a service that creates `Shipment`, `ShipmentItem`, 
 *   All `OrderItem`s belong to the same `OrderItemShipGroup`.
 *   The shipment type is "SALES_SHIPMENT."
 *   The service handles the basic data preparation of shipment-related entities.
+
+
+### Calculate OrderItemShipgroup Package Weight
+
+Create a view entity that joins `OrderItem` and `Product` to efficiently retrieve product shipping weights for order items within the same ship group.
+
+### **Example Code (Illustrative)**
+
+```xml
+<view-entity entity-name="OrderItemProductWeightView"
+             package-name="org.apache.ofbiz.order.order"> 
+    <member-entity entity-alias="OI" entity-name="OrderItem"/>
+    <member-entity entity-alias="P" entity-name="Product"/>
+
+    <alias-all entity-alias="OI"/>  
+    <alias entity-alias="P" name="shippingWeight" field="shippingWeight"/>
+    <alias entity-alias="P" name="productWeight" field="productWeight"/>
+
+    <view-link entity-alias="OI" rel-entity-alias="P">
+        <key-map field-name="productId"/>
+    </view-link>
+</view-entity>
+```
+
+
+**Explanation:**
+
+*   **`view-entity`:** Defines the view entity named `OrderItemProductWeightView`.
+*   **`member-entity`:** Specifies the base entities involved in the join: `OrderItem` and `Product`.
+*   **`alias-all`:** Includes all attributes from `OrderItem` in the view.
+*   **`alias`:** Selectively includes the `shippingWeight` and `productWeight` attributes from the `Product` entity.
+*   **`view-link`:** Establishes the join condition:
+    *   `OrderItem` is linked to `Product` based on `productId`.
+
+
+### **Example Code (Illustrative)**
+
+```java
+// Assuming you have the 'orderId' and 'shipGroupSeqId'
+
+EntityCondition condition = EntityCondition.makeCondition(
+    EntityCondition.makeCondition("orderId", orderId),
+    EntityCondition.makeCondition("shipGroupSeqId", shipGroupSeqId)
+);
+
+List<GenericValue> orderItems = EntityQuery.use(delegator)
+    .from("OrderItemProductWeightView")
+    .where(condition)
+    .queryList();
+
+BigDecimal totalWeight = BigDecimal.ZERO;
+for (GenericValue orderItem : orderItems) {
+    // ... (same weight calculation logic as in calcShipmentPackageTotalWeight)
+    totalWeight = totalWeight.add(productWeight.multiply(quantity));
+}
+```
+
+
+
+
 
 ### **Example Code (Illustrative)**
 
