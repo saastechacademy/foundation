@@ -40,7 +40,17 @@ Modify contents of the Shipment after it is already SHIPMENT_APPROVED or SHIPMEN
 
 ### [Setting up a New Shipping Carrier](https://github.com/saastechacademy/foundation/blob/main/ofbiz-framework/intermediate/setupShippingCarrier.md)
 
+### Pre-Requisits, NOT included in Fulfillment App. 
+1) Setup Faciity with Locations
+2) Setup Product and Inventory configurations
+3) Import product Inventory
+4) Import Orders 
+5) Setup Fulfillment user roles and responsibilities.
+6) 
 
-
-
+### Fulfillment App
+1) PickList and Picking
+2) Shipment lifecycle
+3) Shipping Gateway configuration
+4) 
 
