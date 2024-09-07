@@ -85,3 +85,46 @@ This process involves creating and configuring entities to represent the carrier
 
 6. **Setup [CustomMethod](/udm/intermediate/CustomMethod.md)**
 
+```
+    <entity entity-name="ShipmentBoxType"
+            package-name="org.apache.ofbiz.shipment.shipment"
+            title="Shipment Box Type">
+      <field name="shipmentBoxTypeId" type="id"></field>
+      <field name="description" type="description"></field>
+      <field name="dimensionUomId" type="id"></field>
+      <field name="boxLength" type="fixed-point"></field>
+      <field name="boxWidth" type="fixed-point"></field>
+      <field name="boxHeight" type="fixed-point"></field>
+      <field name="weightUomId" type="id"></field>
+      <field name="boxWeight" type="fixed-point"></field>
+      <prim-key field="shipmentBoxTypeId"/>
+      <relation type="one" fk-name="SHMT_BXTP_DUOM" title="Dimension" rel-entity-name="Uom">
+        <key-map field-name="dimensionUomId" rel-field-name="uomId"/>
+      </relation>
+      <relation type="one" fk-name="SHMT_BXTP_WUOM" title="Weight" rel-entity-name="Uom">
+        <key-map field-name="weightUomId" rel-field-name="uomId"/>
+      </relation>
+    </entity>
+
+    <entity entity-name="CarrierShipmentMethBoxType"
+            package-name="co.hotwax.warehouse.packing"
+            title="Entity contains Party, ShipmentBoxType and ShipmentMethodType" >
+        <field name="partyId" type="id"/>
+        <field name="shipmentBoxTypeId" type="id"/>
+        <field name="shipmentMethodTypeId" type="id"/>
+        <prim-key field="partyId"/>
+        <prim-key field="shipmentBoxTypeId"/>
+        <prim-key field="shipmentMethodTypeId"/>
+        <relation type="one" fk-name="CARR_SHIPBOX_TYPE" rel-entity-name="ShipmentBoxType">
+            <key-map field-name="shipmentBoxTypeId"/>
+        </relation>
+        <relation type="one" fk-name="CARR_PARTY" rel-entity-name="Party">
+            <key-map field-name="partyId"/>
+        </relation>
+        <relation type="one" fk-name="CARR_SHIPMETH_TYPE" rel-entity-name="ShipmentMethodType">
+            <key-map field-name="shipmentMethodTypeId"/>
+        </relation>
+    </entity>
+
+
+```
