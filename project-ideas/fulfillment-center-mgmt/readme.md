@@ -57,3 +57,17 @@ Modify contents of the Shipment after it is already SHIPMENT_APPROVED or SHIPMEN
 ***Shipping Gateway configuration***
 1) [Shipping Carrier](/ofbiz-framework/intermediate/setupShippingCarrier.md)
 
+
+## UAT
+
+### List of scenarios to test createOrderFulfillmentWave
+*   PickList is created, the list of assigned Pickers reconciles with the request
+*   The OrderItem count and the PicklistOrderItem record counts reconciles
+*   The number of uniqui shipGroupSeqId reconciles with the number of Shipments, Packages, RouteSegments created.
+*   The number records for each orderId and ShipmentId combination in OrderShipment table reconciles with ShipmentItems
+
+### Ships together scenario
+### Digital Goods shipment
+### Physical Gift card shipment
+### Marketing material and bonus material
+
