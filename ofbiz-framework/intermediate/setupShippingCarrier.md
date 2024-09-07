@@ -128,3 +128,30 @@ This process involves creating and configuring entities to represent the carrier
 
 
 ```
+
+**Using ShipmentRequest entity**
+
+Retrieve the name of the service to be used for interacting with a specific carrier's API for a given shipment method type and request type (e.g., RATE_REQUEST, TRACKING, etc.).
+
+```
+    conditionList.add(EntityCondition.makeCondition("carrierPartyId", carrierPartyId));
+    conditionList.add(EntityCondition.makeCondition("shipmentMethodTypeId", shipmentMethodTypeId));
+    conditionList.add(EntityCondition.makeCondition("requestType", requestType));
+    GenericValue shipmentRequest = EntityQuery.use(delegator).from("ShipmentRequest").where(conditionList).cache().queryFirst();
+    carrierServiceName = shipmentRequest.getString("serviceName");
+
+```
+
+Sample code for calling service when you have its name
+
+```
+    try {
+        if(UtilValidate.isNotEmpty(carrierServiceName)) {
+            DispatchContext dctx = dispatcher.getDispatchContext();
+            Map <String, Object> serviceCtx = dctx.getModelService(serviceName).makeValid(serviceFields, ModelService.IN_PARAM);
+            serviceResp = dispatcher.runSync(serviceName, serviceCtx);
+        }
+    } catch (GenericServiceException e) {
+        Debug.logError(e, MODULE);
+    }
+```
