@@ -89,7 +89,3 @@ HotWax Commerce has extended the `ShipmentRouteSegment` entity with the followin
     *   Label storage and retrieval (`labelImage`, `labelImageUrl`, `labelHtml`)
 
 
-### HotWax Commerce Shipment 
-*   Has one Package, this eliminates the need for ShipmentPackageContent entity.
-*   The Shipment will have one ShipmentPackage, one ShipmentRouteSegment
-*   All ShipmentItems are assumed to be packed in one Package and tracked using ShipmentRouteSegment

@@ -38,6 +38,12 @@ Modify contents of the Shipment after it is already SHIPMENT_APPROVED or SHIPMEN
     <StatusValidChange statusId="SHRSCS_ACCEPTED" statusIdTo="SHRSCS_VOIDED" transitionName="Void"/>
 ```
 
+## HotWax Commerce Shipment 
+*   Has one Package, this eliminates the need for ShipmentPackageContent entity.
+*   The Shipment will have one ShipmentPackage, one ShipmentRouteSegment
+*   All ShipmentItems are assumed to be packed in one Package and tracked using ShipmentRouteSegment
+
+
 ### [Setting up a New Shipping Carrier](https://github.com/saastechacademy/foundation/blob/main/ofbiz-framework/intermediate/setupShippingCarrier.md)
 
 ### Pre-Requisits, NOT included in Fulfillment App. 
