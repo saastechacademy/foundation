@@ -52,5 +52,8 @@ Modify contents of the Shipment after it is already SHIPMENT_APPROVED or SHIPMEN
 1) PickList and Picking
 2) Shipment lifecycle
 3) Shipping Gateway configuration
-4) 
+
+
+***Shipping Gateway configuration***
+
 
