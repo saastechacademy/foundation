@@ -1,4 +1,4 @@
-Let's explore the `ShipmentPackageRouteSeg` and `ShipmentRouteSegment` entities, their roles within the Apache OFBiz framework, and the customizations made in HotWax Commerce.
+The `ShipmentPackageRouteSeg` and `ShipmentRouteSegment` entities, their roles within the Apache OFBiz framework, and the customizations made in HotWax Commerce.
 
 ### ShipmentPackageRouteSeg (Apache OFBiz)
 
@@ -76,7 +76,9 @@ HotWax Commerce has extended the `ShipmentRouteSegment` entity with the followin
 *   `requestedShipMethTypeId`: An ID field to store the customer's requested shipping method type
 *   `deliveryWindow`: A floating-point field to store the delivery window in days or hours
 
-**Usage in HotWax Commerce**
+## Usage in HotWax Commerce**
+
+**Removal of ShipmentPackageRouteSeg:** HotWax Commerce has simplified the model by assuming one package per shipment. Therefore, they've removed the need for ShipmentPackageRouteSeg and moved relevant tracking and label information directly to the ShipmentRouteSegment entity.
 
 *   **ShipmentRouteSegment Extensions:** The added fields in `ShipmentRouteSegment` cater to HotWax-specific requirements, such as:
     *   COD handling (`codReturnLabelImage`, `codReturnLabelHtml`, `codCollectionAmount`)
