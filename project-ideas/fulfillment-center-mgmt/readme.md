@@ -55,5 +55,5 @@ Modify contents of the Shipment after it is already SHIPMENT_APPROVED or SHIPMEN
 
 
 ***Shipping Gateway configuration***
-
+1) [Shipping Carrier](/ofbiz-framework/intermediate/setupShippingCarrier.md)
 
