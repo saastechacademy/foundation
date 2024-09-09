@@ -290,3 +290,4 @@ Prepare data for creating a new `Shipment` entity in the database. Let's break d
         *   `"weightUomId"`: The unit of measurement for weight.
         *   `"userLogin"`: The userLogin object representing the user performing the operation.
 
+

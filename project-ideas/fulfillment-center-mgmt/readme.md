@@ -37,3 +37,43 @@ Modify contents of the Shipment after it is already SHIPMENT_APPROVED or SHIPMEN
     <StatusValidChange statusId="SHRSCS_CONFIRMED" statusIdTo="SHRSCS_VOIDED" transitionName="Void"/>
     <StatusValidChange statusId="SHRSCS_ACCEPTED" statusIdTo="SHRSCS_VOIDED" transitionName="Void"/>
 ```
+
+## HotWax Commerce Shipment 
+*   Has one Package, this eliminates the need for ShipmentPackageContent entity.
+*   The Shipment will have one ShipmentPackage, one ShipmentRouteSegment
+*   All ShipmentItems are assumed to be packed in one Package and tracked using ShipmentRouteSegment
+
+
+### [Setting up a New Shipping Carrier](https://github.com/saastechacademy/foundation/blob/main/ofbiz-framework/intermediate/setupShippingCarrier.md)
+
+### Pre-Requisits, NOT included in Fulfillment App. 
+1) Setup Faciity with Locations
+2) Setup Product and Inventory configurations
+3) Import product Inventory
+4) Import Orders 
+5) Setup Fulfillment user roles and responsibilities.
+6) 
+
+### Fulfillment App
+1) PickList and Picking
+2) Shipment lifecycle
+3) Shipping Gateway configuration
+
+
+***Shipping Gateway configuration***
+1) [Shipping Carrier](/ofbiz-framework/intermediate/setupShippingCarrier.md)
+
+
+## UAT
+
+### List of scenarios to test createOrderFulfillmentWave
+*   PickList is created, the list of assigned Pickers reconciles with the request
+*   The OrderItem count and the PicklistOrderItem record counts reconciles
+*   The number of uniqui shipGroupSeqId reconciles with the number of Shipments, Packages, RouteSegments created.
+*   The number records for each orderId and ShipmentId combination in OrderShipment table reconciles with ShipmentItems
+
+### Ships together scenario
+### Digital Goods shipment
+### Physical Gift card shipment
+### Marketing material and bonus material
+

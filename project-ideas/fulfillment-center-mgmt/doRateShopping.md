@@ -63,7 +63,7 @@
         *   Handles errors and logs if the service is not configured.
         *   Returns the list of `shipmentMethods` with rates.
 
-2.  **`getConfiguredCarrierService` (in `WarehouseHelper.txt`)**
+2.  **[`getConfiguredCarrierService`](./getConfiguredCarrierService.md)**
 
     *   **Purpose:** Retrieves the service name to use for a specific carrier, shipment method, and request type.
     *   **Key Steps:**
@@ -88,6 +88,9 @@
 3.  If needed, it finds suitable carriers and shipment methods.
 4.  `getShipmentMethods` is called for each carrier/method combination:
     *   It gathers shipment data using helper functions.
-    *   It uses `getConfiguredCarrierService` to find the right carrier service.
+    *   It uses [`getConfiguredCarrierService`](./getConfiguredCarrierService.md) to find the right carrier service.
     *   It calls the carrier API to get rates.
 5.  `doRateShopping` compares rates, selects the cheapest, and updates the shipment or returns the result.
+
+
+In the `getShipmentMethods` implementation, the `ProductStoreShipmentMeth` entity is queried to retrieve a list of configured shipping methods for the given `productStoreId`, `partyId` (carrier), and a set of `shipmentMethodTypeIds`. This list is then used to filter the available shipping methods and ensure that only the ones supported by the store are considered during the rate shopping process.

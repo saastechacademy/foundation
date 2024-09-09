@@ -181,6 +181,35 @@ In the context of shipping and the OMS, the `FacilityParty` entity is crucial fo
 
 3.  **Enabling Rate Shopping:** During the rate shopping process (as seen in the `doRateShopping` service), the system needs to know which carriers are available at the origin facility to request shipping rates from them. The `FacilityParty` entity provides this crucial information.
 
+
+### **ShipmentMethodType in Apache OFBiz**
+
+The `ShipmentMethodType` entity in Apache OFBiz serves as a way to categorize different methods or types of shipment. It provides a structured way to define various shipping options that can be used for fulfilling orders.
+
+**Key Attributes in Standard OFBiz**
+
+*   `shipmentMethodTypeId`: The unique identifier for the shipment method type.
+*   `description`: A textual description of the shipment method type.
+*   `sequenceNum`: A numeric value used to define the order or sequence in which the shipment method types should be displayed or considered.
+
+**Relationships in Standard OFBiz**
+
+*   `ShipmentMethodType` is associated with other entities like `CarrierShipmentMethod` and `ProductStoreShipmentMeth` to link specific carriers and product stores to the available shipment methods.
+
+### **HotWax Commerce Custom Extension**
+
+HotWax Commerce extends the `ShipmentMethodType` entity by adding a new field:
+
+*   `parentTypeId`: This field establishes a hierarchical relationship between shipment method types, allowing for the creation of parent-child relationships.
+
+**Significance of the Extension**
+
+The `parentTypeId` extension in HotWax Commerce introduces the concept of grouping or categorizing shipment methods. This can be useful for:
+
+*   **Organizing Shipment Methods:** It allows for a more structured and hierarchical representation of shipping options, making it easier to manage and present them to users.
+*   **Filtering and Selection:** The parent-child relationship can be leveraged for filtering and selecting shipping methods based on broader categories or groups.
+
+
 ### Role of the `CarrierShipmentMethod` Entity
 
 The `CarrierShipmentMethod` entity in the standard Apache OFBiz framework serves as a bridge between carriers (`Party` entities with the role "CARRIER") and the shipping methods they offer (`ShipmentMethodType` entities). It allows the system to define and manage the specific shipping services that each carrier provides.
@@ -216,4 +245,57 @@ This extension enhances the `CarrierShipmentMethod` entity by incorporating cruc
 **Example**
 
 Consider a scenario where a customer wants their order delivered within 3 days. During rate shopping, the system can query `CarrierShipmentMethod` entities and filter them based on the `deliveryDays` field to only consider methods that can fulfill this requirement.
+
+### **ProductStoreShipmentMeth in Apache OFBiz**
+
+In the standard OFBiz framework, the `ProductStoreShipmentMeth` entity serves as a crucial link between a `ProductStore` and the shipping methods it offers to customers. It allows each product store to define and configure the specific shipping options available for its products.
+
+**Key Attributes in Standard OFBiz**
+
+*   `productStoreShipMethId`: A unique identifier for this specific product store shipment method record
+*   `productStoreId`: The ID of the product store.
+*   `shipmentMethodTypeId`: The ID of the general shipment method type (e.g., "GROUND," "AIR")
+*   `partyId`: The ID of the carrier party associated with this method (if applicable).
+*   `roleTypeId`: The role type of the carrier, typically "CARRIER."
+*   `minWeight`: The minimum weight for which this method is applicable.
+*   `maxWeight`: The maximum weight for which this method is applicable.
+*   `minSize`: The minimum size for which this method is applicable.
+*   `maxSize`: The maximum size for which this method is applicable.
+*   `minTotal`: The minimum order total for which this method is applicable.
+*   `maxTotal`: The maximum order total for which this method is applicable.
+*   `allowUspsAddr`: A flag indicating whether this method allows USPS addresses.
+*   `requireUspsAddr`: A flag indicating whether this method requires USPS addresses.
+*   `allowCompanyAddr`: A flag indicating whether this method allows company addresses.
+*   `requireCompanyAddr`: A flag indicating whether this method requires company addresses.
+*   `includeNoChargeItems`: A flag indicating whether to include items with no charge in the calculation.
+*   `includeFeatureGroup`: A feature group ID that this method might be associated with.
+*   `serviceName`: The name of the service to be used for this method (if applicable).
+*   `configProps`: Configuration properties for this method.
+
+**Relationships in Standard OFBiz**
+
+*   The entity has a many-to-one relationship with `ProductStore` through the `productStoreId` foreign key.
+*   It has a many-to-one relationship with `ShipmentMethodType` through the `shipmentMethodTypeId` foreign key.
+*   It also has an optional many-to-one relationship with `CarrierShipmentMethod` through `shipmentMethodTypeId` and `partyId`, allowing the association of specific carriers with the shipping methods offered by the store.
+
+### **HotWax Commerce Custom Extensions**
+
+HotWax Commerce extends the `ProductStoreShipmentMeth` entity with the following fields:
+
+*   `fromDate` and `thruDate`: These fields define the date range during which this shipping method is valid and available for the product store.
+*   `isShippingWeightRequired`: A flag indicating whether shipping weight is required for this method.
+*   `isTrackingRequired`: A flag indicating whether tracking is required for this method.
+
+### **Usage in HotWax Commerce**
+
+These extensions serve the following purposes in HotWax Commerce:
+
+*   **Time-Based Availability:** The `fromDate` and `thruDate` fields allow for scheduling the availability of shipping methods, enabling promotions or seasonal offerings.
+*   **Shipping Weight Requirement:** The `isShippingWeightRequired` flag can be used to enforce that products have shipping weight information when this method is selected, ensuring accurate rate calculations.
+*   **Tracking Requirement:** The `isTrackingRequired` flag can be used to mandate that shipments using this method must have tracking information, enhancing visibility and customer service.
+
+### **Example**
+
+*   A product store might configure a "Free Shipping" method with a `fromDate` and `thruDate` to offer it only during a specific holiday season.
+*   Another store might have a "Heavy Item Shipping" method with `isShippingWeightRequired` set to "Y" to ensure accurate shipping costs for heavier products.
 
