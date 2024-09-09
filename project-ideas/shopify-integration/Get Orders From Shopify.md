@@ -1,3 +1,6 @@
+### Fetching Order JSON via GraphQL
+To integrate Shopify orders with Hotwax, we begin by fetching the order data from Shopify using a GraphQL query. Shopify provides a flexible and efficient way to retrieve order data, allowing us to specify exactly what information we need. The GraphQL query can pull details such as order number, customer data, line items, shipping information, and payment details.
+
 ### Sample GrapfQL Query for fetching order data from Shopify
 
 Here we are only fetching the fields which are required by Hotwax to create order in Hotwax data model.
