@@ -151,7 +151,7 @@ This service ensures the proper creation and linking of the following entities:
                     },
                     "adjustments": [
                         {
-                            "orderAdjustmentTypeId:"EXT_PROMO_ADJUSTMENT,
+                            "orderAdjustmentTypeId:"EXT_PROMO_ADJUSTMENT",
                             "amount": "200",
                             "exemptAmount": "2.5",
                             "comments": "IDK",
