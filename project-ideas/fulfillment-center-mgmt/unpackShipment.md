@@ -3,6 +3,9 @@
 
 ## unpackShipment
 
+#### Note : 
+packShipment and unpackShipment just update status of shipment, this functionality can be shifted to one updateShipmentStatus service, will refractor later based on final flow.
+
 ### Detailed Logic
 
 1.  **Input:**
