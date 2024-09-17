@@ -9,15 +9,15 @@ Party Data Model Overview
 Entities
 1. Party
 * Description: Represents any entity that can enter into a relationship. This includes individuals or organizations.
-* Key Attributes: Unique identifier (partyId).
+* Key Attribute: partyId.
 2. Person
 * Description: A specialization of Party, representing individual human beings.
 * Key Attribute: partyId.
 3. Organization
 * Description: Another specialization of Party, representing collective entities such as companies or organizations.
-* Key Attributes: partyid.
-4. Party Roles
-* Function: Defines the role of a Party in a specific context.
+* Key Attributes: partyId.
+4. Party Role
+* Description: Defines the role of a Party in a specific context.
 * Key Attributes: partyid, roleTypeId.
 * Examples: Customer, Supplier, Employee.
 5. Contact Mechanism
@@ -25,7 +25,7 @@ Entities
 * Key Attribute: contactMechId
 * Examples: telecomNumber and postalAddress
 5. Party Contact Mechanism
-* Function: Defines the specific use of a contact mechanism, like billing or shipping.
+* Description: Defines the specific use of a contact mechanism, like billing or shipping.
 * Key Attributes: partyId, contactMechId, contactMechPurposeId, fromDate
 Sample JSON Data
 1. Person as Customer
@@ -78,12 +78,12 @@ Sample JSON Data
 ```
 
 
-2. PartyGroup as Supplier
+2. Organization as Supplier
 ```
 {
   "Party": {
     "partyId": "SUPP456",
-    "partyTypeId": "PARTY_GROUP"
+    "partyTypeId": "ORGANIZATION"
   },
   "Organization": {
     "partyId": "SUPP456",
