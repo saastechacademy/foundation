@@ -1,7 +1,7 @@
 Recommeded reading
 https://www.moqui.org/m/docs/mantle/Mantle+Structure+and+UDM/Party
 
-Introduction to Party Data Model
+# Introduction to Party Data Model
 
 This document provides an overview of this model, focusing on its core entities - Party, Person, and PartyGroup - and their applications in representing various business relationships. Additionally, we will delve into Party Roles, contact mechanisms, and their purposes. Finally, we provide sample JSON data for a Person as a Customer and a PartyGroup as a Supplier.
 Party Data Model Overview
@@ -27,7 +27,7 @@ Entities
 5. Party Contact Mechanism
 * Description: Defines the specific use of a contact mechanism, like billing or shipping.
 * Key Attributes: partyId, contactMechId, contactMechPurposeId, fromDate
-Sample JSON Data
+# Sample JSON Data
 1. Person as Customer
 ```
 {
