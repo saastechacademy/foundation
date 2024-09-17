@@ -8,27 +8,25 @@ Party Data Model Overview
 
 Entities
 1. Party
-Description: Represents any entity that can enter into a relationship. This includes individuals, groups, or organizations.
+* Description: Represents any entity that can enter into a relationship. This includes individuals or organizations.
 * Key Attributes: Unique identifier (partyId).
 2. Person
 * Description: A specialization of Party, representing individual human beings.
-* Key Attributes: Inherits partyId, plus attributes like firstName, lastName, birthDate.
-* Relationship with Party: Every Person is a Party, but with additional attributes specific to individuals.
-3. PartyGroup
+* Key Attribute: partyId.
+3. Organization
 * Description: Another specialization of Party, representing collective entities such as companies or organizations.
-* Key Attributes: Inherits partyId, plus attributes like groupName, taxId.
-* Relationship with Party: Every PartyGroup is a Party, but with attributes specific to groups.
+* Key Attributes: partyid.
 4. Party Roles
 * Function: Defines the role of a Party in a specific context.
+* Key Attributes: partyid, roleTypeId.
 * Examples: Customer, Supplier, Employee.
-* Assignment: A Party is assigned a Role through the PartyRole entity, linking the Party to its function within the business ecosystem.
-5. Contact Mechanisms and Purposes
-Adding Contact Mechanisms
-* Types: Includes phone numbers (TelecomNumber) and postal addresses (PostalAddress).
-* Linking to Party: Achieved via the ContactMech entity, which associates a contact mechanism with a Party through a unique contactMechId.
-Assigning Purposes to Contact Mechanisms
+5. Contact Mechanism
+* Description: Defines a means of contacting a party.
+* Key Attribute: contactMechId
+* Examples: telecomNumber and postalAddress
+5. Party Contact Mechanism
 * Function: Defines the specific use of a contact mechanism, like billing or shipping.
-* Implementation: Utilizes the ContactMechPurpose entity, linking a contactMechId to a purpose such as BILLING or SHIPPING.
+* Key Attributes: partyId, contactMechId, contactMechPurposeId, fromDate
 Sample JSON Data
 1. Person as Customer
 ```
@@ -50,12 +48,12 @@ Sample JSON Data
   "ContactMech": [
     {
       "contactMechId": "PHONE001",
-      "contactMechTypeId": "TELECOM_NUMBER",
+      "contactMechTypeEnumId": "TELECOM_NUMBER",
       "infoString": "555-1234"
     },
     {
       "contactMechId": "ADDR001",
-      "contactMechTypeId": "POSTAL_ADDRESS",
+      "contactMechTypeEnumId": "POSTAL_ADDRESS",
       "infoString": "123 Elm Street, Springfield, 12345, USA"
     }
   ],
@@ -69,11 +67,11 @@ Sample JSON Data
   "ContactMechPurpose": [
     {
       "contactMechId": "ADDR001",
-      "contactMechPurposeTypeId": "BILLING"
+      "contactMechTypeEnumId": "BILLING"
     },
     {
       "contactMechId": "ADDR001",
-      "contactMechPurposeTypeId": "SHIPPING"
+      "contactMechTypeEnumId": "SHIPPING"
     }
   ]
 }
@@ -87,9 +85,9 @@ Sample JSON Data
     "partyId": "SUPP456",
     "partyTypeId": "PARTY_GROUP"
   },
-  "PartyGroup": {
+  "Organization": {
     "partyId": "SUPP456",
-    "groupName": "XYZ Supplies Inc.",
+    "organizationName": "XYZ Supplies Inc.",
     "taxId": "98-7654321"
   },
   "PartyRole": {
@@ -99,12 +97,12 @@ Sample JSON Data
   "ContactMech": [
     {
       "contactMechId": "PHONE002",
-      "contactMechTypeId": "TELECOM_NUMBER",
+      "contactMechTypeEnumId": "TELECOM_NUMBER",
       "infoString": "555-6789"
     },
     {
       "contactMechId": "ADDR002",
-      "contactMechTypeId": "POSTAL_ADDRESS",
+      "contactMechTypeEnumId": "POSTAL_ADDRESS",
       "infoString": "456 Oak Avenue, Metropolis, 54321, USA"
     }
   ],
@@ -118,11 +116,11 @@ Sample JSON Data
   "ContactMechPurpose": [
     {
       "contactMechId": "ADDR002",
-      "contactMechPurposeTypeId": "BILLING"
+      "contactMechTypeEnumId": "BILLING"
     },
     {
       "contactMechId": "ADDR002",
-      "contactMechPurposeTypeId": "SHIPPING"
+      "contactMechTypeEnumId": "SHIPPING"
     }
   ]
 }
