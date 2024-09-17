@@ -27,7 +27,7 @@ Party Data Model Overview
 5. Party Contact Mechanism
 * Description: Defines the specific use of a contact mechanism, like billing or shipping.
 * Key Attributes: partyId, contactMechId, contactMechPurposeId, fromDate
-# Sample JSON Data
+## Sample JSON Data
 1. Person as Customer
 ```
 {
