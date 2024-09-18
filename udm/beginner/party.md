@@ -109,8 +109,7 @@ Example: John Doe works as an employee at ABC Organization, where he is also a c
     "partyTypeId": "ORGANIZATION"
     "Organization": {
       "partyId": "ORG456",
-      "organizationName": "ABC",
-      "taxId": "98-7654321"
+      "organizationName": "ABC"
     },
     "PartyRole": {
       "partyId": "ORG456",
