@@ -1,26 +1,38 @@
-The UDM, among its various features, it includes a system for managing contact mechanisms, which is primarily handled through the ContactMech table and its related tables.
+# Introduction to Contact Mechanism Model
 
-1. ContactMech Table
-* Purpose: This table is the central table in the contact mechanism schema. It stores different types of contact information.
-* Fields: Common fields include contactMechId, contactMechTypeId, infoString, etc.
-* Usage: The infoString field is used to store the actual contact information, such as an email address.
+This document provides an overview of this model, focusing on its core entities - ContactMech and ContactMechPurpose - and their application in representing various communication methods. Additionally, we will delve into how to define the entities. Finally, we provide sample JSON data for ContactMech.
 
-Related Tables
+## Contact Mechanism Model Overview
 
-2. TelecomNumber Table
+Example John Doe works as an employee at ABC Organization, where he is also a customer. John Doe has a work TelecomNumeber, work PostalAddress, home PostalAddress, and work emailAddress. ABC Organization has a TelecomNumber and PostalAddress.
 
-* Relationship with ContactMech: This table is related to ContactMech and specifically stores telephone numbers.
-* Fields: Includes contactMechId, countryCode, areaCode, contactNumber, etc.
-* Usage: Used to store detailed telephone contact information. The contactMechId field links it to the ContactMech table.
+### Entities
+#### ContactMech
+* Description: This describes the means of contacting a party. While there are various types only two entities have additional fields: postalAddress and telecomNumber. Remaining types use the contactMech.infoString field.
+* Key Attribute: contactMechId. 
+1. TelecomNumber Table
 
-3. PostalAddress Table
-* Relationship with ContactMech: This table stores the postal address information and is linked to the ContactMech table.
-* Fields: Includes contactMechId, toName, attnName, address1, address2, city, postalCode, etc.
-* Usage: Stores detailed information about postal addresses. The contactMechId field serves as the link to the ContactMech table.
+  * Relationship with ContactMech: This table is related to ContactMech and specifically stores telephone numbers.
+  * Fields: Includes contactMechId, countryCode, areaCode, contactNumber, etc.
+  * Usage: Used to store detailed telephone contact information. The contactMechId field links it to the ContactMech table.
 
-4. Email Addresses in ContactMech
-* Handling: Email addresses are managed directly in the ContactMech table, typically using the infoString field.
-* No Dedicated Table: Unlike telephone numbers and postal addresses, there is no dedicated table for email addresses.
+2. PostalAddress Table
+  * Relationship with ContactMech: This table stores the postal address information and is linked to the ContactMech table.
+  * Fields: Includes contactMechId, toName, attnName, address1, address2, city, postalCode, etc.
+  * Usage: Stores detailed information about postal addresses. The contactMechId field serves as the link to the ContactMech table.
+
+* Example: Lets create all of the relevant ContactMech entities.
+```
+{
+  "ContactMech": [
+    {
+
+    }
+  ]
+}
+```
+
+
 
 Sample Data in JSON Format
 
@@ -29,7 +41,7 @@ Sample Data in JSON Format
   "ContactMech": [
     {
       "contactMechId": "10000",
-      "contactMechTypeId": "TELECOM_NUMBER",
+      "contactMechTypeEnumId": "TELECOM_NUMBER",
       "TelecomNumber": {
         "countryCode": "1",
         "areaCode": "123",
@@ -38,12 +50,12 @@ Sample Data in JSON Format
     },
     {
       "contactMechId": "10001",
-      "contactMechTypeId": "EMAIL_ADDRESS",
+      "contactMechTypeEnumId": "EMAIL_ADDRESS",
       "infoString": "example@email.com"
     },
     {
       "contactMechId": "10002",
-      "contactMechTypeId": "POSTAL_ADDRESS",
+      "contactMechTypeEnumId": "POSTAL_ADDRESS",
       "PostalAddress": {
         "toName": "John Doe",
         "attnName": "Office",
@@ -57,9 +69,3 @@ Sample Data in JSON Format
 }
 
 ```
-
-In this sample JSON data:
-
-A telecom number is linked to the ContactMech table through contactMechId and detailed in the TelecomNumber object.
-An email address is stored as an infoString in the ContactMech table.
-A postal address is linked via contactMechId and detailed in the PostalAddress object.
