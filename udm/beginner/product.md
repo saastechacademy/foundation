@@ -18,26 +18,31 @@ Example: ABC Organization manufactures different products, including a smartphon
       "productId": "PROD10000",
       "productName": "Smartphone",
       "productTypeEnumId": "VIRTUAL"
+      "fromDate": "2023-01-01"
     },
     {
       "productId": "PROD10001",
       "productName": "Smartphone-128GB",
       "productTypeEnumId": "VARIENT"
+      "fromDate": "2023-01-01"
     },
     {
       "productId": "PROD10002",
       "productName": "Smartphone-256GB",
       "productTypeEnumId": "VARIENT"
+      "fromDate": "2023-01-01"
     },
     {
       "productId": "PROD20000",
       "productName": "Laptop",
       "productTypeEnumId": "VIRTUAL"
+      "fromDate": "2023-01-01"
     },
     {
       "productId": "PROD20001",
       "productName": "Laptop-BLACK",
       "productTypeEnumId": "VARIENT"
+      "fromDate": "2023-01-01"
     }
   ]
 }
@@ -90,7 +95,8 @@ Example: ABC Organization manufactures different products, including a smartphon
     {
       "productId": "PROD10002",
       "priceTypeEnumId": "LIST_PRICE",
-      "price": 1099.99
+      "price": 1099.99,
+      "fromDate": "2023-01-01"
     },
     {
       "productId": "PROD10002",
