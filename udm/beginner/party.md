@@ -75,7 +75,7 @@ Example: John Doe works as an employee at ABC Organization, where he is also a c
   ]
 }
 ```
-## Example Complete JSONs
+## Complete JSONs
 ### 1. Person as Customer
 ```
 {
@@ -83,18 +83,15 @@ Example: John Doe works as an employee at ABC Organization, where he is also a c
     "partyId": "PER123",
     "partyTypeId": "PERSON",
     "Person": {
-      "partyId": "PER123",
       "firstName": "John",
       "lastName": "Doe",
       "birthDate": "1990-01-01"
     },
     "PartyRole": [
       {
-        "partyId": "PER123",
         "roleTypeId": "CUSTOMER"
       },
       {
-        "partyId": "PER123",
         "roleTypeId": "EMPLOYEE"    
       }
     ]
@@ -108,11 +105,9 @@ Example: John Doe works as an employee at ABC Organization, where he is also a c
     "partyId": "ORG456",
     "partyTypeId": "ORGANIZATION"
     "Organization": {
-      "partyId": "ORG456",
       "organizationName": "ABC"
     },
     "PartyRole": {
-      "partyId": "ORG456",
       "roleTypeId": "EMPLOYER"
     }
   }
