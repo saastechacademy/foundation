@@ -13,32 +13,32 @@ Example: John Doe works as an employee at ABC Organization, where he is also a c
 
 * **Key Attribute**: `contactMechId`
 
-**TelecomNumber Table**
-- **Relationship with ContactMech:** This table is related to `ContactMech` and specifically stores telephone numbers.
-- **Fields:** 
-  - `contactMechId`
-  - `countryCode`
-  - `areaCode`
-  - `contactNumber`
-  - etc.
-- **Usage:** 
-  - Used to store detailed telephone contact information.
-  - The `contactMechId` field links it to the `ContactMech` table.
+- **TelecomNumber Table**
+  - **Relationship with ContactMech:** This table is related to `ContactMech` and specifically stores telephone numbers.
+  - **Fields:** 
+    - `contactMechId`
+    - `countryCode`
+    - `areaCode`
+    - `contactNumber`
+    - etc.
+  - **Usage:** 
+    - Used to store detailed telephone contact information.
+    - The `contactMechId` field links it to the `ContactMech` table.
 
-**PostalAddress Table**
-- **Relationship with ContactMech:** This table stores the postal address information and is linked to the `ContactMech` table.
-- **Fields:**
-  - `contactMechId`
-  - `toName`
-  - `attnName`
-  - `address1`
-  - `address2`
-  - `city`
-  - `postalCode`
-  - etc.
-- **Usage:**
-  - Stores detailed information about postal addresses.
-  - The `contactMechId` field serves as the link to the `ContactMech` table.
+- **PostalAddress Table**
+  - **Relationship with ContactMech:** This table stores the postal address information and is linked to the `ContactMech` table.
+  - **Fields:**
+    - `contactMechId`
+    - `toName`
+    - `attnName`
+    - `address1`
+    - `address2`
+    - `city`
+    - `postalCode`
+    - etc.
+  - **Usage:**
+    - Stores detailed information about postal addresses.
+    - The `contactMechId` field serves as the link to the `ContactMech` table.
 
 - Example: Lets create the relevant contactMechs.
 ```
