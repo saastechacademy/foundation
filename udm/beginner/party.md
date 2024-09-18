@@ -19,7 +19,7 @@ Example: John Doe works as an employee at ABC Organization, where he is also a c
     {
       "partyId": "PER123",
       "partyTypeId": "PERSON"
-    }
+    },
     {
       "partyId": "ORG456",
       "partyTypeId": "ORGANIZATION"
@@ -63,11 +63,11 @@ Example: John Doe works as an employee at ABC Organization, where he is also a c
     {
       "partyId": "PER123",
       "roleTypeId": "CUSTOMER"    
-    }
+    },
     {
       "partyId": "PER123",
       "roleTypeId": "EMPLOYEE"    
-    }
+    },
     {
       "partyId": "ORG456",
       "roleTypeId": "EMPLOYER"    
