@@ -10,9 +10,9 @@ Example: John Doe works as an employee at ABC Organization, where he is also a c
 
 ### Entities
 #### 1. Party
-* Description: Represents any entity that can enter into a relationship. This includes individuals or organizations.
-* Key Attribute: partyId.
-* Example: Lets create the relevant parties.
+- **Description**: Represents any entity that can enter into a relationship. This includes `PERSON` or `ORGANIZATION`.
+- **Key Attribute**: `partyId`
+- **Example**: Lets create the relevant parties.
 ```
 {
   "Party": [
@@ -28,9 +28,9 @@ Example: John Doe works as an employee at ABC Organization, where he is also a c
 }
 ```
 #### 2. Person
-* Description: A specialization of Party, representing individual human beings.
-* Key Attribute: partyId.
-* Example: Lets create the relevent person.
+- **Description**: A specialization of `Party`, representing individual human beings.
+- **Key Attribute**: `partyId`
+- **Example**: Lets create the relevent person.
 ```
 {
   "Person": {
@@ -42,9 +42,9 @@ Example: John Doe works as an employee at ABC Organization, where he is also a c
 }
 ```
 #### 3. Organization
-* Description: Another specialization of Party, representing collective entities such as companies or organizations.
-* Key Attributes: partyId.
-* Example: Lets create the relevant organization.
+- **Description**: Another specialization of `Party`, representing collective entities such as companies or organizations.
+- **Key Attributes**: `partyId`.
+- **Example**: Lets create the relevant organization.
 ```
 {
   "Organization": {
@@ -54,9 +54,9 @@ Example: John Doe works as an employee at ABC Organization, where he is also a c
 }
 ```
 #### 4. Party Role
-* Description: Defines the role of a Party in a specific context.
-* Key Attributes: partyid, roleTypeId.
-* Examples: Lets define the relevant roles for the parties.
+- **Description**: Defines the role of a `Party` in a specific context.
+- **Key Attributes**: `partyid`, `roleTypeId`
+- **Examples**: Lets define the relevant roles for the parties.
 ```
 {
   "PartyRole": [
