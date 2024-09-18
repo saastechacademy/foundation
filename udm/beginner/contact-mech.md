@@ -13,7 +13,7 @@ Example: John Doe works as an employee at ABC Organization, where he is also a c
 
 * **Key Attribute**: `contactMechId`
 
-### 1. TelecomNumber Table
+##### 1. TelecomNumber Table
 - **Relationship with ContactMech:** This table is related to `ContactMech` and specifically stores telephone numbers.
 - **Fields:** 
   - `contactMechId`
@@ -27,7 +27,7 @@ Example: John Doe works as an employee at ABC Organization, where he is also a c
 
 ---
 
-### 2. PostalAddress Table
+##### 2. PostalAddress Table
 - **Relationship with ContactMech:** This table stores the postal address information and is linked to the `ContactMech` table.
 - **Fields:**
   - `contactMechId`
