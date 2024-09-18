@@ -6,22 +6,39 @@ This document provides an overview of this model, focusing on its core entities 
 
 Example John Doe works as an employee at ABC Organization, where he is also a customer. John Doe has a work TelecomNumeber, work PostalAddress, home PostalAddress, and work emailAddress. ABC Organization has a TelecomNumber and PostalAddress.
 
-### Entities
-#### ContactMech
-* Description: This describes the means of contacting a party. While there are various types only two entities have additional fields: postalAddress and telecomNumber. Remaining types use the contactMech.infoString field.
-* Key Attribute: contactMechId. 
-1. TelecomNumber Table
+# Entities
 
-  * Relationship with ContactMech: This table is related to ContactMech and specifically stores telephone numbers.
-  * Fields: Includes contactMechId, countryCode, areaCode, contactNumber, etc.
-  * Usage: Used to store detailed telephone contact information. The contactMechId field links it to the ContactMech table.
+## ContactMech
+* Description: This describes the means of contacting a party. While there are various types, only two entities have additional fields: `postalAddress` and `telecomNumber`. Remaining types use the `contactMech.infoString` field.
 
-2. PostalAddress Table
-  * Relationship with ContactMech: This table stores the postal address information and is linked to the ContactMech table.
-  * Fields: Includes contactMechId, toName, attnName, address1, address2, city, postalCode, etc.
-  * Usage: Stores detailed information about postal addresses. The contactMechId field serves as the link to the ContactMech table.
+* Key Attribute: `contactMechId`
 
-* Example: Lets create all of the relevant ContactMech entities.
+### 1. TelecomNumber Table
+- **Relationship with ContactMech:** This table is related to `ContactMech` and specifically stores telephone numbers.
+- **Fields:** 
+  - `contactMechId`
+  - `countryCode`
+  - `areaCode`
+  - `contactNumber`
+  - etc.
+- **Usage:** 
+  - Used to store detailed telephone contact information.
+  - The `contactMechId` field links it to the `ContactMech` table.
+
+---
+
+### 2. PostalAddress Table
+- **Relationship with ContactMech:** This table stores the postal address information and is linked to the `ContactMech` table.
+- **Fields:**
+  - `contactMechId`
+  - `toName`
+  - `attnName`
+  - `address1`
+  - `address2`
+  - `city`
+  - `postalCode`
+  - etc.
+
 ```
 {
   "ContactMech": [
