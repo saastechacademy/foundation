@@ -9,9 +9,9 @@ Example: John Doe works as an employee at ABC Organization, where he is also a c
 ### Entities
 
 #### 1. ContactMech
-* **Description**: This describes the means of contacting a party. While there are various types, only two entities have additional fields: `postalAddress` and `telecomNumber`. Remaining types use the `contactMech.infoString` field.
+- **Description**: This describes the means of contacting a party. While there are various types, only two entities have additional fields: `postalAddress` and `telecomNumber`. Remaining types use the `contactMech.infoString` field.
 
-* **Key Attribute**: `contactMechId`
+- **Key Attribute**: `contactMechId`
 
 - **TelecomNumber Table**
   - **Relationship with ContactMech:** This table is related to `ContactMech` and specifically stores telephone numbers.
@@ -40,7 +40,7 @@ Example: John Doe works as an employee at ABC Organization, where he is also a c
     - Stores detailed information about postal addresses.
     - The `contactMechId` field serves as the link to the `ContactMech` table.
 
-- Example: Lets create the relevant contactMechs.
+- **Example**: Lets create the relevant contactMechs.
 ```
 {
   "ContactMech": [
