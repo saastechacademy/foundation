@@ -20,23 +20,10 @@ A good is a tangible physical product that can be sold to customers, contrasting
 When a product consists of a large number of parts or combinations of parts, it is known as a configurable good.  
 **Examples:** Bike, Computer, Cell phone, etc.
 
-### Work In Process (WIP)
-Work in process refers to products that have not been completed during the manufacturing process.
-
 ### Digital Goods
 Digital goods are products stored, delivered, and used in electronic format. They may also be referred to as electronic goods or e-goods.  
 - Digital goods are shipped electronically, either via email or through a secure download link.  
 **Examples:** E-books, Music files, Software, Digital images, Website templates, Manuals in electronic format, and any electronically stored file(s).
-
-### Cross-Sell Products
-Cross-selling occurs when a customer buys a product, and you sell them an additional product that complements the one they are already purchasing.  
-- The cross-sold products are usually smaller value items.  
-- It increases the chances of additional sales and boosts the average order size.  
-**Example:** Recommending related and complementary products dynamically based on product category, clickstream, purchases, and shopping cart information.
-
-### Up-Sell Products
-Up-selling occurs when a customer intends to buy a product, and you offer them a better, often more expensive product.  
-- It requires demonstrating better value for money to the customer.
 
 ### Virtual Product
 A virtual product has no real inventory associated with it.
