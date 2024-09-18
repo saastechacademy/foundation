@@ -1,35 +1,52 @@
-The UDM, among its various features, it includes a system for managing contact mechanisms, which is primarily handled through the ContactMech table and its related tables.
+# Introduction to Contact Mechanism Model
 
-1. ContactMech Table
-* Purpose: This table is the central table in the contact mechanism schema. It stores different types of contact information.
-* Fields: Common fields include contactMechId, contactMechTypeId, infoString, etc.
-* Usage: The infoString field is used to store the actual contact information, such as an email address.
+This document provides an overview of this model, focusing on its core entities - ContactMech and ContactMechPurpose - and their application in representing various communication methods. Additionally, we will delve into how to define the entities. Finally, we provide sample JSON data for ContactMech.
 
-Related Tables
+## Contact Mechanism Model Overview
 
-2. TelecomNumber Table
+Example: John Doe works as an employee at ABC Organization, where he is also a customer. John Doe has a work Telecom Number, work Postal Address, home Postal Address, and work Email Address. ABC Organization has a Telecom Number and Postal Address.
 
-* Relationship with ContactMech: This table is related to ContactMech and specifically stores telephone numbers.
-* Fields: Includes contactMechId, countryCode, areaCode, contactNumber, etc.
-* Usage: Used to store detailed telephone contact information. The contactMechId field links it to the ContactMech table.
+### Entities
 
-3. PostalAddress Table
-* Relationship with ContactMech: This table stores the postal address information and is linked to the ContactMech table.
-* Fields: Includes contactMechId, toName, attnName, address1, address2, city, postalCode, etc.
-* Usage: Stores detailed information about postal addresses. The contactMechId field serves as the link to the ContactMech table.
+#### 1. ContactMech
+- **Description**: This describes the means of contacting a party. While there are various types, only two entities have additional fields: `postalAddress` and `telecomNumber`. Remaining types use the `contactMech.infoString` field.
 
-4. Email Addresses in ContactMech
-* Handling: Email addresses are managed directly in the ContactMech table, typically using the infoString field.
-* No Dedicated Table: Unlike telephone numbers and postal addresses, there is no dedicated table for email addresses.
+- **Key Attribute**: `contactMechId`
 
-Sample Data in JSON Format
+- **TelecomNumber Table**
+  - **Relationship with ContactMech:** This table is related to `ContactMech` and specifically stores telephone numbers.
+  - **Fields:** 
+    - `contactMechId`
+    - `countryCode`
+    - `areaCode`
+    - `contactNumber`
+    - etc.
+  - **Usage:** 
+    - Used to store detailed telephone contact information.
+    - The `contactMechId` field links it to the `ContactMech` table.
 
+- **PostalAddress Table**
+  - **Relationship with ContactMech:** This table stores the postal address information and is linked to the `ContactMech` table.
+  - **Fields:**
+    - `contactMechId`
+    - `toName`
+    - `attnName`
+    - `address1`
+    - `address2`
+    - `city`
+    - `postalCode`
+    - etc.
+  - **Usage:**
+    - Stores detailed information about postal addresses.
+    - The `contactMechId` field serves as the link to the `ContactMech` table.
+
+- **Example**: Lets create the relevant contactMechs.
 ```
 {
   "ContactMech": [
     {
       "contactMechId": "10000",
-      "contactMechTypeId": "TELECOM_NUMBER",
+      "contactMechTypeEnumId": "TELECOM_NUMBER",
       "TelecomNumber": {
         "countryCode": "1",
         "areaCode": "123",
@@ -38,17 +55,28 @@ Sample Data in JSON Format
     },
     {
       "contactMechId": "10001",
-      "contactMechTypeId": "EMAIL_ADDRESS",
+      "contactMechTypeEnumId": "EMAIL_ADDRESS",
       "infoString": "example@email.com"
     },
     {
       "contactMechId": "10002",
-      "contactMechTypeId": "POSTAL_ADDRESS",
+      "contactMechTypeEnumId": "POSTAL_ADDRESS",
       "PostalAddress": {
         "toName": "John Doe",
         "attnName": "Office",
         "address1": "123 Main St",
         "address2": "Suite 100",
+        "city": "Metropolis",
+        "postalCode": "12345"
+      }
+    },
+    {
+      "contactMechId": "10003",
+      "contactMechTypeEnumId": "POSTAL_ADDRESS",
+      "PostalAddress": {
+        "toName": "John Doe",
+        "attnName": "Home",
+        "address1": "123 Local St",
         "city": "Metropolis",
         "postalCode": "12345"
       }
@@ -58,8 +86,69 @@ Sample Data in JSON Format
 
 ```
 
-In this sample JSON data:
+#### 2. ContactMechPurpose
+- **Description**: Defines the purpose of a `ContactMech` in a specific context.
+- **Key Attributes**: `contactMechPurposeId`
+- **Examples**: Lets define the relevant purposes for the contactMechs.
+```
+{
+  "ContactMechPurpose": [
+    {
+      "contactMechPurposeId": "WORK"
+    },
+    {
+      "contactMechPurposeId": "HOME"
+    },
+    {
+      "contactMechPurposeId": "OFFICE"
+    }
+  ]
+}
+```
 
-A telecom number is linked to the ContactMech table through contactMechId and detailed in the TelecomNumber object.
-An email address is stored as an infoString in the ContactMech table.
-A postal address is linked via contactMechId and detailed in the PostalAddress object.
+#### 3. PartyContactMech
+- **Description**: Used to associate a `Party` with a `ContactMech`.
+- **Key Attributes**: `partyId`, `contactMechId`, `contactMechPurposeId`, `fromDate`
+- **Examples**: Lets define the associations between Party and ContactMech.
+```
+{
+  "PartyContactMech": [
+    {
+      "partyId": "PER123"
+      "contactMechId": "10000"
+      "contactMechPurposeId": "WORK"
+      "fromDate": "2010-01-01"
+    },
+    {
+      "partyId": "PER123"
+      "contactMechId": "10001"
+      "contactMechPurposeId": "WORK"
+      "fromDate": "2010-01-01"
+    },
+    {
+      "partyId": "PER123"
+      "contactMechId":"10002"
+      "contactMechPurposeId": "WORK"
+      "fromDate": "2010-01-01"
+    },
+    {
+      "partyId":"PER123"
+      "contactMechId": "10003"
+      "contactMechPurposeId": "HOME"
+      "fromDate": "2005-01-01"
+    },
+    {
+      "partyId": "ORG456"
+      "contactMechId": "10000"
+      "contactMechPurposeId": "OFFICE"
+      "fromDate": "2010-01-01"
+    },
+    {
+      "partyId": "ORG456"
+      "contactMechId": "10002"
+      "contactMechPurposeId": "OFFICE"
+      "fromDate": "2000-01-01"
+    }
+  ]
+}
+```
