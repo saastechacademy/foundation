@@ -10,7 +10,7 @@ Example: ABC Organization manufactures different products, including a smartphon
 - **Description**: The primary entity that describes a product or service available for sale or use. Includes basic attributes and associated entities for detailed information such as dimensions, price, shipping, etc.
 
 - **Key Attribute**: `productId`
-- **Example**: Lets create the relevant products.
+- **Example**: Lets create the relevant `VIRTUAL` and `VARIENT` products.
 ```
 {
   "Product": [
@@ -47,7 +47,7 @@ Example: ABC Organization manufactures different products, including a smartphon
 - **Description**: Stores content associated with the product or service. For our modeling, this content is associated with the `VIRTUAL` products.
 
 - **Key Attribute**: `productContentId`
-- **Example**: Lets create the needed content.
+- **Example**: Lets create the needed online content for the products.
 ```
 {
   "ProductContent": [
@@ -77,7 +77,7 @@ Example: ABC Organization manufactures different products, including a smartphon
 - **Description**: Stores pricing information for a product, including list price, promotional prices, and prices for specific customer groups or vendors.
 
 - **Key Attribute**: `productPriceId`
-- **Example**: Lets create the relevant ProductPrices.
+- **Example**: Lets create the relevant Product Pricing information.
 ```
 {
   "ProductPrice": [
@@ -112,7 +112,7 @@ Example: ABC Organization manufactures different products, including a smartphon
 - **Description**: Stores the dimensions of the product, including weight, length, and other custom dimensions.
 
 - **Key Attributes**: `productId`, `dimensionTypeId`
-- **Example**: Lets create the relevant productDimensions.
+- **Example**: Lets create the relevant productDimensions information.
 ```
 {
   "ProductDimension": [
@@ -148,7 +148,7 @@ Example: ABC Organization manufactures different products, including a smartphon
 - **Description**: Defines relationships between products, such as variants (e.g., size or color), cross/up sell, and/or accessories.
 
 - **Key Attributes**: `productId`, `toProductId`, `productAssocTypeEnumId`, `fromDate`
-- **Example**: Lets create the relevant product associations.
+- **Example**: Lets create the relevant product associations between `VIRTUAL` and `VARIENT` products.
 ```
 {
   "ProductAssoc": [
