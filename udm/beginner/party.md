@@ -75,7 +75,7 @@ Example: John Doe works as an employee at ABC Organization, where he is also a c
   ]
 }
 ```
-## Sample JSON Data
+## Example Complete JSONs
 ### 1. Person as Customer
 ```
 {
