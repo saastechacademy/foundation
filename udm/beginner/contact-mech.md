@@ -25,8 +25,6 @@ Example: John Doe works as an employee at ABC Organization, where he is also a c
   - Used to store detailed telephone contact information.
   - The `contactMechId` field links it to the `ContactMech` table.
 
----
-
 ##### 2. PostalAddress Table
 - **Relationship with ContactMech:** This table stores the postal address information and is linked to the `ContactMech` table.
 - **Fields:**
