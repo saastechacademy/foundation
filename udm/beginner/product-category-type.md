@@ -42,6 +42,11 @@ Example: ABC Organization sells different products, including smartphones and la
       "productId": "PROD20001",
       "productCategoryId": "BROWSE_ROOT",
       "fromDate": "2023-01-01",
+    },
+    {
+      "productId": "PROM001",
+      "productCategoryId": "BROWSE_ROOT",
+      "fromDate": "2023-10-01",
     }
   ]
 }
@@ -83,6 +88,11 @@ Example: ABC Organization sells different products, including smartphones and la
       "productId": "PROD20001",
       "productCategoryId": "SEARCH",
       "fromDate": "2023-09-01
+    },
+    {
+      "productId": "PROM001",
+      "productCategoryId": "SEARCH",
+      "fromDate": "2023-10-01",
     }
   ]
 }
@@ -124,6 +134,12 @@ Example: ABC Organization sells different products, including smartphones and la
       "productId": "PROD20001",
       "productCategoryId": "VIEW_ALLOW",
       "fromDate": "2023-09-01"
+    },
+    {
+      "productId": "PROM001",
+      "productCategoryId": "VIEW_ALLOW",
+      "fromDate": "2023-10-01",
+      "toDate": "2023-11-15"
     }
   ]
 }
@@ -164,6 +180,12 @@ Example: ABC Organization sells different products, including smartphones and la
       "productId": "PROD20001",
       "productCategoryId": "PURCHASE_ALLOW",
       "fromDate": "2023-09-15"
+    },
+    {
+      "productId": "PROM001",
+      "productCategoryId": "PURCHASE_ALLOW",
+      "fromDate": "2023-10-01",
+      "toDate": "2023-11-15"
     }
   ]
 }
@@ -207,12 +229,20 @@ Example: ABC Organization sells different products, including smartphones and la
     "parentProductCategoryId" = "BROWSE_ROOT",
     "categoryName": "Promotions"
   }
-  "ProductCategoryMember": {
-    "productId": "PROD10002",
-    "productCategoryId": "PROMOTIONS",
-    "fromDate": "2023-08-15",
-    "thruDate": "2023-08-31"
-  }
+  "ProductCategoryMember": [
+    {
+      "productId": "PROD10002",
+      "productCategoryId": "PROMOTIONS",
+      "fromDate": "2023-08-15",
+      "thruDate": "2023-08-31"
+    },
+    {
+      "productId": "PROM001",
+      "productCategoryId": "PROMOTIONS",
+      "fromDate": "2023-10-01",
+      "toDate": "2023-11-15"
+    }
+  ]
 }
 ```
 
