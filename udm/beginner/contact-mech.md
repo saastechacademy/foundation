@@ -81,6 +81,17 @@ Example: John Doe works as an employee at ABC Organization, where he is also a c
         "postalCode": "12345"
       }
     }
+    {
+      "contactMechId": "10004",
+      "contactMechTypeEnumId": "POSTAL_ADDRESS",
+      "PostalAddress": {
+        "toName": "SoHo Store",
+        "attnName": "Home",
+        "address1": "123 Broome St",
+        "city": "New York",
+        "postalCode": "10012"
+      }
+    }
   ]
 }
 
