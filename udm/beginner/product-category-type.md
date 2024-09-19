@@ -12,7 +12,7 @@ Example: ABC Organization sells different products, including smartphones and la
 - **Example**: Lets create the `BROWSE_ROOT` category for ABC organization and place products in the category.
 ```
 {
-  "ProductCategory":{
+  "ProductCategory": {
     "productCategoryId": "BROWSE_ROOT",
     "productCategoryTypeId": "CATALOG_CATEGORY",
     "categoryName": "Browse Root"
@@ -53,12 +53,17 @@ Example: ABC Organization sells different products, including smartphones and la
 - **Example**: Lets create the `SEARCH` category for ABC organization and place products in the category.
 ```
 {
-  "ProductCategory":{
+  "ProductCategory": {
     "productCategoryId": "SEARCH",
     "productCategoryTypeId": "SEARCH_CATEGORY",
     "categoryName": "Browse Root"
   }
   "ProductCategoryMember": [
+    {
+      "productId": "PROD10000",
+      "productCategoryId": "SEARCH",
+      "fromDate": "2023-06-01"
+    },
     {
       "productId": "PROD10001",
       "productCategoryId": "SEARCH",
@@ -89,12 +94,17 @@ Example: ABC Organization sells different products, including smartphones and la
 - **Example**: Lets create the `VIEW_ALLOW` category and place relevant products in it. Their phones were released few months after the laptop. 
 ```
 {
-  "ProductCategory":{
+  "ProductCategory": {
     "productCategoryId": "VIEW_ALLOW",
     "productCategoryTypeId": "CATALOG_CATEGORY",
     "categoryName": "Browse Root"
   }
   "ProductCategoryMember": [
+    {
+      "productId": "PROD10000",
+      "productCategoryId": "SEARCH",
+      "fromDate": "2023-06-01"
+    },
     {
       "productId": "PROD10001",
       "productCategoryId": "VIEW_ALLOW",
@@ -109,7 +119,12 @@ Example: ABC Organization sells different products, including smartphones and la
       "productId": "PROD20000",
       "productCategoryId": "VIEW_ALLOW",
       "fromDate": "2023-09-01"
-    }
+    },
+    {
+      "productId": "PROD20001",
+      "productCategoryId": "SEARCH",
+      "fromDate": "2023-09-01"
+    },
   ]
 }
 ```
@@ -119,12 +134,17 @@ Example: ABC Organization sells different products, including smartphones and la
 - **Example**: Lets create the `PURCHASE_ALLOW` category and place relevant products in it. Items are available for purchase couple weeks after they are available for viewing. 
 ```
 {
-  "ProductCategory":{
+  "ProductCategory": {
     "productCategoryId": "PURCHASE_ALLOW",
     "productCategoryTypeId": "CATALOG_CATEGORY",
     "categoryName": "Browse Root"
   }
   "ProductCategoryMember": [
+    {
+      "productId": "PROD10000",
+      "productCategoryId": "SEARCH",
+      "fromDate": "2023-06-15"
+    },
     {
       "productId": "PROD10001",
       "productCategoryId": "PURCHASE_ALLOW",
@@ -139,7 +159,12 @@ Example: ABC Organization sells different products, including smartphones and la
       "productId": "PROD20000",
       "productCategoryId": "PURCHASE_ALLOW",
       "fromDate": "2023-09-15"
-    }
+    },
+    {
+      "productId": "PROD20001",
+      "productCategoryId": "SEARCH",
+      "fromDate": "2023-09-15"
+    },
   ]
 }
 ```
@@ -150,7 +175,7 @@ Example: ABC Organization sells different products, including smartphones and la
 - **Example**: Lets create the Tax category and place relevant products in it. Based on the price, ABC's large phone and laptops are classified as `LUXURY_TAX_CATEGORY` items.
 ```
 {
-  "ProductCategory":{
+  "ProductCategory": {
     "productCategoryId": "LUXURY_TAX_CATEGORY",
     "productCategoryTypeId": "TAX_CATEGORY",
     "categoryName": "Browse Root"
@@ -162,7 +187,7 @@ Example: ABC Organization sells different products, including smartphones and la
       "fromDate": "2023-08-15"
     },
     {
-      "productId": "PROD20000",
+      "productId": "PROD20001",
       "productCategoryId": "LUXURY_TAX_CATEGORY",
       "fromDate": "2023-09-15"
     }
@@ -176,7 +201,7 @@ Example: ABC Organization sells different products, including smartphones and la
 - **Example**: Lets create the `PROMOTIONS` category and place relevant products in it. ABC's large phone was promoted during their annual sale.
 ```
 {
-  "ProductCategory":{
+  "ProductCategory": {
     "productCategoryId": "PROMOTIONS",
     "productCategoryTypeId": "CATALOG_CATEGORY",
     "categoryName": "Browse Root"
@@ -196,7 +221,7 @@ Example: ABC Organization sells different products, including smartphones and la
 - **Example**: Lets create the `MOST_POPULAR` category and place relevant products in it. ABC's large phone had the highest sales last quarter.
 ```
 {
-  "ProductCategory":{
+  "ProductCategory": {
     "productCategoryId": "MOST_POPULAR",
     "productCategoryTypeId": "CATALOG_CATEGORY",
     "categoryName": "Browse Root"
@@ -215,16 +240,24 @@ Example: ABC Organization sells different products, including smartphones and la
 - **Example**: Lets create the `WHATS_NEW` category and place relevant products in it. ABC's laptop was classified as a New Item for 2 months after its release.
 ```
 {
-  "ProductCategory":{
+  "ProductCategory": {
     "productCategoryId": "WHATS_NEW",
     "productCategoryTypeId": "CATALOG_CATEGORY",
     "categoryName": "Browse Root"
   }
-  "ProductCategoryMember": {
-    "productId": "PROD20000",
-    "productCategoryId": "WHATS_NEW",
-    "fromDate": "2023-09-01",
-    "thruDate": "2023-10-31"
-  }
+  "ProductCategoryMember": [
+    {
+      "productId": "PROD20000",
+      "productCategoryId": "WHATS_NEW",
+      "fromDate": "2023-09-01",
+      "thruDate": "2023-10-31"
+    },
+    {
+      "productId": "PROD20001",
+      "productCategoryId": "WHATS_NEW",
+      "fromDate": "2023-09-01",
+      "thruDate": "2023-10-31"
+    }
+  ]
 }
 ```
