@@ -2,7 +2,7 @@
 This document provides an overview of the Product model, focusing on its core entities—Product, ProductContent, ProductPrice, and others—and their applications in representing various product details. Additionally, we will define the key entities and provide sample JSON data for Product.
 
 ## Product Model Overview
-Example: ABC Organization manufactures different products, including a smartphone, which is sold online. These have various product details, such as pricing, dimensions, shipping details, and are associated with multiple content resources like images and descriptions.
+Example: ABC Organization manufactures different products, including a smartphone and laptop, which is sold online. These have various product details, such as pricing, dimensions, shipping details, and are associated with multiple content resources like images and descriptions.
 
 ### Entities
 
@@ -10,39 +10,50 @@ Example: ABC Organization manufactures different products, including a smartphon
 - **Description**: The primary entity that describes a product or service available for sale or use. Includes basic attributes and associated entities for detailed information such as dimensions, price, shipping, etc.
 
 - **Key Attribute**: `productId`
-- **Example**: Lets create the relevant `VIRTUAL` and `VARIENT` products.
+- **Example**: Lets create the relevant `FINISHED_GOOD` products. We will categorize them as virtual and varient as needed.
 ```
 {
   "Product": [
     {
       "productId": "PROD10000",
       "productName": "Smartphone",
-      "productTypeEnumId": "VIRTUAL"
-      "fromDate": "2023-01-01"
+      "productTypeEnumId": "FINISHED_GOOD",
+      "isVirtual": "Y",
+      "isVarient": "N",
     },
     {
       "productId": "PROD10001",
       "productName": "Smartphone-128GB",
-      "productTypeEnumId": "VARIENT"
-      "fromDate": "2023-01-01"
+      "productTypeEnumId": "FINISHED_GOOD",
+      "isVirtual": "N",
+      "isVarient": "Y",
     },
     {
       "productId": "PROD10002",
       "productName": "Smartphone-256GB",
-      "productTypeEnumId": "VARIENT"
-      "fromDate": "2023-01-01"
+      "productTypeEnumId": "FINISHED_GOOD",
+      "isVirtual": "N",
+      "isVarient": "Y",
     },
     {
       "productId": "PROD20000",
       "productName": "Laptop",
-      "productTypeEnumId": "VIRTUAL"
+      "productTypeEnumId": "FINISHED_GOOD",
+      "isVirtual": "Y",
+      "isVarient": "N",
       "fromDate": "2023-09-01"
     },
     {
       "productId": "PROD20001",
       "productName": "Laptop-BLACK",
-      "productTypeEnumId": "VARIENT"
-      "fromDate": "2023-09-01"
+      "productTypeEnumId": "FINISHED_GOOD",
+      "isVirtual": "N",
+      "isVarient": "Y",
+    },
+    {
+      "productId": "PROM001",
+      "productName": "Laptop-Phone-Promotional-Package",
+      "productTypeEnumId": "FINISHED_GOOD",
     }
   ]
 }
@@ -89,27 +100,28 @@ Example: ABC Organization manufactures different products, including a smartphon
     {
       "productId": "PROD10001",
       "priceTypeEnumId": "LIST_PRICE",
-      "price": 799.99,
-      "fromDate": "2023-01-01"
+      "price": 799.99
     },
     {
       "productId": "PROD10002",
       "priceTypeEnumId": "LIST_PRICE",
-      "price": 1099.99,
-      "fromDate": "2023-01-01"
+      "price": 1099.99
     },
     {
       "productId": "PROD10002",
       "priceTypeEnumId": "PROMOTIONAL_PRICE",
-      "price": 999.99,
-      "fromDate": "2023-07-01",
-      "thruDate": "2023-07-31"
+      "price": 999.99
     },
     {
       "productId": "PROD20000",
       "priceTypeEnumId": "LIST_PRICE",
-      "price": 1299.99,
-      "fromDate": "2023-09-01"
+      "price": 1299.99
+    },
+    {
+      "productId": "PROM001",
+      "productName": "Laptop-Phone-Promotional-Package",
+      "productTypeEnumId": "PROMOTIONAL_PRICE",
+      "price": 1999.99
     }
   ]
 }
@@ -127,18 +139,6 @@ Example: ABC Organization manufactures different products, including a smartphon
       "dimensionTypeEnumId": "WEIGHT",
       "dimensionValue": 6.60
       "valueUomId": "OUNCES"
-    },
-    {
-      "productId": "PROD10000",
-      "dimensionTypeEnumId": "MEMORY",
-      "dimensionValue": 128
-      "valueUomId": "GB"
-    },
-    {
-      "productId": "PROD10000",
-      "dimensionTypeEnumId": "MEMORY",
-      "dimensionValue": 256
-      "valueUomId": "GB"
     },
     {
       "productId": "PROD10001",
@@ -175,6 +175,25 @@ Example: ABC Organization manufactures different products, including a smartphon
       "toProductId": "PROD20001",
       "productAssocTypeEnumId": "VARIANT",
       "fromdate": "2023-09-01"
+    }
+  ]
+}
+```
+- **Example**: Lets create the relevant product associations for a `MARKT_PACKAGE` product.
+```
+{
+  "ProductAssoc": [
+    {
+      "productId": "PROM001",
+      "toProductId": "PROD10001",
+      "productAssocTypeEnumId": "MARKT_PACKAGE",
+      "fromdate": "2023-10-01"
+    },
+    {
+      "productId": "PROM001",
+      "toProductId": "PROD20001",
+      "productAssocTypeEnumId": "MARKT_PACKAGE",
+      "fromdate": "2023-10-01"
     }
   ]
 }
