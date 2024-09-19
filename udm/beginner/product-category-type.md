@@ -16,7 +16,7 @@ Example: ABC Organization sells different products, including smartphones and la
     "productCategoryId": "BROWSE_ROOT",
     "productCategoryTypeId": "CATALOG_CATEGORY",
     "categoryName": "Browse Root"
-  }
+  },
   "ProductCategoryMember": [
     {
       "productId": "PROD10000",
@@ -57,7 +57,7 @@ Example: ABC Organization sells different products, including smartphones and la
     "productCategoryId": "SEARCH",
     "productCategoryTypeId": "SEARCH_CATEGORY",
     "categoryName": "Search"
-  }
+  },
   "ProductCategoryMember": [
     {
       "productId": "PROD10000",
@@ -98,7 +98,7 @@ Example: ABC Organization sells different products, including smartphones and la
     "productCategoryId": "VIEW_ALLOW",
     "productCategoryTypeId": "CATALOG_CATEGORY",
     "categoryName": "View Allow"
-  }
+  },
   "ProductCategoryMember": [
     {
       "productId": "PROD10000",
@@ -124,7 +124,7 @@ Example: ABC Organization sells different products, including smartphones and la
       "productId": "PROD20001",
       "productCategoryId": "VIEW_ALLOW",
       "fromDate": "2023-09-01"
-    },
+    }
   ]
 }
 ```
@@ -138,7 +138,7 @@ Example: ABC Organization sells different products, including smartphones and la
     "productCategoryId": "PURCHASE_ALLOW",
     "productCategoryTypeId": "CATALOG_CATEGORY",
     "categoryName": "Purchase Allow"
-  }
+  },
   "ProductCategoryMember": [
     {
       "productId": "PROD10000",
@@ -164,7 +164,7 @@ Example: ABC Organization sells different products, including smartphones and la
       "productId": "PROD20001",
       "productCategoryId": "PURCHASE_ALLOW",
       "fromDate": "2023-09-15"
-    },
+    }
   ]
 }
 ```
@@ -179,7 +179,7 @@ Example: ABC Organization sells different products, including smartphones and la
     "productCategoryId": "LUXURY_TAX_CATEGORY",
     "productCategoryTypeId": "TAX_CATEGORY",
     "categoryName": "Luxury Tax"
-  }
+  },
   "ProductCategoryMember": [
     {
       "productId": "PROD10002",
@@ -227,7 +227,7 @@ Example: ABC Organization sells different products, including smartphones and la
     "productCategoryTypeId": "CATALOG_CATEGORY",
     "parentProductCategoryId" = "BROWSE_ROOT",
     "categoryName": "Most Popular"
-  }
+  },
   "ProductCategoryMember": {
     "productId": "PROD10002",
     "productCategoryId": "MOST_POPULAR",
@@ -247,7 +247,7 @@ Example: ABC Organization sells different products, including smartphones and la
     "productCategoryTypeId": "CATALOG_CATEGORY",
     "parentProductCategoryId" = "BROWSE_ROOT",
     "categoryName": "Whats New"
-  }
+  },
   "ProductCategoryMember": [
     {
       "productId": "PROD20000",
