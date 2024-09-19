@@ -84,8 +84,6 @@
 
 1.  **External Shipment ID (externalId):**
 
-    *   **Uniqueness:** If provided, the `externalId` must be unique within the `Shipment` entity.
-
 2.  **Shipment Type ID (shipmentTypeId):**
 
     *   **Validity:** If provided, the `shipmentTypeId` must exist in the `ShipmentType` entity.
@@ -93,9 +91,7 @@
 
 3.  **Order ID (orderId) and Order External ID (orderExternalId):**
 
-    *   **Existence:** Either `orderId` or `orderExternalId` is required.
     *   **External ID Resolution:** If only `orderExternalId` is provided, the service should fetche the corresponding `orderId`.
-    *   **Order Validity:** The `orderId` must exist in the `OrderHeader` entity and match the correct `orderTypeId` ("SALES_ORDER" ).
     *   **Ship Group Validity (Optional):** If `shipGroupSeqId` is provided, it must be valid within the specified order.
 
 5.  **Party IDs (partyIdFrom, externalPartyIdFrom, partyIdTo, externalPartyIdTo):**
