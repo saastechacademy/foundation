@@ -122,7 +122,7 @@ Example: ABC Organization sells different products, including smartphones and la
     },
     {
       "productId": "PROD20001",
-      "productCategoryId": "SEARCH",
+      "productCategoryId": "VIEW_ALLOW",
       "fromDate": "2023-09-01"
     },
   ]
@@ -162,7 +162,7 @@ Example: ABC Organization sells different products, including smartphones and la
     },
     {
       "productId": "PROD20001",
-      "productCategoryId": "SEARCH",
+      "productCategoryId": "PURCHASE_ALLOW",
       "fromDate": "2023-09-15"
     },
   ]
