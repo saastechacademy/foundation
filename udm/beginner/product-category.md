@@ -11,7 +11,7 @@ Example: ABC Organization manufactures different products, which are sold online
 
 - **Key Attribute**: `productCategoryId`
 - **Example**: Lets create a product category.
-```
+```json
 {
   "ProductCategory":
     {
@@ -26,7 +26,7 @@ Example: ABC Organization manufactures different products, which are sold online
 
 - **Key Attributes**: `productId`, `productCategoryId`, `fromDate`
 - **Example**: Lets place one product in the category.
-```
+```json
 {
   "ProductCategoryMember":
     {

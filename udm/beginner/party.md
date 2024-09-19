@@ -13,7 +13,7 @@ Example: John Doe works as an employee at ABC Organization, where he is also a c
 - **Description**: Represents any entity that can enter into a relationship. This includes `PERSON` or `ORGANIZATION`.
 - **Key Attribute**: `partyId`
 - **Example**: Lets create the relevant parties.
-```
+```json
 {
   "Party": [
     {
@@ -31,7 +31,7 @@ Example: John Doe works as an employee at ABC Organization, where he is also a c
 - **Description**: A specialization of `Party`, representing individual human beings.
 - **Key Attribute**: `partyId`
 - **Example**: Lets create the relevent person.
-```
+```json
 {
   "Person": {
     "partyId": "PER123",
@@ -45,7 +45,7 @@ Example: John Doe works as an employee at ABC Organization, where he is also a c
 - **Description**: Another specialization of `Party`, representing collective entities such as companies or organizations.
 - **Key Attributes**: `partyId`.
 - **Example**: Lets create the relevant organization.
-```
+```json
 {
   "Organization": {
     "partyID": "ORG456",
@@ -57,7 +57,7 @@ Example: John Doe works as an employee at ABC Organization, where he is also a c
 - **Description**: Defines the role of a `Party` in a specific context.
 - **Key Attributes**: `partyid`, `roleTypeId`
 - **Examples**: Lets define the relevant roles for the parties.
-```
+```json
 {
   "PartyRole": [
     {
@@ -77,7 +77,7 @@ Example: John Doe works as an employee at ABC Organization, where he is also a c
 ```
 ## Complete JSONs
 ### 1. Person as Customer
-```
+```json
 {
   "Party": {
     "partyId": "PER123",
@@ -99,11 +99,11 @@ Example: John Doe works as an employee at ABC Organization, where he is also a c
 }
 ```
 ### 2. Organization as Employer
-```
+```json
 {
   "Party": {
     "partyId": "ORG456",
-    "partyTypeId": "ORGANIZATION"
+    "partyTypeId": "ORGANIZATION",
     "Organization": {
       "organizationName": "ABC"
     },

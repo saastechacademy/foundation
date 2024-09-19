@@ -11,19 +11,19 @@ Example: ABC Organization manufactures different products, including a smartphon
 
 - **Key Attribute**: `productFeatureId`
 - **Example**: Lets create the relevant `ProductFeature` needed for ABC's products.
-```
+```json
 {
   "ProductFeature": [
     {
-      "productFeatureId": "128BG"
+      "productFeatureId": "128BG",
       "productFeatureTypeEnumId": "MEMORY"
     },
     {
-      "productFeatureId": "256BG"
+      "productFeatureId": "256BG",
       "productFeatureTypeEnumId": "MEMORY"
     },
     {
-      "productFeatureId": "BLACK"
+      "productFeatureId": "BLACK",
       "productFeatureTypeEnumId": "COLOR"
     },
   ]
@@ -41,43 +41,43 @@ Example: ABC Organization manufactures different products, including a smartphon
 
 - **Key Attributes**: `productId`, `productFeatureId`, `fromDate`
 - **Example**: Lets apply our features to the respective products. 
-```
+```json
 {
   "ProductFeatureAppl": [
     {
       "productId": "PROD10000",
       "productFeatureId": "128GB",
-      "fromdate": "2023-06-01"
+      "fromdate": "2023-06-01",
       "applTypeEnumId": "SELECTABLE_FEATURE"
     },
     {
       "productId": "PROD10000",
       "productFeatureId": "256GB",
-      "fromdate": "2023-06-01"
+      "fromdate": "2023-06-01",
       "applTypeEnumId": "SELECTABLE_FEATURE"
     },
     {
       "productId": "PROD10001",
       "productFeatureId": "128GB",
-      "fromdate": "2023-06-01"
+      "fromdate": "2023-06-01",
       "applTypeEnumId": "STANDARD_FEATURE"
     },
     {
       "productId": "PROD10002",
       "productFeatureId": "256GB",
-      "fromdate": "2023-08-01"
+      "fromdate": "2023-08-01",
       "applTypeEnumId": "STANDARD_FEATURE"
     },
     {
       "productId": "PROD20000",
       "productFeatureId": "BLACK",
-      "fromdate": "2023-09-01"
+      "fromdate": "2023-09-01",
       "applTypeEnumId": "STANDARD_FEATURE"
     },
     {
       "productId": "PROD20001",
       "productFeatureId": "BLACK",
-      "fromdate": "2023-09-01"
+      "fromdate": "2023-09-01",
       "applTypeEnumId": "STANDARD_FEATURE"
     },
   ]
