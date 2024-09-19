@@ -91,8 +91,8 @@
 
 3.  **Order ID (orderId) and Order External ID (orderExternalId):**
 
-    *   **External ID Resolution:** If only `orderExternalId` is provided, the service should fetche the corresponding `orderId`.
-    *   **Ship Group Validity (Optional):** If `shipGroupSeqId` is provided, it must be valid within the specified order.
+    *   **External ID Resolution:** If only `orderExternalId` is provided.
+    *   **Ship Group Validity (Optional):** 
 
 5.  **Party IDs (partyIdFrom, externalPartyIdFrom, partyIdTo, externalPartyIdTo):**
 
@@ -247,67 +247,3 @@ Prepare data for creating a new `Shipment` entity in the database. Let's break d
 
     *   **Significance:** Estimated dates for arrival, readiness, and shipping.
     *   **Rule:** Included only if provided in the input and converted to Timestamp objects.
-
-**Prepare data for ShipmentItem**
-
-1.  **Extraction of Item Details:**
-
-    *   For each item in the `Shipmentitems` :
-        *   `productId`: The ID of the product to be included in the shipment.
-        *   `sku`: The SKU (Stock Keeping Unit) of the product, which can be used to look up the `productId` if it's not provided directly.
-        *   `itemSeqId`: A sequence ID for the shipment item, likely used for ordering or identification within the shipment.
-        *   `orderItemSeqId`: The sequence ID of the corresponding order item from the original order.
-        *   `quantity`: The quantity of the product to be included in the shipment.
-
-2.  **Product ID Resolution:**
-
-    *   If the `productId` is not provided but the `sku` is,  lookup database in the `Product` entity to find the corresponding `productId` based on the `internalName` (which is assumed to be the SKU).
-
-3.  **Data Conversion:**
-
-    *   The `quantity` value, which might be provided as a string or another numeric type, is explicitly converted to a `BigDecimal` using `ObjectType.simpleTypeConvert`. This ensures accurate representation of quantities, especially for fractional values.
-
-**Rules and Error Handling:**
-
-*   **Required Fields:** Either `productId` or `sku` is required for each item. If both are missing, an error is added to the `errorList`.
-*   **Valid Product:** The provided `productId` or the `productId` derived from the `sku` must exist in the `Product` entity. If not, an error is added to the `errorList`.
-*   **Quantity Conversion:** The `quantity` must be convertible to a `BigDecimal`. While the code doesn't explicitly handle a `NumberFormatException`, it's good practice to add error handling for this scenario.
-
-### **Prepares data to  `createOrderShipment`**
-
-3.  **Order Shipment Context Creation:**
-    *   A `createOrderShipmentCtx` map is created to hold the data for the `createOrderShipment` service call.
-    *   The map is populated with the following key-value pairs:
-        *   `"shipmentId"`: The ID of the shipment.
-        *   `"shipmentItemSeqId"`: The sequence ID of the shipment item obtained in step 1.
-        *   `"orderId"`: The ID of the order.
-        *   `"orderItemSeqId":` 
-        *   `"userLogin"`: The userLogin object representing the user performing the operation.
-
-1.  **Package Details Extraction:**
-    *   Package as following details:
-        *   `boxTypeId`: The type of box used for the package.
-        *   `packageSeqId`: A sequence ID for the package, likely used for ordering or identification within the shipment.
-        *   `dimensionUomId`: The unit of measurement for the package dimensions (e.g., "LEN_in" for inches).
-        *   `weightUomId`: The unit of measurement for the package weight (e.g., "WT_lb" for pounds).
-        *   `boxLength`, `boxHeight`, `boxWidth`, `weight`: The dimensions and weight of the package.
-        *   `items`: A list of items included in the package (this is used later for creating `ShipmentPackageContent` entities).
-
-2.  **Default Values and Conversions:**
-    *   If `boxTypeId` is not provided, it defaults to a value from the configuration ("YOURPACKNG" in this case).
-    *   If `weightUomId` is not provided, it tries to get it from the origin facility's default or a system-wide default ("WT_lb").
-    *   If `dimensionUomId` is not provided, it defaults to a system-wide default ("LEN_in").
-    *   The `boxLength`, `boxHeight`, `boxWidth`, and `weight` values are converted to `BigDecimal` for precision.
-
-3.  **Shipment Package Context Creation:**
-    *   A `shipmentPackage` map is created to hold the data for the `ShipmentPackage`.
-    *   The map is populated with the following key-value pairs:
-        *   `"shipmentId"`: The ID of the shipment.
-        *   `"shipmentPackageSeqId"`: The sequence ID of the package.
-        *   `"boxLength"`, `"boxHeight"`, `"boxWidth"`, `"weight"`: The package dimensions and weight (as `BigDecimal`).
-        *   `"shipmentBoxTypeId"`: The type of box.
-        *   `"dimensionUomId"`: The unit of measurement for dimensions.
-        *   `"weightUomId"`: The unit of measurement for weight.
-        *   `"userLogin"`: The userLogin object representing the user performing the operation.
-
-
