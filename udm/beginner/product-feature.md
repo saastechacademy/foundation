@@ -1,7 +1,7 @@
 # Introduction to Product Features Model
 This document provides an overview of the Product Features model, focusing on entities such as - ProductFeature and ProductFeatureAppl - and their applications in representing various product details. Additionally, we will define the key entities and provide sample JSON data.
 
-## Product feature Overview
+## Product Feature Overview
 Example: ABC Organization manufactures different products, including a smartphone and laptop, which is sold online. These products have various features such as color and size.
 
 ### Entities
