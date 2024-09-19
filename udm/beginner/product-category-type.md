@@ -60,19 +60,14 @@ Example: ABC Organization sells different products, including smartphones and la
   }
   "ProductCategoryMember": [
     {
-      "productId": "PROD10000",
-      "productCategoryId": "SEARCH",
-      "fromDate": "2023-01-01"
-    },
-    {
       "productId": "PROD10001",
       "productCategoryId": "SEARCH",
-      "fromDate": "2023-01-01"
+      "fromDate": "2023-06-01"
     },
     {
       "productId": "PROD10002",
       "productCategoryId": "SEARCH",
-      "fromDate": "2023-01-01"
+      "fromDate": "2023-08-01"
     },
     {
       "productId": "PROD20000",
