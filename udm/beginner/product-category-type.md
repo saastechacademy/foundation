@@ -76,7 +76,7 @@ Example: ABC Organization sells different products, including smartphones and la
     },
     {
       "productId": "PROD20000",
-      "productCategoryId": "PCCT_SEARCH",
+      "productCategoryId": "SEARCH",
       "fromDate": "2023-09-01"
     },
     {
@@ -101,11 +101,6 @@ Example: ABC Organization sells different products, including smartphones and la
   }
   "ProductCategoryMember": [
     {
-      "productId": "PROD10000",
-      "productCategoryId": "VIEW_ALLOW",
-      "fromDate": "2023-01-01"
-    },
-    {
       "productId": "PROD10001",
       "productCategoryId": "VIEW_ALLOW",
       "fromDate": "2023-06-01"
@@ -117,11 +112,6 @@ Example: ABC Organization sells different products, including smartphones and la
     },
     {
       "productId": "PROD20000",
-      "productCategoryId": "VIEW_ALLOW",
-      "fromDate": "2023-09-01"
-    },
-    {
-      "productId": "PROD20001",
       "productCategoryId": "VIEW_ALLOW",
       "fromDate": "2023-09-01"
     }
@@ -141,11 +131,6 @@ Example: ABC Organization sells different products, including smartphones and la
   }
   "ProductCategoryMember": [
     {
-      "productId": "PROD10000",
-      "productCategoryId": "PURCHASE_ALLOW",
-      "fromDate": "2023-01-15"
-    },
-    {
       "productId": "PROD10001",
       "productCategoryId": "PURCHASE_ALLOW",
       "fromDate": "2023-06-15"
@@ -157,11 +142,6 @@ Example: ABC Organization sells different products, including smartphones and la
     },
     {
       "productId": "PROD20000",
-      "productCategoryId": "PURCHASE_ALLOW",
-      "fromDate": "2023-09-15"
-    },
-    {
-      "productId": "PROD20001",
       "productCategoryId": "PURCHASE_ALLOW",
       "fromDate": "2023-09-15"
     }
@@ -206,19 +186,18 @@ Example: ABC Organization sells different products, including smartphones and la
     "productCategoryTypeId": "CATALOG_CATEGORY",
     "categoryName": "Browse Root"
   }
-  "ProductCategoryMember":
-    {
-      "productId": "PROD10002",
-      "productCategoryId": "PROMOTIONS",
-      "fromDate": "2023-08-15",
-      "thruDate": "2023-08-31"
-    }
+  "ProductCategoryMember": {
+    "productId": "PROD10002",
+    "productCategoryId": "PROMOTIONS",
+    "fromDate": "2023-08-15",
+    "thruDate": "2023-08-31"
+  }
 }
 ```
 
 #### 7. Most Popular
 - **Purpose**: The purpose of this category is to list the most popular products available on the e-commerce site. The prod catalog category type for Most Popular Category is MOST_POPULAR and only one category of such type exists for a catalog.
-- **Category Type**: CATALOG_CATEGORY
+- **Category Type**: `CATALOG_CATEGORY`
 - **Example**: Lets create the `MOST_POPULAR` category and place relevant products in it. ABC's large phone had the highest sales last quarter.
 ```
 {
@@ -227,18 +206,17 @@ Example: ABC Organization sells different products, including smartphones and la
     "productCategoryTypeId": "CATALOG_CATEGORY",
     "categoryName": "Browse Root"
   }
-  "ProductCategoryMember":
-    {
-      "productId": "PROD10002",
-      "productCategoryId": "MOST_POPULAR",
-      "fromDate": "2023-09-01"
-    }
+  "ProductCategoryMember": {
+    "productId": "PROD10002",
+    "productCategoryId": "MOST_POPULAR",
+    "fromDate": "2023-09-01"
+  }
 }
 ```
 
 #### 8. What's New
 - **Purpose**: All the fresh arrivals in a e-commerce site are displayed under What's New Category.The prod catalog category type for this category is WHATS_NEW. Only one category of this type exist for a catalog.
-- **Category Type**: CATALOG_CATEGORY
+- **Category Type**: `CATALOG_CATEGORY`
 - **Example**: Lets create the `WHATS_NEW` category and place relevant products in it. ABC's laptop was classified as a New Item for 2 months after its release.
 ```
 {
@@ -247,12 +225,11 @@ Example: ABC Organization sells different products, including smartphones and la
     "productCategoryTypeId": "CATALOG_CATEGORY",
     "categoryName": "Browse Root"
   }
-  "ProductCategoryMember":
-    {
-      "productId": "PROD20000",
-      "productCategoryId": "WHATS_NEW",
-      "fromDate": "2023-09-01",
-      "thruDate": "2023-10-31"
-    }
+  "ProductCategoryMember": {
+    "productId": "PROD20000",
+    "productCategoryId": "WHATS_NEW",
+    "fromDate": "2023-09-01",
+    "thruDate": "2023-10-31"
+  }
 }
 ```
