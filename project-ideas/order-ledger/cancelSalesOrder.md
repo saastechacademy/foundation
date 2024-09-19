@@ -40,48 +40,48 @@ Order items in OMS are exploded, so for one Shopify order line item number of or
 Current implementation in HCOMS is cancelShopifyOrderItem service which processes shopify refunds of kind ‘cancel/no_restock’ to cancel order items in HC. This part won’t be relevant in the new implementation. But we need to consider actions specific to identifying and canceling order items in OMS. The following actions needs to be considered,
 1. Since the order items are exploded by default in OMS, it identifies all the OMS order items against a Shopify order item. Also does the necessary calculation and validations for `cancelQuantity`.
 2. In the next step, it iterates over `cancelQuantity` and calls `ShopifyOrderServices.cancelShopifyOrderItem()` method. This method performs the following actions:
-    a. Fetches open OMS order items for the given Shopify order items.
-    b. Gets the first order item giving priority to non-brokered order items.
-    c. Calls OOTB OFBiz `cancelOrderItem` service for the identified item.
-    d. Creates a negative sales tax adjustment for the order item.
-    e. Creates a communication event for order item cancellation.
+   * Fetches open OMS order items for the given Shopify order items.
+   * Gets the first order item giving priority to non-brokered order items.
+   * Calls OOTB OFBiz `cancelOrderItem` service for the identified item.
+   * Creates a negative sales tax adjustment for the order item.
+   * Creates a communication event for order item cancellation.
 3. In the last step, it calls `getRefundTransactionsAndCreateOrderPayment` service.
-    a. It fetches refund transactions from Shopify for the order and for each transaction calls `getTransactionAndCreateOrderPaymentPreference` service, which does a bunch of validation and mapping and updates or creates `OrderPaymentPreference`.
+   * It fetches refund transactions from Shopify for the order and for each transaction calls `getTransactionAndCreateOrderPaymentPreference` service, which does a bunch of validation and mapping and updates or creates `OrderPaymentPreference`.
 
 ### TO-BE Implementation
 The new cancel order API and services would be implemented in the Moqui framework. Following API and services need to be implemented,
 1. cancelShopifyOrderItem: This is the main API wrapper service that implements the logic described in the AS-IS implementation above.
 2. Desired behavior from the following OOTB OFBiz services needs to be replicated in Moqui:
-    a. cancelOrderItem
-        i. createOrderItemChange
-        ii. createOrderNote
-        iii. cancelOrderItemInvResQty
-            1. cancelOrderItemShipGrpInvRes
-                a. createInventoryItemDetail
-        iv. changeOrderItemStatus
-            1. checkOrderItemStatus (seca) (OOTB)
-                a. changeOrderStatus
-                    i. ~~releaseOrderPayments~~ (seca) (Custom): OMS isn’t responsible for payment processing, so this service shouldn’t be needed.
-                    ii. ~~processRefundReturnForReplacement~~ (seca) (OOTB): This service too is irrelevant; OMS isn’t an RMA and doesn’t process refunds and replacements.
-                    iii. ~~onPOCancelAdjustAtpOnOtherPo~~ (seca) (custom for PO)
-                    iv. onChangeOrderStatus
-                    v. ~~cancelOrderOnMarketplace~~ (Custom)
-                    vi. createOrderIndex
-                    vii. ~~checkEmailAddressAndSendOrderCompleteNotification~~
-                    viii. sendOrderCancelNotification (Later)
-                    ix. sendOrderCompleteNotification (Later)
-                        1. createOrderNotificationLog
-                    x. sendOrderSmsNotification (Later)
-            2. checkAndRejectOrderItem (seca) (Custom)
-            3. rejectTransferOrderItem (seca) (Custom)
-            4. ~~adjustAtpOnOtherPO~~ (seca) (Custom for PO)
-            5. checkOrderItemAndCapturePayament (Custom): Called on item completion.
-            6. onChangeOrderItemStatus
-            7. createOrderIndex
-            8. ~~checkEmailAddressAndSendOrderCancelledNotification~~
-            9. ~~completeKitProduct~~ (On item completion)
-            10. ~~cancelKitComponents~~ (On item cancellation)
-            11. checkValidASNAndUpdateAtp
+   * cancelOrderItem
+     - createOrderItemChange
+     - createOrderNote
+     - cancelOrderItemInvResQty
+       * cancelOrderItemShipGrpInvRes
+         - reateInventoryItemDetail
+   * changeOrderItemStatus
+     - checkOrderItemStatus (seca) (OOTB)
+       * changeOrderStatus
+         - ~~releaseOrderPayments~~ (seca) (Custom): OMS isn’t responsible for payment processing, so this service shouldn’t be needed.
+         - ~~processRefundReturnForReplacement~~ (seca) (OOTB): This service too is irrelevant; OMS isn’t an RMA and doesn’t process refunds and replacements.
+         - ~~onPOCancelAdjustAtpOnOtherPo~~ (seca) (custom for PO)
+         - onChangeOrderStatus
+         - ~~cancelOrderOnMarketplace~~ (Custom)
+         - createOrderIndex
+         - ~~checkEmailAddressAndSendOrderCompleteNotification~~
+         - sendOrderCancelNotification (Later)
+         - sendOrderCompleteNotification (Later)
+           * createOrderNotificationLog
+         - sendOrderSmsNotification (Later)
+     * checkAndRejectOrderItem (seca) (Custom)
+     * rejectTransferOrderItem (seca) (Custom)
+     * ~~adjustAtpOnOtherPO~~ (seca) (Custom for PO)
+     * checkOrderItemAndCapturePayament (Custom): Called on item completion.
+     * onChangeOrderItemStatus
+     * createOrderIndex
+     * ~~checkEmailAddressAndSendOrderCancelledNotification~~
+     * ~~completeKitProduct~~ (On item completion)
+     * ~~cancelKitComponents~~ (On item cancellation)
+     * checkValidASNAndUpdateAtp
 
 #### OMS/Shopify Middleware (Accelerator)
 In the process of implementing this API we will start designing and implementing a middleware component to map and transform Shopify order data into OMS order schema. A few of the desired capabilities of this component in context of this API would be as follows,
@@ -90,11 +90,11 @@ In the process of implementing this API we will start designing and implementing
 3. Calculate the balance `cancelQuantity` between the Shopify order line item `cancelQuantity` and OMS exploded order items aggregated `cancelQuantity`.
 4. With respect to the balance `cancelQuantity`, get eligible exploded order items in OMS against Shopify `orderLineItemId` for cancellation. These items should be included in the Cancel Order JSON.
 5. Map and transform Shopify `OrderTransaction` to create `OrderPaymentPreference` in OMS:
-    a. Map `currencyUomId`.
-    b. Map Shopify transaction `statusId` to OMS `OrderPaymentPreference` `statusId`.
-    c. Map Shopify transaction `gateway` to OMS `paymentMethodTypeId`.
-    d. If the Shopify order currency is different from the OMS order currency, use the Shopify transaction `exchange_rate` if available. Otherwise, derive it from the `UOMConversion` entity in OMS. If the exchange rate couldn’t be derived, the transaction amount is set to null.
-    e. Map the remaining relevant Shopify transaction fields to generate OMS `OrderPaymentPreference` JSON to be included in the Cancel Order JSON.
+   * Map `currencyUomId`.
+   * Map Shopify transaction `statusId` to OMS `OrderPaymentPreference` `statusId`.
+   * Map Shopify transaction `gateway` to OMS `paymentMethodTypeId`.
+   * If the Shopify order currency is different from the OMS order currency, use the Shopify transaction `exchange_rate` if available. Otherwise, derive it from the `UOMConversion` entity in OMS. If the exchange rate couldn’t be derived, the transaction amount is set to null.
+   * Map the remaining relevant Shopify transaction fields to generate OMS `OrderPaymentPreference` JSON to be included in the Cancel Order JSON.
 
 
 
