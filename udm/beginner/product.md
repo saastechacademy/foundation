@@ -2,7 +2,7 @@
 This document provides an overview of the Product model, focusing on its core entities—Product, ProductContent, ProductPrice, and others—and their applications in representing various product details. Additionally, we will define the key entities and provide sample JSON data for Product.
 
 ## Product Model Overview
-Example: ABC Organization manufactures different products, including a smartphone, which is sold online. The smartphone has various product details, such as pricing, dimensions, shipping details, and is associated with multiple content resources like images and descriptions.
+Example: ABC Organization manufactures different products, including a smartphone, which is sold online. These have various product details, such as pricing, dimensions, shipping details, and are associated with multiple content resources like images and descriptions.
 
 ### Entities
 
@@ -36,13 +36,13 @@ Example: ABC Organization manufactures different products, including a smartphon
       "productId": "PROD20000",
       "productName": "Laptop",
       "productTypeEnumId": "VIRTUAL"
-      "fromDate": "2023-01-01"
+      "fromDate": "2023-09-01"
     },
     {
       "productId": "PROD20001",
       "productName": "Laptop-BLACK",
       "productTypeEnumId": "VARIENT"
-      "fromDate": "2023-01-01"
+      "fromDate": "2023-09-01"
     }
   ]
 }
@@ -109,7 +109,7 @@ Example: ABC Organization manufactures different products, including a smartphon
       "productId": "PROD20000",
       "priceTypeEnumId": "LIST_PRICE",
       "price": 1299.99,
-      "fromDate": "2023-01-01"
+      "fromDate": "2023-09-01"
     }
   ]
 }
@@ -174,7 +174,7 @@ Example: ABC Organization manufactures different products, including a smartphon
       "productId": "PROD20000",
       "toProductId": "PROD20001",
       "productAssocTypeEnumId": "VARIANT",
-      "fromdate": "2023-01-01"
+      "fromdate": "2023-09-01"
     }
   ]
 }
