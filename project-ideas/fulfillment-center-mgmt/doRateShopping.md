@@ -1,5 +1,7 @@
 # doRateShopping
 
+Get shipping rates from the Carrier party for the ShipmentMethodTypes configured on the ProductStore and meet the deliveryDays/SLA criteria. 
+
 **Purpose:**
 
 *   Finds the optimal shipping method for a shipment by comparing rates from various carriers.

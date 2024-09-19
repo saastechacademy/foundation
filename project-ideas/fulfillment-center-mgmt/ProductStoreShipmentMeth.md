@@ -37,3 +37,4 @@ The `ProductStoreShipmentMeth` entity acts as a bridge between a product store a
 
 The rate shopping process, this entity is queried to retrieve a list of configured shipping methods for the given `productStoreId`, `partyId` (carrier), and a set of `shipmentMethodTypeIds` configured for the carrier in [CarrierShipmentMethod](CarrierShipmentMethod.md). 
 
+Get shipping rates from the Carrier party for the ShipmentMethodTypes configured on the ProductStore and meet the deliveryDays/SLA criteria. 
