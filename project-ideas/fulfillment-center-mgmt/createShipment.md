@@ -41,8 +41,32 @@
             "shipmentRouteSegmentId": "00001",
             "originFacilityId": "WAREHOUSE_A",
             "destinationFacilityId": "HUB_B",
-            "estimatedArrival": "2024-07-17 09:00:00"
-        }
+            "estimatedArrival": "2024-07-17 09:00:00",
+            "shipmentPackageRouteSeg": [
+                {
+                "shipmentPackageSeqId": "00001", 
+                "trackingCode": "TRACK12345", 
+                "boxNumber": "BOX001",
+                "labelImage": null, 
+                "labelIntlSignImage": null, 
+                "labelHtml": "<html>...</html>", 
+                "labelPrinted": "N", 
+                "internationalInvoice": null, 
+                "packageTransportCost": 5.0, 
+                "packageServiceCost": 2.5, 
+                "packageOtherCost": 0.5, 
+                "codAmount": 0.0, 
+                "insuredAmount": 50.0, 
+                "currencyUomId": "USD",
+                "labelImageUrl": "https://example.com/label10025.png",
+                "internationalInvoiceUrl": null,
+                "packagePickupPrn": "PICKUP123",
+                "packagePickupDate": "2024-07-16 08:30:00",
+                "gatewayMessage": "Package accepted by carrier",
+                "gatewayStatus": "SUCCESS"
+                }
+            ]
+        },
     ],
     "orderShipments":[
         {
