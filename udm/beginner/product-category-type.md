@@ -56,7 +56,7 @@ Example: ABC Organization sells different products, including smartphones and la
   "ProductCategory": {
     "productCategoryId": "SEARCH",
     "productCategoryTypeId": "SEARCH_CATEGORY",
-    "categoryName": "Browse Root"
+    "categoryName": "Search"
   }
   "ProductCategoryMember": [
     {
@@ -91,13 +91,13 @@ Example: ABC Organization sells different products, including smartphones and la
 #### 3. View Allow
 - **Purpose**: View Allow is optional and special purpose category for a catalog. If `VIEW_ALLOW` Category exists for a catalog, then all the products are required to be associated with this category to be visible on front store.
 - **Category Type**: `CATALOG_CATEGORY`
-- **Example**: Lets create the `VIEW_ALLOW` category and place relevant products in it. Their phones were released few months after the laptop. 
+- **Example**: Lets create the `VIEW_ALLOW` category and place relevant products in it. Their laptops were released few weeks after thier phones. 
 ```
 {
   "ProductCategory": {
     "productCategoryId": "VIEW_ALLOW",
     "productCategoryTypeId": "CATALOG_CATEGORY",
-    "categoryName": "Browse Root"
+    "categoryName": "View Allow"
   }
   "ProductCategoryMember": [
     {
@@ -131,18 +131,18 @@ Example: ABC Organization sells different products, including smartphones and la
 #### 4. Purchase Allow
 - **Purpose**: Purchase Allow also is an optional and special purpose category for a catalog. Only the products associated to `PURCHASE_ALLOW` Category will be available for purchase from store front in the situation if this category exists.
 - **Category Type**: `CATALOG_CATEGORY`
-- **Example**: Lets create the `PURCHASE_ALLOW` category and place relevant products in it. Items are available for purchase couple weeks after they are available for viewing. 
+- **Example**: Lets create the `PURCHASE_ALLOW` category and place relevant products in it. At ABC items are available for purchase couple weeks after they are available for viewing. 
 ```
 {
   "ProductCategory": {
     "productCategoryId": "PURCHASE_ALLOW",
     "productCategoryTypeId": "CATALOG_CATEGORY",
-    "categoryName": "Browse Root"
+    "categoryName": "Purchase Allow"
   }
   "ProductCategoryMember": [
     {
       "productId": "PROD10000",
-      "productCategoryId": "SEARCH",
+      "productCategoryId": "PURCHASE_ALLOW",
       "fromDate": "2023-06-15"
     },
     {
@@ -178,7 +178,7 @@ Example: ABC Organization sells different products, including smartphones and la
   "ProductCategory": {
     "productCategoryId": "LUXURY_TAX_CATEGORY",
     "productCategoryTypeId": "TAX_CATEGORY",
-    "categoryName": "Browse Root"
+    "categoryName": "Luxury Tax"
   }
   "ProductCategoryMember": [
     {
@@ -196,7 +196,7 @@ Example: ABC Organization sells different products, including smartphones and la
 ```
 
 #### 6. Promotions
-- **Purpose**: Promotions Category is special purpose category to promote specific type of products in specific section over the site to get the user attraction on products. For a catalog single promotion category will exist having prod catalog category type as PROMOTIONS.
+- **Purpose**: The Promotions Category is a specialized category designed to highlight specific products in designated sections of the site, aimed at attracting user attention. Each catalog can have a single Promotions Category with the catalog category type set to `PROMOTIONS` and its parent category is `BROWSE_ROOT`.
 - **Category Type**: `CATALOG_CATEGORY`
 - **Example**: Lets create the `PROMOTIONS` category and place relevant products in it. ABC's large phone was promoted during their annual sale.
 ```
@@ -204,7 +204,8 @@ Example: ABC Organization sells different products, including smartphones and la
   "ProductCategory": {
     "productCategoryId": "PROMOTIONS",
     "productCategoryTypeId": "CATALOG_CATEGORY",
-    "categoryName": "Browse Root"
+    "parentProductCategoryId" = "BROWSE_ROOT",
+    "categoryName": "Promotions"
   }
   "ProductCategoryMember": {
     "productId": "PROD10002",
@@ -216,7 +217,7 @@ Example: ABC Organization sells different products, including smartphones and la
 ```
 
 #### 7. Most Popular
-- **Purpose**: The purpose of this category is to list the most popular products available on the e-commerce site. The prod catalog category type for Most Popular Category is MOST_POPULAR and only one category of such type exists for a catalog.
+- **Purpose**: The purpose of this category is to list the most popular products available on the e-commerce site. The prod catalog category type for Most Popular Category is MOST_POPULAR and its parent category is `BROWSE_ROOT`. Only one category of such type exists for a catalog.
 - **Category Type**: `CATALOG_CATEGORY`
 - **Example**: Lets create the `MOST_POPULAR` category and place relevant products in it. ABC's large phone had the highest sales last quarter.
 ```
@@ -224,7 +225,8 @@ Example: ABC Organization sells different products, including smartphones and la
   "ProductCategory": {
     "productCategoryId": "MOST_POPULAR",
     "productCategoryTypeId": "CATALOG_CATEGORY",
-    "categoryName": "Browse Root"
+    "parentProductCategoryId" = "BROWSE_ROOT",
+    "categoryName": "Most Popular"
   }
   "ProductCategoryMember": {
     "productId": "PROD10002",
@@ -235,7 +237,7 @@ Example: ABC Organization sells different products, including smartphones and la
 ```
 
 #### 8. What's New
-- **Purpose**: All the fresh arrivals in a e-commerce site are displayed under What's New Category.The prod catalog category type for this category is WHATS_NEW. Only one category of this type exist for a catalog.
+- **Purpose**: All the fresh arrivals in a e-commerce site are displayed under What's New Category.The prod catalog category type for this category is `WHATS_NEW` and its parent category is `BROWSE_ROOT`. Only one category of this type exist for a catalog.
 - **Category Type**: `CATALOG_CATEGORY`
 - **Example**: Lets create the `WHATS_NEW` category and place relevant products in it. ABC's laptop was classified as a New Item for 2 months after its release.
 ```
@@ -243,7 +245,8 @@ Example: ABC Organization sells different products, including smartphones and la
   "ProductCategory": {
     "productCategoryId": "WHATS_NEW",
     "productCategoryTypeId": "CATALOG_CATEGORY",
-    "categoryName": "Browse Root"
+    "parentProductCategoryId" = "BROWSE_ROOT",
+    "categoryName": "Whats New"
   }
   "ProductCategoryMember": [
     {
