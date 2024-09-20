@@ -36,50 +36,15 @@ private static boolean shouldDoRateShopping(GenericValue shipment, Boolean force
     *   If the count is greater than 0, return `true` (rate shopping is needed).
     *   Otherwise, return `false`.
 
+4.  **Facility Group Check for Auto Shipping Label:**
+    *   Retrieves the `facilityId` associated with the shipment.
+    *   Checks if the facility belongs to the "AUTO_SHIPPING_LABEL" facility group using the `isFacilityInGroup` helper function.
+    *   If it does, it returns `true` (rate shopping is needed for facilities in this group).
+
+
 **Return Value**
 
 *   `true`: If rate shopping should be performed.
 *   `false`: If rate shopping is not required.
 
-**OFBiz Best Practices Considerations**
-
-*   **Entity Engine:** Utilize the `EntityQuery` API for efficient database queries.
-*   **Error Handling:** Include appropriate error handling (e.g., try-catch blocks) to gracefully manage potential database exceptions.
-*   **Logging:** Use `Debug.logInfo` or `Debug.logWarning` statements for informative logging during development and debugging.
-*   **Clarity and Readability:** Ensure the code is well-structured, commented, and adheres to OFBiz coding conventions for maintainability.
-
-**Example Implementation (Illustrative)**
-
-```java
-private static boolean shouldDoRateShopping(GenericValue shipment, Boolean forceRateShop, String shipmentMethodTypeId) {
-    // 1. Carrier Check
-    String carrierPartyId = shipment.getRelatedOne("ShipmentRouteSegment").getString("carrierPartyId");
-    if (carrierPartyId.equals("_NA_") || (forceRateShop != null && forceRateShop)) {
-        // 2. Shipment Method Check
-        if (shipmentMethodTypeId.equals("STOREPICKUP")) {
-            return false;
-        }
-
-        // 3. Product Store Configuration Check
-        try {
-            String productStoreId = shipment.getRelatedOne("OrderHeader").getString("productStoreId");
-            EntityCondition condition = EntityCondition.makeCondition(
-                    EntityCondition.makeCondition("partyId", EntityOperator.NOT_EQUAL, "_NA_"),
-                    EntityCondition.makeCondition("roleTypeId", "CARRIER"),
-                    EntityCondition.makeCondition("productStoreId", productStoreId),
-                    EntityCondition.makeCondition("isTrackingRequired", EntityOperator.OR, 
-                            EntityCondition.makeCondition("isTrackingRequired", "Y"),
-                            EntityCondition.makeCondition("isTrackingRequired", null))
-            );
-            long productStoreShipmentMethCount = EntityQuery.use(delegator).from("ProductStoreShipmentMeth").where(condition).queryCount();
-            return productStoreShipmentMethCount > 0;
-        } catch (GenericEntityException e) {
-            Debug.logError(e, "Error while checking ProductStoreShipmentMeth", MODULE);
-            return false; // Or throw an exception depending on your error handling strategy
-        }
-    } else {
-        return false;
-    }
-}
-```
 
