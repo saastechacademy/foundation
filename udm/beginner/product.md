@@ -99,26 +99,31 @@ Example: ABC Organization manufactures different products, including a smartphon
   "ProductPrice": [
     {
       "productId": "PROD10001",
+      "productPriceId": "PRC_PHN1",
       "priceTypeEnumId": "LIST_PRICE",
       "price": 799.99
     },
     {
       "productId": "PROD10002",
+      "productPriceId": "PRC_PHN2",
       "priceTypeEnumId": "LIST_PRICE",
       "price": 1099.99
     },
     {
       "productId": "PROD10002",
+      "productPriceId": "PRC_PHN1_PROM1",
       "priceTypeEnumId": "PROMOTIONAL_PRICE",
       "price": 999.99
     },
     {
       "productId": "PROD20000",
+      "productPriceId": "PRC_LPT1",
       "priceTypeEnumId": "LIST_PRICE",
       "price": 1299.99
     },
     {
       "productId": "PROM001",
+      "productPriceId": "PRC_PHN_LPT_PROM1",
       "productName": "Laptop-Phone-Promotional-Package",
       "productTypeEnumId": "PROMOTIONAL_PRICE",
       "price": 1999.99
@@ -137,13 +142,13 @@ Example: ABC Organization manufactures different products, including a smartphon
     {
       "productId": "PROD10000",
       "dimensionTypeEnumId": "WEIGHT",
-      "dimensionValue": 6.60
+      "dimensionValue": 6.60,
       "valueUomId": "OUNCES"
     },
     {
       "productId": "PROD10001",
       "dimensionTypeEnumId": "WEIGHT",
-      "dimensionValue": 2.5
+      "dimensionValue": 2.5,
       "valueUomId": "LBS"
     }
   ]
