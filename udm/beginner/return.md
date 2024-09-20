@@ -42,7 +42,7 @@ Example: John Doe returns an item he purchased from ABC Organization due to it b
     },
     {
       "returnId": "RET123",
-      "returnItemSeqId": "00001",
+      "returnItemSeqId": "00002",
       "orderItemSeqId": "00003",
       "returnPrice": "65.00"
     }
