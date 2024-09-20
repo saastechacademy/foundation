@@ -18,14 +18,6 @@ The `getConfiguredCarrierService` is a utility function that retrieves the name 
     *   The function returns the `serviceName`, which is the name of the OFBiz service to be used for the carrier API interaction.
     *   If no configuration is found in either the database or the properties file, it returns `null`.
 
-**How it Helps in `getShipmentMethods`**
-
-In the `getShipmentMethods` function, `getConfiguredCarrierService` is called to determine the correct service to invoke for fetching shipping rates from the carrier's API.
-
-*   It provides a flexible mechanism to configure carrier-specific services for different shipment method types and request types.
-*   It allows for overriding default configurations through the `ShipmentRequest` entity, enabling customization based on specific business needs.
-*   It ensures that the correct service is called for each carrier and shipment method combination, streamlining the integration with various carrier APIs.
-
 **Example**
 
 *   If the `carrierPartyId` is "FEDEX," the `shipmentMethodTypeId` is "GROUND," and the `requestType` is "RATE_REQUEST," the function might:
