@@ -124,7 +124,8 @@ Example: John Doe places an order with ABC Organization, which includes two part
         "postalContactMechId": "10003",
         "statusId": "COMPLETED",
         "partTotal": 1364.99,
-        "OrderItem": {
+        "OrderItem": [
+          {
             "orderItemSeqId": "00001",
             "productId": "PROD20001",
             "quantity": 1,
@@ -133,20 +134,21 @@ Example: John Doe places an order with ABC Organization, which includes two part
               "orderItemSeqId": "00003",
               "productId": "SALES_TAX",
               "unitPrice": 65.00
+            },
           }
-        },
-        "OrderItem" {
-          "orderPartSeqId": "00002",
-          "orderItemSeqId": "00002",
-          "productId": "PROD10002",
-          "quantity": 1,
-          "unitPrice": 1099.99,
-          "OrderItem": {
-            "orderItemSeqId": "00004",
-            "productId": "SALES_TAX",
-            "unitPrice": 55.00
+          {
+            "orderPartSeqId": "00002",
+            "orderItemSeqId": "00002",
+            "productId": "PROD10002",
+            "quantity": 1,
+            "unitPrice": 1099.99,
+            "OrderItem": {
+              "orderItemSeqId": "00004",
+              "productId": "SALES_TAX",
+              "unitPrice": 55.00
+            }
           }
-        }
+        ]
       }
     ]
   }
