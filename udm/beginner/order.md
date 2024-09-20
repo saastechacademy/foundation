@@ -48,7 +48,7 @@ Example: John Doe places an order with ABC Organization, which includes two part
       "orderPartSeqId": "00002",
       "customerPartyId": "PER123",
       "postalContactMechId": "10003",
-      "statusId": "PART_PLACED",
+      "statusId": "PLACED",
       "partTotal": 1154.99
 
     },
@@ -58,7 +58,7 @@ Example: John Doe places an order with ABC Organization, which includes two part
       "vendorPartyId": "VEN456",
       "postalContactMechId": "10002",
       "telecomContactMechId": "10000",
-      "statusId": "PART_PLACED",
+      "statusId": "PLACED",
       "partTotal": 64999.50
     }
   ]
@@ -124,31 +124,35 @@ Example: John Doe places an order with ABC Organization, which includes two part
         "postalContactMechId": "10003",
         "statusId": "COMPLETED",
         "partTotal": 1364.99,
-        "OrderItem": [
-          {
-            "orderItemSeqId": "00001",
-            "productId": "PROD20001",
-            "quantity": 1,
-            "unitPrice": 1299.99,
-            "OrderItem": {
-              "orderItemSeqId": "00003",
-              "productId": "SALES_TAX",
-              "unitPrice": 65.00
-            },
+        "OrderItem": {
+          "orderItemSeqId": "00001",
+          "productId": "PROD20001",
+          "quantity": 1,
+          "unitPrice": 1299.99,
+          "OrderItem": {
+            "orderItemSeqId": "00003",
+            "productId": "SALES_TAX",
+            "unitPrice": 65.00
           }
-          {
-            "orderPartSeqId": "00002",
-            "orderItemSeqId": "00002",
-            "productId": "PROD10002",
-            "quantity": 1,
-            "unitPrice": 1099.99,
-            "OrderItem": {
-              "orderItemSeqId": "00004",
-              "productId": "SALES_TAX",
-              "unitPrice": 55.00
-            }
+        }
+      },
+      {
+        "orderPartSeqId": "00002",
+        "customerPartyId": "PER123",
+        "postalContactMechId": "10003",
+        "statusId": "PLACED",
+        "partTotal": 1154.99,
+        "OrderItem": {
+          "orderItemSeqId": "00002",
+          "productId": "PROD10002",
+          "quantity": 1,
+          "unitPrice": 1099.99,
+          "OrderItem": {
+            "orderItemSeqId": "00004",
+            "productId": "SALES_TAX",
+            "unitPrice": 55.00
           }
-        ]
+        },
       }
     ]
   }
