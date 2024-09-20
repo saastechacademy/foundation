@@ -22,24 +22,29 @@ Get shipping rates from the Carrier party for the ShipmentMethodTypes configured
 
 3.  **Shipment Route Segment and Configuration Check:**
     *   Retrieves the first `ShipmentRouteSegment` (assuming one per shipment).
-    *   Checks if the carrier and shipment method are configured for the product store.
+    *   Checks if the carrier and shipment method are configured for the product store. 
     *   If not configured and the method isn't "STOREPICKUP," the order is processed offline.
+    *   If carrierPartyId is NOT _NA_ and valid shipmentMethodTypeId is exits then, no need for rate shopping. The decision is already made. 
 
 4.  **Carrier and Shipment Method Selection:**
     *   If no carrier is assigned (`carrierPartyId` is "_NA_") or `forceRateShop` is true, and the method isn't "STOREPICKUP," it proceeds with rate shopping.
     *   Gets carriers associated with the origin facility (`facilityCarrierShipments`).
+    *   Auto generate Shipping label if facility is member of "AUTO_SHIPPING_LABEL" facility group.
+        ```
+        if (UtilValidate.isEmpty(generateLabel)) {
+            generateLabel = WarehouseHelper.isFacilityGroupMember(delegator, facilityId, "AUTO_SHIPPING_LABEL");
+        }
+        ```
     *   For each carrier:
         *   Checks if there's a `CarrierShipmentMethod` entry with delivery days configured.
-        *   If so, finds other methods for the same carrier with delivery days within the configured limit.
-        *   Considers the `shipmentMethodTypeId` suggested by the brokering algorithm.
-        *   Calls `getShipmentMethods` to fetch rates from the carrier's API.
-        *   If no rates are found and "STANDARD" hasn't been tried, attempts to get "STANDARD" rates and triggers an event if express shipping is unavailable.
-```
-                        List<GenericValue> facilityCarrierShipments = EntityQuery.use(delegator).select("partyId").from("FacilityParty").where("facilityId", facilityId, "roleTypeId", "CARRIER").filterByDate().distinct().queryList();
+        *   If so, find methods for the same carrier with delivery days within the configured limit.
+        ```
+        List<GenericValue> facilityCarrierShipments = EntityQuery.use(delegator).select("partyId").from("FacilityParty").where("facilityId", facilityId, "roleTypeId", "CARRIER").filterByDate().distinct().queryList();
 
-```
-
+        ```
+    
 5.  **Rate Comparison and Selection:**
+    *   
     *   Sorts retrieved `shipmentMethods` by estimated cost (ascending).
     *   Selects the cheapest method.
     *   If `shipmentMethodTypeId` and `carrierPartyId` are missing, retrieves them from `CarrierShipmentMethod`.
