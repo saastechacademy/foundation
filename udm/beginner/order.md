@@ -152,7 +152,7 @@ Example: John Doe places an order with ABC Organization, which includes two part
             "productId": "SALES_TAX",
             "unitPrice": 55.00
           }
-        },
+        }
       }
     ]
   }
