@@ -73,47 +73,6 @@ The `OrderItemShipGroup` entity in Apache OFBiz represents a group of order item
     *   `orderFacilityId`: information related to the facility from which the order is placed.
 
 
-The `ShipmentRouteSegment` entity in the Apache OFBiz official codebase represents a single leg or step in the transportation of a shipment from its origin to its destination. It captures details about the specific route segment, including the carrier, shipping method, origin and destination facilities, contact information, estimated and actual dates, costs, tracking information, and other relevant attributes.
-
-**Key attributes of the `ShipmentRouteSegment` entity in OFBiz:**
-
-*   `shipmentId`: The ID of the shipment to which this route segment belongs.
-*   `shipmentRouteSegmentId`: A unique identifier for this specific route segment within the shipment.
-*   `deliveryId`: The ID of the delivery associated with this route segment (if applicable).
-*   `originFacilityId` and `destFacilityId`: The IDs of the origin and destination facilities for this segment.
-*   `originContactMechId` and `destContactMechId`: Contact information for the origin and destination.
-*   `originTelecomNumberId` and `destTelecomNumberId`: Telecom contact information (phone numbers) for the origin and destination.
-*   `carrierPartyId`: The ID of the carrier responsible for this route segment.
-*   `shipmentMethodTypeId`: The type of shipping method used for this segment.
-*   `carrierServiceStatusId`: The status of the carrier service for this segment.
-*   `carrierDeliveryZone`: The delivery zone assigned by the carrier.
-*   `carrierRestrictionCodes` and `carrierRestrictionDesc`: Codes and descriptions of any restrictions imposed by the carrier.
-*   `billingWeight` and `billingWeightUomId`: The weight used for billing and its unit of measurement.
-*   `actualTransportCost`, `actualServiceCost`, `actualOtherCost`, and `actualCost`: The actual costs incurred for transport, service, other expenses, and the total cost, respectively.
-*   `currencyUomId`: The currency used for the cost values.
-*   `actualStartDate` and `actualArrivalDate`: The actual start and arrival dates for this segment.
-*   `estimatedStartDate` and `estimatedArrivalDate`: The estimated start and arrival dates.
-*   `trackingIdNumber`: The tracking number for this segment.
-*   `trackingDigest`: A digest or summary of tracking information.
-*   `updatedByUserLoginId` and `lastUpdatedDate`: Information about the last update to this record.
-*   `homeDeliveryType`, `homeDeliveryDate`: Details about home delivery if applicable.
-*   `thirdPartyAccountNumber`, `thirdPartyPostalCode`, `thirdPartyCountryGeoCode`: Information related to third-party accounts or locations.
-*   `upsHighValueReport`: A byte array potentially used for UPS high-value shipment reports.
-
-**HotWax Commerce Custom Extensions**
-
-HotWax Commerce has extended the `ShipmentRouteSegment` entity with the following additional fields:
-
-*   `codReturnLabelImage`: A byte array to store the COD (Cash On Delivery) return label image.
-*   `codReturnLabelHtml`: HTML content of the COD return label.
-*   `codCollectionAmount`: The amount to be collected on delivery.
-*   `carrierAccountNumber`: The carrier account number used for this segment.
-*   `carrierService`: The name of the specific carrier service used.
-*   `isGenerateThirdPartyLabel`: An indicator to specify if a third-party label should be generated.
-*   `isTrackingRequired`: An indicator to specify if tracking is required for this segment.
-*   `referenceNumber`: A reference number for this segment.
-*   `actualCarrierCode`: The actual carrier code used for this segment.
-
 **How it relates to the Shipment entity:**
 
 When creating a `Shipment` entity, many of its fields can be populated using information from the corresponding `OrderItemShipGroup`. This includes:
@@ -140,7 +99,7 @@ Populate origin postal address and telecom information in a Shipment entity base
 
 The `OrderItemShipGroup` acts as a bridge between the `OrderHeader` (the overall order) and the `Shipment` (the physical fulfillment of part or all of the order). It provides essential details about how a specific group of items within an order should be shipped, which directly informs the creation and management of the corresponding `Shipment`.
 
-Let's outline the design for a service that creates `Shipment`, `ShipmentItem`, `ShipmentRouteSegment` and `OrderShipment` records based on a list of `OrderItem`s belonging to the same `OrderItemShipGroup`.
+Let's outline the design for a service that creates `Shipment`, `ShipmentItem`, `ShipmentPackage`, `ShipmentRouteSegment`, `ShipmentPackageRouteSeg` and `OrderShipment` records based on a list of `OrderItem`s belonging to the same `OrderItemShipGroup`.
 
 **Key attributes of the `ShipmentPackage` entity in OFBiz:**
 
@@ -160,7 +119,7 @@ The `ShipmentPackage` entity in the Shipment data model holds information about 
 ### **Purpose**
 
 *   Streamline the shipment creation process when all `OrderItem`s belong to a single `OrderItemShipGroup`.
-*   Leverage the `OrderItem` and `OrderItemShipGroup` data to populate the necessary fields in the `Shipment`, `ShipmentItem`, `ShipmentRouteSegment` and `OrderShipment` entities.
+*   Leverage the `OrderItem` and `OrderItemShipGroup` data to populate the necessary fields in the `Shipment`, `ShipmentItem`, `ShipmentPackage`, `ShipmentRouteSegment`, `ShipmentPackageRouteSeg` and `OrderShipment` entities.
 
 ### **Inputs**
 
@@ -222,7 +181,7 @@ The `ShipmentPackage` entity in the Shipment data model holds information about 
 
 ### **Dependencies**
 
-*   Entity services for creating `Shipment`, `ShipmentItem`, `ShipmentRouteSegment`, and `OrderShipment`.
+*   Entity services for creating `Shipment`, `ShipmentItem`, `ShipmentPackage`, `ShipmentRouteSegment`, `ShipmentPackageRouteSeg` and `OrderShipment`.
 
 ### **Assumptions**
 

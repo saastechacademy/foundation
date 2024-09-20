@@ -32,60 +32,49 @@ The `ShipmentPackageRouteSeg` and `ShipmentRouteSegment` entities, their roles w
     *   `gatewayMessage` and `gatewayStatus`: Information about the status and any messages from the shipping gateway integration.
 
 
+**ShipmentRouteSegment in Apache OFBiz**
 
-**ShipmentRouteSegment in Apache OFBiz and HotWax Commerce**
+*   **Purpose:** The `ShipmentRouteSegment` entity in Apache OFBiz represents a single leg or step in the transportation of a shipment from its origin to its destination. It stores details about this specific segment, including:
+    *   Origin and destination facilities
+    *   Carrier information
+    *   Shipping method
+    *   Estimated and actual shipment dates
+    *   Costs associated with the segment
+    *   Tracking details
+    *   Other relevant attributes
 
-The `ShipmentRouteSegment` entity in Apache OFBiz represents a single leg or step in the transportation of a shipment from its origin to its destination. It stores details about the origin and destination facilities, carrier, shipping method, estimated and actual dates, costs, and tracking information for that specific segment of the shipment's journey.
+*   **Key Attributes:**
+    *   `shipmentId`, `shipmentRouteSegmentId`: Primary keys identifying the shipment and the specific route segment
+    *   `deliveryId`: If applicable, links to the `Delivery` entity
+    *   `originFacilityId`, `destFacilityId`: IDs of the origin and destination facilities
+    *   `originContactMechId`, `destContactMechId`: Contact information for origin and destination
+    *   `originTelecomNumberId`, `destTelecomNumberId`: Telecom contact information
+    *   `carrierPartyId`: The carrier responsible for this segment
+    *   `shipmentMethodTypeId`: The type of shipping method used
+    *   `carrierServiceStatusId`: The status of the carrier service
+    *   `carrierDeliveryZone`, `carrierRestrictionCodes`, `carrierRestrictionDesc`: Carrier-specific details
+    *   `billingWeight`, `billingWeightUomId`: Weight used for billing and its unit of measurement
+    *   `actualTransportCost`, `actualServiceCost`, `actualOtherCost`, `actualCost`, `currencyUomId`: Cost breakdown
+    *   `actualStartDate`, `actualArrivalDate`, `estimatedStartDate`, `estimatedArrivalDate`: Date/time information
+    *   `trackingIdNumber`, `trackingDigest`: Tracking details
+    *   `updatedByUserLoginId`, `lastUpdatedDate`: Last update information
+    *   `homeDeliveryType`, `homeDeliveryDate`: Home delivery details (if applicable)
+    *   `thirdPartyAccountNumber`, `thirdPartyPostalCode`, `thirdPartyCountryGeoCode`: Third-party related info
+    *   `upsHighValueReport`: Data for UPS high-value shipments
 
-**Key Attributes in Standard OFBiz**
+*   **Relationships:**
+    *   Links to `Shipment`, `Delivery`, `Party`, `ShipmentMethodType`, `Facility`, `ContactMech`, `PostalAddress`, `TelecomNumber`, `StatusItem`, and `Uom` entities.
 
-*   `shipmentId` and `shipmentRouteSegmentId`: Primary keys identifying the shipment and the specific route segment.
-*   `deliveryId`: The ID of the delivery associated with this segment (if applicable).
-*   `originFacilityId`, `destFacilityId`: IDs of the origin and destination facilities.
-*   `originContactMechId`, `destContactMechId`: Contact information for origin and destination.
-*   `originTelecomNumberId`, `destTelecomNumberId`: Telecom contact information for origin and destination.
-*   `carrierPartyId`: The carrier responsible for this segment.
-*   `shipmentMethodTypeId`: The type of shipping method used.
-*   `carrierServiceStatusId`: The status of the carrier service for this segment.
-*   `carrierDeliveryZone`, `carrierRestrictionCodes`, `carrierRestrictionDesc`: Carrier-specific details about delivery zones and restrictions.
-*   `billingWeight`, `billingWeightUomId`: Weight used for billing and its unit of measurement.
-*   `actualTransportCost`, `actualServiceCost`, `actualOtherCost`, `actualCost`, `currencyUomId`: Cost details for this segment.
-*   `actualStartDate`, `actualArrivalDate`, `estimatedStartDate`, `estimatedArrivalDate`: Date and time information for the segment.
-*   `trackingIdNumber`, `trackingDigest`: Tracking details.
-*   `updatedByUserLoginId`, `lastUpdatedDate`: Information about the last update.
-*   `homeDeliveryType`, `homeDeliveryDate`: Details about home delivery if applicable.
-*   `thirdPartyAccountNumber`, `thirdPartyPostalCode`, `thirdPartyCountryGeoCode`: Information related to third-party accounts or locations.
-*   `upsHighValueReport`: Data for UPS high-value shipment reports.
+**HotWax Commerce Customizations**
 
-**HotWax Commerce Custom Extensions**
+HotWax Commerce extends this entity to include:
 
-HotWax Commerce has extended the `ShipmentRouteSegment` entity with the following additional fields:
+*   `codReturnLabelImage`, `codReturnLabelHtml`, `codCollectionAmount`: Handles Cash On Delivery (COD) scenarios.
+*   `carrierAccountNumber`: Stores the carrier's account number used for this segment.
+*   `isGenerateThirdPartyLabel`: Indicates if a third-party shipping label should be generated.
+*   `isTrackingRequired`: Specifies if tracking is mandatory for this segment.
+*   `referenceNumber`: Provides an additional reference number for the segment.
+*   `actualCarrierCode`: Stores the actual carrier code used.
 
-*   `codReturnLabelImage`, `codReturnLabelHtml`, `codCollectionAmount`: Fields related to Cash On Delivery (COD) handling.
-*   `carrierAccountNumber`: The carrier account number used for this segment.
-*   `carrierService`: The name of the specific carrier service.
-*   `isGenerateThirdPartyLabel`: Indicates if a third-party label should be generated.
-*   `isTrackingRequired`: Indicates if tracking is required for this segment.
-*   `referenceNumber`: A reference number for this segment.
-*   `actualCarrierCode`: The actual carrier code used.
-*   `labelImage`: A binary field to store the shipping label image
-*   `labelImageUrl`: A text field to store the URL of the shipping label image
-*   `labelHtml`: A text field to store the HTML representation of the shipping label
-*   `requestedDeliveryDate`: A date field to store the customer's requested delivery date
-*   `requestedDeliveryTime`: A time field to store the customer's requested delivery time
-*   `requestedShipMethTypeId`: An ID field to store the customer's requested shipping method type
-*   `deliveryWindow`: A floating-point field to store the delivery window in days or hours
-
-## Usage in HotWax Commerce**
-
-**Removal of ShipmentPackageRouteSeg:** HotWax Commerce has simplified the model by assuming one package per shipment. Therefore, they've removed the need for ShipmentPackageRouteSeg and moved relevant tracking and label information directly to the ShipmentRouteSegment entity.
-
-*   **ShipmentRouteSegment Extensions:** The added fields in `ShipmentRouteSegment` cater to HotWax-specific requirements, such as:
-    *   COD handling (`codReturnLabelImage`, `codReturnLabelHtml`, `codCollectionAmount`)
-    *   Third-party label generation (`isGenerateThirdPartyLabel`)
-    *   Explicit tracking requirement (`isTrackingRequired`)
-    *   Additional carrier and service details (`carrierAccountNumber`, `carrierService`, `actualCarrierCode`)
-    *   Customer-requested delivery preferences (`requestedDeliveryDate`, `requestedDeliveryTime`, `requestedShipMethTypeId`, `deliveryWindow`)
-    *   Label storage and retrieval (`labelImage`, `labelImageUrl`, `labelHtml`)
-
+**Usage in HotWax Commerce**
 
