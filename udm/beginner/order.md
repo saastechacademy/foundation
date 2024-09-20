@@ -4,7 +4,7 @@ This document provides an overview of the Order data model, focusing on its core
 
 ## Order Data Model Overview
 
-Example: John Doe places an order with ABC Organization, which includes two parts: one item shipped from Warehouse A to Location 1, and another item shipped from Warehouse B to Location 2.
+Example: John Doe places an order for two items with ABC Organization. ABC Organization also places an order for 50 new laptops.
 
 ### Entities
 #### 1. OrderHeader
