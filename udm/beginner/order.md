@@ -21,7 +21,7 @@ Example: John Doe places an order for two items with ABC Organization. ABC Organ
     },
     {
       "orderId": "ORD123",
-      "statusId": "ORDER_PLACED",
+      "statusId": "CREATED",
       "orderDate": "2024-09-19"
     }
   ]
@@ -48,7 +48,7 @@ Example: John Doe places an order for two items with ABC Organization. ABC Organ
       "orderPartSeqId": "00002",
       "customerPartyId": "PER123",
       "postalContactMechId": "10003",
-      "statusId": "PLACED",
+      "statusId": "CREATED",
       "partTotal": 1154.99
 
     },
@@ -58,7 +58,7 @@ Example: John Doe places an order for two items with ABC Organization. ABC Organ
       "vendorPartyId": "VEN456",
       "postalContactMechId": "10002",
       "telecomContactMechId": "10000",
-      "statusId": "PLACED",
+      "statusId": "CREATED",
       "partTotal": 64999.50
     }
   ]
@@ -140,7 +140,7 @@ Example: John Doe places an order for two items with ABC Organization. ABC Organ
         "orderPartSeqId": "00002",
         "customerPartyId": "PER123",
         "postalContactMechId": "10003",
-        "statusId": "PLACED",
+        "statusId": "CREATED",
         "partTotal": 1154.99,
         "OrderItem": {
           "orderItemSeqId": "00002",
@@ -165,7 +165,7 @@ Example: John Doe places an order for two items with ABC Organization. ABC Organ
 {
   "OrderHeader": { 
     "orderId": "ORD123",
-    "statusId": "ORDER_PLACED",
+    "statusId": "CREATED",
     "orderDate": "2024-09-19",
     "OrderPart": {
       "orderPartSeqId": "00001",
