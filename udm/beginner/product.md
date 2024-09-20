@@ -11,7 +11,7 @@ Example: ABC Organization manufactures different products, including a smartphon
 
 - **Key Attribute**: `productId`
 - **Example**: Lets create the relevant `FINISHED_GOOD` products. We will categorize them as virtual and varient as needed.
-```
+```json
 {
   "Product": [
     {
@@ -64,7 +64,7 @@ Example: ABC Organization manufactures different products, including a smartphon
 
 - **Key Attribute**: `productContentId`
 - **Example**: Lets create the needed online content for the products.
-```
+```json
 {
   "ProductContent": [
     {
@@ -94,7 +94,7 @@ Example: ABC Organization manufactures different products, including a smartphon
 
 - **Key Attribute**: `productPriceId`
 - **Example**: Lets create the relevant Product Pricing information.
-```
+```json
 {
   "ProductPrice": [
     {
@@ -131,7 +131,7 @@ Example: ABC Organization manufactures different products, including a smartphon
 
 - **Key Attributes**: `productId`, `dimensionTypeId`
 - **Example**: Lets create the relevant productDimensions information.
-```
+```json
 {
   "ProductDimension": [
     {
@@ -155,7 +155,7 @@ Example: ABC Organization manufactures different products, including a smartphon
 
 - **Key Attributes**: `productId`, `toProductId`, `productAssocTypeEnumId`, `fromDate`
 - **Example**: Lets create the relevant product associations between `VIRTUAL` and `VARIENT` products.
-```
+```json
 {
   "ProductAssoc": [
     {
@@ -180,7 +180,7 @@ Example: ABC Organization manufactures different products, including a smartphon
 }
 ```
 - **Example**: Lets create the relevant product associations for a `MARKT_PACKAGE` product.
-```
+```json
 {
   "ProductAssoc": [
     {

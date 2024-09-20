@@ -41,7 +41,7 @@ Example: John Doe works as an employee at ABC Organization, where he is also a c
     - The `contactMechId` field serves as the link to the `ContactMech` table.
 
 - **Example**: Lets create the relevant contactMechs.
-```
+```json
 {
   "ContactMech": [
     {
@@ -81,6 +81,17 @@ Example: John Doe works as an employee at ABC Organization, where he is also a c
         "postalCode": "12345"
       }
     }
+    {
+      "contactMechId": "10004",
+      "contactMechTypeEnumId": "POSTAL_ADDRESS",
+      "PostalAddress": {
+        "toName": "SoHo Store",
+        "attnName": "Home",
+        "address1": "123 Broome St",
+        "city": "New York",
+        "postalCode": "10012"
+      }
+    }
   ]
 }
 
@@ -90,7 +101,7 @@ Example: John Doe works as an employee at ABC Organization, where he is also a c
 - **Description**: Defines the purpose of a `ContactMech` in a specific context.
 - **Key Attributes**: `contactMechPurposeId`
 - **Examples**: Lets define the relevant purposes for the contactMechs.
-```
+```json
 {
   "ContactMechPurpose": [
     {
@@ -110,43 +121,43 @@ Example: John Doe works as an employee at ABC Organization, where he is also a c
 - **Description**: Used to associate a `Party` with a `ContactMech`.
 - **Key Attributes**: `partyId`, `contactMechId`, `contactMechPurposeId`, `fromDate`
 - **Examples**: Lets define the associations between Party and ContactMech.
-```
+```json
 {
   "PartyContactMech": [
     {
-      "partyId": "PER123"
-      "contactMechId": "10000"
-      "contactMechPurposeId": "WORK"
+      "partyId": "PER123",
+      "contactMechId": "10000",
+      "contactMechPurposeId": "WORK",
       "fromDate": "2010-01-01"
     },
     {
-      "partyId": "PER123"
-      "contactMechId": "10001"
-      "contactMechPurposeId": "WORK"
+      "partyId": "PER123",
+      "contactMechId": "10001",
+      "contactMechPurposeId": "WORK",
       "fromDate": "2010-01-01"
     },
     {
-      "partyId": "PER123"
-      "contactMechId":"10002"
-      "contactMechPurposeId": "WORK"
+      "partyId": "PER123",
+      "contactMechId":"10002",
+      "contactMechPurposeId": "WORK",
       "fromDate": "2010-01-01"
     },
     {
-      "partyId":"PER123"
-      "contactMechId": "10003"
-      "contactMechPurposeId": "HOME"
+      "partyId":"PER123",
+      "contactMechId": "10003",
+      "contactMechPurposeId": "HOME",
       "fromDate": "2005-01-01"
     },
     {
-      "partyId": "ORG456"
-      "contactMechId": "10000"
-      "contactMechPurposeId": "OFFICE"
+      "partyId": "ORG456",
+      "contactMechId": "10000",
+      "contactMechPurposeId": "OFFICE",
       "fromDate": "2010-01-01"
     },
     {
-      "partyId": "ORG456"
-      "contactMechId": "10002"
-      "contactMechPurposeId": "OFFICE"
+      "partyId": "ORG456",
+      "contactMechId": "10002",
+      "contactMechPurposeId": "OFFICE",
       "fromDate": "2000-01-01"
     }
   ]
