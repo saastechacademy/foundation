@@ -43,26 +43,7 @@ Example: John Doe orders a product from ABC Organization. The order is split int
 }
 ```
 
-#### 3. ShipmentItemSource
-
-- **Description**: Tracks the relationship between shipment items and their associated orders or returns.
-- **Key Attributes**: shipmentItemSeqId, orderId, orderItemSeqId
-- **Example**: Let's link the shipment items to their corresponding order items.
-
-```json
-{
-  "ShipmentItemSource": {
-    "shipmentId": "SHIP001",
-    "productId": "PROD20001",
-    "quantity": 1,
-    "orderId": "ORD789",
-    "orderItemSeqId": "00001",
-    "statusId": "PACKED"
-  }
-}
-```
-
-#### 4. ShipmentPackage
+#### 3. ShipmentPackage
 
 - **Description**: Represents the packaging of items in a shipment. Each package may contain one or more shipment items.
 - **Key Attributes**: `shipmentId`, `shipmentPackageSeqId`
@@ -79,7 +60,7 @@ Example: John Doe orders a product from ABC Organization. The order is split int
 }
 ```
 
-#### 5. ShipmentPackageContent
+#### 4. ShipmentPackageContent
 
 - **Description**: Tracks the contents of each package, associating each shipment item with the package it is contained in.
 - **Key Attributes**: `shipmentId`, `shipmentPackageSeqId`, `productId`
@@ -96,17 +77,17 @@ Example: John Doe orders a product from ABC Organization. The order is split int
 }
 ```
 
-#### 6. ShipmentRouteSegment
+#### 5. ShipmentRouteSegment
 
 - **Description**: Represents the route of the shipment, detailing the carrier, origin, and destination.
-- **Key Attributes**: `shipmentId`, `shipmentRouteSegmentId`
+- **Key Attributes**: `shipmentId`, `shipmentRouteSegmentSeqId`
 - **Example**: Let's create a route segment for the shipment.
 
 ```json
 {
   "ShipmentRouteSegment": {
     "shipmentId": "SHIP001",
-    "shipmentRouteSegmentId": "SEG001",
+    "shipmentRouteSegmentSeqId": "SEG001",
     "carrierPartyId": "CARRIER001",
     "shipmentMethodEnumId": "GROUND",
     "originPostalContactMechId": "LOC001",
@@ -115,21 +96,40 @@ Example: John Doe orders a product from ABC Organization. The order is split int
 }
 ```
 
-#### 7. ShipmentPackageRouteSeg
+#### 6. ShipmentPackageRouteSeg
 
 - **Description**: Represents the route of the shipment, detailing the carrier, origin, and destination.
-- **Key Attributes**: `shipmentId`, `shipmentRouteSegmentId`, `shipmentRouteSegmentSeqId`
+- **Key Attributes**: `shipmentId`, `shipmentPackageSeqId`, `shipmentRouteSegmentSeqId`
 - **Example**: Let's create a route segment for the shipment.
 
 ```json
 {
   "ShipmentPackageRouteSeg": {
     "shipmentId": "SHIP001",
-    "shipmentRouteSegmentId": "SEG001",
-    "shipmentRouteSegmentSeqId": "RTSEG001",
+    "shipmentRouteSegmentSeqId": "SEG001",
+    "shipmentPackageSeqId": "00001",
     "trackingCode": "4455667788",
     "labelImage": "/images/shippingLabel/4455667788.jpeg",
     "labelPrinted": "PRINTED"
+  }
+}
+```
+
+#### 7. ShipmentItemSource
+
+- **Description**: Tracks the relationship between shipment items and their associated orders or returns.
+- **Key Attributes**: shipmentItemSeqId, orderId, orderItemSeqId
+- **Example**: Let's link the shipment items to their corresponding order items.
+
+```json
+{
+  "ShipmentItemSource": {
+    "shipmentId": "SHIP001",
+    "productId": "PROD20001",
+    "quantity": 1,
+    "orderId": "ORD789",
+    "orderItemSeqId": "00001",
+    "statusId": "PACKED"
   }
 }
 ```
@@ -153,26 +153,26 @@ Example: John Doe orders a product from ABC Organization. The order is split int
       "productId": "PROD20001",
       "quantity": 1
     },
+    "ShipmentPackage": {
+      "shipmentPackageSeqId": "00001",
+      "weight": 5,
+      "weightUomId": "LBS",
+      "ShipmentPackageContent": {
+        "productId": "PROD20001",
+        "quantity": "1"
+      }      
+    },
     "ShipmentRouteSegment": {
-      "shipmentRouteSegmentId": "SEG001",
+      "shipmentRouteSegmentSeqId": "SEG001",
       "carrierPartyId": "CARRIER001",
       "shipmentMethodEnumId": "GROUND",
       "originPostalContactMechId": "LOC001",
-      "destPostalContactMechId": "LOC002",
-      "ShipmentPackage": {
+      "destPostalContactMechId": "LOC002", 
+      "ShipmentPackageRouteSeg": {
         "shipmentPackageSeqId": "00001",
-        "weight": 5,
-        "weightUomId": "LBS",
-        "ShipmentPackageContent": {
-          "productId": "PROD20001",
-          "quantity": "1"
-        },
-        "ShipmentPackageRouteSeg": {
-          "shipmentRouteSegmentSeqId": "RTSEG001",
-          "trackingCode": "4455667788",
-          "labelImage": "/images/shippingLabel/4455667788.jpeg",
-          "labelPrinted": "PRINTED"
-        }
+        "trackingCode": "4455667788",
+        "labelImage": "/images/shippingLabel/4455667788.jpeg",
+        "labelPrinted": "PRINTED"
       }
     }
   }
