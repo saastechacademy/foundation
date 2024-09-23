@@ -153,7 +153,6 @@ Example: John Doe orders a product from ABC Organization. The order is split int
       "productId": "PROD20001",
       "quantity": 1
     },
-    
     "ShipmentRouteSegment": {
       "shipmentRouteSegmentId": "SEG001",
       "carrierPartyId": "CARRIER001",
