@@ -68,19 +68,19 @@ Example: ABC Organization manufactures different products, including a smartphon
 {
   "ProductContent": [
     {
-      "productContentId": "CON100"
+      "productContentId": "CON100",
       "productId": "PROD10000",
       "productContentTypeEnumId": "IMAGE",
       "contentLocation": "/images/smartphone.jpg"
     },
     {
-      "productContentId": "CON200"
+      "productContentId": "CON200",
       "productId": "PROD10000",
       "productContentTypeEnumId": "DESCRIPTION",
       "contentLocation": "/descriptions/smartphone_en.txt"
     },
     {
-      "productContentId": "CON300"
+      "productContentId": "CON300",
       "productId": "PROD20000",
       "productContentTypeEnumId": "IMAGE",
       "contentLocation": "/images/laptop.jpg"
