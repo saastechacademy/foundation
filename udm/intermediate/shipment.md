@@ -125,8 +125,8 @@ Example: John Doe orders a product from ABC Organization. The order is split int
 {
   "ShipmentPackageRouteSeg": {
     "shipmentId": "SHIP001",
-    "shipmentRouteSegmentId": "",
-    "shipmentRouteSegmentSeqId": "",
+    "shipmentRouteSegmentId": "SEG001",
+    "shipmentRouteSegmentSeqId": "RTSEG001",
     "trackingCode": "4455667788",
     "labelImage": "/images/shippingLabel/4455667788.jpeg",
     "labelPrinted": "PRINTED"
