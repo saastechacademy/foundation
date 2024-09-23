@@ -173,8 +173,8 @@ Example: John Doe orders a product from ABC Organization. The order is split int
           "labelImage": "/images/shippingLabel/4455667788.jpeg",
           "labelPrinted": "PRINTED"
         }
-      },
-    },
+      }
+    }
   }
 }
 ```
