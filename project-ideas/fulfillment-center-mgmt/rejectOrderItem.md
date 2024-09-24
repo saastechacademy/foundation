@@ -4,17 +4,40 @@ The "Process Non-Kit Item Rejection" of the `rejectOrderItem`.
 
 ### Purpose
 
-This section of the code handles the rejection of individual order items that are not part of a kit (i.e., standalone products). The goal is to update the order item's association with the shipment group, adjust inventory levels, and log the rejection.
+This section of the code handles the rejection of individual order items that are not part of a kit (i.e., standalone products). The goal is to update the order item's association with the shipment group.
+
+**NOTE:** As compared to legacy code:
+* This serice is not responsible to adjust inventory levels, and log the rejection.
+* Does create or update records in OrderItemShipGroupAssoc entity.
+* An orderItem is part of one and only one OrderItemShipGroup. 
+
+**IN Parameters**
+* `orderId`
+* `orderItemSeqId`
+* `naFacilityId`
+
 
 ### Workflow
 
-1.   **Cancel Inventory Reservation:** The `cancelOrderItemInvResQty` service is called to cancel the corresponding inventory reservation for the orderItem quantity.
-2.   **Move to Rejected Ship Group (if applicable):** If the order item was originally associated with a non-NA facility, it's moved to a ship group associated with the `naFacilityId` (a designated facility for rejected items).
-3.   **Create Order Facility Change:** An `OrderFacilityChange` record is created to log the change in facility for the rejected item.
-4.   **Log External Fulfillment:** The `createUpdateExternalFulfillmentOrderItem` service is called to create or update an external fulfillment log entry, marking the item as rejected.
-5.   **Create Order History:** An `OrderHistory` record is created with the event type `ITEM_REJECTED` to track the rejection in the order's history.
-6.  **Record Inventory Variance:** If the `recordVariance` flag is set to "Y," and the rejection reason requires it, an inventory variance is recorded for the rejected quantity. This helps track inventory adjustments due to the rejection.
-7.  **Set Auto Cancel Date:** If the `setAutoCancelDate` flag is set to "Y," the service calculates and sets an auto-cancel date for the order item based on the product store's configuration. This is typically used to automatically cancel orders that haven't been paid for within a certain timeframe.
+1.  **Cancel Inventory Reservation:** Call `cancelOrderItemInvResQty(orderId, orderItemSeqId, shipGroupSeqId, cancelQantity)` service is called to cancel the corresponding inventory reservation for the orderItem quantity. The called service will canceel reservation for marketing package and all its components. 
+2.  **Cancel the related PickList item:** Get `picklistItems` for `orderId` `orderItemSeqId`. 
+3.  **Move to Rejected Ship Group:** Move the orderItem to a ship group associated with the `naFacilityId` (a designated facility for rejected items). Check if OrderItemShipGroup exits for the `naFacilityId` else create one and then move `orderItem` to this ship group. 
+4.  **Log External Fulfillment:** The `createUpdateExternalFulfillmentOrderItem` service is called to create or update an external fulfillment log entry, marking the item as rejected.
+5.  **Create Order History:** An `OrderHistory` record is created with the event type `ITEM_REJECTED` to track the rejection in the order's history.
+6.  **Create Order Facility Change:** An `OrderFacilityChange` record is created to log the change in facility for the rejected item.
+
+### Related services are responsible for the following
+
+7.  **Record Inventory Variance:** If the `recordVariance` flag is set to "Y," and the rejection reason requires it, an inventory variance is recorded for the rejected quantity. This helps track inventory adjustments due to the rejection.
+8.  **Set Auto Cancel Date:** If the `setAutoCancelDate` flag is set to "Y," the service calculates and sets an auto-cancel date for the order item based on the product store's configuration. This is typically used to automatically cancel orders that haven't been paid for within a certain timeframe.
+
+### Bundle product OrderItem
+
+In case the OrderItem is for budle product. During the fulfillment process, PRODUCT_COMPONENT of the budles products are reserved `OrderItemShipGrpInvRes`,  picked `PickListItem` and shipped `ShipmentItem`.
+
+
+
+
 
 ### Key Points
 
@@ -22,25 +45,8 @@ This section of the code handles the rejection of individual order items that ar
 *   **Inventory and Order Management:** It handles inventory reservation cancellations, facility changes, and order history updates.
 *   **OrderFacilityChange:** Record changes between an orderItem and its fulfillment facilityit. It might trigger a need to re-evaluate the order's fulfillment at the current facility.
 
-```
-OrderFacilityChange.
-if (naFacilityId.equals(orderShipGroup.get("oisgFacilityId"))) {
-                        serviceCtx.put("orderId", orderId);
-                        serviceCtx.put("orderItemSeqId", orderItemSeqId);
-                        serviceCtx.put("fromFacilityId", oisgFacilityId);
-                        serviceCtx.put("facilityId", naFacilityId);
-                        serviceCtx.put("shipGroupSeqId", shipGroupSeqId);
-                        serviceCtx.put("changeReasonEnumId", "NOT_IN_STOCK"); // deduce based on rejection reason. Or just map to rejection reason.
-                        StringBuilder comment = new StringBuilder("[Store Rejected] ");
-                        if(facility != null && UtilValidate.isNotEmpty(facility.getString("facilityName")))
-                            comment.append("[Rejected from ").append(facility.getString("facilityName")).append("]");
-                        serviceCtx.put("comments", comment.toString());
-                        serviceCtx.put("changeUserLogin", userLogin.getString("userLoginId"));
-                        serviceCtx.put("changeDatetime", UtilDateTime.nowTimestamp());
-                        serviceCtx.put("userLogin", userLogin);
-                        serviceCtx.put("routerUserLogin", userLogin.getString("userLoginId"));
-                        serviceResult = dispatcher.runSync("createOrderFacilityChange", serviceCtx);
-```
+
+
 
 ### **OrderHistory**
   **Enumerations**
