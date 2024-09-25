@@ -1,10 +1,7 @@
 ## rejectOrderItem
 
-The "Process Non-Kit Item Rejection" of the `rejectOrderItem`.
-
 ### Purpose
-
-This section of the code handles the rejection of individual order items that are not part of a kit (i.e., standalone products). The goal is to update the order item's association with the shipment group.
+Move the OrderItem from assigned fulfillment facility to brokering queue or reject orderItem queue or similar. 
 
 **NOTE:** As compared to legacy code:
 * This serice is not responsible to adjust inventory levels, and log the rejection.

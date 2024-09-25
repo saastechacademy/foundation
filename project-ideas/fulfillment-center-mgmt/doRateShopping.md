@@ -9,11 +9,10 @@ The doRateShopping service's main objective is to identify the most suitable shi
 **Detailed Implementation**
 
 1.  **Input and Initialization:**
+    *   Shipment data JSON.
 
 2.  **Shipment and Order Data Retrieval:**
-    *   Fetches the `Shipment` entity using `shipmentId`.
-    *   Gets the `productStoreId` from the associated `OrderHeader`.
-    *   Extracts the `facilityId` (origin) from the shipment.
+    *   doRateShopping has no access to OMS database.
 
 3.  **Shipment Route Segment and Configuration Check:**
     *   Checks if the carrier and shipment method are configured for the product store. 
@@ -34,7 +33,12 @@ The doRateShopping service's main objective is to identify the most suitable shi
     *   Selects the cheapest method.
 
 6.  **Return**
-    *   return carrierPartyId, shipmentMethodTypeId, shippingRate 
+    *   Data elements that align with ShipmentPackageRouteSegment entity.  
 
 
+
+NOTE:
+The in payload is Shipment JSON with all the details needed to get the Shipping label. A Shipment may have one or more Packages. It's possible that the carrier does not support more than one package per shipment. In that case, the get shipping label for each package route sagment. 
+
+I think we should model the input JSON on lines of the Shipment JSON that aggregators like ShipStation will accept. 
 
