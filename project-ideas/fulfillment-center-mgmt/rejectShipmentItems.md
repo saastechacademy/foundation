@@ -27,9 +27,8 @@ Level 2: Set of ShipmentItems based on filter condition that reject shipmentItem
 To reject a ShipmentItem, the Shipmemnt should be in INPUT status.
 
 ### Workflow
-*   Delete OrderShipment
-*   Delete ShipmentPackageContent
-*   Delete ShipmentItem
-*   Call rejectOrderItem service
+*   For each ShipmentItem
+    *   Call rejectOrderItem service
+    *   Call rejectOrderItem service
 
 
