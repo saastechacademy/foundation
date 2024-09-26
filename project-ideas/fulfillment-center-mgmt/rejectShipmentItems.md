@@ -29,6 +29,4 @@ To reject a ShipmentItem, the Shipmemnt should be in INPUT status.
 ### Workflow
 *   For each ShipmentItem
     *   Call rejectOrderItem service
-    *   Call rejectOrderItem service
-
 
