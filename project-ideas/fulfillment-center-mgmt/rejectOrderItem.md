@@ -4,7 +4,7 @@
 Move the OrderItem from assigned fulfillment facility to brokering queue or reject orderItem queue or similar. 
 
 **NOTE:** As compared to legacy code:
-* This serice is not responsible to adjust inventory levels, and log the rejection.
+* This service is not responsible to adjust inventory levels, and log the rejection.
 * Does create or update records in OrderItemShipGroupAssoc entity.
 * An orderItem is part of one and only one OrderItemShipGroup. 
 
@@ -12,6 +12,9 @@ Move the OrderItem from assigned fulfillment facility to brokering queue or reje
 * `orderId`
 * `orderItemSeqId`
 * `naFacilityId`
+
+**OUT Parameters** 
+* List of cancelled Inventory reservations. This data can be used for recording inventory variance. 
 
 
 ### Workflow
@@ -31,6 +34,7 @@ Move the OrderItem from assigned fulfillment facility to brokering queue or reje
 ### Bundle product OrderItem
 
 In case the OrderItem is for budle product. During the fulfillment process, PRODUCT_COMPONENT of the budles products are reserved `OrderItemShipGrpInvRes`,  picked `PickListItem` and shipped `ShipmentItem`.
+
 
 
 
