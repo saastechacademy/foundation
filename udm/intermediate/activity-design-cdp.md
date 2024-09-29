@@ -15,7 +15,8 @@ Learning objectives
 You are part of a team developing CDP. You are assigned three tasks. 
 1. Design Customer data model.
 2. Prepare mapping for Customer model on Shopify with your Customer model.
-3. Write pseudo code for parsing Shopify API response and then storing it in UDM/OFBiz model
+3. Write pseudo code for parsing Shopify API response and then storing it in UDM/OFBiz model.
+4. Test your pseudo code for all the sample JSON provided in `shopify-samples/customers-json` folder
 
 References: 
 https://shopify.dev/docs/api/admin-rest/2024-01/resources/customer
