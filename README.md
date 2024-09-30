@@ -68,19 +68,6 @@ Build skills in following categories
 4. https://www.moqui.org/m/docs/framework/IDE+Setup/IntelliJ+IDEA+Setup
 5. https://www.youtube.com/watch?v=mxToh2rX7NY
 
-### Scaling
-1. https://github.com/saastechacademy/foundation/blob/main/udm/intermediate/order.md
-2. https://github.com/saastechacademy/foundation/blob/main/udm/intermediate/order-status.md
-3. https://github.com/saastechacademy/foundation/blob/main/udm/intermediate/activity-design-cdp.md
-4. https://github.com/saastechacademy/foundation/blob/main/udm/intermediate/activity-design-pim.md
-5. https://github.com/saastechacademy/foundation/blob/main/udm/intermediate/activity-design-order.md
-6. https://github.com/saastechacademy/foundation/blob/main/udm/intermediate/activity-design-fulfillment.md
-
-
-## Must Read Books
-First five chapters, Start from Vol. 1, then go to Vol. 3:
-1. The Data Model Resource Book, Vol. 1: A Library of Universal Data Models for All Enterprises
-2. The Data Model Resource Book, Vol. 3: Universal Patterns for Data Modeling
 
 ## Official Documentation 
 1. https://docs.hotwax.co/documents/v/documents-1
