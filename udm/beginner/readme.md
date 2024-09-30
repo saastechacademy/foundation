@@ -10,7 +10,8 @@
 *  https://github.com/saastechacademy/foundation/blob/main/udm/beginner/product-types.md
 *  https://github.com/saastechacademy/foundation/blob/main/udm/beginner/product-feature.md
 *  https://github.com/saastechacademy/foundation/blob/main/udm/beginner/product-assoc.md
-*  https://github.com/saastechacademy/foundation/blob/main/udm/beginner/product-category-explained.md
+*  https://github.com/saastechacademy/foundation/blob/main/udm/beginner/product-category-type.md
+*  https://github.com/saastechacademy/foundation/blob/main/udm/beginner/product-category.md
 
 ### Inventory
 
