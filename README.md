@@ -33,16 +33,6 @@ Build skills in following categories
 *  https://github.com/saastechacademy/foundation/tree/main/udm
 *  https://github.com/saastechacademy/foundation/tree/main/ubpl
 
-### Data Modeling activities 
-
-* https://github.com/saastechacademy/foundation/blob/main/udm/intermediate/activity-design-cdp.md
-* https://github.com/saastechacademy/foundation/blob/main/udm/intermediate/activity-design-fulfillment.md
-* https://github.com/saastechacademy/foundation/blob/main/udm/intermediate/activity-design-order.md
-* https://github.com/saastechacademy/foundation/blob/main/udm/intermediate/activity-design-pim.md
-
-**Resources**
-* https://github.com/saastechacademy/foundation/tree/main/udm/intermediate/shopify-samples
-
 ## UDM Basics
 1. https://github.com/saastechacademy/foundation/blob/main/udm/beginner/party.md
 2. https://github.com/saastechacademy/foundation/blob/main/udm/beginner/contact-mech.md
@@ -54,6 +44,16 @@ Build skills in following categories
 8. https://github.com/saastechacademy/foundation/blob/main/udm/beginner/activity.md#setup-up-company-product-store-and-catalog
 9. https://github.com/saastechacademy/foundation/blob/main/udm/beginner/order.md
 10. https://github.com/saastechacademy/foundation/blob/main/udm/beginner/activity.md#order
+
+### Data Modeling activities 
+
+* https://github.com/saastechacademy/foundation/blob/main/udm/intermediate/activity-design-cdp.md
+* https://github.com/saastechacademy/foundation/blob/main/udm/intermediate/activity-design-fulfillment.md
+* https://github.com/saastechacademy/foundation/blob/main/udm/intermediate/activity-design-order.md
+* https://github.com/saastechacademy/foundation/blob/main/udm/intermediate/activity-design-pim.md
+
+**Resources**
+* https://github.com/saastechacademy/foundation/tree/main/udm/intermediate/shopify-samples
 
 ## SQL Assignments
 1. https://github.com/saastechacademy/foundation/blob/main/udm/intermediate/sql-assignment-1.md
