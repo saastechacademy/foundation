@@ -442,3 +442,63 @@ https://github.com/hotwax/mantle-shipstation
 https://github.com/hotwax/mantle-shipengine
 
 
+```xml
+    <mantle.party.PartySetting partyId="ORG_ZIZI_RETAIL" partySettingTypeId="ValidateAddressGatewayConfigId" settingValue="SHIPPO_DEMO"/>
+    <mantle.party.PartySetting partyId="ORG_ZIZI_RETAIL" partySettingTypeId="DefaultShipmentGatewayConfigId" settingValue="SHIPPO_DEMO"/>
+```
+
+This data defines party-specific settings for address validation and default shipment gateway. Let's break down each part:
+
+*   `mantle.party.PartySetting`: This entity is used to store various settings and preferences for different parties in Moqui. In this case, it's configuring settings for a party with `partyId = "ORG_ZIZI_RETAIL"`. This represents a retail organization the demo data.
+
+*   `partySettingTypeId`: This field indicates the type of setting being configured. There are two settings being defined here:
+
+    *   `ValidateAddressGatewayConfigId`: This setting specifies which shipping gateway configuration should be used for address validation. The `settingValue = "SHIPPO_DEMO"` indicates that the "SHIPPO_DEMO" `ShippingGatewayConfig` (which we discussed earlier) should be used for validating addresses for this party.
+
+    *   `DefaultShipmentGatewayConfigId`: This setting determines the default shipping gateway configuration to be used for this party. Again, `settingValue = "SHIPPO_DEMO"` means that Shippo will be the default gateway for shipments associated with this party.
+
+*   Additional context:
+    *   These settings will be used as defaults if there are no specific settings defined at the store level (referring to a retail store or online store).
+    *   The screens where a store or vendor is not explicitly specified, the "Owner Party" (likely the party who owns or manages the Moqui instance) must be set to use these settings.
+
+
+
+```
+ <mantle.product.store.ProductStore productStoreId="POPC_DEFAULT">
+        <shipOptions carrierPartyId="_NA_" shipmentMethodEnumId="ShMthGround" sequenceNum="1"/>
+        <shipOptions carrierPartyId="USPS" shipmentMethodEnumId="ShMthGround" sequenceNum="5"/>
+        <shipOptions carrierPartyId="USPS" shipmentMethodEnumId="ShMthThirdDay" sequenceNum="6"/>
+        <shipOptions carrierPartyId="USPS" shipmentMethodEnumId="ShMthNextDay" sequenceNum="7"/>
+        <shipOptions carrierPartyId="UPS" shipmentMethodEnumId="ShMthGround" sequenceNum="11"/>
+        <shipOptions carrierPartyId="UPS" shipmentMethodEnumId="ShMthThirdDay" sequenceNum="12"/>
+        <shipOptions carrierPartyId="UPS" shipmentMethodEnumId="ShMthSecondDay" sequenceNum="13"/>
+        <shipOptions carrierPartyId="UPS" shipmentMethodEnumId="ShMthNextDay" sequenceNum="14"/>
+        <shipOptions carrierPartyId="FedEx" shipmentMethodEnumId="ShMthGround" sequenceNum="21"/>
+        <shipOptions carrierPartyId="FedEx" shipmentMethodEnumId="ShMthThirdDay" sequenceNum="22"/>
+        <shipOptions carrierPartyId="FedEx" shipmentMethodEnumId="ShMthSecondDay" sequenceNum="23"/>
+        <shipOptions carrierPartyId="FedEx" shipmentMethodEnumId="ShMthNextDay" sequenceNum="24"/>
+        <shippingGateways carrierPartyId="_NA_" shippingGatewayConfigId="NA_LOCAL"/>
+        <shippingGateways carrierPartyId="USPS" shippingGatewayConfigId="SHIPPO_DEMO"/>
+        <shippingGateways carrierPartyId="UPS" shippingGatewayConfigId="SHIPPO_DEMO"/>
+        <shippingGateways carrierPartyId="FedEx" shippingGatewayConfigId="SHIPPO_DEMO"/>
+    </mantle.product.store.ProductStore>
+```
+This XML snippet demonstrates how to configure shipping options and gateway preferences for a specific product store in Moqui. It provides a template for customizing shipping behavior at the store level.
+
+Here's a breakdown of the data:
+
+*   `mantle.product.store.ProductStore`: This entity represents a product store, which could be a physical retail store or an online store. This configuration is for a store with `productStoreId = "POPC_DEFAULT"`, likely a default or primary store in the demo data.
+
+*   `shipOptions`: This element is used to specify the preferred order of shipping methods for different carriers. Each `shipOptions` entry includes:
+    *   `carrierPartyId`: The ID of the carrier (or "_NA_" for any carrier).
+    *   `shipmentMethodEnumId`: The ID of the shipment method type from the `ShipmentMethod` enumeration.
+    *   `sequenceNum`: A number to determine the order in which the shipping methods should be displayed or considered for this store. Lower numbers have higher priority.
+
+    For example, `shipOptions carrierPartyId="USPS" shipmentMethodEnumId="ShMthGround" sequenceNum="5"` indicates that USPS Ground should have a sequence number of 5 for this store.
+
+*   `shippingGateways`: This element associates specific carriers with shipping gateway configurations for this store. Each `shippingGateways` entry includes:
+    *   `carrierPartyId`: The ID of the carrier (or "_NA_" for any carrier).
+    *   `shippingGatewayConfigId`: The ID of the `ShippingGatewayConfig` to use for this carrier.
+
+    For instance, `shippingGateways carrierPartyId="FedEx" shippingGatewayConfigId="SHIPPO_DEMO"` means that FedEx shipments for this store should be processed through the "SHIPPO_DEMO" gateway configuration.
+
