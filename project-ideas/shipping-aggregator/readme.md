@@ -157,12 +157,12 @@ Here's sample data to setup FedEx gateway and a detailed system setup guide:
 **Important Note**
 We will copy over limited set entity definition and services from Moqui UDM and USL. 
 
-Useful links
+### Useful links
 
-https://github.com/moqui/mantle-shippo/tree/master
-https://github.com/hotwax/mantle-fedex
-https://github.com/hotwax/mantle-shipstation
-https://github.com/hotwax/mantle-shipengine
+*   https://github.com/moqui/mantle-shippo/tree/master
+*   https://github.com/hotwax/mantle-fedex
+*   https://github.com/hotwax/mantle-shipstation
+*   https://github.com/hotwax/mantle-shipengine
 
 
 ```xml
