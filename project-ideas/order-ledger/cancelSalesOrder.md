@@ -57,7 +57,7 @@ The new cancel order API and services would be implemented in the Moqui framewor
      - createOrderNote
      - cancelOrderItemInvResQty
        * cancelOrderItemShipGrpInvRes
-         - reateInventoryItemDetail
+         - createInventoryItemDetail
    * changeOrderItemStatus
      - checkOrderItemStatus (seca) (OOTB)
        * changeOrderStatus
@@ -76,7 +76,7 @@ The new cancel order API and services would be implemented in the Moqui framewor
      * rejectTransferOrderItem (seca) (Custom)
      * ~~adjustAtpOnOtherPO~~ (seca) (Custom for PO)
      * checkOrderItemAndCapturePayament (Custom): Called on item completion.
-     * onChangeOrderItemStatus
+     * ~~onChangeOrderItemStatus~~(seca) This is a subscriber service, so irrelevant as of now.
      * createOrderIndex
      * ~~checkEmailAddressAndSendOrderCancelledNotification~~
      * ~~completeKitProduct~~ (On item completion)
