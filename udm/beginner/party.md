@@ -113,6 +113,3 @@ Example: John Doe works as an employee at ABC Organization, where he is also a c
   }
 }
 ```
-
-
-
