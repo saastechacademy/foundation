@@ -82,7 +82,8 @@ Additionally, implementation should also consider consuming ShopifyFulfillmentAc
      - externalId
 
 #### Related Shopify Connector Changes
-Remove aggregatedLineItemMap from *co.hotwax.shopify.fulfillment.ShopifyFulfillmentServices.create#Fulfillment* service as new implementation would provide aggregated quantity by shopifyLineItemId.
+1. Remove aggregatedLineItemMap from *co.hotwax.shopify.fulfillment.ShopifyFulfillmentServices.create#Fulfillment* service as new implementation would provide aggregated quantity by shopifyLineItemId.
+2. Since we don't need OMS orderId and orderItemSeqId anymore remove it's references in co.hotwax.shopify.ShopifyFulfillmentServices.generate#ShopifyFulfillmentAckFeed.
 
 ### Digital Order Item Fulfillment Sync Design
 To further simplify various aspects of fulfillment like sync with external systems, reporting, reconiciliation, we should create dummy shipments in shipped status for digital order items as soon as they are marked as completed. Once that is implemented there won't be a need to design a separate fulfillment sync flow for digital order items as above design should be able to accomodate it.
