@@ -86,3 +86,7 @@ Remove aggregatedLineItemMap from *co.hotwax.shopify.fulfillment.ShopifyFulfillm
 
 ### Digital Order Item Fulfillment Sync Design
 To further simplify various aspects of fulfillment like sync with external systems, reporting, reconiciliation, we should create dummy shipments in shipped status for digital order items as soon as they are marked as completed. Once that is implemented there won't be a need to design a separate fulfillment sync flow for digital order items as above design should be able to accomodate it.
+
+### Consume ShopifyFulfillmentAckFeed
+1. Define a new SystemMessageType - *ShopifyFulfillmentAckFeed* to receive file from SFTP, store it locally and consume it.
+2. Implement *consume#ShopifyFulfillmentAckFeed* consumeService that would iterate through json maps in the feed and update shipment.externalId from externalFulfillmentId in the map. 
