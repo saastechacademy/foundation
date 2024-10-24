@@ -40,14 +40,49 @@ Additionally, implementation should also consider consuming ShopifyFulfillmentAc
 3. Fetch shopId from SystemMessageRemote.remoteId
 4. Use shopId and parameters as available from SystemMessage.messageText to fetch shipmentIds from *ShopifyShopOrderShipmentAndStatus* view, view details defined in next section.
 5. Initiate a local file for the json feed.
-6. Iterate thru shipmentIds to prepare shipmentDetail map from *OrderShipmentDetail* view, view details defined in next section. shipmentDetails map should have following information,
+6. Iterate thru shipmentIds, fetch ShipmentRouteSegment for carrierPartyId and trackingNumber, prepare shipmentDetail map from *OrderShipmentDetail* view, view details defined in next section. shipmentDetails map should have following information,
+   - shipmentId
    - shopifyOrderId
    - lineItems
      - shopifyLineItemId
-     - quantity
+     - quantity (aggregated by shopifyLineItemId)
    - trackingNumber
    - trackingUrl - fetch from SystemProperty and append tracking number to prepare this url
    - carrier
    - notifyCustomer - fetch from configuration
-7. Write the JSON to the feed file
-8. If *sendSmrId* SystemMessageTypeParameter is defined, queue *SendOMSPhysicalFulfillmentFeed* SystemMessage
+7. In step 6 make sure to handle kits/bundles by fetching distinct records from OrderShipmentDetail view by orderId, orderItemSeqId, shipmentId.
+8. Write the JSON to the feed file
+9. If *sendSmrId* SystemMessageTypeParameter is defined, queue *SendOMSPhysicalFulfillmentFeed* SystemMessage
+
+#### View Entities
+1. ShopifyShopOrderShipmentAndStatus
+   - ShopifyShopOrder
+     - shopId
+     - orderId
+     - shopifyOrderId
+  - Shipment
+    - shipmentId
+    - shipmentTypeId
+    - statusId
+    - primaryOrderId (view link)
+    - externalId
+  - ShipmentStatus
+    - shipmentId
+    - statusId
+    - statusDate
+2. OrderShipmentDetail
+   - OrderShipment
+     - orderId
+     - orderItemSeqId
+     - shipmentId
+     - quantity
+   - OrderItem
+     - orderId
+     - orderItemSeqId
+     - externalId
+
+#### Related Shopify Connector Changes
+Remove aggregatedLineItemMap from *co.hotwax.shopify.fulfillment.ShopifyFulfillmentServices.create#Fulfillment* service as new implementation would provide aggregated quantity by shopifyLineItemId.
+
+### Digital Order Item Fulfillment Sync Design
+To further simplify various aspects of fulfillment like sync with external systems, reporting, reconiciliation, we should create dummy shipments in shipped status for digital order items as soon as they are marked as completed. Once that is implemented there won't be a need to design a separate fulfillment sync flow for digital order items as above design should be able to accomodate it.
