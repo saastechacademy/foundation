@@ -402,26 +402,26 @@ The new cancel order API and services would be implemented in the Moqui framewor
      - createOrderNote
      - cancelOrderItemInvResQty
        * cancelOrderItemShipGrpInvRes
-         - reateInventoryItemDetail
+         - createInventoryItemDetail
    * changeOrderItemStatus
      - checkOrderItemStatus (seca) (OOTB)
        * changeOrderStatus
          - ~~releaseOrderPayments~~ (seca) (Custom): OMS isn’t responsible for payment processing, so this service shouldn’t be needed.
          - ~~processRefundReturnForReplacement~~ (seca) (OOTB): This service too is irrelevant; OMS isn’t an RMA and doesn’t process refunds and replacements.
          - ~~onPOCancelAdjustAtpOnOtherPo~~ (seca) (custom for PO)
-         - onChangeOrderStatus
+         - ~~onChangeOrderStatus~~
          - ~~cancelOrderOnMarketplace~~ (Custom)
          - createOrderIndex
          - ~~checkEmailAddressAndSendOrderCompleteNotification~~
-         - sendOrderCancelNotification (Later)
-         - sendOrderCompleteNotification (Later)
-           * createOrderNotificationLog
-         - sendOrderSmsNotification (Later)
+         - ~~sendOrderCancelNotification~~ (Later) We are not a notification system anymore.
+         - ~~sendOrderCompleteNotification~~ (Later) We are not a notification system anymore.
+           * ~~createOrderNotificationLog~~ We are not a notification system anymore.
+         - ~~sendOrderSmsNotification~~ (Later) We are not a notification system anymore.
      * checkAndRejectOrderItem (seca) (Custom)
      * rejectTransferOrderItem (seca) (Custom)
      * ~~adjustAtpOnOtherPO~~ (seca) (Custom for PO)
-     * checkOrderItemAndCapturePayament (Custom): Called on item completion.
-     * onChangeOrderItemStatus
+     * ~~checkOrderItemAndCapturePayament (Custom)~~: Called on item completion. Not needed as we are not a payment gateway.
+     * ~~onChangeOrderItemStatus~~
      * createOrderIndex
      * ~~checkEmailAddressAndSendOrderCancelledNotification~~
      * ~~completeKitProduct~~ (On item completion)
@@ -431,10 +431,10 @@ The new cancel order API and services would be implemented in the Moqui framewor
 #### Moqui OMS API
 
 **cancelSalesOrderItem**  
-We will assume that order items would always be exploded in OMS and implement the logic accordingly. Given that order item quantity would always be 1 so we don't need quantity as an input. We also don't need to calculate cancelQuantity and identify order items explicitly. We could simply validate order item status and update status and cancelQuantity fields on order item. Refer OFBiz OrderServices.cancelOrderItem service for relevant code and implement the new service as described below.
+We will consider that order items would always be exploded in OMS and implement the logic accordingly. Given that order item quantity would always be 1 so we don't need quantity as an input. We also don't need to calculate cancelQuantity and identify order items explicitly. We could simply validate order item status and update status and cancelQuantity fields on order item. Refer OFBiz OrderServices.cancelOrderItem service for relevant code and implement the new service as described below.
 1. Input
    - orderId
-   - orderItemSequenceId
+   - orderItemSeqId
    - shipGroupSeqId
    - reason
    - comment
@@ -448,10 +448,25 @@ We will assume that order items would always be exploded in OMS and implement th
 9. Call changeSalesOrderItemStatus inline with relevant input. A new service to be implemented, refer implementation details below.
 
 **cancelOrderItemInvResQty**  
-TBD
+Considering that order items would always be exploded and each order item would represent a single quantity, there should ideally only be one associated inventory reservation record to be removed,
+1. Input
+   - orderId
+   - orderItemSequId
+   - shipGroupSeqId
+2. Find OrderItemShipGroupInvRes records (ideally only one should be returned) and delete them.
+3. Call createInventoryItemDetail inline with relevant input.  This can be a simple entity auto operation.
 
 **changeSalesOrderItemStatus**  
-TBD
+1. Input
+   - orderId
+   - orderItemSeqId
+   - statusId
+   - changeReason
+   - statusDateTime
+2. Validate order item status, log error if status is completed or canceled.
+3. Validate StatusValidChange, a helper method _isValidStatusChange_ could be implemented to return boolean value.
+4. update OrderItem.statusId.
+5. Call createOrderStatus inline with relevant input. This can be a simple entity auto operation.
 
 #### OMS/Shopify Middleware (Accelerator)
 In the process of implementing this API we will start designing and implementing a middleware component to map and transform Shopify order data into OMS order schema. A few of the desired capabilities of this component in context of this API would be as follows,
