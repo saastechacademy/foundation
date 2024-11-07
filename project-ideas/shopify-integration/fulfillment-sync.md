@@ -28,6 +28,7 @@ Additionally, implementation should also consider consuming ShopifyFulfillmentAc
      - systemMessageRemoteId*
      - shipmentId
      - orderId
+     - includeDigitalItems (defaults to **Y**)
      - fromDate
      - thruDate
    - If fromDate in empty fetch last successful *GenerateOMSPhysicalFulfillmentFeed* SystemMessage and if found set it's processedDate as fromDate
@@ -60,16 +61,16 @@ Additionally, implementation should also consider consuming ShopifyFulfillmentAc
      - shopId
      - orderId
      - shopifyOrderId
-  - Shipment
-    - shipmentId
-    - shipmentTypeId
-    - statusId
-    - primaryOrderId (view link)
-    - externalId
-  - ShipmentStatus
-    - shipmentId
-    - statusId
-    - statusDate
+   - Shipment
+     - shipmentId
+     - shipmentTypeId
+     - statusId
+     - primaryOrderId (view link)
+     - externalId
+   - ShipmentStatus
+     - shipmentId
+     - statusId
+     - statusDate
 2. OrderShipmentDetail
    - OrderShipment
      - orderId
@@ -80,6 +81,11 @@ Additionally, implementation should also consider consuming ShopifyFulfillmentAc
      - orderId
      - orderItemSeqId
      - externalId
+     - productId
+   - Product
+     - productTypeId
+   - ProductType
+     - isDigital
 
 #### Related Shopify Connector Changes
 1. Remove aggregatedLineItemMap from *co.hotwax.shopify.fulfillment.ShopifyFulfillmentServices.create#Fulfillment* service as new implementation would provide aggregated quantity by shopifyLineItemId.
