@@ -430,8 +430,8 @@ The new cancel order API and services would be implemented in the Moqui framewor
     
 #### Moqui OMS API
 
-**cancelSalesOrderItem**  
-We will consider that order items would always be exploded in OMS and implement the logic accordingly. Given that order item quantity would always be 1 so we don't need quantity as an input. We also don't need to calculate cancelQuantity and identify order items explicitly. We could simply validate order item status and update status and cancelQuantity fields on order item. Refer OFBiz OrderServices.cancelOrderItem service for relevant code and implement the new service as described below.
+**cancel#SalesOrderItem**  
+We will consider that order items would always be exploded in OMS and implement the logic accordingly. Given that order item quantity would always be 1 so we don't need quantity as an input. We also don't need to calculate cancelQuantity and identify order items explicitly. We could simply validate order item status and update status and cancelQuantity fields on order item. Refer OFBiz OrderServices.cancel#OrderItem service for relevant code and implement the new service as described below.
 1. Input
    - orderId
    - orderItemSeqId
@@ -440,23 +440,23 @@ We will consider that order items would always be exploded in OMS and implement 
    - comment
 2. Validate order item status, if already canceled or completed log error.
 3. Update OrderItem.cancelQuantity and OrderItemShipGroupAssoc.cancelQuantity.
-4. Call createOrderItemChange inline with relevant input. This can be a simple entity auto operation.
-5. Call createOrderNote inline with relevant input. This can be a simple entity auto operation.
-6. Call cancelOrderItemInvResQty inline with relevant input. A new service to be implemented, refer implementation details below.
-7. Call getOrderItemSalesTaxTotal inline and if taxTotal is greater than zero, call createOrderAdjustment inline with relevant input. Refer ShopifyOrderServices.cancelShopifyOrderItem method at L2943.
-8. Call createCommunicationEvent inline with relevant input. Refer ShopifyOrderServices.cancelShopifyOrderItem method. This can be a simple entity auto operation.
-9. Call changeSalesOrderItemStatus inline with relevant input. A new service to be implemented, refer implementation details below.
+4. Call create#OrderItemChange inline with relevant input. This can be a simple entity auto operation.
+5. Call create#OrderNote inline with relevant input. This can be a simple entity auto operation.
+6. Call cancel#OrderItemInvResQty inline with relevant input. A new service to be implemented, refer implementation details below.
+7. Call get#OrderItemSalesTaxTotal inline and if taxTotal is greater than zero, call create#OrderAdjustment inline with relevant input. Refer ShopifyOrderServices.cancel#ShopifyOrderItem method at L2943.
+8. Call create#CommunicationEvent inline with relevant input. Refer ShopifyOrderServices.cancel#ShopifyOrderItem method. This can be a simple entity auto operation.
+9. Call change#SalesOrderItemStatus inline with relevant input. A new service to be implemented, refer implementation details below.
 
-**cancelOrderItemInvResQty**  
+**cancel#OrderItemInvResQty**  
 Considering that order items would always be exploded and each order item would represent a single quantity, there should ideally only be one associated inventory reservation record to be removed,
 1. Input
    - orderId
    - orderItemSequId
    - shipGroupSeqId
 2. Find OrderItemShipGroupInvRes records (ideally only one should be returned) and delete them.
-3. Call createInventoryItemDetail inline with relevant input.  This can be a simple entity auto operation.
+3. Call create#InventoryItemDetail inline with relevant input.  This can be a simple entity auto operation.
 
-**changeSalesOrderItemStatus**  
+**change#SalesOrderItemStatus**  
 1. Input
    - orderId
    - orderItemSeqId
@@ -466,7 +466,34 @@ Considering that order items would always be exploded and each order item would 
 2. Validate order item status, log error if status is completed or canceled.
 3. Validate StatusValidChange, a helper method _isValidStatusChange_ could be implemented to return boolean value.
 4. update OrderItem.statusId.
-5. Call createOrderStatus inline with relevant input. This can be a simple entity auto operation.
+5. Call create#OrderStatus inline with relevant input. This can be a simple entity auto operation.
+6. If statusId is canceled or completed call check#CancelCompleteSalesOrder inline, refer implementation details below.
+
+**check#CancelCompleteSalesOrder**
+1. Input
+   - orderId
+2. Refer check#CancelCompleteOrder service in https://github.com/moqui/mantle-usl/blob/master/service/mantle/order/OrderServices.xml, the code should be written in the same fashion in context of OFBiz data model instead of Moqui data model as follows,
+   - Replace Moqui OrderHeader reference with OFBiz OrderHeader reference
+   - Replace Moqui OrderPart reference with OFBiz OrderItem reference
+   - Replace Moqui update#OrderHeader entity auto operation with inline change#SalesOrderStatus service call (setItemStatus=false), refer implementation details below.
+
+**change#OrderStatus**
+1. Input
+   - orderId
+   - statusId
+   - changeReason
+   - setItemStatus
+2. Validate StatusValidChange.
+3. Update OrderHeader.statusId.
+4. Call create#OrderStatus inline with relevant input.
+5. If setItemStatus=true, iterate through related OrderItem records and call change#SalesOrderItemStatus inline.
+
+> TODO
+>
+> - checkAndRejectOrderItem
+> - rejectTransferOrderItem
+> - checkValidASNAndUpdateAtp
+> - createOrderIndex
 
 #### OMS/Shopify Middleware (Accelerator)
 In the process of implementing this API we will start designing and implementing a middleware component to map and transform Shopify order data into OMS order schema. A few of the desired capabilities of this component in context of this API would be as follows,
