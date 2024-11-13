@@ -20,41 +20,23 @@ Additionally, implementation should also consider consuming ShopifyFulfillmentAc
 ### Physical Order Item Fulfillment Sync Design
 1. Define a new SystemMessageType - *GenerateOMSFulfillmentFeed*.
 2. sendPath should be the local runtime path where feed should be generated.
-3. Implement sendService *generate#OMSFulfillmentFeed* as described in next section.
+3. Implement sendService *generate#OMSFulfillmentFeed*, refer implementation details below.
 4. Define optional SystemMessageTypeParameter - *sendSmrId*, if generated feed needs to be sent to SFTP location then populate it with systemMessageRemoteId of the remote SFTP server. sendService will use this info.
-5. Define and configure *SendOMSPhysicalFulfillmentFeed* SystemMessageType if feed needs to be sent to SFTP.
-6. Implement service *queue#OMSPhysicalFulfillmentFeed* for preparing SystemMessage context and queuing the SystemMessage periodically.
-   - **Input**
-     - systemMessageRemoteId*
-     - systemMessageTypeId*
-     - runAsBatch (defaults to **False**)
-     - shipmentId
-     - orderId
-     - includeDigitalItems (defaults to **Y**)
-     - fromDate
-     - thruDate
-   - Below are the service job parameters for the scheduled job
-     - systemMessageRemoteId*
-     - systemMessageTypeId*
-     - runAsBatch(will be True)
-     - fromDate
-   - The service job that will be scheduled will have fewer parameter than what the service supports.
-   - For running as batch, use the scheduled service job and to run for a particular orderId, run the service.
-   - For the scheduled service runAsBatch will be set to **True** and when running for a specific orderId then the runAsBatch will be **False**.
-   - In the service, handling will be added to set the messageDate(in systemMessage) to now date when the runAsBatch parameter is True.
-   - When the runAsBatch parameter is set to False then the messageDate will not be set. This is done so that whenever 
-     the service is run for a specific orderId then its messageDate is not picked up for the next scheduled job run and does not disturb the batch processing of orders.
-   - If fromDate is empty fetch last successful *GenerateOMSFulfillmentFeed* SystemMessage where messageDate is not null and if found set it's messageDate as fromDate
-   - Prepare messageText with following map input - *shipmentId, orderId, fromDate, thruDate*
-   - Call *queue#SystemMessage* service with *sendNow=true*
+5. Define and configure *SendOMSFulfillmentFeed* SystemMessageType if feed needs to be sent to SFTP.
+6. Implement service *queue#OMSFulfillmentFeed* as des for preparing SystemMessage context and queuing the SystemMessage periodically, refer implementation details below.
+7. For batch processing create ServiceJob data for *queue#OMSFulfillmentFeed* with following parameters,
+   - systemMessageRemoteId
+   - systemMessageTypeId
+   - runAsBatch=true
+   - includeDigitalItems
 
 #### *generate#OMSFulfillmentFeed* service implementation details
 1. Fetch SystemMessage record
 2. Fetch related SystemMessageRemote
 3. Fetch shopId from SystemMessageRemote.remoteId
-4. Use shopId and parameters as available from SystemMessage.messageText to fetch shipmentIds from *ShopifyShopOrderShipmentAndStatus* view, view details defined in next section.
+4. Use shopId and parameters as available from SystemMessage.messageText to fetch shipmentIds from *ShopifyShopOrderShipmentAndStatus* dynamic view, view details defined in next section.
 5. Initiate a local file for the json feed.
-6. Iterate thru shipmentIds, fetch ShipmentRouteSegment for carrierPartyId and trackingNumber, prepare shipmentDetail map from *OrderShipmentDetail* view, view details defined in next section. shipmentDetails map should have following information,
+6. Iterate thru shipmentIds, fetch ShipmentRouteSegment for carrierPartyId and trackingNumber, prepare shipmentDetail map from *OrderShipmentDetail* dynamic view, view details defined in next section. shipmentDetails map should have following information,
    - shipmentId
    - shopifyOrderId
    - lineItems
@@ -68,6 +50,23 @@ Additionally, implementation should also consider consuming ShopifyFulfillmentAc
 8. Write the JSON to the feed file
 9. If *sendSmrId* SystemMessageTypeParameter is defined, queue *SendOMSPhysicalFulfillmentFeed* SystemMessage
 
+#### *queue#OMSFulfillmentFeed* service implementation details
+1. - **Input**
+     - systemMessageRemoteId*
+     - systemMessageTypeId*
+     - runAsBatch (defaults to **False** to not run as a batch process)
+     - shipmentId
+     - orderId
+     - includeDigitalItems (defaults to **Y**)
+     - fromDate
+     - thruDate
+2. Prepare queryParam map from following input parameters - shipmentId, orderId, fromDate, thruDate.
+3. If runAsBatch=true, do following,
+   - Set queryParams.thruDate = nowDate.
+   - Set messageDate (context) = nowDate.
+   - Fetch last successful SystemMessage where messageDate is not null and set queryParams.fromDate = systemMessage.messageDate
+4. Call *queue#SystemMessage* service with following parameters -  systemMessageTypeId, systemMessageRemoteId, messageDate, messageText=queryParams, *sendNow=true*
+   
 #### View Entities
 1. ShopifyShopOrderShipmentAndStatus
    - ShopifyShopOrder
