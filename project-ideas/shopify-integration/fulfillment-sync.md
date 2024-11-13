@@ -1,10 +1,10 @@
 # OMS/Shopify Fulfillment Sync Redesign
 
 ## Problem Statement
-Current implmentation to generate a fulfilled order items feed is a generic implementation to supply order fulfillment details to any number of external systems like ERP, WMS, Shopify, etc.
+Current implementation to generate a fulfilled order items feed is a generic implementation to supply order fulfillment details to any number of external systems like ERP, WMS, Shopify, etc.
 It requires further complex transformations involving database reads via NiFi to generate a fulfilled order items feed consumable by Shopify. It becomes a huge overhead when we process large number of order fulfillment across significant number of stores and warehouses.
 It further adds to the latency in overall processing time.  
-The external references for Shopify fulfillments also needs to be synced back to OMS which again is prcessed via Nifi even though it's a simple database update in a single entity.  
+The external references for Shopify fulfillments also needs to be synced back to OMS which again is processed via Nifi even though it's a simple database update in a single entity.  
 Additionally, since it's a generic implementation a complex database view with lots of required and optional input conditions is used to generate the feed with heavy order fulfillment objects containing a lot of details unnecessary for Shopify.  
 
 A simplified OMS/Shopify fulfillment sync flow should be implemented by eliminating NiFi transformation overhead and producing only necessary fulfillment data for Shopify.
@@ -17,25 +17,38 @@ The new implementation should support fulfillment sync for following two broad l
 
 Additionally, implementation should also consider consuming ShopifyFulfillmentAckFeed.
 
-### Pysical Order Item Fulfillment Sync Design
-1. Define a new SystemMessageType - *GenerateOMSPhysicalFulfillmentFeed*.
+### Physical Order Item Fulfillment Sync Design
+1. Define a new SystemMessageType - *GenerateOMSFulfillmentFeed*.
 2. sendPath should be the local runtime path where feed should be generated.
-3. Implement sendService *generate#OMSPhysicalFulfillmentFeed* as described in next section.
+3. Implement sendService *generate#OMSFulfillmentFeed* as described in next section.
 4. Define optional SystemMessageTypeParameter - *sendSmrId*, if generated feed needs to be sent to SFTP location then populate it with systemMessageRemoteId of the remote SFTP server. sendService will use this info.
-5. Define and congigure *SendOMSPhysicalFulfillmentFeed* SystemMessageType if feed needs to be send to SFTP.
-6. Implement service *queue#OMSPhysicalFulfillmentFeed* for preparing SystemMessage context and queing the SystemMessage periodically.
+5. Define and configure *SendOMSPhysicalFulfillmentFeed* SystemMessageType if feed needs to be sent to SFTP.
+6. Implement service *queue#OMSPhysicalFulfillmentFeed* for preparing SystemMessage context and queuing the SystemMessage periodically.
    - **Input**
      - systemMessageRemoteId*
+     - systemMessageTypeId*
+     - runAsBatch (defaults to **False**)
      - shipmentId
      - orderId
      - includeDigitalItems (defaults to **Y**)
      - fromDate
      - thruDate
-   - If fromDate in empty fetch last successful *GenerateOMSPhysicalFulfillmentFeed* SystemMessage and if found set it's processedDate as fromDate
+   - Below are the service job parameters for the scheduled job
+     - systemMessageRemoteId*
+     - systemMessageTypeId*
+     - runAsBatch(will be True)
+     - fromDate
+   - The service job that will be scheduled will have fewer parameter than what the service supports.
+   - For running as batch, use the scheduled service job and to run for a particular orderId, run the service.
+   - For the scheduled service runAsBatch will be set to **True** and when running for a specific orderId then the runAsBatch will be **False**.
+   - In the service, handling will be added to set the messageDate(in systemMessage) to now date when the runAsBatch parameter is True.
+   - When the runAsBatch parameter is set to False then the messageDate will not be set. This is done so that whenever 
+     the service is run for a specific orderId then its messageDate is not picked up for the next scheduled job run and does not disturb the batch processing of orders.
+   - If fromDate is empty fetch last successful *GenerateOMSFulfillmentFeed* SystemMessage where messageDate is not null and if found set it's messageDate as fromDate
    - Prepare messageText with following map input - *shipmentId, orderId, fromDate, thruDate*
    - Call *queue#SystemMessage* service with *sendNow=true*
 
-#### *generate#OMSPhysicalFulfillmentFeed* service implementation details
+#### *generate#OMSFulfillmentFeed* service implementation details
 1. Fetch SystemMessage record
 2. Fetch related SystemMessageRemote
 3. Fetch shopId from SystemMessageRemote.remoteId
