@@ -403,30 +403,32 @@ The new cancel order API and services would be implemented in the Moqui framewor
      - cancelOrderItemInvResQty
        * cancelOrderItemShipGrpInvRes
          - createInventoryItemDetail
-   * changeOrderItemStatus
-     - checkOrderItemStatus (seca) (OOTB)
-       * changeOrderStatus
-         - ~~releaseOrderPayments~~ (seca) (Custom): OMS isn’t responsible for payment processing, so this service shouldn’t be needed.
-         - ~~processRefundReturnForReplacement~~ (seca) (OOTB): This service too is irrelevant; OMS isn’t an RMA and doesn’t process refunds and replacements.
-         - ~~onPOCancelAdjustAtpOnOtherPo~~ (seca) (custom for PO)
-         - ~~onChangeOrderStatus~~
-         - ~~cancelOrderOnMarketplace~~ (Custom)
-         - createOrderIndex
-         - ~~checkEmailAddressAndSendOrderCompleteNotification~~
-         - ~~sendOrderCancelNotification~~ (Later) We are not a notification system anymore.
-         - ~~sendOrderCompleteNotification~~ (Later) We are not a notification system anymore.
-           * ~~createOrderNotificationLog~~ We are not a notification system anymore.
-         - ~~sendOrderSmsNotification~~ (Later) We are not a notification system anymore.
-     * checkAndRejectOrderItem (seca) (Custom)
-     * rejectTransferOrderItem (seca) (Custom)
-     * ~~adjustAtpOnOtherPO~~ (seca) (Custom for PO)
-     * ~~checkOrderItemAndCapturePayament (Custom)~~: Called on item completion. Not needed as we are not a payment gateway.
-     * ~~onChangeOrderItemStatus~~
-     * createOrderIndex
-     * ~~checkEmailAddressAndSendOrderCancelledNotification~~
-     * ~~completeKitProduct~~ (On item completion)
-     * ~~cancelKitComponents~~ (On item cancellation)
-     * checkValidASNAndUpdateAtp
+     - changeOrderItemStatus
+       - checkOrderItemStatus (seca) (OOTB)
+         * changeOrderStatus
+           - ~~releaseOrderPayments~~ (seca) (Custom): OMS isn’t responsible for payment processing, so this service shouldn’t be needed.
+           - ~~processRefundReturnForReplacement~~ (seca) (OOTB): This service too is irrelevant; OMS isn’t an RMA and doesn’t process refunds and replacements.
+           - ~~onPOCancelAdjustAtpOnOtherPo~~ (seca) (custom for PO)
+           - ~~onChangeOrderStatus~~
+           - ~~cancelOrderOnMarketplace~~ (Custom)
+           - createOrderIndex
+           - ~~checkEmailAddressAndSendOrderCompleteNotification~~
+           - ~~sendOrderCancelNotification~~ (Later) We are not a notification system anymore.
+           - ~~sendOrderCompleteNotification~~ (Later) We are not a notification system anymore.
+             * ~~createOrderNotificationLog~~ We are not a notification system anymore.
+           - ~~sendOrderSmsNotification~~ (Later) We are not a notification system anymore.
+         * checkAndRejectOrderItem (seca) (Custom)
+         * rejectTransferOrderItem (seca) (Custom)
+         * ~~adjustAtpOnOtherPO~~ (seca) (Custom for PO)
+         * ~~checkOrderItemAndCapturePayament (Custom)~~: Called on item completion. Not needed as we are not a payment gateway.
+         * ~~onChangeOrderItemStatus~~
+         * createOrderIndex
+         * ~~checkEmailAddressAndSendOrderCancelledNotification~~
+         * ~~completeKitProduct~~ (On item completion)
+         * ~~cancelKitComponents~~ (On item cancellation)
+         * checkValidASNAndUpdateAtp
+     - resetGrandTotal (seca)
+     - ~~sendOrderChangeNotification~~ (seca)
     
 #### Moqui OMS API
 
@@ -494,6 +496,7 @@ Considering that order items would always be exploded and each order item would 
 > - rejectTransferOrderItem
 > - checkValidASNAndUpdateAtp
 > - createOrderIndex
+> - resetGrandTotal
 
 #### OMS/Shopify Middleware (Accelerator)
 In the process of implementing this API we will start designing and implementing a middleware component to map and transform Shopify order data into OMS order schema. A few of the desired capabilities of this component in context of this API would be as follows,
