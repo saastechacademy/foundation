@@ -427,7 +427,7 @@ The new cancel order API and services would be implemented in the Moqui framewor
          * ~~completeKitProduct~~ (On item completion)
          * ~~cancelKitComponents~~ (On item cancellation)
          * checkValidASNAndUpdateAtp
-     - resetGrandTotal (seca)
+     - ~~resetGrandTotal~~ (seca) In new implementation we won't be doing any order calculations in OMS, we will always sync these details from external ecommerce platform.
      - ~~sendOrderChangeNotification~~ (seca)
     
 #### Moqui OMS API
@@ -496,7 +496,6 @@ Considering that order items would always be exploded and each order item would 
 > - rejectTransferOrderItem
 > - checkValidASNAndUpdateAtp
 > - createOrderIndex
-> - resetGrandTotal
 
 #### OMS/Shopify Middleware (Accelerator)
 In the process of implementing this API we will start designing and implementing a middleware component to map and transform Shopify order data into OMS order schema. A few of the desired capabilities of this component in context of this API would be as follows,
