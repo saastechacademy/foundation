@@ -445,7 +445,7 @@ We will consider that order items would always be exploded in OMS and implement 
 4. Call create#OrderItemChange inline with relevant input. This can be a simple entity auto operation.
 5. Call create#OrderNote inline with relevant input. This can be a simple entity auto operation.
 6. Call cancel#OrderItemInvResQty inline with relevant input. A new service to be implemented, refer implementation details below.
-7. Call get#OrderItemSalesTaxTotal inline and if taxTotal is greater than zero, call create#OrderAdjustment inline with relevant input. Refer ShopifyOrderServices.cancel#ShopifyOrderItem method at L2943.
+7. Call get#OrderItemSalesTaxTotal (new helper service) inline and if taxTotal is greater than zero, call create#OrderAdjustment inline with relevant input. Refer ShopifyOrderServices.cancel#ShopifyOrderItem method at L2943.
 8. Call create#CommunicationEvent inline with relevant input. Refer ShopifyOrderServices.cancel#ShopifyOrderItem method. This can be a simple entity auto operation.
 9. Call change#SalesOrderItemStatus inline with relevant input. A new service to be implemented, refer implementation details below.
 
@@ -465,9 +465,8 @@ Considering that order items would always be exploded and each order item would 
    - statusId
    - changeReason
    - statusDateTime
-2. Validate order item status, log error if status is completed or canceled.
-3. Validate StatusValidChange, a helper method _isValidStatusChange_ could be implemented to return boolean value.
-4. update OrderItem.statusId.
+3. Validate StatusValidChange, a helper method _check#ValidStatusChange_ could be implemented to return boolean value.
+4. Update OrderItem.statusId.
 5. Call create#OrderStatus inline with relevant input. This can be a simple entity auto operation.
 6. If statusId is canceled or completed call check#CancelCompleteSalesOrder inline, refer implementation details below.
 
@@ -479,7 +478,7 @@ Considering that order items would always be exploded and each order item would 
    - Replace Moqui OrderPart reference with OFBiz OrderItem reference
    - Replace Moqui update#OrderHeader entity auto operation with inline change#SalesOrderStatus service call (setItemStatus=false), refer implementation details below.
 
-**change#OrderStatus**
+**change#SalesOrderStatus**
 1. Input
    - orderId
    - statusId
