@@ -9,12 +9,13 @@ The analysis revealed that the `performFind` API is used extensively across serv
 ## Key Findings
 
 - **Wide Usage:** The `performFind` API supports critical functionalities like:
-    - Fetching order headers, items, and attributes.
-    - Retrieving shipment and route segment details.
-    - Managing carrier and facility-related information.
-    - Handling picklists, customer contact mechanisms, and rejection reasons.
+  - Fetching order headers, items, and attributes.
+  - Retrieving shipment and route segment details.
+  - Managing carrier and facility-related information.
+  - Handling picklists, customer contact mechanisms, and rejection reasons.
 - **Dynamic Parameters:** The API queries vary in complexity, utilizing filters like `entityName`, `inputFields`, `fieldList`, and pagination parameters (`viewSize`, `distinct`).
 - **Component Integration:** The results from these API calls are consumed in components such as `OrderDetail.vue`, `PicklistManagement.vue`, and `BillingDetails.vue` to provide real-time data for users.
+- **Fields Requested:** Each `performFind` call is tailored with a specific set of fields required for a given feature, optimizing data retrieval for performance and relevance.
 
 ## Recommendation for the Next OMS Release
 
@@ -23,27 +24,24 @@ To ensure seamless migration and continuity of features, it is essential to prov
 - Results should match the structure expected by the PWA components to minimize refactoring efforts.
 - Performance and scalability considerations should be incorporated, especially for APIs returning large datasets (e.g., picklists, shipment details).
 
-This analysis ensures that all `performFind` use cases have been documented, and the following table provides a detailed reference for the migration and planning phases.
 
 ---
 
 ## Detailed Use Cases
 
-| **Service**             | **Function**                    | **Entity**                     | **Parameters**                          | **Usage**                                                                             | **Components**                               |
-|--------------------------|----------------------------------|---------------------------------|------------------------------------------|-------------------------------------------------------------------------------------|-----------------------------------------------|
-| CarrierService.ts        | fetchCarriers                  | Carrier                         | carrierId, statusId, partyId             | Used in Carrier Management views to list and filter available carriers.             | Carriers.vue, CarrierDetail.vue               |
-| CarrierService.ts        | fetchCarrierShipmentMethods    | CarrierShipmentMethod           | carrierPartyId, shipmentMethodTypeId     | Used in Carrier Detail view to show supported shipment methods.                    | CarrierShipmentMethods.vue                    |
-| OrderService.ts          | fetchOrderHeader               | OrderHeader                     | orderId, orderTypeId, statusId           | Used in the Orders Overview to display high-level order summaries.                 | OpenOrders.vue, Completed.vue                 |
-| OrderService.ts          | fetchOrderItems                | OrderItem                       | orderId, productId                       | Used in Order Detail views to show the items in a specific order.                  | OrderDetail.vue                               |
-| UserService.ts           | getFacilityDetails             | Facility                        | facilityId, facilityTypeId               | Used in Facility Management views to display metadata about facilities.            | Settings.vue                                  |
-| UtilService.ts           | fetchPicklistInformation       | Picklist                        | picklistId, statusId                     | Used in Order Fulfillment workflows to display and manage picklists.               | InProgress.vue                                |
-| UtilService.ts           | fetchFacilityTypeInformation   | FacilityType                    | facilityTypeId                           | Used in Facility Settings to categorize facilities.                                 | Settings.vue                                  |
-| UtilService.ts           | fetchRejectReasons             | RejectReason                    | rejectReasonId, rejectTypeId             | Used in Rejection Management to show and manage rejection reasons.                 | Rejections.vue, RejectionReasons.vue          |
-| OrderLookup/actions.ts   | fetchOrderShipmentAndRouteSegment | OrderShipmentAndRouteSegment   | fieldList, viewSize, entityName          | Retrieves shipment and route segment details for orders.                           | OrderFulfillment.vue                          |
-| OrderLookup/actions.ts   | fetchPartyInformation          | Party                           | partyId                                  | Fetches billing party information for orders.                                      | BillingDetails.vue                            |
-| OrderLookup/actions.ts   | fetchContactMechInformation    | ContactMech                     | contactMechId, contactMechId_op          | Retrieves contact mechanisms (addresses, emails) for customers.                   | CustomerDetails.vue                           |
-| OrderLookup/actions.ts   | fetchPicklistBinInformation    | PicklistBin                     | orderId, shipGroupSeqId, shipGroupSeqId_op | Fetches picklist bins associated with specific order groups.                      | PicklistManagement.vue                        |
+| **Service**             | **Function**                    | **Entity**                     | **Parameters**                          | **Fields Requested**                                                | **Usage**                                                                             | **Components**                               |
+|--------------------------|----------------------------------|---------------------------------|------------------------------------------|----------------------------------------------------------------------|-------------------------------------------------------------------------------------|-----------------------------------------------|
+| CarrierService.ts        | fetchCarriers                  | Carrier                         | carrierId, statusId, partyId             | All Fields                                                         | Used in Carrier Management views to list and filter available carriers.             | Carriers.vue, CarrierDetail.vue               |
+| CarrierService.ts        | fetchCarrierShipmentMethods    | CarrierShipmentMethod           | carrierPartyId, shipmentMethodTypeId     | All Fields                                                         | Used in Carrier Detail view to show supported shipment methods.                    | CarrierShipmentMethods.vue                    |
+| OrderService.ts          | fetchOrderHeader               | OrderHeader                     | orderId, orderTypeId, statusId           | orderId, orderDate, statusId                                       | Used in the Orders Overview to display high-level order summaries.                 | OpenOrders.vue, Completed.vue                 |
+| OrderService.ts          | fetchOrderItems                | OrderItem                       | orderId, productId                       | orderId, orderItemSeqId, quantityOrdered                           | Used in Order Detail views to show the items in a specific order.                  | OrderDetail.vue                               |
+| UserService.ts           | getFacilityDetails             | Facility                        | facilityId, facilityTypeId               | facilityId, facilityName, facilityTypeId                           | Used in Facility Management views to display metadata about facilities.            | Settings.vue                                  |
+| UtilService.ts           | fetchPicklistInformation       | Picklist                        | picklistId, statusId                     | picklistId, statusId, createdByUser                                | Used in Order Fulfillment workflows to display and manage picklists.               | InProgress.vue                                |
+| UtilService.ts           | fetchFacilityTypeInformation   | FacilityType                    | facilityTypeId                           | facilityTypeId, description                                         | Used in Facility Settings to categorize facilities.                                 | Settings.vue                                  |
+| UtilService.ts           | fetchRejectReasons             | RejectReason                    | rejectReasonId, rejectTypeId             | rejectReasonId, description                                         | Used in Rejection Management to show and manage rejection reasons.                 | Rejections.vue, RejectionReasons.vue          |
+| OrderLookup/actions.ts   | fetchOrderShipmentAndRouteSegment | OrderShipmentAndRouteSegment   | fieldList, viewSize, entityName          | orderId, shipGroupSeqId, shipmentId, trackingIdNumber              | Retrieves shipment and route segment details for orders.                           | OrderFulfillment.vue                          |
+| OrderLookup/actions.ts   | fetchPartyInformation          | Party                           | partyId                                  | partyId, partyTypeId, roleTypeId                                    | Fetches billing party information for orders.                                      | BillingDetails.vue                            |
+| OrderLookup/actions.ts   | fetchContactMechInformation    | ContactMech                     | contactMechId, contactMechId_op          | contactMechId, contactMechTypeId, infoString                       | Retrieves contact mechanisms (addresses, emails) for customers.                   | CustomerDetails.vue                           |
+| OrderLookup/actions.ts   | fetchPicklistBinInformation    | PicklistBin                     | orderId, shipGroupSeqId, shipGroupSeqId_op | picklistBinId, statusId, orderId, shipGroupSeqId                   | Fetches picklist bins associated with specific order groups.                      | PicklistManagement.vue                        |
 
 ---
-
-This document, along with the attached CSV file, provides a complete overview of `performFind` use cases for the Order Fulfillment Application. This will serve as a guide for implementing similar APIs in the next release of OMS.
