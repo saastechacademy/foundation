@@ -131,4 +131,74 @@ The `reserveProductInventory` service is called with the following input paramet
 |                          | `orderItemSeqId`    | "00001"      |
 |                          | `shipGroupSeqId`   | "00001"      |
 |                          | `availableToPromiseDiff` | -1           |
-    
+
+
+
+### Detailed Design: HotWax Commerce `reserveForInventoryItemInline` Function
+
+**Why not implement this in reserveProductInventory?**
+
+*   **Modularity and Reusability:** Separating the logic into a distinct function improves modularity and makes the code more reusable. If there are other services or processes that need to reserve inventory from a specific InventoryItem, they can potentially reuse this function.
+
+
+**1. Introduction**
+
+*   **Purpose:** This function handles the core logic of reserving non-serialized inventory from a specific `InventoryItem` in HotWax Commerce. It updates the `InventoryItem` record, creates an `InventoryItemDetail` record to log the reservation, and manages scenarios with insufficient inventory.
+*   **Scope:** This function is designed for use within the `reserveProductInventory` service in HC, which always uses the FIFO (First-In, First-Out) strategy for inventory allocation.
+*   **Reference Implementation:** This design is inspired by the `reserveForInventoryItemInline` function in the OFBiz codebase, but adapted to HC's specific requirements and constraints.
+
+**2. Function Definition**
+
+*   **Function Name:** `reserveForInventoryItemInline`
+*   **Input Parameters:**
+    *   `inventoryItem`: A `GenericValue` representing the `InventoryItem` from which to reserve inventory.
+    *   `quantityNotReserved`: A `BigDecimal` representing the remaining quantity to be reserved.
+    *   `requireInventory`: A `String` (Y/N) indicating whether inventory is required for the reservation.
+    *   `orderId`: A `String` representing the ID of the order.
+    *   `orderItemSeqId`: A `String` representing the sequence ID of the order item.
+    *   `shipGroupSeqId`: A `String` representing the sequence ID of the shipment group.
+*   **Output Parameters:**
+    *   `inventoryItem`: The updated `GenericValue` representing the `InventoryItem`.
+    *   `quantityNotReserved`: The updated `BigDecimal` representing the remaining quantity to be reserved.
+    *   `lastNonSerInventoryItem`: A `GenericValue` representing the last non-serialized `InventoryItem` processed.
+
+**3. Logic**
+
+*   **Check for Non-Serialized Inventory:**
+    *   Verify that the `inventoryItemTypeId` of the input `inventoryItem` is `NON_SERIAL_INV_ITEM`. If not, the function should exit or throw an error, as HC only supports non-serialized inventory.
+
+*   **Check Inventory Availability:**
+    *   Ensure that the `InventoryItem` is not on hold or defective (`statusId` is not `INV_ON_HOLD` or `INV_NS_DEFECTIVE` or `INV_DEFECTIVE`).
+    *   Verify that the `availableToPromiseTotal` of the `InventoryItem` is greater than 0.
+
+*   **Calculate `deductAmount`:**
+    *   Determine the amount to deduct from the `availableToPromiseTotal`, which is the lesser value between `quantityNotReserved` and `availableToPromiseTotal`.
+
+*   **Update `InventoryItem`:**
+    *   Reduce the `availableToPromiseTotal` of the `InventoryItem` by the `deductAmount`.
+    *   Update the `lastUpdatedStamp` field of the `InventoryItem` to reflect the modification.
+
+*   **Create `InventoryItemDetail`:**
+    *   Create a new `InventoryItemDetail` record to log the reservation transaction.
+    *   Populate the relevant fields in the `InventoryItemDetail` record, such as:
+        *   `inventoryItemId`
+        *   `orderId`
+        *   `orderItemSeqId`
+        *   `shipGroupSeqId`
+        *   `availableToPromiseDiff` (set to the negative of the `deductAmount`)
+
+*   **Create `OrderItemShipGrpInvRes`:**
+    *   Call the `reserveOrderItemInventory` service to create or update an `OrderItemShipGrpInvRes` record. This step might need to be adapted based on how HC handles reservations and the one-to-one relationship between `OrderItem` and `OrderItemShipGroup`.
+
+*   **Update `quantityNotReserved`:**
+    *   Reduce the `quantityNotReserved` by the `deductAmount`.
+
+*   **Update `lastNonSerInventoryItem`:**
+    *   Store the current `InventoryItem` as the `lastNonSerInventoryItem`. This will be used later in the `reserveProductInventory` service to handle scenarios with insufficient inventory.
+
+
+**5. HotWax Commerce Considerations**
+
+*   This implementation focuses solely on non-serialized inventory, as that's the only type supported in HC.
+*   Ensure that the function integrates seamlessly with the HC data model and any related services or workflows.
+
