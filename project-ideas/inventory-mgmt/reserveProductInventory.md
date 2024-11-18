@@ -202,3 +202,33 @@ The `reserveProductInventory` service is called with the following input paramet
 *   This implementation focuses solely on non-serialized inventory, as that's the only type supported in HC.
 *   Ensure that the function integrates seamlessly with the HC data model and any related services or workflows.
 
+
+**Logic implemented in `checkNegativeInventory`**
+
+This function primarily determines whether negative inventory is allowed based on the `requireInventory` flag and potentially other configuration settings. Here's a breakdown of its logic:
+
+1.  **Check `requireInventory`:**
+    *   It first checks the value of the `requireInventory` parameter.
+    *   If `requireInventory` is "Y", it means that the system requires physical inventory to be available for reservations. In this case, the function returns `false`, indicating that negative inventory is not allowed.
+
+2.  **Check Configuration Settings:**
+    *   If `requireInventory` is "N", the function checks the `allowNegativeInventory` property in the `general.properties` configuration file.
+    *   If this property is set to "Y", it means that negative inventory is allowed globally in the system. The function returns `true` in this case.
+
+3.  **Check Product-Specific Settings:**
+    *   If the `allowNegativeInventory` property is not set or is set to "N", the function checks if the product itself allows negative inventory. It looks for the `allowNegative` flag on the `Product` entity.
+    *   If the product allows negative inventory, the function returns `true`.
+
+4.  **Default Behavior:**
+    *   If none of the above conditions are met, the function returns `false` by default, meaning negative inventory is not allowed.
+
+**How `checkNegativeInventory` is used in `reserveProductInventory`**
+
+The `reserveProductInventory` service uses the `checkNegativeInventory` function in the following way:
+
+1.  **After Inventory Reservation Attempts:** After attempting to reserve inventory from all available `InventoryItem` records, the service checks if there is any `quantityNotReserved`.
+2.  **If Insufficient Inventory:** If `quantityNotReserved` is greater than zero, it means that there wasn't enough inventory to fulfill the entire requested quantity.
+3.  **Call `checkNegativeInventory`:** The service calls the `checkNegativeInventory` function to determine if negative inventory is allowed in this case.
+4.  **Handle Negative Inventory:**
+    *   If `checkNegativeInventory` returns `true`, the service proceeds to create a new `InventoryItem` with negative `availableToPromiseTotal` or adjust the `availableToPromiseTotal` of the last processed `InventoryItem` to reflect the negative quantity.
+    *   If `checkNegativeInventory` returns `false`, the service likely throws an error indicating that the reservation cannot be fulfilled due to insufficient inventory.
