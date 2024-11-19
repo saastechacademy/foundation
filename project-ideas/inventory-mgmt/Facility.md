@@ -143,6 +143,52 @@ The `ProductFacility` entity in HotWax Commerce links products to the facilities
 
 *   Many-to-many between `Product` and `Facility`.
 
+You're right! I can be more confident in my description now that we've established the purpose and usage of the `FacilityIdentification` entity.
+
+Here's the rewritten description with a more assertive tone:
+
+5**`FacilityIdentification`**
+
+The `FacilityIdentification` entity in HotWax Commerce associates various identification values with a facility. This includes different types of identifiers such as internal IDs, external IDs, government-issued IDs, or any other relevant identification number.
+
+**Key Fields**
+
+*   `facilityIdenTypeId` (id, Primary Key):  Links to an enumeration that defines the type of identification (e.g., "Internal ID," "Government ID," "External System ID").
+*   `facilityId` (id, Primary Key): The ID of the facility.
+*   `idValue` (id-long): The actual identification value.
+*   `fromDate` (date-time, Primary Key): The starting date and time when this identification is valid.
+*   `thruDate` (date-time): The ending date and time when this identification is valid.
+
+**Relationships**
+
+*   One-to-one with `Enumeration` (linked through `facilityIdenTypeId`).
+*   One-to-one with `Facility`.
+
+**Detailed Description**
+
+The `FacilityIdentification` entity provides HotWax Commerce with the flexibility to manage multiple identification values for each facility. This is essential for several reasons:
+
+*   **Integration with external systems:** HotWax Commerce uses this entity to store external IDs alongside the internal `facilityId`, enabling seamless integration with other systems that may use different facility identifiers.
+*   **Tracking different types of IDs:**  HotWax Commerce tracks various types of identification numbers for a facility, such as government-issued permits, tax IDs, or internal tracking numbers, using this entity.
+*   **Managing ID changes over time:** If a facility's identification changes (e.g., due to a merger, acquisition, or re-registration), this entity maintains a history of IDs and their validity periods.
+
+**Example**
+
+A facility might have the following IDs:
+
+*   Internal ERP ID: "FAC-123"
+*   Shopify-issued number: "GOV-456"
+*   ID used in an external warehouse management system: "WMS-789"
+
+HotWax Commerce stores these IDs in the `FacilityIdentification` entity as follows:
+
+| facilityIdenTypeId  | facilityId | idValue     | fromDate  | thruDate  |
+|---------------------|------------|-------------|-----------|-----------|
+| FACILITY\_ERPID     | FAC-123    | FAC-123     | 2023-01-01 | null      |
+| FACILITY\_SHOPIFYID | FAC-123    | SHOPIFY-456 | 2023-01-01 | null      |
+| FACILITY\_EXTERNAL  | FAC-123    | WMS-789     | 2023-01-01 | null      |
+
+
 **Purpose and Usage**
 
 The `ProductFacility` entity plays a vital role in HotWax Commerce's inventory management and order fulfillment processes. It allows businesses to:
