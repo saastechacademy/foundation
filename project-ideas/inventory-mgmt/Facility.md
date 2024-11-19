@@ -22,9 +22,31 @@
 
 4.  **`FacilityLocation`**
 
-    *   **Purpose:** Represents specific locations within a facility (e.g., aisles, bins).
-    *   **Key Fields:** `facilityId`, `locationSeqId`, `areaId`, `positionId`.
-    *   **Relevance to HC:** HC leverages this entity to manage inventory at a granular level, assigning inventory to specific locations within a facility for efficient picking and packing operations.
+The `FacilityLocation` entity in HotWax Commerce represents a specific location or zone within a facility. This could be an aisle, bin, shelf, or receiving area. It allows for detailed tracking and management of inventory at a granular level.
+
+**Key Fields**
+
+*   `facilityId`: The ID of the facility where the location is situated. This field is a primary key, meaning it's a unique identifier for the facility.
+*   `locationSeqId`: A unique identifier for the location within the facility. This field is also a primary key, ensuring each location within a facility has a unique ID.
+*   `areaId`: Represents a sub-area within the facility. This could be used to group related locations, such as all the bins in a particular aisle or all the shelves in a specific room.
+*   `positionId`: Specifies the position of the location within a sub-area. This could be used to further pinpoint the location, such as the exact position of a bin on a shelf.
+*   `isLocked`: This field, a HotWax Commerce extension, indicates whether the location is currently locked for reservations. This can be useful for preventing inventory from being reserved at a location that's undergoing maintenance or an inventory count.
+*   `lastCountDate`: Another HotWax Commerce extension, this field stores the date of the last inventory count at this location. This helps track when physical inventory checks were performed.
+*   `nextCountDate`: This HotWax extension stores the date of the next scheduled inventory count at this location. This helps plan and schedule future inventory counts.
+
+**Relationships**
+
+*   The `FacilityLocation` entity has a many-to-one relationship with the `Facility` entity. This means that many locations can belong to one facility.
+
+**Purpose and Usage**
+
+The `FacilityLocation` entity is important for HotWax Commerce because it enables the system to:
+
+*   **Organize inventory:** Define and manage specific locations within a facility to track inventory more precisely.
+*   **Control reservations:** Lock locations to prevent reservations during stocktaking or maintenance.
+*   **Schedule inventory counts:** Track and schedule regular inventory counts at different locations.
+*   **Optimize picking and packing:** Facilitate efficient picking and packing operations by assigning inventory to specific locations.
+
 
 5.  **`FacilityGroup`**
 
