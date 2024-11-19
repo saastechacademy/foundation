@@ -82,9 +82,35 @@
 
 14. **`ProductFacility`**
 
-    *   **Purpose:** Links products to facilities and manages stock levels.
-    *   **Key Fields:** `productId`, `facilityId`, `minimumStock`, `reorderQuantity`.
-    *   **Relevance to HC:** This entity is crucial for HC to manage product-specific inventory levels within facilities, track stock levels, set reorder points, and manage replenishment strategies.
+The `ProductFacility` entity in HotWax Commerce links products to the facilities where they are stored or handled. It manages various aspects of product-specific inventory control and fulfillment options within each facility.
+
+**Key Fields**
+
+*   `productId`: (Primary Key) The ID of the product.
+*   `facilityId`: (Primary Key) The ID of the facility.
+*   `minimumStock`: The minimum stock level to maintain for this product at this facility.
+*   `reorderQuantity`: The quantity to reorder when the stock level falls below the minimum.
+*   `allowPickup`: (HotWax Extension) Indicates whether customers are allowed to pick up orders for this product at this facility.
+*   `salesVelocity`: (HotWax Extension) Represents the sales velocity of the product at this facility, which can be useful for demand forecasting and inventory planning.
+*   `requirementMethodEnumId`: (HotWax Extension) Specifies the method used to determine inventory requirements for this product at this facility. This might involve different calculation methods or algorithms for forecasting demand and managing stock levels.
+*   `computedLastInventoryCount`: (HotWax Extension) Stores the computed last inventory count of the product at this facility. This is calculated as `availableToPromiseTotal - minimumStock`, but if `availableToPromiseTotal` is less than or equal to `minimumStock`, it's set to 0.
+*   `allowBrokering`: (HotWax Extension) Indicates whether brokering is allowed for this product at this facility. This means that if the product is unavailable at this facility, the system can attempt to source it from other facilities or suppliers.
+
+**Relationships**
+
+*   Many-to-many between `Product` and `Facility`.
+
+**Purpose and Usage**
+
+The `ProductFacility` entity plays a vital role in HotWax Commerce's inventory management and order fulfillment processes. It allows businesses to:
+
+*   **Set inventory policies:** Define minimum stock levels and reorder quantities for each product at different facilities.
+*   **Control fulfillment options:** Manage whether products can be picked up from specific facilities.
+*   **Track sales velocity:** Monitor the sales performance of products at each facility.
+*   **Determine inventory requirements:** Utilize different methods for calculating and forecasting inventory needs.
+*   **Manage excess inventory:** Track the amount of inventory exceeding the minimum stock level.
+*   **Enable brokering:** Allow products to be sourced from alternative locations if unavailable at the primary facility.
+
 
 15. **`ProductFacilityLocation`**
 
