@@ -202,6 +202,27 @@ The `reserveProductInventory` service is called with the following input paramet
 *   This implementation focuses solely on non-serialized inventory, as that's the only type supported in HC.
 *   Ensure that the function integrates seamlessly with the HC data model and any related services or workflows.
 
+**Understanding `reserveOrderItemInventory` in OFBiz**
+
+This service is responsible for creating or updating the `OrderItemShipGrpInvRes` entity, which represents the reservation of inventory for a specific order item within a shipment group.
+
+1.  **Gather Input:** The service takes input parameters such as `orderId`, `orderItemSeqId`, `shipGroupSeqId`, `inventoryItemId`, and `quantity`.
+
+2.  **Check for Existing Reservation:** It checks if an `OrderItemShipGrpInvRes` record already exists for the given combination of `orderId`, `orderItemSeqId`, `shipGroupSeqId`, and `inventoryItemId`.
+
+3.  **Create or Update Reservation:**
+    *   If a reservation record doesn't exist, it creates a new `OrderItemShipGrpInvRes` entity and populates its fields with the provided input values.
+    *   If a reservation record already exists, it updates the `quantity` field of the existing record.
+
+4.  **Handle `quantityNotAvailable`:** If the `quantityNotAvailable` parameter is provided, it updates the corresponding field in the `OrderItemShipGrpInvRes` record. This field likely indicates the portion of the reserved quantity that is not currently available.
+
+5.  **Set `reservedDatetime`:** The service sets or updates the `reservedDatetime` field in the `OrderItemShipGrpInvRes` record to the current timestamp.
+
+6.  **Store the Reservation:** Finally, it stores the newly created or updated `OrderItemShipGrpInvRes` record in the database.
+
+**Key Considerations**
+
+*   **Simplified Logic in HotWax Commerce:** In HotWax Commerce, due to the one-to-one relationship between `OrderItem` and `OrderItemShipGroup`, the logic for retrieving or creating `OrderItemShipGroup` records might be simplified.
 
 **Logic implemented in `checkNegativeInventory`**
 
