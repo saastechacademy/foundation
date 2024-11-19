@@ -2,11 +2,32 @@
 
 1.  **`Facility`**
 
-    *   **Purpose:** Represents physical or virtual locations like warehouses, stores, or distribution centers.
-    *   **Key Fields:** `facilityId`, `facilityTypeId`, `parentFacilityId`, `facilityName`, `defaultInventoryItemTypeId`.
-    *   **Relevance to HC:** This entity is crucial for representing HC's warehouses or fulfillment centers.
-        *   The `facilityTypeId` field allows HC to categorize different types of facilities, such as warehouses, stores, or offices.
-        *   The `parentFacilityId` field enables HC to model hierarchical relationships between facilities, such as regional warehouses reporting to a central distribution center.
+The `Facility` entity in HotWax Commerce represents a physical or virtual location, such as a warehouse, store, or distribution center. It stores essential information about the facility's operations, contact details, and inventory management capabilities.
+
+**Key Fields**
+
+*   `facilityId`: (Primary Key) The unique ID of the facility.
+*   `facilityTypeId`: The type of facility (e.g., warehouse, store, office).
+*   `parentFacilityId`: The ID of the parent facility in a hierarchical structure (if applicable).
+*   `facilityName`: The name of the facility.
+*   `defaultInventoryItemTypeId`: The default type of inventory item managed in this facility (e.g., serialized, non-serialized).
+*   `openTime`: (HotWax Extension) The daily opening time of the facility.
+*   `closeTime`: (HotWax Extension) The daily closing time of the facility.
+*   `facilityTimeZone`: (HotWax Extension) The time zone in which the facility operates.
+*   `maximumOrderLimit`: (HotWax Extension) The maximum number of orders that can be processed or fulfilled by the facility within a specific time period.
+*   `postalCode`: (HotWax Extension) The postal code of the facility's location.
+
+**Purpose and Usage**
+
+The `Facility` entity is central to HotWax Commerce's OMS and inventory management capabilities. It allows businesses to:
+
+*   **Model their physical locations:** Represent their warehouses, stores, and other operational locations within the system.
+*   **Categorize facilities:** Group facilities by type to manage different operational needs.
+*   **Track operating hours:** Store information about the facility's opening and closing times.
+*   **Manage capacity:** Define limits on the number of orders a facility can handle.
+*   **Track location:** Store the postal code for logistical purposes.
+*   **Manage inventory:** Associate inventory items with specific facilities and track stock levels.
+*   **Fulfill orders:** Determine which facilities can fulfill customer orders based on product availability and other factors.
 
 2.  **`FacilityType`**
 
