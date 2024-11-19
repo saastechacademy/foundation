@@ -1,8 +1,18 @@
 Inventory Management systems 
 
 [Inventory data model](Inventory.md)
-Understand InventoryItem and InventoryItemType 
 
+InventoryItem
+InventoryItemStatus
+InventoryItemDetail
+InventoryItemVariance
+PhysicalInventory
+PhysicalInventoryAndVariance
+InventoryTransfer
+
+getMktgPackagesAvailable
+issueImmediatelyFulfilledOrder
+issueImmediatelyFulfilledOrderItem,
 
 ### Inventory Reservation Cancellation Services in OFBiz
 
