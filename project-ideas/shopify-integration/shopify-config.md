@@ -157,7 +157,7 @@ These view entities play a crucial role in optimizing data access and retrieval 
   }
 }
 ```
-**ShopifyShop with ShopifyConfig and Type Mappings:**
+**ShopifyShop with ShopifyConfig, carrierShipments and Type Mappings:**
 
 ```json
 {
@@ -203,9 +203,22 @@ These view entities play a crucial role in optimizing data access and retrieval 
       "mappedTypeId": "SHOPIFY_ORDER_SOURCE",
       "mappedValue": "PHONE_SALES_CHANNEL"
     }
+  ],
+  "carrierShipments": [
+    {
+      "carrierPartyId": "_NA_",
+      "shipmentMethodTypeId": "NEXT_DAY",
+      "shopifyShippingMethod": "Expedited"
+    },
+    {
+      "carrierPartyId": "FEDEX",
+      "shipmentMethodTypeId": "THIRD_DAY",
+      "shopifyShippingMethod": "Standard"
+    }
   ]
 }
 ```
+
 
 
 ## ShopifyShopTypeMapping API Documentation
@@ -284,4 +297,73 @@ The ShopifyShopTypeMapping entity manages type mappings (e.g., payment types, pr
 *   **URL:** `/rest/shopifyShopTypeMappings/{shopId}/{mappedKey}`
 *   **Method:** `DELETE`
 *   **Description:** Deletes a specific ShopifyShopTypeMapping by mappedKey for a Shopify shop.
+
+
+## API Specification for Managing ShopifyShopCarrierShipment
+
+### 1. Create or Update ShopifyShopCarrierShipment
+
+*   **URL:** `/rest/shopifyShopCarrierShipments`
+*   **Method:** `POST`
+*   **Description:** Creates or updates a ShopifyShopCarrierShipment entry for a Shopify shop.
+
+**Request Payload Example:**
+
+```json
+{
+  "shopId": "10000",
+  "carrierPartyId": "_NA_",
+  "shipmentMethodTypeId": "NEXT_DAY",
+  "shopifyShippingMethod": "Expedited"
+}
+```
+
+### 2. Retrieve ShopifyShopCarrierShipments for a Shop
+
+*   **URL:** `/rest/shopifyShopCarrierShipments/{shopId}`
+*   **Method:** `GET`
+*   **Description:** Retrieves all ShopifyShopCarrierShipments for a specific shop.
+
+**Response Example:**
+
+```json
+{
+  "shopId": "10000",
+  "carrierShipments": [
+    {
+      "carrierPartyId": "_NA_",
+      "shipmentMethodTypeId": "NEXT_DAY",
+      "shopifyShippingMethod": "Expedited"
+    },
+    {
+      "carrierPartyId": "FEDEX",
+      "shipmentMethodTypeId": "THIRD_DAY",
+      "shopifyShippingMethod": "Standard"
+    }
+  ]
+}
+```
+
+### 3. Retrieve a Specific ShopifyShopCarrierShipment
+
+*   **URL:** `/rest/shopifyShopCarrierShipments/{shopId}/{shopifyShippingMethod}`
+*   **Method:** `GET`
+*   **Description:** Retrieves a specific ShopifyShopCarrierShipment by shopifyShippingMethod for a Shopify shop.
+
+**Response Example:**
+
+```json
+{
+  "shopId": "10000",
+  "carrierPartyId": "_NA_",
+  "shipmentMethodTypeId": "NEXT_DAY",
+  "shopifyShippingMethod": "Expedited"
+}
+```
+
+### 4. Delete a ShopifyShopCarrierShipment
+
+*   **URL:** `/rest/shopifyShopCarrierShipments/{shopId}/{shopifyShippingMethod}`
+*   **Method:** `DELETE`
+*   **Description:** Deletes a specific ShopifyShopCarrierShipment by shopifyShippingMethod for a Shopify shop.
 
