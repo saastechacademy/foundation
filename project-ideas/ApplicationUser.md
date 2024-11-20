@@ -53,3 +53,21 @@ Creating a new store associate named "John Doe":
 3.  Create a `PartyRole` record with `partyId` "JOHN\_DOE" and `roleTypeId` "EMPLOYEE."
 4.  Create a `UserLogin` record with `userLoginId` "johndoe" (or similar), `partyId` "JOHN\_DOE," and a secure password.
 5.  Assign "JOHN\_DOE" to the "SALES\_ASSOCIATE" security group, granting permissions like "VIEW\_ORDERS" and "PROCESS\_SALES."
+
+
+
+### Server Side API calls from Users Application
+
+|Function Name in PWA|Use Case|Server Side API Endpoint|Parameters|Data Elements Received|
+|---|---|---|---|---|
+|fetchUsers|Fetch information for all the users.|performFind|viewIndex, viewSize, partyId, partyId_op, firstName, firstName_op, lastName, lastName_op, lastName_ic, userName, userName_op, userName_ic, userLoginId, userLoginId_op, userLoginId_ic, enabled, enabled_op, hasLoggedOut, hasLoggedOut_op, lastLoginTime, lastLoginTime_op, lastLoginTime_ic, lastLogoutTime, lastLogoutTime_op, lastLogoutTime_ic, passwordHint, passwordHint_op, passwordHint_ic, requirePasswordChange, requirePasswordChange_op, externalAuthId, externalAuthId_op, entityName, noConditionFind|count, docs|
+|fetchUserGroups|Fetch information for all the user groups.|performFind|viewIndex, viewSize, partyId, partyId_op, userGroupId, userGroupId_op, userGroupId_ic, entityName, noConditionFind|count, docs|
+|updateUserLogin|Update user login.|updateUserLogin|userLoginId, currentPassword, newPassword, newPasswordVerify, requirePasswordChange|status, message|
+|createUserLogin|Create user login.|createUserLogin|userLoginId, partyId, enabled, password, passwordVerify, requirePasswordChange, externalAuthId|status, message|
+|deleteUser|Delete user.|deleteUserLogin|userLoginId|status, message|
+|updatePerson|Update person.|updatePerson|partyId, firstName, lastName|status, message|
+|createPerson|Create person.|createPerson|firstName, lastName|status, message|
+|fetchUserLogin|Fetch information for the user login.|performFind|userLoginId, userLoginId_op, entityName, noConditionFind, fieldList|count, docs|
+|fetchUserLoginSecurityGroups|Fetch information for the user login security groups.|performFind|userLoginId, groupId, groupId_op, entityName, noConditionFind, fromDate, fromDate_op|count, docs|
+|addUserGroup|Add the user group.|addUserLoginToSecurityGroup|userLoginId, groupId, fromDate|status, message|
+|removeUserGroup|Remove the user group.|removeUserLoginFromSecurityGroup|userLoginId, groupId, fromDate|status, message|
