@@ -76,3 +76,84 @@ The data model also includes several view entities that simplify data retrieval 
 *   **`ShopifyProductFacilityView`**: Provides a comprehensive view of product-facility relationships, including inventory levels and facility details, aiding in inventory management and fulfillment decisions.
 
 These view entities play a crucial role in optimizing data access and retrieval for various operations within the Shopify connector, enabling efficient querying and analysis of Shopify-related data within the HotWax Commerce OMS.
+
+
+## API for Managing ShopifyShop with ShopifyConfig
+
+**Endpoint: Create or Update ShopifyShop with Configuration**
+
+*   URL: /rest/shopifyShops
+*   Method: POST
+*   Description: Creates or updates a ShopifyShop along with its configuration (ShopifyConfig).
+
+**Request Payload Example:**
+
+```json
+{
+  "shopId": "10000",
+  "shopifyShopId": "6973849727",
+  "productStoreId": "STORE",
+  "name": "HC Demo",
+  "email": "integrations@hotwax.co",
+  "phone": "7828341900",
+  "shopOwner": "HotWax Commerce Shopify",
+  "timezone": "America/New_York",
+  "planName": "affiliate",
+  "domain": "hc-demo.myshopify.com",
+  "myshopifyDomain": "hc-demo.myshopify.com",
+  "primaryLocationId": "17715232895",
+  "weightUnit": "lb",
+  "currency": "USD",
+  "countryCode": "US",
+  "shopifyConfig": {
+    "shopifyConfigId": "10000",
+    "shopifyConfigName": "hc-demo",
+    "accessScopeEnumId": "SHOP_RW_ACCESS",
+    "accessToken": "shpat",
+    "apiUrl": "[https://hc-demo.myshopify.com/](https://hc-demo.myshopify.com/)",
+    "processRefund": "Y",
+    "productStoreId": "STORE",
+    "sharedSecret": "04a072",
+    "webSiteId": "WEBSTORE"
+  }
+}
+```
+
+**Endpoint: Retrieve ShopifyShop with Configuration**
+
+*   URL: /rest/shopifyShops/{shopId}
+*   Method: GET
+*   Description: Retrieves a ShopifyShop and its nested configuration (ShopifyConfig).
+
+**Response Example:**
+
+```json
+{
+  "shopId": "10000",
+  "shopifyShopId": "6973849727",
+  "productStoreId": "STORE",
+  "name": "HC Demo",
+  "email": "integrations@hotwax.co",
+  "phone": "7828341900",
+  "shopOwner": "HotWax Commerce Shopify",
+  "timezone": "America/New_York",
+  "planName": "affiliate",
+  "domain": "hc-demo.myshopify.com",
+  "myshopifyDomain": "hc-demo.myshopify.com",
+  "primaryLocationId": "17715232895",
+  "weightUnit": "lb",
+  "currency": "USD",
+  "countryCode": "US",
+  "shopifyConfig": {
+    "shopifyConfigId": "10000",
+    "shopifyConfigName": "hc-demo",
+    "accessScopeEnumId": "SHOP_RW_ACCESS",
+    "accessToken": "shpat",
+    "apiUrl": "[https://hc-demo.myshopify.com/](https://hc-demo.myshopify.com/)",
+    "processRefund": "Y",
+    "productStoreId": "STORE",
+    "sharedSecret": "04a072",
+    "webSiteId": "WEBSTORE"
+  }
+}
+```
