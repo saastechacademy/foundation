@@ -157,3 +157,131 @@ These view entities play a crucial role in optimizing data access and retrieval 
   }
 }
 ```
+**ShopifyShop with ShopifyConfig and Type Mappings:**
+
+```json
+{
+  "shopId": "10000",
+  "shopifyShopId": "6973849727",
+  "productStoreId": "STORE",
+  "name": "HC Demo",
+  "email": "integrations@hotwax.co",
+  "phone": "7828341900",
+  "shopOwner": "HotWax Commerce Shopify",
+  "timezone": "America/New_York",
+  "planName": "affiliate",
+  "domain": "hc-demo.myshopify.com",
+  "myshopifyDomain": "hc-demo.myshopify.com",
+  "primaryLocationId": "17715232895",
+  "weightUnit": "lb",
+  "currency": "USD",
+  "countryCode": "US",
+  "shopifyConfig": {
+    "shopifyConfigId": "10000",
+    "shopifyConfigName": "hc-demo",
+    "accessScopeEnumId": "SHOP_RW_ACCESS",
+    "accessToken": "shpat",
+    "apiUrl": "https://hc-demo.myshopify.com/",
+    "processRefund": "Y",
+    "productStoreId": "STORE",
+    "sharedSecret": "04a072",
+    "webSiteId": "WEBSTORE"
+  },
+  "typeMappings": [
+    {
+      "mappedKey": "afterpay",
+      "mappedTypeId": "SHOPIFY_PAYMENT_TYPE",
+      "mappedValue": "EXT_SHOP_AFTRPAY"
+    },
+    {
+      "mappedKey": "Loyalty Card",
+      "mappedTypeId": "SHOPIFY_PRODUCT_TYPE",
+      "mappedValue": "DIGITAL_GOOD"
+    },
+    {
+      "mappedKey": "iphone",
+      "mappedTypeId": "SHOPIFY_ORDER_SOURCE",
+      "mappedValue": "PHONE_SALES_CHANNEL"
+    }
+  ]
+}
+```
+
+
+## ShopifyShopTypeMapping API Documentation
+
+The ShopifyShopTypeMapping entity manages type mappings (e.g., payment types, product types, order sources) for a Shopify shop. This document defines APIs for creating, updating, retrieving, and deleting ShopifyShopTypeMapping data independently.
+
+## API Design: ShopifyShopTypeMapping
+
+### Endpoint: Create or Update ShopifyShopTypeMapping
+
+*   **URL:** `/rest/shopifyShopTypeMappings`
+*   **Method:** `POST`
+*   **Description:** Creates or updates a ShopifyShopTypeMapping entry for a Shopify shop.
+
+**Request Payload Example:**
+
+```json
+{
+  "shopId": "10000",
+  "mappedKey": "afterpay",
+  "mappedTypeId": "SHOPIFY_PAYMENT_TYPE",
+  "mappedValue": "EXT_SHOP_AFTRPAY"
+}
+```
+
+### Endpoint: Retrieve ShopifyShopTypeMappings for a Shop
+
+*   **URL:** `/rest/shopifyShopTypeMappings/{shopId}`
+*   **Method:** `GET`
+*   **Description:** Retrieves all ShopifyShopTypeMappings for a specific shop.
+
+**Response Example:**
+
+```json
+{
+  "shopId": "10000",
+  "typeMappings": [
+    {
+      "mappedKey": "afterpay",
+      "mappedTypeId": "SHOPIFY_PAYMENT_TYPE",
+      "mappedValue": "EXT_SHOP_AFTRPAY"
+    },
+    {
+      "mappedKey": "Loyalty Card",
+      "mappedTypeId": "SHOPIFY_PRODUCT_TYPE",
+      "mappedValue": "DIGITAL_GOOD"
+    },
+    {
+      "mappedKey": "iphone",
+      "mappedTypeId": "SHOPIFY_ORDER_SOURCE",
+      "mappedValue": "PHONE_SALES_CHANNEL"
+    }
+  ]
+}
+```
+
+### Endpoint: Retrieve a Specific ShopifyShopTypeMapping
+
+*   **URL:** `/rest/shopifyShopTypeMappings/{shopId}/{mappedKey}`
+*   **Method:** `GET`
+*   **Description:** Retrieves a specific ShopifyShopTypeMapping by mappedKey for a Shopify shop.
+
+**Response Example:**
+
+```json
+{
+  "shopId": "10000",
+  "mappedKey": "afterpay",
+  "mappedTypeId": "SHOPIFY_PAYMENT_TYPE",
+  "mappedValue": "EXT_SHOP_AFTRPAY"
+}
+```
+
+### Endpoint: Delete a ShopifyShopTypeMapping
+
+*   **URL:** `/rest/shopifyShopTypeMappings/{shopId}/{mappedKey}`
+*   **Method:** `DELETE`
+*   **Description:** Deletes a specific ShopifyShopTypeMapping by mappedKey for a Shopify shop.
+
