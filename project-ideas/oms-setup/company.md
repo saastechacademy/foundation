@@ -86,3 +86,36 @@
 *   Replace `"Your Company Name"` with the actual name of the organization.
 *   Replace `"/resources/uploads/images/your_company_logo.png"` with the actual URL of the organization's logo.
 
+# Updating an Organization
+
+This section explains how to update the details of an existing organization using the Organization Setup API. For example, updating the organization name to **"NotNaked Fashion Inc"**.
+
+---
+
+## API Endpoint
+
+- **URL**: `/rest/parties`
+- **Method**: `PUT`
+- **Description**: Updates an existing organization by modifying its `PartyGroup` details and any related nested data as needed.
+
+---
+
+## Request Payload
+
+The payload for updating an organization's details must include the `partyId` of the organization you want to update. In this example, we are updating the `groupName` for the `PartyGroup` entity.
+
+### Sample Payload
+
+```json
+{
+  "partyId": "COMPANY",
+  "partyTypeId": "PARTY_GROUP",
+  "partyGroup": {
+    "groupName": "NotNaked Fashion Inc"
+  }
+}
+
+```
+
+
+

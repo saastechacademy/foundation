@@ -107,3 +107,38 @@ The `ProductStore` entity is central to managing sales channels and order fulfil
     *   Purpose: Associates various identification values with a facility.
     *   Key Fields: `facilityIdenTypeId`, `facilityId`, `idValue`, `fromDate`, `thruDate`.
     *   Relationships: One-to-one with `Enumeration` and `Facility`.
+
+
+### 6. ProductStore REST API
+
+*   **Endpoint**
+    *   : /rest/productStores
+    *   Method: POST
+    *   Description: Creates and configures a new ProductStore with all related data such as settings, facility groups, and catalog associations.
+*   **Request Payload**
+
+```json
+{
+  "productStoreId": "STORE",
+  "storeName": "Demo Store",
+  "primaryStoreGroupId": "STORE_GROUP",
+  "companyName": "Company",
+  "defaultCurrencyUomId": "USD",
+  "catalogUrlMountPoint": "products",
+  "autoSetFacility": "Y",
+  "enableExternalPromotion": "Y",
+  "storeSettings": [
+    {
+      "settingTypeEnumId": "RATE_SHOPPING",
+      "fromDate": "2001-01-01T12:00:00.000Z",
+      "settingValue": "Y"
+    }
+  ],
+  "facilityGroups": [
+    {
+      "facilityGroupId": "WAREHOUSE_GROUP",
+      "fromDate": "2023-01-01T00:00:00.000Z"
+    }
+  ]
+}
+```
