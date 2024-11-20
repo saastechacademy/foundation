@@ -56,18 +56,23 @@ Creating a new store associate named "John Doe":
 
 
 
-### Server Side API calls from Users Application
-
-|Function Name in PWA|Use Case|Server Side API Endpoint|Parameters|Data Elements Received|
+| Function Name in PWA | Use Case | Server Side API Endpoint | Parameters | Data Elements Received |
 |---|---|---|---|---|
-|fetchUsers|Fetch information for all the users.|performFind|viewIndex, viewSize, partyId, partyId_op, firstName, firstName_op, lastName, lastName_op, lastName_ic, userName, userName_op, userName_ic, userLoginId, userLoginId_op, userLoginId_ic, enabled, enabled_op, hasLoggedOut, hasLoggedOut_op, lastLoginTime, lastLoginTime_op, lastLoginTime_ic, lastLogoutTime, lastLogoutTime_op, lastLogoutTime_ic, passwordHint, passwordHint_op, passwordHint_ic, requirePasswordChange, requirePasswordChange_op, externalAuthId, externalAuthId_op, entityName, noConditionFind|count, docs|
-|fetchUserGroups|Fetch information for all the user groups.|performFind|viewIndex, viewSize, partyId, partyId_op, userGroupId, userGroupId_op, userGroupId_ic, entityName, noConditionFind|count, docs|
-|updateUserLogin|Update user login.|updateUserLogin|userLoginId, currentPassword, newPassword, newPasswordVerify, requirePasswordChange|status, message|
-|createUserLogin|Create user login.|createUserLogin|userLoginId, partyId, enabled, password, passwordVerify, requirePasswordChange, externalAuthId|status, message|
-|deleteUser|Delete user.|deleteUserLogin|userLoginId|status, message|
-|updatePerson|Update person.|updatePerson|partyId, firstName, lastName|status, message|
-|createPerson|Create person.|createPerson|firstName, lastName|status, message|
-|fetchUserLogin|Fetch information for the user login.|performFind|userLoginId, userLoginId_op, entityName, noConditionFind, fieldList|count, docs|
-|fetchUserLoginSecurityGroups|Fetch information for the user login security groups.|performFind|userLoginId, groupId, groupId_op, entityName, noConditionFind, fromDate, fromDate_op|count, docs|
-|addUserGroup|Add the user group.|addUserLoginToSecurityGroup|userLoginId, groupId, fromDate|status, message|
-|removeUserGroup|Remove the user group.|removeUserLoginFromSecurityGroup|userLoginId, groupId, fromDate|status, message|
+| fetchUsers | Retrieves a list of users | performFind | viewIndex, viewSize, partyId, partyId_op, firstName, firstName_op, lastName, lastName_op, lastName_ic, userName, userName_op, userName_ic, userLoginId, userLoginId_op, userLoginId_ic, enabled, enabled_op, hasLoggedOut, hasLoggedOut_op, lastLoginTime, lastLoginTime_op, lastLoginTime_ic, lastLogoutTime, lastLogoutTime_op, lastLogoutTime_ic, passwordHint, passwordHint_op, passwordHint_ic, requirePasswordChange, requirePasswordChange_op, externalAuthId, externalAuthId_op, entityName, noConditionFind | count, docs |
+| fetchUserGroups | Retrieves a list of user groups | performFind | viewIndex, viewSize, partyId, partyId_op, userGroupId, userGroupId_op, userGroupId_ic, entityName, noConditionFind | count, docs |
+| updateUserLogin | Updates an existing user login | updateUserLogin | userLoginId, currentPassword, newPassword, newPasswordVerify, requirePasswordChange | status, message |
+| createUserLogin | Creates a new user login | createUserLogin | userLoginId, partyId, enabled, password, passwordVerify, requirePasswordChange, externalAuthId | status, message | 
+| deleteUser | Deletes a user login | deleteUserLogin | userLoginId | status, message |
+| updatePerson | Updates information about a person | updatePerson | partyId, firstName, lastName | status, message |
+| createPerson | Creates a new person record | createPerson | firstName, lastName | status, message |
+| fetchUserLogin | Retrieves details for a specific user login | performFind | userLoginId, userLoginId_op, entityName, noConditionFind, fieldList | count, docs |
+| fetchUserLoginSecurityGroups | Retrieves security groups associated with a user login | performFind | userLoginId, groupId, groupId_op, entityName, noConditionFind, fromDate, fromDate_op | count, docs |
+| addUserGroup | Adds a user to a security group | addUserLoginToSecurityGroup | userLoginId, groupId, fromDate | status, message |
+| removeUserGroup | Removes a user from a security group | removeUserLoginFromSecurityGroup | userLoginId, groupId, fromDate | status, message |
+| hasPermissions | Checks if a user has specific permissions | hasPermissions | permissionIds, userLoginId |  status (indicating whether the user has the permissions) |
+| getUserPermissions | Gets all permissions for a user | getUserPermissions | userLoginId | list of permissions |
+| getUserPermissionGroups | Gets all permission groups for a user | getUserPermissionGroups | userLoginId | list of permission groups |
+| addUserPermissionGroup | Adds a user to a permission group | addUserPermissionGroup | userLoginId, groupId | status |
+| removeUserPermissionGroup | Removes a user from a permission group | removeUserPermissionGroup | userLoginId, groupId | status |
+
+
