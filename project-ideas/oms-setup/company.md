@@ -40,6 +40,49 @@
 <PartyRole partyId="COMPANY" roleTypeId="VENDOR"/>
 ```
 
+```json
+{
+  "partyId": "COMPANY",
+  "partyTypeId": "PARTY_GROUP",
+  "statusId": "PARTY_ENABLED",
+  "partyGroup": {
+    "groupName": "Your Company Name",
+    "logoImageUrl": "/images/your_company_logo.png"
+  },
+  "partyRoles": [
+    { "roleTypeId": "BILL_FROM_VENDOR" },
+    { "roleTypeId": "BILL_TO_CUSTOMER" }
+  ],
+  "contactMechs": [
+    {
+      "contactMechId": "9000",
+      "contactMechTypeId": "POSTAL_ADDRESS",
+      "infoString": "2003 Open Blvd, Open City, CA",
+      "partyContactMech": {
+        "fromDate": "2000-01-01T00:00:00.000Z",
+        "allowSolicitation": "Y"
+      }
+    },
+    {
+      "contactMechId": "Company",
+      "contactMechTypeId": "EMAIL_ADDRESS",
+      "infoString": "ofbiztest@example.com",
+      "partyContactMech": {
+        "fromDate": "2000-01-01T00:00:00.000Z",
+        "allowSolicitation": "Y"
+      }
+    }
+  ]
+}
+```
+```xml
+<rest-path path="/parties">
+    <method name="POST" service="create#Party"/>
+</rest-path>
+```
+**Entity Engine Auto-Save:**
+*   Moqui’s entity engine will automatically parse the JSON, create or update the Party, and cascade operations to dependent entities (PartyGroup, PartyRole, ContactMech, etc.).
+
 *   Replace `"Your Company Name"` with the actual name of the organization.
 *   Replace `"/resources/uploads/images/your_company_logo.png"` with the actual URL of the organization's logo.
 
