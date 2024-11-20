@@ -132,12 +132,46 @@ The `ProductStore` entity is central to managing sales channels and order fulfil
       "settingTypeEnumId": "RATE_SHOPPING",
       "fromDate": "2001-01-01T12:00:00.000Z",
       "settingValue": "Y"
+    },
+    {
+      "settingTypeEnumId": "DEFULT_PKG_BOPIS_ORD",
+      "fromDate": "2024-01-01T12:00:00.000Z",
+      "settingValue": "BOPISPACKNG"
+    }
+  ],
+  "facilities": [
+    {
+      "facilityId": "_NA_",
+      "facilityTypeId": "NA",
+      "facilityName": "Brokering Queue",
+      "description": "Brokering Queue"
+    },
+    {
+      "facilityId": "UNF_HOLD_PARKING",
+      "facilityTypeId": "NA",
+      "facilityName": "Unfillable Hold Parking",
+      "description": "Unfillable Hold Parking"
+    },
+    {
+      "facilityId": "PRE_ORDER_PARKING",
+      "facilityTypeId": "PRE_ORDER",
+      "facilityName": "Preorder Parking",
+      "description": "Preorder Parking"
+    },
+    {
+      "facilityId": "CONFIGURATION",
+      "facilityTypeId": "CONFIGURATION",
+      "facilityName": "Configuration Facility",
+      "description": "Configuration Facility"
     }
   ],
   "facilityGroups": [
     {
-      "facilityGroupId": "WAREHOUSE_GROUP",
-      "fromDate": "2023-01-01T00:00:00.000Z"
+      "facilityGroupId": "AUTO_CNCL_ODR_ITM",
+      "members": [
+        { "facilityId": "_NA_" },
+        { "facilityId": "UNFILLABLE_PARKING" }
+      ]
     }
   ]
 }
