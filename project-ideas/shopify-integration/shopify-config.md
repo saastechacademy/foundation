@@ -157,7 +157,7 @@ These view entities play a crucial role in optimizing data access and retrieval 
   }
 }
 ```
-**ShopifyShop with ShopifyConfig, carrierShipments and Type Mappings:**
+**ShopifyShop with ShopifyConfig, ShopifyShopTypeMapping, ShopifyShopCarrierShipment, and ShopifyShopLocation:**
 
 ```json
 {
@@ -180,14 +180,18 @@ These view entities play a crucial role in optimizing data access and retrieval 
     "shopifyConfigId": "10000",
     "shopifyConfigName": "hc-demo",
     "accessScopeEnumId": "SHOP_RW_ACCESS",
-    "accessToken": "shpat",
-    "apiUrl": "https://hc-demo.myshopify.com/",
-    "processRefund": "Y",
+    "apiVersion": "2024-11",
     "productStoreId": "STORE",
+    "shopId": "10000",
+    "webSiteId": "WEBSTORE",
+    "apiUrl": "https://hc-demo.myshopify.com/",
+    "username": "api_user",
+    "currentPassword": "secure_password",
+    "accessToken": "shpat_1234567890abcdef",
     "sharedSecret": "04a072",
-    "webSiteId": "WEBSTORE"
+    "processRefund": "Y"
   },
-  "typeMappings": [
+  "shopifyShopTypeMappings": [
     {
       "mappedKey": "afterpay",
       "mappedTypeId": "SHOPIFY_PAYMENT_TYPE",
@@ -204,7 +208,7 @@ These view entities play a crucial role in optimizing data access and retrieval 
       "mappedValue": "PHONE_SALES_CHANNEL"
     }
   ],
-  "carrierShipments": [
+  "shopifyShopCarrierShipments": [
     {
       "carrierPartyId": "_NA_",
       "shipmentMethodTypeId": "NEXT_DAY",
@@ -214,6 +218,20 @@ These view entities play a crucial role in optimizing data access and retrieval 
       "carrierPartyId": "FEDEX",
       "shipmentMethodTypeId": "THIRD_DAY",
       "shopifyShippingMethod": "Standard"
+    }
+  ],
+  "shopifyShopLocations": [
+    {
+      "facilityId": "_NA_",
+      "shopifyLocationId": "67890151588"
+    },
+    {
+      "facilityId": "BROADWAY",
+      "shopifyLocationId": "67890446500"
+    },
+    {
+      "facilityId": "SALT_LAKE_CITY",
+      "shopifyLocationId": "67890184356"
     }
   ]
 }
@@ -367,3 +385,84 @@ The ShopifyShopTypeMapping entity manages type mappings (e.g., payment types, pr
 *   **Method:** `DELETE`
 *   **Description:** Deletes a specific ShopifyShopCarrierShipment by shopifyShippingMethod for a Shopify shop.
 
+### **API Documentation for Managing ShopifyShopLocation**
+
+The `ShopifyShopLocation` entity manages the mapping of Shopify locations to facilities in HotWax Commerce, enabling accurate inventory and fulfillment management. This section defines APIs for independently managing ShopifyShopLocation data.
+
+---
+
+### **API Endpoints for ShopifyShopLocation**
+
+#### **1. Create or Update ShopifyShopLocation**
+
+- **Endpoint**: `/rest/shopifyShopLocations`
+- **Method**: `POST`
+- **Description**: Creates or updates a ShopifyShopLocation entry.
+
+**Request Payload Example**:
+
+```json
+{
+  "shopId": "10000",
+  "facilityId": "BROADWAY",
+  "shopifyLocationId": "67890446500"
+}
+```
+
+---
+
+#### **2. Retrieve ShopifyShopLocations for a Shop**
+
+- **Endpoint**: `/rest/shopifyShopLocations/{shopId}`
+- **Method**: `GET`
+- **Description**: Retrieves all ShopifyShopLocations for a specific Shopify shop.
+
+**Response Example**:
+
+```json
+{
+  "shopId": "10000",
+  "shopifyShopLocations": [
+    {
+      "facilityId": "_NA_",
+      "shopifyLocationId": "67890151588"
+    },
+    {
+      "facilityId": "BROADWAY",
+      "shopifyLocationId": "67890446500"
+    },
+    {
+      "facilityId": "SALT_LAKE_CITY",
+      "shopifyLocationId": "67890184356"
+    }
+  ]
+}
+```
+
+---
+
+#### **3. Retrieve a Specific ShopifyShopLocation**
+
+- **Endpoint**: `/rest/shopifyShopLocations/{shopId}/{shopifyLocationId}`
+- **Method**: `GET`
+- **Description**: Retrieves a specific ShopifyShopLocation by `shopifyLocationId` for a Shopify shop.
+
+**Response Example**:
+
+```json
+{
+  "shopId": "10000",
+  "facilityId": "BROADWAY",
+  "shopifyLocationId": "67890446500"
+}
+```
+
+---
+
+#### **4. Delete a ShopifyShopLocation**
+
+- **Endpoint**: `/rest/shopifyShopLocations/{shopId}/{shopifyLocationId}`
+- **Method**: `DELETE`
+- **Description**: Deletes a specific ShopifyShopLocation by `shopifyLocationId` for a Shopify shop.
+
+---
