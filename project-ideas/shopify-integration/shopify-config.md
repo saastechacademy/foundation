@@ -43,10 +43,6 @@ The HotWax Commerce Shopify connector data model is designed to facilitate the i
 
 *   **`ShopifyShopScript`**: This entity manages scripts associated with a Shopify shop, including script types, event triggers, and execution details.
 
-*   **`DataManagerLog` (extended)**: This extended entity logs data management operations related to the Shopify connector, including the associated Shopify configuration and remote file paths.
-
-*   **`JobSandbox` (extended)**: This extended entity associates scheduled jobs with specific Shopify shops, enabling task automation and management within the context of the Shopify integration.
-
 ### **View Entities for Data Read Operations**
 
 The data model also includes several view entities that simplify data retrieval and aggregation for various use cases:
