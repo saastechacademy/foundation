@@ -60,7 +60,7 @@ Additionally, implementation should also consider consuming ShopifyFulfillmentAc
      - includeDigitalItems (defaults to **Y**)
      - fromDate
      - thruDate
-2. Prepare queryParam map from following input parameters - shipmentId, orderId, fromDate, thruDate.
+2. Prepare queryParam map from following input parameters - shipmentId, orderId, fromDate, thruDate, includeDigitalItems.
 3. If runAsBatch=true, do following,
    - Set queryParams.thruDate = nowDate.
    - Set messageDate (context) = nowDate.
