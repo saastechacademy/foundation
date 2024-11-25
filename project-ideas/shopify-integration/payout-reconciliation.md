@@ -2,12 +2,12 @@
 
 ShopifyPayments, deposits money in the merchant bank account in a batch, also called the settlement batch, Shopify calls them ShopifyPaymentsPayout.
 The Payout can be daily, weekly or monthly.
-The reconciliation process will reconcile all the [Transactions](https://shopify.dev/docs/api/admin-rest/2024-10/resources/transaction) on Orders with the list ShopifyPaymentsBalanceTransactions included in ShopifyPaymentsPayout.
+The reconciliation process will reconcile all the [Transactions](https://shopify.dev/docs/api/admin-rest/2024-10/resources/transaction) on Orders with the list [ShopifyPaymentsBalanceTransactions](https://shopify.dev/docs/api/admin-graphql/2024-07/objects/ShopifyPaymentsBalanceTransaction) included in [ShopifyPaymentsPayout](https://shopify.dev/docs/api/admin-graphql/2024-07/objects/ShopifyPaymentsPayout).
 
 # Mapping Shopify entities with HC data model entities
+The Financial details of each Payout is tracked using [Payment, PaymentGroup, FinAccountTrans](payment-group.md). 
 
-A Financial account is create for merchant account received money from the ShopifyPayments. The payment details on Payouts to merchant are recorded as Financial transactions. 
-
+The [ShopifyPaymentsAccount](https://shopify.dev/docs/api/admin-graphql/2024-07/objects/ShopifyPaymentsAccount) is setup as Financial Account in HotWax. The Payouts summary is managed in FinAccountTrans and ShopifyPaymentsBalanceTransaction are tracked in Payments.   
 
 ## ShopifyPaymentsPayout with PaymentGroup
 
