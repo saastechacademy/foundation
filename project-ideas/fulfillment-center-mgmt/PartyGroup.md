@@ -5,13 +5,6 @@ There is no reason to create Party independent of PartyGroup of Person. We shoul
 createPartyGroup should accept all fields in Party and PartyGroup entity. 
 Keep it simple, If you pass in partyId, and insert fails because of duplicate key, it fails, return natural error. Don't process it in anyways. 
 
-Similarly, implement 
-updatePartyGroup 
-deletePartyGroup
+Implement following rest resources.
 
-createPerson
-updatePerson
-deletePerson. 
-
-
-The Ofbiz implementation considers status, We don't want to. 
+Get, Put, Post, Delete
