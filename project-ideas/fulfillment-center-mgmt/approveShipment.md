@@ -1,13 +1,16 @@
-## calcShipmentPackageTotalWeight
-
-# Note: We will do this computation in approveShipment service. I don't think we have use of this service. We will not implement in Moqui.
+## approveShipment 
 
 
-**Purpose:**
+Step 1: For each Package in the Shipment, Compute the shipment package weight and update it on the ShipmentPackage.
 
-The primary goal of this function is to determine the weight of a single package within a shipment. 
+Step 2: createShipmentStatus. First create "SHIPMENT_APPROVED" record in ShipmentStatus table 
 
-Prepare dynamic view entity
+Step 3: update the StatusId on Shipment table to "SHIPMENT_APPROVED"
+
+
+Implementation notes:
+
+ShipmentPackageContent has list of ShipmentItems and Qty of that ShipmentItem. To compute the weight of ShipmentPackage, write a dynamic view that gets me ShipmentPackage weight.
 
 **View Entity Definition**
 
@@ -32,3 +35,6 @@ GROUP BY
     si.shipment_id and spc.shipment_package_seq_id;
 
 ```
+
+Note: 
+We may end up writing services for each status transition 
