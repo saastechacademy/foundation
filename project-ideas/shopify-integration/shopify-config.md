@@ -260,7 +260,7 @@ The ShopifyShopTypeMapping entity manages type mappings (e.g., payment types, pr
 
 ### Endpoint: Retrieve ShopifyShopTypeMappings for a Shop
 
-*   **URL:** `/rest/shopifyShopTypeMappings/{shopId}`
+*   **URL:** `/rest/s1/shopify-api/{shopId}/typeMappings`
 *   **Method:** `GET`
 *   **Description:** Retrieves all ShopifyShopTypeMappings for a specific shop.
 
