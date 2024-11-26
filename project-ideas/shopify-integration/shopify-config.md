@@ -78,7 +78,7 @@ These view entities play a crucial role in optimizing data access and retrieval 
 
 **Endpoint: Create or Update ShopifyShop with Configuration**
 
-*   URL: /rest/shopifyShops
+*   URL: /rest/s1/shopify/shops
 *   Method: POST
 *   Description: Creates or updates a ShopifyShop along with its configuration (ShopifyConfig).
 
@@ -117,7 +117,7 @@ These view entities play a crucial role in optimizing data access and retrieval 
 
 **Endpoint: Retrieve ShopifyShop with Configuration**
 
-*   URL: /rest/shopifyShops/{shopId}
+*   URL: /rest/s1/shopify/shops/{shopId}
 *   Method: GET
 *   Description: Retrieves a ShopifyShop and its nested configuration (ShopifyConfig).
 
@@ -243,7 +243,7 @@ The ShopifyShopTypeMapping entity manages type mappings (e.g., payment types, pr
 
 ### Endpoint: Create or Update ShopifyShopTypeMapping
 
-*   **URL:** `/rest/shopifyShopTypeMappings`
+*   **URL:** `/rest/s1/shopify/shops/{shopId}/shopTypeMappings`
 *   **Method:** `POST`
 *   **Description:** Creates or updates a ShopifyShopTypeMapping entry for a Shopify shop.
 
@@ -260,7 +260,7 @@ The ShopifyShopTypeMapping entity manages type mappings (e.g., payment types, pr
 
 ### Endpoint: Retrieve ShopifyShopTypeMappings for a Shop
 
-*   **URL:** `/rest/s1/shopify-api/{shopId}/typeMappings`
+*   **URL:** `/rest/s1/shopify/shops/{shopId}/typeMappings`
 *   **Method:** `GET`
 *   **Description:** Retrieves all ShopifyShopTypeMappings for a specific shop.
 
@@ -291,7 +291,7 @@ The ShopifyShopTypeMapping entity manages type mappings (e.g., payment types, pr
 
 ### Endpoint: Retrieve a Specific ShopifyShopTypeMapping
 
-*   **URL:** `/rest/shopifyShopTypeMappings/{shopId}/{mappedKey}`
+*   **URL:** `/rest/s1/shopify/shops/{shopId}/shopTypeMappings/{mappedKey}`
 *   **Method:** `GET`
 *   **Description:** Retrieves a specific ShopifyShopTypeMapping by mappedKey for a Shopify shop.
 
@@ -308,7 +308,7 @@ The ShopifyShopTypeMapping entity manages type mappings (e.g., payment types, pr
 
 ### Endpoint: Delete a ShopifyShopTypeMapping
 
-*   **URL:** `/rest/shopifyShopTypeMappings/{shopId}/{mappedKey}`
+*   **URL:** `/rest/s1/shopify/shops/{shopId}/shopTypeMappings/{mappedKey}`
 *   **Method:** `DELETE`
 *   **Description:** Deletes a specific ShopifyShopTypeMapping by mappedKey for a Shopify shop.
 
