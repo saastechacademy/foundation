@@ -20,12 +20,6 @@
 
 **3. Data Model**
 
-*   **Entities:**
-    *   `OrderItem`: Stores order item details, including the `shipGroupSeqId` in HC.
-    *   `OrderItemShipGroup`: Tracks shipment group information, including the `facilityId`. In HC, there's a one-to-one relationship between `OrderItem` and `OrderItemShipGroup`.
-    *   `OrderItemShipGrpInvRes`: Represents an inventory reservation for an order item within a shipment group.
-    *   `InventoryItem`: Manages inventory levels and availability.
-    *   `InventoryItemDetail`: Logs inventory transactions, including reservations.
 *   **Entity Relationships:**
     *   `OrderItem` has a one-to-one relationship with `OrderItemShipGroup` in HC.
     *   `OrderItem` has a one-to-many relationship with `OrderItemShipGrpInvRes`.
@@ -37,14 +31,11 @@
 
 *   **Detailed Steps:**
     1.  **Input Validation:**
-        *   Validate that all required input parameters are present and have valid values.
-        *   Verify that the corresponding `OrderHeader`, `OrderItem`, `Product`, and `Facility` records exist in the database.
     2.  **Inventory Item Retrieval:**
         *   Query the `InventoryItem` entity to find all items matching the `productId` and `facilityId`.
         *   If `locationSeqId` is provided, filter the results further to include only items at that location.
-        *   Filter the results to include only items with `availableToPromiseTotal` greater than or equal to the requested `quantity`.
-    3.  **Dynamic Selection (FIFO):**
-        *   Sort the filtered list of `InventoryItem` records in ascending order of their `datetimeReceived` values. This prioritizes items received earlier, adhering to the FIFO strategy.
+        *   Sort the results descending by `availableToPromiseTotal`, get first InventoryItem record.
+    3.  **:**
     4.  **Reservation Creation:**
         *   Iterate through the sorted list of `InventoryItem` records.
         *   For each item, attempt to reserve the requested `quantity` by:
@@ -67,12 +58,9 @@
                 *   Create an `OrderItemShipGrpInvRes` record with `quantityNotAvailable` set to the `quantityNotReserved` value.
 
 **5. Implementation Notes**
-
-*   **Programming Language:** Minilang
-*   **HC-Specific Considerations:**
-    *   The service will always use FIFO for inventory reservation.
+  
+**HC-Specific Considerations:**
     *   The `OrderItem` entity in HC includes the `shipGroupSeqId` field, resulting in a one-to-one relationship between `OrderItem` and `OrderItemShipGroup`.
-
 
 **Scenario:**
 
@@ -138,14 +126,7 @@ The `reserveProductInventory` service is called with the following input paramet
 
 **Why not implement this in reserveProductInventory?**
 
-*   **Modularity and Reusability:** Separating the logic into a distinct function improves modularity and makes the code more reusable. If there are other services or processes that need to reserve inventory from a specific InventoryItem, they can potentially reuse this function.
-
-
 **1. Introduction**
-
-*   **Purpose:** This function handles the core logic of reserving non-serialized inventory from a specific `InventoryItem` in HotWax Commerce. It updates the `InventoryItem` record, creates an `InventoryItemDetail` record to log the reservation, and manages scenarios with insufficient inventory.
-*   **Scope:** This function is designed for use within the `reserveProductInventory` service in HC, which always uses the FIFO (First-In, First-Out) strategy for inventory allocation.
-*   **Reference Implementation:** This design is inspired by the `reserveForInventoryItemInline` function in the OFBiz codebase, but adapted to HC's specific requirements and constraints.
 
 **2. Function Definition**
 
@@ -190,11 +171,6 @@ The `reserveProductInventory` service is called with the following input paramet
 *   **Create `OrderItemShipGrpInvRes`:**
     *   Call the `reserveOrderItemInventory` service to create or update an `OrderItemShipGrpInvRes` record. This step might need to be adapted based on how HC handles reservations and the one-to-one relationship between `OrderItem` and `OrderItemShipGroup`.
 
-*   **Update `quantityNotReserved`:**
-    *   Reduce the `quantityNotReserved` by the `deductAmount`.
-
-*   **Update `lastNonSerInventoryItem`:**
-    *   Store the current `InventoryItem` as the `lastNonSerInventoryItem`. This will be used later in the `reserveProductInventory` service to handle scenarios with insufficient inventory.
 
 
 **5. HotWax Commerce Considerations**
@@ -202,54 +178,13 @@ The `reserveProductInventory` service is called with the following input paramet
 *   This implementation focuses solely on non-serialized inventory, as that's the only type supported in HC.
 *   Ensure that the function integrates seamlessly with the HC data model and any related services or workflows.
 
-**Understanding `reserveOrderItemInventory` in OFBiz**
-
-This service is responsible for creating or updating the `OrderItemShipGrpInvRes` entity, which represents the reservation of inventory for a specific order item within a shipment group.
-
-1.  **Gather Input:** The service takes input parameters such as `orderId`, `orderItemSeqId`, `shipGroupSeqId`, `inventoryItemId`, and `quantity`.
-
-2.  **Check for Existing Reservation:** It checks if an `OrderItemShipGrpInvRes` record already exists for the given combination of `orderId`, `orderItemSeqId`, `shipGroupSeqId`, and `inventoryItemId`.
-
-3.  **Create or Update Reservation:**
-    *   If a reservation record doesn't exist, it creates a new `OrderItemShipGrpInvRes` entity and populates its fields with the provided input values.
-    *   If a reservation record already exists, it updates the `quantity` field of the existing record.
-
-4.  **Handle `quantityNotAvailable`:** If the `quantityNotAvailable` parameter is provided, it updates the corresponding field in the `OrderItemShipGrpInvRes` record. This field likely indicates the portion of the reserved quantity that is not currently available.
-
-5.  **Set `reservedDatetime`:** The service sets or updates the `reservedDatetime` field in the `OrderItemShipGrpInvRes` record to the current timestamp.
-
-6.  **Store the Reservation:** Finally, it stores the newly created or updated `OrderItemShipGrpInvRes` record in the database.
-
 **Key Considerations**
 
 *   **Simplified Logic in HotWax Commerce:** In HotWax Commerce, due to the one-to-one relationship between `OrderItem` and `OrderItemShipGroup`, the logic for retrieving or creating `OrderItemShipGroup` records might be simplified.
-
-**Logic implemented in `checkNegativeInventory`**
-
-This function primarily determines whether negative inventory is allowed based on the `requireInventory` flag and potentially other configuration settings. Here's a breakdown of its logic:
 
 1.  **Check `requireInventory`:**
     *   It first checks the value of the `requireInventory` parameter.
     *   If `requireInventory` is "Y", it means that the system requires physical inventory to be available for reservations. In this case, the function returns `false`, indicating that negative inventory is not allowed.
 
 2.  **Check Configuration Settings:**
-    *   If `requireInventory` is "N", the function checks the `allowNegativeInventory` property in the `general.properties` configuration file.
-    *   If this property is set to "Y", it means that negative inventory is allowed globally in the system. The function returns `true` in this case.
-
-3.  **Check Product-Specific Settings:**
-    *   If the `allowNegativeInventory` property is not set or is set to "N", the function checks if the product itself allows negative inventory. It looks for the `allowNegative` flag on the `Product` entity.
-    *   If the product allows negative inventory, the function returns `true`.
-
-4.  **Default Behavior:**
-    *   If none of the above conditions are met, the function returns `false` by default, meaning negative inventory is not allowed.
-
-**How `checkNegativeInventory` is used in `reserveProductInventory`**
-
-The `reserveProductInventory` service uses the `checkNegativeInventory` function in the following way:
-
-1.  **After Inventory Reservation Attempts:** After attempting to reserve inventory from all available `InventoryItem` records, the service checks if there is any `quantityNotReserved`.
-2.  **If Insufficient Inventory:** If `quantityNotReserved` is greater than zero, it means that there wasn't enough inventory to fulfill the entire requested quantity.
-3.  **Call `checkNegativeInventory`:** The service calls the `checkNegativeInventory` function to determine if negative inventory is allowed in this case.
-4.  **Handle Negative Inventory:**
-    *   If `checkNegativeInventory` returns `true`, the service proceeds to create a new `InventoryItem` with negative `availableToPromiseTotal` or adjust the `availableToPromiseTotal` of the last processed `InventoryItem` to reflect the negative quantity.
-    *   If `checkNegativeInventory` returns `false`, the service likely throws an error indicating that the reservation cannot be fulfilled due to insufficient inventory.
+    *   If `requireInventory` is "N", it means that negative inventory reservation is allowed.
