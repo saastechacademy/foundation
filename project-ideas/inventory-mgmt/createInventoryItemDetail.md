@@ -1,5 +1,5 @@
 # **createInventoryItemDetail** 
-The `createInventoryItemDetail` service is designed to record detailed changes or adjustments to the inventory of a specific `InventoryItem`. It captures the reasons for these changes, providing a historical record of inventory movements.
+The `createInventoryItemDetail` record detailed adjustments to the inventory of a specific `InventoryItem`. It captures the reasons for these changes, providing a historical record of inventory movements.
 
 
 **`InventoryItemDetail` Entity**
@@ -15,7 +15,7 @@ The `createInventoryItemDetail` service is designed to record detailed changes o
 
 **Use Cases and Scenarios**
 
-The `createInventoryItemDetail` service is employed in various scenarios to track inventory adjustments:
+The `createInventoryItemDetail`:
 
 1.  **Inventory Variance Adjustments:**
     *   When there's a discrepancy between the physical inventory count and the system's recorded quantity, this service is used to log the variance. The `reasonEnumId` would indicate the nature of the variance (e.g., "VAR_LOST" for lost items, "VAR_FOUND" for found items).
@@ -23,11 +23,9 @@ The `createInventoryItemDetail` service is employed in various scenarios to trac
 2.  **Inventory Transfers:**
     *   During inventory transfers between locations, this service records the quantity changes at both the source and destination locations.
 
-3.  **Inventory Adjustments for Other Reasons:**
-    *   The service can be used to record any other adjustments to inventory levels, such as items becoming damaged, being used for samples, or corrections due to mis-shipments. The `reasonEnumId` provides flexibility to categorize these adjustments.
 
 4.  **Integration with External Systems:**
-    *   When integrating with external inventory management systems, this service can be used to synchronize inventory changes between OFBiz and the external system. The `reasonEnumId` "VAR_INTEGR" is often used in this context.
+    *   When integrating with external inventory management systems, this service can be used to synchronize inventory changes between OMS and the external system. The `reasonEnumId` "VAR_INTEGR" is often used in this context.
 
 **Example**
 
