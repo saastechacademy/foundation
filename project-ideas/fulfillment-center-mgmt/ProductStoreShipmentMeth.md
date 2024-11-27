@@ -1,4 +1,4 @@
-The **ProductStoreShipmentMeth** entity in Apache OFBiz serves as a crucial link between a **ProductStore** and the shipping methods it offers to customers. It allows each product store to define and configure the specific shipping options available for its products.
+The **ProductStoreShipmentMeth** entity is link between a **ProductStore** and the shipping methods it offers to customers.
 
 **Key attributes**
 
@@ -39,4 +39,4 @@ The rate shopping process, this entity is queried to retrieve a list of configur
 
 Get shipping rates from the Carrier party for the ShipmentMethodTypes configured on the ProductStore and meet the deliveryDays/SLA criteria. 
 
-Implement REST Resources for managing ProductStoreShipmentMeth content. 
+Implement REST Resources for managing ProductStoreShipmentMeth. 
