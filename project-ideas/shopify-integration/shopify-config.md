@@ -78,7 +78,7 @@ These view entities play a crucial role in optimizing data access and retrieval 
 
 **Endpoint: Create or Update ShopifyShop with Configuration**
 
-*   URL: /rest/shopifyShops
+*   URL: /rest/s1/shopify/shops
 *   Method: POST
 *   Description: Creates or updates a ShopifyShop along with its configuration (ShopifyConfig).
 
@@ -117,7 +117,7 @@ These view entities play a crucial role in optimizing data access and retrieval 
 
 **Endpoint: Retrieve ShopifyShop with Configuration**
 
-*   URL: /rest/shopifyShops/{shopId}
+*   URL: /rest/s1/shopify/shops/{shopId}
 *   Method: GET
 *   Description: Retrieves a ShopifyShop and its nested configuration (ShopifyConfig).
 
@@ -243,7 +243,7 @@ The ShopifyShopTypeMapping entity manages type mappings (e.g., payment types, pr
 
 ### Endpoint: Create or Update ShopifyShopTypeMapping
 
-*   **URL:** `/rest/shopifyShopTypeMappings`
+*   **URL:** `/rest/s1/shopify/shops/{shopId}/typeMappings`
 *   **Method:** `POST`
 *   **Description:** Creates or updates a ShopifyShopTypeMapping entry for a Shopify shop.
 
@@ -260,7 +260,7 @@ The ShopifyShopTypeMapping entity manages type mappings (e.g., payment types, pr
 
 ### Endpoint: Retrieve ShopifyShopTypeMappings for a Shop
 
-*   **URL:** `/rest/s1/shopify-api/{shopId}/typeMappings`
+*   **URL:** `/rest/s1/shopify/shops/{shopId}/typeMappings`
 *   **Method:** `GET`
 *   **Description:** Retrieves all ShopifyShopTypeMappings for a specific shop.
 
@@ -291,7 +291,7 @@ The ShopifyShopTypeMapping entity manages type mappings (e.g., payment types, pr
 
 ### Endpoint: Retrieve a Specific ShopifyShopTypeMapping
 
-*   **URL:** `/rest/shopifyShopTypeMappings/{shopId}/{mappedKey}`
+*   **URL:** `/rest/s1/shopify/shops/{shopId}/typeMappings/{mappedKey}`
 *   **Method:** `GET`
 *   **Description:** Retrieves a specific ShopifyShopTypeMapping by mappedKey for a Shopify shop.
 
@@ -308,7 +308,7 @@ The ShopifyShopTypeMapping entity manages type mappings (e.g., payment types, pr
 
 ### Endpoint: Delete a ShopifyShopTypeMapping
 
-*   **URL:** `/rest/shopifyShopTypeMappings/{shopId}/{mappedKey}`
+*   **URL:** `/rest/s1/shopify/shops/{shopId}/typeMappings/{mappedKey}`
 *   **Method:** `DELETE`
 *   **Description:** Deletes a specific ShopifyShopTypeMapping by mappedKey for a Shopify shop.
 
@@ -317,7 +317,7 @@ The ShopifyShopTypeMapping entity manages type mappings (e.g., payment types, pr
 
 ### 1. Create or Update ShopifyShopCarrierShipment
 
-*   **URL:** `/rest/shopifyShopCarrierShipments`
+*   **URL:** `/rest/s1/shopify/shops/{shopId}/carrierShipments`
 *   **Method:** `POST`
 *   **Description:** Creates or updates a ShopifyShopCarrierShipment entry for a Shopify shop.
 
@@ -334,7 +334,7 @@ The ShopifyShopTypeMapping entity manages type mappings (e.g., payment types, pr
 
 ### 2. Retrieve ShopifyShopCarrierShipments for a Shop
 
-*   **URL:** `/rest/shopifyShopCarrierShipments/{shopId}`
+*   **URL:** `/rest/s1/shopify/shops/{shopId}/carrierShipments`
 *   **Method:** `GET`
 *   **Description:** Retrieves all ShopifyShopCarrierShipments for a specific shop.
 
@@ -360,7 +360,7 @@ The ShopifyShopTypeMapping entity manages type mappings (e.g., payment types, pr
 
 ### 3. Retrieve a Specific ShopifyShopCarrierShipment
 
-*   **URL:** `/rest/shopifyShopCarrierShipments/{shopId}/{shopifyShippingMethod}`
+*   **URL:** `/rest/s1/shopify/shops/{shopId}/carrierShipments/{shopifyShippingMethod}`
 *   **Method:** `GET`
 *   **Description:** Retrieves a specific ShopifyShopCarrierShipment by shopifyShippingMethod for a Shopify shop.
 
@@ -377,7 +377,7 @@ The ShopifyShopTypeMapping entity manages type mappings (e.g., payment types, pr
 
 ### 4. Delete a ShopifyShopCarrierShipment
 
-*   **URL:** `/rest/shopifyShopCarrierShipments/{shopId}/{shopifyShippingMethod}`
+*   **URL:** `/rest/s1/shopify/shops/{shopId}/carrierShipments/{shopifyShippingMethod}`
 *   **Method:** `DELETE`
 *   **Description:** Deletes a specific ShopifyShopCarrierShipment by shopifyShippingMethod for a Shopify shop.
 
@@ -391,7 +391,7 @@ The `ShopifyShopLocation` entity manages the mapping of Shopify locations to fac
 
 #### **1. Create or Update ShopifyShopLocation**
 
-- **Endpoint**: `/rest/shopifyShopLocations`
+- **Endpoint**: `/rest/s1/shopify/shops/{shopId}/locations`
 - **Method**: `POST`
 - **Description**: Creates or updates a ShopifyShopLocation entry.
 
@@ -409,7 +409,7 @@ The `ShopifyShopLocation` entity manages the mapping of Shopify locations to fac
 
 #### **2. Retrieve ShopifyShopLocations for a Shop**
 
-- **Endpoint**: `/rest/shopifyShopLocations/{shopId}`
+- **Endpoint**: `/rest/s1/shopify/shops/{shopId}/locations`
 - **Method**: `GET`
 - **Description**: Retrieves all ShopifyShopLocations for a specific Shopify shop.
 
@@ -439,7 +439,7 @@ The `ShopifyShopLocation` entity manages the mapping of Shopify locations to fac
 
 #### **3. Retrieve a Specific ShopifyShopLocation**
 
-- **Endpoint**: `/rest/shopifyShopLocations/{shopId}/{shopifyLocationId}`
+- **Endpoint**: `/rest/s1/shopify/shops/{shopId}/locations/{shopifyLocationId}`
 - **Method**: `GET`
 - **Description**: Retrieves a specific ShopifyShopLocation by `shopifyLocationId` for a Shopify shop.
 
@@ -457,7 +457,7 @@ The `ShopifyShopLocation` entity manages the mapping of Shopify locations to fac
 
 #### **4. Delete a ShopifyShopLocation**
 
-- **Endpoint**: `/rest/shopifyShopLocations/{shopId}/{shopifyLocationId}`
+- **Endpoint**: `/rest/s1/shopify/shops/{shopId}/locations/{shopifyLocationId}`
 - **Method**: `DELETE`
 - **Description**: Deletes a specific ShopifyShopLocation by `shopifyLocationId` for a Shopify shop.
 
