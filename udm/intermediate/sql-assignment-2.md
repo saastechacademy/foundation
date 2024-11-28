@@ -1,217 +1,173 @@
 # SQL Assignment 2
 
-## Introduction
-
-In today's data-driven environment, insightful analytics are pivotal for organizations aiming to optimize operations, enhance customer satisfaction, and improve financial performance. As a member of the analytics team at [Your Company], your role is to extract and analyze data that provides actionable insights across various departments, including sales, customer service, fulfillment, finance, and operations.
-
-This assignment outlines a comprehensive analytics story that delves into sales performance, operational efficiency, financial health, customer relations, and inventory management. By logically categorizing and analyzing the data, you will help each department understand their processes better and make informed decisions to drive the company forward.
+As a member of the analytics team, your task is to use SQL to extract specific data sets that provide insights across various departments. Retrieve the following data for analysis.
 
 ## 1. Sales Performance and Customer Behavior
 
-Understanding sales performance and customer behavior is essential for driving revenue growth and enhancing product offerings. This section focuses on analyzing completed sales orders, historical sales data, and returns to gain insights into product performance and customer satisfaction.
+### a. Completed Sales Orders
 
-### a. Analysis of Completed Sales Orders
+Retrieve data for physical items from completed sales orders:
 
-The sales team is interested in tracking the performance of physical items from completed sales orders. Retrieve the following data to help them analyze product performance and sales channels:
+- `ORDER_ID`
+- `ORDER_ITEM_SEQ_ID`
+- `PRODUCT_ID`
+- `PRODUCT_TYPE_ID`
+- `IS_PHYSICAL`
+- `IS_DIGITAL`
+- `SALES_CHANNEL_ENUM_ID`
+- `ORDER_DATE`
+- `ENTRY_DATE`
+- `STATUS_ID`
+- `STATUS_DATETIME`
+- `ORDER_TYPE_ID`
+- `PRODUCT_STORE_ID`
 
-- **ORDER_ID**
-- **ORDER_ITEM_SEQ_ID**
-- **PRODUCT_ID**
-- **PRODUCT_TYPE_ID**
-- **IS_PHYSICAL**
-- **IS_DIGITAL**
-- **SALES_CHANNEL_ENUM_ID**
-- **ORDER_DATE**
-- **ENTRY_DATE**
-- **STATUS_ID**
-- **STATUS_DATETIME**
-- **ORDER_TYPE_ID**
-- **PRODUCT_STORE_ID**
+### b. Completed Return Items
 
-This data will enable the team to assess which products are performing well, identify trends across different sales channels, and understand the efficiency of the order completion process.
+Fetch details of completed returns:
 
-### b. Evaluation of Completed Return Items
+- `RETURN_ID`
+- `ORDER_ID`
+- `PRODUCT_STORE_ID`
+- `STATUS_DATETIME`
+- `ORDER_NAME`
+- `FROM_PARTY_ID`
+- `RETURN_DATE`
+- `ENTRY_DATE`
+- `RETURN_CHANNEL_ENUM_ID`
 
-Returns provide valuable insights into customer satisfaction and product issues. Fetch the following return item details to analyze completed returns:
+### c. Completed Orders in July 2023
 
-- **RETURN_ID**
-- **ORDER_ID**
-- **PRODUCT_STORE_ID**
-- **STATUS_DATETIME**
-- **ORDER_NAME**
-- **FROM_PARTY_ID**
-- **RETURN_DATE**
-- **ENTRY_DATE**
-- **RETURN_CHANNEL_ENUM_ID**
+Retrieve orders completed in July 2023:
 
-Analyzing this information helps identify patterns in returns, understand reasons behind customer dissatisfaction, and address product-related issues promptly.
+- `ORDER_ID`
+- `ORDER_ITEM_SEQ_ID`
+- `Shopify Order ID`
+- `Shopify Product ID`
 
-### c. Review of Completed Orders in July 2023
+### d. Completed Orders in August 2023
 
-The operations team requires data on completed orders from **July 2023** to assess performance. Retrieve:
+Fetch data for orders completed in August 2023:
 
-- **ORDER_ID**
-- **ORDER_ITEM_SEQ_ID**
-- **Shopify Order ID**
-- **Shopify Product ID**
-
-This helps in evaluating the effectiveness of sales strategies and product popularity during that period.
-
-### d. Analysis of August 2023 Completed Orders
-
-For a broader perspective, fetch data on orders completed in **August 2023**:
-
-- **PRODUCT_ID**
-- **PRODUCT_TYPE_ID**
-- **PRODUCT_STORE_ID**
-- **TOTAL_QUANTITY**
-- **INTERNAL_NAME**
-- **FACILITY_ID**
-- **EXTERNAL_ID**
-- **FACILITY_TYPE_ID**
-- **ORDER_HISTORY_ID**
-- **ORDER_ID**
-- **ORDER_ITEM_SEQ_ID**
-- **SHIP_GROUP_SEQ_ID**
-
-This comprehensive dataset allows for in-depth analysis of sales trends, operational efficiency, and product performance.
+- `PRODUCT_ID`
+- `PRODUCT_TYPE_ID`
+- `PRODUCT_STORE_ID`
+- `TOTAL_QUANTITY`
+- `INTERNAL_NAME`
+- `FACILITY_ID`
+- `EXTERNAL_ID`
+- `FACILITY_TYPE_ID`
+- `ORDER_HISTORY_ID`
+- `ORDER_ID`
+- `ORDER_ITEM_SEQ_ID`
+- `SHIP_GROUP_SEQ_ID`
 
 ## 2. Fulfillment Efficiency and Operational Review
 
-Efficient fulfillment processes are crucial for customer satisfaction and operational cost management. This section focuses on analyzing shipment details, order completion times, warehouse performance, and procurement patterns.
+### a. Shipping Addresses for October 2023 Orders
 
-### a. Shipping Address Analysis for October 2023 Orders
+Retrieve shipping addresses for orders completed in October 2023:
 
-The fulfillment team needs to review orders completed in **October 2023** and their shipping addresses to optimize delivery processes. Retrieve:
-
-- **ORDER_ID**
-- **CONTACT_MECH_ID** (Shipping Address)
-
-This will help in identifying geographical areas with high order volumes and potential delivery challenges.
+- `ORDER_ID`
+- `CONTACT_MECH_ID` (Shipping Address)
 
 ### b. Warehouse Performance for September 2023
 
-To assess warehouse efficiency, fetch data on physical items completed from the warehouse in **September 2023**:
+Fetch data on physical items completed from the warehouse in September 2023:
 
-- **ORDER_ID**
-- **ORDER_ITEM_SEQ_ID**
-- **PRODUCT_ID**
-- **QUANTITY**
-- **FACILITY_ID**
-- **SHIP_GROUP_SEQ_ID**
-- **ORDER_STATUS**
-- **STATUS_DATETIME**
-
-Analyzing this data can highlight bottlenecks, inventory management issues, and opportunities for process improvements within the warehouse operations.
+- `ORDER_ID`
+- `ORDER_ITEM_SEQ_ID`
+- `PRODUCT_ID`
+- `QUANTITY`
+- `FACILITY_ID`
+- `SHIP_GROUP_SEQ_ID`
+- `ORDER_STATUS`
+- `STATUS_DATETIME`
 
 ### c. Procurement Patterns for September 2023
 
-Understanding ordering patterns aids in inventory planning and procurement strategies. Retrieve details of physical items ordered in **September 2023**:
+Retrieve details of physical items ordered in September 2023:
 
-- **ORDER_ID**
-- **ORDER_ITEM_SEQ_ID**
-- **PRODUCT_ID**
-- **QUANTITY**
-- **ORDER_DATE**
-- **ORDER_STATUS**
-- **PRODUCT_TYPE_ID**
-
-This information will help the procurement team anticipate demand and adjust purchasing accordingly.
+- `ORDER_ID`
+- `ORDER_ITEM_SEQ_ID`
+- `PRODUCT_ID`
+- `QUANTITY`
+- `ORDER_DATE`
+- `ORDER_STATUS`
+- `PRODUCT_TYPE_ID`
 
 ## 3. Financial Health and Order Integrity
 
-Financial performance is directly linked to accurate order processing and payment collection. This section addresses the creation of sales orders, payment methods, and discrepancies in order statuses.
-
 ### a. Newly Created Sales Orders and Payment Methods
 
-The finance team needs data on all newly created sales orders to understand revenue streams and customer payment preferences. Fetch:
+Fetch data on all newly created sales orders:
 
-- **ORDER_ID**
-- **TOTAL_AMOUNT**
-- **PAYMENT_METHOD** (e.g., Cash, Mastercard, Visa, PayPal)
-- **Shopify Order ID**
-
-This data provides insights into sales volume, preferred payment options, and potential areas to streamline the payment process.
+- `ORDER_ID`
+- `TOTAL_AMOUNT`
+- `PAYMENT_METHOD` (e.g., Cash, Mastercard, Visa, PayPal)
+- `Shopify Order ID`
 
 ## 4. Customer Relations and Satisfaction
 
-Building strong customer relationships is vital for long-term success. This section focuses on analyzing customer data, appeasements, returns, and recurring return issues to improve customer service and satisfaction.
-
 ### a. New Customers Acquired in June 2023
 
-The customer relations team wants to track customers created in **June 2023** to tailor engagement strategies. Retrieve:
+Retrieve data for customers created in June 2023:
 
-- **CUSTOMER_ID**
-- **CUSTOMER_NAME**
-- **EMAIL**
-- **PHONE**
-- **ENTRY_DATE**
-- **CUSTOMER_STATUS**
+- `CUSTOMER_ID`
+- `CUSTOMER_NAME`
+- `EMAIL`
+- `PHONE`
+- `ENTRY_DATE`
+- `CUSTOMER_STATUS`
 
-This data helps in understanding customer demographics and enhancing communication efforts.
+### b. Appeasements Issued in July
 
-### b. Analysis of Appeasements Issued in July
+Fetch details of appeasements issued:
 
-Appeasements are often issued to address customer grievances. Fetch details to analyze their impact:
-
-- **ORDER_ID**
-- **APPEASEMENT_REASON**
-- **APPEASEMENT_DATE**
-- **APPEASEMENT_AMOUNT**
-- **COMMENTS**
-
-Understanding the reasons behind appeasements can lead to improvements in products and services.
+- `ORDER_ID`
+- `APPEASEMENT_REASON`
+- `APPEASEMENT_DATE`
+- `APPEASEMENT_AMOUNT`
+- `COMMENTS`
 
 ### c. Distinguishing Returns from Appeasements
 
-**Explanation:**
-
-- **Returns** involve customers sending back products due to issues like defects or dissatisfaction, leading to refunds or exchanges. This affects inventory and revenue directly.
-- **Appeasements** are compensations offered (e.g., discounts, credits) without requiring product returns, aimed at resolving customer complaints and maintaining goodwill.
-
-Recognizing the differences helps in developing appropriate strategies for customer satisfaction and financial management.
+- **Returns**: Products sent back by customers; involves refunds or exchanges.
+- **Appeasements**: Compensation offered without requiring product returns.
 
 ### d. Detailed Return Information
 
-To further analyze returns, retrieve:
+Retrieve detailed return data:
 
-- **RETURN_ID**
-- **ENTRY_DATE**
-- **RETURN_ADJUSTMENT_TYPE_ID**
-- **AMOUNT**
-- **COMMENTS**
-- **ORDER_ID**
-- **ORDER_DATE**
-- **RETURN_DATE**
-- **PRODUCT_STORE_ID**
+- `RETURN_ID`
+- `ENTRY_DATE`
+- `RETURN_ADJUSTMENT_TYPE_ID`
+- `AMOUNT`
+- `COMMENTS`
+- `ORDER_ID`
+- `ORDER_DATE`
+- `RETURN_DATE`
+- `PRODUCT_STORE_ID`
 
-This data assists in pinpointing specific issues and implementing corrective actions.
+### e. Orders with Multiple Returns
 
-### e. Identifying Orders with Multiple Returns
+Identify orders with multiple returns:
 
-Repeated returns on the same order indicate underlying issues. Fetch details to investigate:
-
-- **ORDER_ID**
-- **RETURN_ID**
-- **RETURN_DATE**
-- **RETURN_REASON**
-- **RETURN_QUANTITY**
-
-Understanding these patterns helps in addressing product defects or service problems, ultimately improving customer satisfaction.
+- `ORDER_ID`
+- `RETURN_ID`
+- `RETURN_DATE`
+- `RETURN_REASON`
+- `RETURN_QUANTITY`
 
 ## 5. Inventory Management and Variance Analysis
 
-Effective inventory management minimizes losses due to discrepancies like lost or damaged goods. This section focuses on identifying and analyzing inventory variances.
+### a. Lost and Damaged Inventory
 
-### a. Investigating Lost and Damaged Inventory
+Retrieve data on inventory variances due to loss or damage:
 
-The inventory team needs to examine variances caused by loss or damage. Fetch:
-
-- **PRODUCT_ID**
-- **FACILITY_ID**
-- **VARIANCE_TYPE**
-- **QUANTITY**
-- **ENTRY_DATE**
-- **REASON**
-
-Analyzing this data helps in implementing measures to reduce inventory shrinkage and improve asset protection.
+- `PRODUCT_ID`
+- `FACILITY_ID`
+- `VARIANCE_TYPE`
+- `QUANTITY`
+- `ENTRY_DATE`
+- `REASON`
