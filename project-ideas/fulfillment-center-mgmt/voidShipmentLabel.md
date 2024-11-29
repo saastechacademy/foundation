@@ -1,5 +1,7 @@
-Reset the ShipmentRouteSegment entity for the Shipment. 
+## Reset the ShipmentRouteSegment entity for the Shipment. 
 
+One of the use case for this services is, when user wants to manually get shipping label, before retry, first clear previous shipping label details. 
+The other case, is when we modify Shipment Package after it was packed, once package contents are modified we have to void previous shipping label and get new one.
 
 ```
     public static Map<String, Object> voidShipmentPackageLabel(DispatchContext dctx, Map<String, Object> context) {
@@ -23,10 +25,6 @@ Reset the ShipmentRouteSegment entity for the Shipment.
     }
 
 ```
-
-
-
-The `ShipmentRouteSegment` entity in HotWax Commerce, which extends the standard Apache OFBiz definition, represents a specific leg or part of a shipment's journey. It captures details about the carrier, shipping method, origin, destination, and other relevant information for that particular segment of the shipment's route.
 
 **ShipmentRouteSegment Entity Definition in HotWax Commerce**
 
@@ -83,7 +81,6 @@ The following table outlines the fields of the `ShipmentRouteSegment` entity in 
 **Key Relationships:**
 
 * **Shipment:** Each `ShipmentRouteSegment` belongs to a single `Shipment`.
-* **Delivery:** A `ShipmentRouteSegment` can be optionally associated with a `Delivery` if it represents the final delivery leg.
 * **Carrier Party:** The `carrierPartyId` links the segment to the `Party` responsible for its execution.
 * **ShipmentMethodType:** The `shipmentMethodTypeId` specifies the type of shipping method used for this segment.
 * **Origin and Destination Facilities & Contact Mechanisms:** The `originFacilityId`, `destFacilityId`, `originContactMechId`, etc., link the segment to its origin and destination points.
