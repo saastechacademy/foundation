@@ -1,7 +1,7 @@
 ### **rejectShipmentItem** 
 
 **Purpose**
-The primary goal of the `rejectShipmentItem` service is to handle the rejection of a specific item within a shipment. This involves cancelling  the shipment item, put the order items in the brokering queue and adjusting inventory levels.
+The primary goal of the `rejectShipmentItem` service is to handle the rejection of a specific item within a shipment. This involves cancelling  the shipment item, move PickListOrderItem to rejected status, put the order items in the brokering queue and adjusting inventory levels.
 
 **Input Parameters**
 
@@ -9,8 +9,10 @@ The primary goal of the `rejectShipmentItem` service is to handle the rejection 
 *   **`shipmentItemSeqId` (String):** The sequence ID of the specific item within the shipment.
 
 ### Workflow
-*   Delete OrderShipment
 *   Delete ShipmentPackageContent
 *   Delete ShipmentItem
+*   With OrderId and OrderItemSeqId find PickListOrderItem and move it to rejected status
+*   Delete OrderShipment
 *   Call rejectOrderItem service
 
+### Notes
