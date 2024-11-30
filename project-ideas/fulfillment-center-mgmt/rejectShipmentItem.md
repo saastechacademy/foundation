@@ -9,6 +9,7 @@ The primary goal of the `rejectShipmentItem` service is to handle the rejection 
 *   **`shipmentItemSeqId` (String):** The sequence ID of the specific item within the shipment.
 
 ### Workflow
+*   If Shipment is not in SHIPMENT_INPUT status then call reinitializeShipment.
 *   Delete ShipmentPackageContent
 *   Delete ShipmentItem
 *   With OrderId and OrderItemSeqId find PickListOrderItem and move it to rejected status
