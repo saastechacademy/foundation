@@ -1,6 +1,6 @@
 ## **PickList Entity Design**
 
-NOTE: Simplied version of Picklist datamodel.
+NOTE: Simplified version of Picklist data model.
 
 * **Purpose:** The central entity representing a list of items to be picked from inventory, typically to fulfill customer orders.
 * **Key Fields:**
@@ -87,9 +87,30 @@ lastModifiedByUserLogin: "admin456"
 
   "inventoryItemId": "10000",
 
-  "itemStatusId": "ITEM_APPROVED",
+  "itemStatusId": "PICKITEM_PENDING",
 
   "quantity": 1.5
   }
 }
+```
+
+### **update#PicklistOrderItem**
+*   Used to change status.
+
+**`update#PicklistOrderItem`**
+```json
+{
+  "picklistId": "PL0005",
+  "pickListItemSeqId": "10000",
+  "orderId": "10000",
+  "orderItemSeqId": "00101",
+  "itemStatusId": "PICKITEM_CANCELLED"
+}
+```
+
+```xml
+    <StatusItem statusCode="PENDING" statusId="PICKITEM_PENDING" statusTypeId="PICKITEM_STATUS" statusAge="0"/>
+    <StatusItem statusCode="PICKED" statusId="PICKITEM_PICKED" statusTypeId="PICKITEM_STATUS" statusAge="50"/>
+    <StatusItem statusCode="COMPLETED" statusId="PICKITEM_COMPLETED" statusTypeId="PICKITEM_STATUS" statusAge="100"/>
+    <StatusItem statusCode="CANCELLED" statusId="PICKITEM_CANCELLED" statusTypeId="PICKITEM_STATUS" statusAge="101"/>
 ```
