@@ -4,7 +4,6 @@
 Move the OrderItem from assigned fulfillment facility to brokering queue or reject orderItem queue or similar. 
 
 **NOTE:** As compared to legacy code:
-* This service is not responsible to adjust inventory levels, and log the rejection.
 * Does create or update records in OrderItemShipGroupAssoc entity.
 * An orderItem is part of one and only one OrderItemShipGroup. 
 
@@ -13,29 +12,28 @@ Move the OrderItem from assigned fulfillment facility to brokering queue or reje
 * `orderItemSeqId`
 * `rejectToFacilityId`
 * `rejectionReasonId`
-* `comments`
+* `comments` optional
 
 **OUT Parameters** 
-* List of cancelled Inventory reservations. This data can be used for recording inventory variance. 
+* List of cancelled Inventory reservations.
 
 
 ### Workflow
 
-1.  **Cancel Inventory Reservation:** Call `cancelOrderItemInvResQty(orderId, orderItemSeqId, shipGroupSeqId, cancelQantity)` service is called to cancel the corresponding inventory reservation for the orderItem quantity. The called service will canceel reservation for marketing package and all its components. 
-2.  **Cancel the related PickList item:** Get `picklistItems` for `orderId` `orderItemSeqId`. 
-3.  **Move to Rejected Ship Group:** Move the orderItem to a ship group associated with the `naFacilityId` (a designated facility for rejected items). Check if OrderItemShipGroup exits for the `naFacilityId` else create one and then move `orderItem` to this ship group. 
-4.  **Log External Fulfillment:** The `createUpdateExternalFulfillmentOrderItem` service is called to create or update an external fulfillment log entry, marking the item as rejected.
-5.  **Create Order History:** An `OrderHistory` record is created with the event type `ITEM_REJECTED` to track the rejection in the order's history.
-6.  **Create Order Facility Change:** An `OrderFacilityChange` record is created to log the change in facility for the rejected item.
-
-### Related services are responsible for the following
-
-7.  **Record Inventory Variance:** If the `recordVariance` flag is set to "Y," and the rejection reason requires it, an inventory variance is recorded for the rejected quantity. This helps track inventory adjustments due to the rejection.
-8.  **Set Auto Cancel Date:** If the `setAutoCancelDate` flag is set to "Y," the service calculates and sets an auto-cancel date for the order item based on the product store's configuration. This is typically used to automatically cancel orders that haven't been paid for within a certain timeframe.
+1. **Cancel Inventory Reservation:** Call `cancelOrderItemInvResQty(orderId, orderItemSeqId, shipGroupSeqId, cancelQantity)` service is called to cancel the corresponding inventory reservation for the orderItem quantity. The called service will canceel reservation for marketing package and all its components. 
+2. **Cancel the related PickList item:** Get `picklistItems` for `orderId` `orderItemSeqId`. 
+3. **Move to Rejected Ship Group:** Move the orderItem to a ship group associated with the `naFacilityId` (a designated facility for rejected items). [Check if OrderItemShipGroup exits](findOrCreateOrderItemShipGroup.md) for the `naFacilityId` else create one and then move `orderItem` to this ship group. 
+4. **Log External Fulfillment:** The `createUpdateExternalFulfillmentOrderItem` service is called to create or update an external fulfillment log entry, marking the item as rejected.
+5. **Create Order History:** An `OrderHistory` record is created with the event type `ITEM_REJECTED` to track the rejection in the order's history.
+6. **Create Order Facility Change:** An `OrderFacilityChange` record is created to log the change in facility for the rejected item.
+7. **Record Inventory Variance:** 
+   *    Analyze the rejection reason to compute the variance quantity, record inventory variance for the rejected quantity from the facility rejecting the orderItem.
+   *    [createPhysicalInventory](../inventory-mgmt/createPhysicalInventory.md). 
+8. **Set Auto Cancel Date:** If the productStore setting `setAutoCancelDate` flag is set to "Y," the service calculates and sets an auto-cancel date for the order item based on the product store's configuration. This is typically used to automatically cancel orders that haven't been paid for within a certain timeframe.
 
 ### Bundle product OrderItem
 
-In case the OrderItem is for budle product. During the fulfillment process, PRODUCT_COMPONENT of the budles products are reserved `OrderItemShipGrpInvRes`,  picked `PickListItem` and shipped `ShipmentItem`.
+In case the OrderItem is for bundle product. During the fulfillment process, PRODUCT_COMPONENT of the budles products are reserved `OrderItemShipGrpInvRes`,  picked `PickListItem` and shipped `ShipmentItem`.
 
 
 

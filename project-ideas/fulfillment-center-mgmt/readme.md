@@ -39,9 +39,6 @@ Modify contents of the Shipment after it is already SHIPMENT_APPROVED or SHIPMEN
 ```
 
 ## HotWax Commerce Shipment 
-*   Has one Package, this eliminates the need for ShipmentPackageContent entity.
-*   The Shipment will have one ShipmentPackage, one ShipmentRouteSegment
-*   All ShipmentItems are assumed to be packed in one Package and tracked using ShipmentRouteSegment
 
 
 ### [Setting up a New Shipping Carrier](https://github.com/saastechacademy/foundation/blob/main/ofbiz-framework/intermediate/setupShippingCarrier.md)
@@ -52,7 +49,7 @@ Modify contents of the Shipment after it is already SHIPMENT_APPROVED or SHIPMEN
 3) Import product Inventory
 4) Import Orders 
 5) Setup Fulfillment user roles and responsibilities.
-6) 
+6) Each Facility has list of Shipping Carriers and may be billing accounts with carrier. 
 
 ### Fulfillment App
 1) PickList and Picking
@@ -69,7 +66,7 @@ Modify contents of the Shipment after it is already SHIPMENT_APPROVED or SHIPMEN
 ### List of scenarios to test createOrderFulfillmentWave
 *   PickList is created, the list of assigned Pickers reconciles with the request
 *   The OrderItem count and the PicklistOrderItem record counts reconciles
-*   The number of uniqui shipGroupSeqId reconciles with the number of Shipments, Packages, RouteSegments created.
+*   The number of unique shipGroupSeqId reconciles with the number of Shipments created.
 *   The number records for each orderId and ShipmentId combination in OrderShipment table reconciles with ShipmentItems
 
 ### Ships together scenario
@@ -77,3 +74,10 @@ Modify contents of the Shipment after it is already SHIPMENT_APPROVED or SHIPMEN
 ### Physical Gift card shipment
 ### Marketing material and bonus material
 
+
+## Questions 
+1.  Why do we reset carrierPartyId and shipmentMethodTypeId on reinitializeShipment method? Both these fields are HC custom.
+2.  What if OrderItemShipGrp has shipment carrier partyId and shipment method set, Do we rate shop or not? What business scenarios are related to this? 
+3.  What if during Shipment processing, we may have to get ShippingLabel. In this case we can skip the rate shopping step, Read carrrier Party and shipmentMethodTypeId from the ShipmentRouteSegment entity.
+4.  Are we honoring the shipmentMethodType suggested by brokering engine? Brokering engine evaluates distance between fulfillment location and deliver location, if the distance is within the range of ZONE 2, Brokering engine suggests ShipmentMethodType. The Rate shopping process should include the suggested shipmentMethodType.
+5. 
