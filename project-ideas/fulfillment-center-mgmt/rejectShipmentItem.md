@@ -7,6 +7,8 @@ The primary goal of the `rejectShipmentItem` service is to handle the rejection 
 
 *   **`shipmentId` (String):** The ID of the shipment containing the item to be rejected.
 *   **`shipmentItemSeqId` (String):** The sequence ID of the specific item within the shipment.
+*   **`rejectToFacilityId` (String):**
+*   **`comments` (String):**
 
 ### Workflow
 *   If Shipment is not in SHIPMENT_INPUT status then call reinitializeShipment.

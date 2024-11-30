@@ -11,7 +11,9 @@ Move the OrderItem from assigned fulfillment facility to brokering queue or reje
 **IN Parameters**
 * `orderId`
 * `orderItemSeqId`
-* `naFacilityId`
+* `rejectToFacilityId`
+* `rejectionReasonId`
+* `comments`
 
 **OUT Parameters** 
 * List of cancelled Inventory reservations. This data can be used for recording inventory variance. 
