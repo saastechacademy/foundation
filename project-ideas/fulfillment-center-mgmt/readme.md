@@ -74,6 +74,15 @@ Modify contents of the Shipment after it is already SHIPMENT_APPROVED or SHIPMEN
 ### Physical Gift card shipment
 ### Marketing material and bonus material
 
+### Scenarios 
+*   Update shipTo Postal address after shipment is created. The shipping address should be first updated on OrderItemShipGroup and then update the address on Shipment.
+  * Update contactMechId on OrderItemShipGroup
+  * Update destinationContactMechId on Shipment
+  * Update destContactMechId on ShipmentRouteSegment
+*   Update shipTo Telecom number after shipment is created. The shipping Telecom should be first updated on OrderItemShipGroup and then update the Telecom on Shipment.
+  * Update telecomContactMechId on OrderItemShipGroup
+  * Update destinationTelecomNumberId on Shipment
+  * Update destTelecomNumberId on ShipmentRouteSegment
 
 ## Questions 
 1.  Why do we reset carrierPartyId and shipmentMethodTypeId on reinitializeShipment method? Both these fields are HC custom.
