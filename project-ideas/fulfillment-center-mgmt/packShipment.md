@@ -1,5 +1,3 @@
-# **Shipment**
-
 ## packShipment
 
 1.  **Input:**
@@ -7,30 +5,31 @@
 ```json
 
 {
-  "packed": [
+  "shipmentId": "10025",
+  "shipmentPackageContents":[
     {
-      "shipmentId": "10000",
+      "shipmentItemSeqId": "001",
       "shipmentPackageSeqId": "00001",
-      "shipmentItemSeqId": "00001",
       "quantity": 1
     },
     {
-      "shipmentId": "10000",
       "shipmentPackageSeqId": "00002",
       "shipmentItemSeqId": "00002",
       "quantity": 1
     }
-  ],
-  "rejected": [
+    ],
+  "rejectedShipmentItems": [
     {
-      "shipmentId": "10000",
       "shipmentItemSeqId": "00001",
-      "rejectionReasonId" : "REJ_RSN_DAMAGED"
+      "rejectToFacilityId": "FAC003",
+      "rejectionReasonId" : "REJ_RSN_DAMAGED",
+      "comments": "The item was part of a display and is not in acceptable condition."
     },
     {
-      "shipmentId": "10001",
       "shipmentItemSeqId": "00003",
-      "rejectionReasonId" : "REJ_RSN_DAMAGED"
+      "rejectToFacilityId": "FAC003",
+      "rejectionReasonId" : "REJ_RSN_DAMAGED",
+      "comments": "The item was part of a display and is not in acceptable condition."
     }
   ]
 }
