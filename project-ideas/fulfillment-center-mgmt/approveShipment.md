@@ -38,3 +38,5 @@ GROUP BY
 
 Note: 
 We may end up writing services for each status transition 
+
+How do we call [doRateShopping](doRateShopping.md)

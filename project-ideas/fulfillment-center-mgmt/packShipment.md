@@ -34,14 +34,14 @@
   ]
 }
 ```
-2.  **Fetch Shipment:**
-    *   Validate that the shipment exists and is in the `SHIPMENT_APPROVED` status (precondition).
+2.  **[reinitiazeShipment](reinitializeShipment.md):**
 
 3.  **Process Shipment Items:**
     *   Reject shipmentItems 
     *   Compute diff between ShipmentPackageContent and the packed items list. Update ShipmentPackageContent state in the database if necessary.
 
 4.  **Update Shipment Status:**
+    *   [approveShipment](approveShipment.md) 
     *   Update the `statusId` of the `Shipment` entity to `SHIPMENT_PACKED` (postcondition), indicating it's been packed and is ready for shipment.
 
 5.  **Fetch Order and Order Item Details:**
@@ -50,12 +50,4 @@
 6.  **Update PicklistOrderItem Items:**
     *   For each `orderId` and `orderItemSeqId` pair, query the `PicklistOrderItem` entity to find associated items.
     *   Update the `itemStatusId` of these `PicklistItem` entities to `PICKITEM_PICKED`, indicating they have been picked for the packed shipment.
-
-
-## Java Code Skeleton
-
-
-### Key Corrections
-
-*   **Shipment Status:** The precondition is now correctly checked for `SHIPMENT_APPROVED`, and the postcondition updates the status to `SHIPMENT_PACKED`.
 
