@@ -25,12 +25,12 @@
     {
       "shipmentId": "10000",
       "shipmentItemSeqId": "00001",
-      "rejectionReason" : "REJ_RSN_DAMAGED"
+      "rejectionReasonId" : "REJ_RSN_DAMAGED"
     },
     {
       "shipmentId": "10001",
       "shipmentItemSeqId": "00003",
-      "rejectionReason" : "REJ_RSN_DAMAGED"
+      "rejectionReasonId" : "REJ_RSN_DAMAGED"
     }
   ]
 }
