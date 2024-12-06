@@ -15,3 +15,6 @@ We should implement cancelOrderItem API service independent of rejectOrderItem A
 
 
 Going this path will also reduce number of parameters passed in to communicate the intend. Instead, the API purpose is simple and clear. "Give me the OrderItem that you want to cancel, I will name sure PickList and ShipmentItem data is updated as expected by the cancelOrderItem"
+
+
+https://git.hotwax.co/commerce/oms/blob/db0c1f38dfd01836ac8a36e05e71cc04332749e6/applications/product/minilang/shipment/shipment/ShipmentServices.xml#L1914
