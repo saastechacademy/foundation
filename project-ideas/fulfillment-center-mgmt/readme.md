@@ -100,4 +100,6 @@ Modify contents of the Shipment after it is already SHIPMENT_APPROVED or SHIPMEN
 2.  What if OrderItemShipGrp has shipment carrier partyId and shipment method set, Do we rate shop or not? What business scenarios are related to this? 
 3.  What if during Shipment processing, we may have to get ShippingLabel. In this case we can skip the rate shopping step, Read carrrier Party and shipmentMethodTypeId from the ShipmentRouteSegment entity.
 4.  Are we honoring the shipmentMethodType suggested by brokering engine? Brokering engine evaluates distance between fulfillment location and deliver location, if the distance is within the range of ZONE 2, Brokering engine suggests ShipmentMethodType. The Rate shopping process should include the suggested shipmentMethodType.
-5. 
+
+
+https://git.hotwax.co/commerce/oms/blob/371fe6c4251c11438e590bf21e98290f8e64a235/applications/product/minilang/shipment/issuance/IssuanceServices.xml#L134
