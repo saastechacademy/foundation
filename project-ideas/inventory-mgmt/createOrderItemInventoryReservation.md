@@ -1,8 +1,12 @@
 **1. Introduction**
 
 *   **Purpose:** This service reserves inventory for a specific order item within a shipment group at a designated facility in HotWax Commerce (HC).
-*   **Scope:** The service handles finished goods and non-serialized inventory items. It enforces a First-In, First-Out (FIFO) strategy for inventory allocation.
-*   **Reference Implementation:** This design is based on the Apache OFBiz `reserveProductInventory` service but tailored to HC's specific requirements and customizations.
+*   **Scope:** The service handles finished goods and non-serialized inventory items.
+  * Finished Goods
+  * Non serialized Inventory
+  * One InventoryItem per Facility per Product
+  * statusId is not used
+  * Do negative reservation if not enough in stock.
 
 **2. Service Definition**
 
@@ -40,7 +44,7 @@
             *   Create an `InventoryItemDetail` record for each reservation to track the change in inventory.
             *   Updating the `availableToPromiseTotal` of the `InventoryItem`.
     5. **Handling Insufficient Inventory:**
-        *   After attempting to reserve inventory from all suitable `InventoryItem` records, check if the `quantityNotReserved` output parameter is greater than zero.
+        *   After attempting to reserve inventory from all suitable `InventoryItem` records, check if the `quantityNotReserved` is greater than zero.
         *   If `quantityNotReserved` is greater than zero, it indicates that the facility has insufficient ATP inventory to fulfill the entire requested quantity.
         *   In this case :
             1.  Check if there is a `lastNonSerInventoryItem` available (this would be the last `InventoryItem` processed in the FIFO iteration).
@@ -57,6 +61,7 @@
   
 **HC-Specific Considerations:**
     *   The `OrderItem` entity in HC includes the `shipGroupSeqId` field, resulting in a one-to-one relationship between `OrderItem` and `OrderItemShipGroup`.
+    *   In HC we have one InventoryItem per facility per product. I think we can skip the logic to loop thru InventoryItems to try to reserve the requested quantity.
 
 **Scenario:**
 
@@ -140,11 +145,15 @@ The `createOrderItemInventoryReservation` service is called with the following i
 **3. Logic**
 
 *   **Check for Non-Serialized Inventory:**
-    *   Verify that the `inventoryItemTypeId` of the input `inventoryItem` is `NON_SERIAL_INV_ITEM`. If not, the function should exit or throw an error, as HC only supports non-serialized inventory.
+    *   Verify that the `inventoryItemTypeId` of the input `inventoryItem` is `NON_SERIAL_INV_ITEM`. 
+    *   If not, the function should exit or throw an error, as HC only supports non-serialized inventory.
+    *   I think we can skip this in HC OMS implementation.
 
 *   **Check Inventory Availability:**
     *   Ensure that the `InventoryItem` is not on hold or defective (`statusId` is not `INV_ON_HOLD` or `INV_NS_DEFECTIVE` or `INV_DEFECTIVE`).
     *   Verify that the `availableToPromiseTotal` of the `InventoryItem` is greater than 0.
+    *   HC does not have the idea of InventoryItem.status. I think we can skip this part. 
+    *   Create negative reservation, if we don't have enough, This means we don't have to check if `availableToPromiseTotal` is greater than `0`.
 
 *   **Calculate `deductAmount`:**
     *   Determine the amount to deduct from the `availableToPromiseTotal`, which is the lesser value between `quantityNotReserved` and `availableToPromiseTotal`.
