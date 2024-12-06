@@ -2,57 +2,19 @@
   
 ## The Core Entities Used for Modeling Inventory
 
-### InventoryItem
-Represents a specific item in inventory, tracking its quantity, location, status, and other details.
-- **inventoryItemId** (Primary Key): Unique identifier for the inventory item.
-- **inventoryItemTypeId:** Type of inventory item (e.g., raw material, finished good).
-- **productId:** The product associated with the inventory item.
-- **statusId:** Current status of the inventory item (e.g., available, on hold).
-- **facilityId:** The facility where the item is located.
-- **locationSeqId:** The specific location within the facility.
-- **lotId:** The lot or batch the item belongs to.
-- **quantityOnHandTotal:** Total quantity of the item on hand.
-- **availableToPromiseTotal:** Quantity available for reservation or sale.
-- **accountingQuantityTotal:** Quantity used for accounting purposes.
-- **unitCost:** Cost per unit of the item.
-- **currencyUomId:** Currency of the unit cost.
+* `InventoryItem`
 
-### InventoryItemType
-Defines different types of inventory items.
-- **inventoryItemTypeId** (Primary Key): Unique identifier for the inventory item type.
-- **parentTypeId:** Allows for hierarchical categorization of item types.
-- **description:** Description of the item type.
+* `InventoryItemType`
 
-### InventoryItemDetail
-Records changes in inventory item quantities and other details over time.
-- **inventoryItemId** (Primary Key): References the associated inventory item.
-- **inventoryItemDetailSeqId** (Primary Key): Unique sequence ID for each detail record.
-- **effectiveDate:** Date and time when the change occurred.
-- **quantityOnHandDiff, availableToPromiseDiff, accountingQuantityDiff:** Changes in quantities.
-- **reasonEnumId:** Reason for the change (e.g., sale, adjustment).
+* `InventoryItemDetail`
 
-### ItemIssuance
-Represents the issuance of inventory items for various purposes (e.g., production, shipment).
-- **itemIssuanceId** (Primary Key): Unique identifier for the issuance.
-- **inventoryItemId:** The inventory item being issued.
-- **quantity:** Quantity issued.
+* `ItemIssuance`
 
-### InventoryItemVariance
-Tracks discrepancies between expected and actual inventory quantities during physical inventory counts.
-- **inventoryItemId** (Primary Key): References the associated inventory item.
-- **physicalInventoryId** (Primary Key): References the physical inventory count.
-- **varianceReasonId:** Reason for the variance.
-- **availableToPromiseVar, quantityOnHandVar:** Variance amounts.
+* `PhysicalInventory`
 
-### PhysicalInventory
-Represents a physical inventory count event.
-- **physicalInventoryId** (Primary Key): Unique identifier for the count.
-- **physicalInventoryDate:** Date of the count.
+* `InventoryItemVariance`
 
-### VarianceReason
-Provides reasons for inventory variances.
-- **varianceReasonId** (Primary Key): Unique identifier for the reason.
-- **description:** Description of the reason.
+* `VarianceReason`
 
 ## InventoryItem and InventoryItemDetail Sample Data
 
@@ -253,15 +215,6 @@ The `PhysicalInventory` and `InventoryItemVariance` entities work together to ma
 4.  **Variance Recording:** The `availableToPromiseVar` and `quantityOnHandVar` fields are populated with the differences in ATP and QOH quantities, respectively.
 5.  **Analysis and Action:** The variances are analyzed to identify patterns and trends. Corrective actions are taken based on the variance reasons (e.g., security measures for theft, improved handling for damage).
 
-## Business Requirement Fulfillment
-
-*   **Accurate Inventory Records:** Identifying and correcting variances ensures accurate inventory data.
-*   **Loss Prevention and Root Cause Analysis:** Variance reasons help pinpoint the causes of discrepancies, enabling targeted loss prevention measures.
-*   **Operational Efficiency:** Accurate inventory data supports efficient operations like order fulfillment and production planning.
-*   **Financial Reporting:** Reliable inventory data is essential for accurate financial reports.
-
-By leveraging these entities and their relationships, businesses can effectively manage inventory discrepancies, improve accuracy, and optimize inventory processes. The `VarianceReason` entity adds valuable context to variances, facilitating informed decision-making and targeted actions to address inventory issues.
-
 ## Sample data
 
 ```json
@@ -290,28 +243,3 @@ By leveraging these entities and their relationships, businesses can effectively
   ]
 }
 ```
-
-## Explanation
-
-*   **`physicalInventoryId`:** A unique identifier for this specific inventory count event (PI\_20240715).
-*   **`physicalInventoryDate`:** The date and time the inventory count was conducted (2024-07-15 10:00:00).
-*   **`partyId`:** The ID of the employee who performed the count ("PARTY\_EMPLOYEE\_JOHN\_DOE").
-*   **`generalComments`:** A brief note about the inventory count ("Routine inventory count at Main Street Store").
-*   **`inventoryItemVariances`:** An array containing the variances found during the count.
-    *   **First Variance:**
-        *   **`inventoryItemId`:** "FG001-INV-001" (one of the inventory items for Product 1).
-        *   **`varianceReasonId`:** "VAR\_FOUND" (the reason for the variance).
-        *   **`availableToPromiseVar`:** 1 (one extra unit was found).
-        *   **`quantityOnHandVar`:** 1 (the on-hand quantity also increased by one).
-        *   **`comments`:** "Found one extra unit on shelf" (additional details about the variance).
-    *   **Second Variance:**
-        *   **`inventoryItemId`:** "FG002-INV-002" (one of the inventory items for Product 2).
-        *   **`varianceReasonId`:** "VAR\_DAMAGED" (two units were damaged).
-        *   **`availableToPromiseVar`:** -2 (two units are no longer available).
-        *   **`quantityOnHandVar`:** -2 (the on-hand quantity decreased by two).
-        *   **`comments`:** "Two units damaged during shipping" (additional details about the variance).
-
-
-
-
-

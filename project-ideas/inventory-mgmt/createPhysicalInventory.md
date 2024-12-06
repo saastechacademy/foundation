@@ -1,47 +1,43 @@
 ## create#PhysicalInventory
 
-The `create#PhysicalInventory` service designed to record discrepancies between the expected and actual inventory levels of a product at a particular facility. This discrepancy is known as an inventory variance.
-
 ### Workflow
 
-1.  **Input Validation:** The service validates the input parameters:
+1.  **Input Validation:**
 
 2.  **Create Physical Inventory:**
     *   create record for the given `inventoryItemId` and `physicalInventoryDate` now().
-    *   The physical inventory record stores the current `quantityOnHand` and `availableToPromise` values from the `InventoryItem` entity.
 
 3.  **Create Variance:**
     *   If either `quantityOnHandVar` or `availableToPromiseVar` is not zero, it indicates a variance.
     *   The service creates an `InventoryItemVariance` record to track the variance details, including the reason and comments.
 
-4.  **Update Inventory Item:**
-    *   The service updates the `InventoryItem` entity with the new `quantityOnHand` and `availableToPromise` values, reflecting the adjustments made due to the variance.
-
-
 ### Key Points
 
 ```json
 {
-  "PhysicalInventory": {
-    "physicalInventoryId": "PHYINV1001",
-    "physicalInventoryDate": "2024-11-20T10:00:00",
-    "partyId": "JOHNDOE",
-    "comments": "Physical inventory completed for Main Warehouse.",
-    "inventoryItemVariances": [
-      {
-        "inventoryItemId": "INVITEM1001",
-        "quantityOnHandVar": -5,
-        "varianceReasonId": "DAMAGED",
-        "comments": "Surplus of 5 units found during inventory count."
-      },
-      {
-        "inventoryItemId": "INVITEM1002",
-        "quantityOnHandVar": 3,
-        "varianceReasonId": "DAMAGED",
-        "comments": "Surplus of 3 units found during inventory count."
+  "physicalInventoryDate": "2024-11-20T10:00:00",
+  "partyId": "JOHNDOE",
+  "generalComments": "Physical inventory completed for Main Warehouse.",
+  "inventoryItemVariances": [
+    {
+      "inventoryItemId": "INVITEM1001",
+      "quantityOnHandVar": -5,
+      "varianceReasonId": "DAMAGED",
+      "comments": "Surplus of 5 units found during inventory count.",
+      "inventoryItemDetail": {
+        "quantityOnHandDiff": -5
       }
-    ]
-  }
+    },
+    {
+      "inventoryItemId": "INVITEM1002",
+      "quantityOnHandVar": 3,
+      "varianceReasonId": "DAMAGED",
+      "comments": "Surplus of 3 units found during inventory count.",
+      "inventoryItemDetail": {
+        "quantityOnHandDiff": 3
+      }
+    }
+  ]
 }
 ```
 
