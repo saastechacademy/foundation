@@ -28,7 +28,8 @@ Shipment is created in SHIPMENT_INPUT, then SHIPMENT_APPROVED to SHIPMENT_PACKED
 
 * On the SHIPMENT_APPROVED status event of Shipment lifecycle,  systems triggers the process to get Shipping Label (doRateShopping) from the logistics company.
 * On successful execution of shipping label RateShopping, the RateShopping service updates the update ShipmentRouteSegment. Set `shipmentMethodTypeId`, `carrierPartyId`, `actualCost`, `carrierServiceStatusId` (SHRSCS_CONFIRMED). 
-* Once we have Shipping label, Shipment can be moved to SHIPMENT_PACKED status. 
+* Once we have Shipping label, Shipment can be moved to SHIPMENT_PACKED status.
+* Ship (Handover in case of BOPIS) the Shipment moves Shipment status to S
 
 Modify contents of the Shipment after it is already SHIPMENT_APPROVED or SHIPMENT_PACKED. 
 
