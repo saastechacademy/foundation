@@ -26,3 +26,30 @@ dispatcher.runSync("createInventoryItemDetail", UtilMisc.toMap(
 This would create a new `InventoryItemDetail` record, decreasing both the quantity on hand and ATP by 5, with the reason "Damaged."
 
 We don't have use case for PUT, DELETE on this Entity
+
+## `InventoryItem` Update ATP and QOH on InventoryItemDetail lifecycle events.
+
+* quantityOnHandTotal
+* availableToPromiseTotal
+
+```xml
+<!-- The InventoryItemDetail entity should never be updated/stored or deleted/removed, but we'll catch those too anyway... -->
+<eca entity="InventoryItemDetail" operation="create-store-remove" event="return">
+    <action service="updateInventoryItemFromDetail" mode="sync"/>
+</eca>
+<eca entity="InventoryItemDetail" operation="create-store-remove" event="return">
+    <condition field-name="availableToPromiseDiff" operator="not-equals" value="0" type="BigDecimal"/>
+    <action service="setLastInventoryCount" mode="sync"/>
+</eca>
+```
+
+* Similar example from Moqui framework 
+
+```xml
+    <!-- AssetDetail should never be updated or deleted, but handle those just in case -->
+    <eeca id="AssetDetailUpdateAsset" entity="mantle.product.asset.AssetDetail" on-create="true">
+        <!-- NOTE: only runs on-create, AssetDetail records should not be updated or deleted, if they are needs to be supported somehow -->
+        <actions><service-call name="mantle.product.AssetServices.update#AssetFromDetail" in-map="context"/></actions>
+    </eeca>
+
+```

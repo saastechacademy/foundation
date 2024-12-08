@@ -40,3 +40,7 @@ Link order and item to event
 ##  Increase ATP and QoH
 Link order, order item, shipment and shipment item to event
 
+## ProductFacility.inventoryItemId
+* Add InventoryItemId to ProductFacility
+* Stop maintaining LastInventoryCount on ProductFacility
+* Create a view  "ProductFacilityInventoryItem" on InventoryItem and ProductFacility where ProductFacilityInventoryItem.ATP is InventoryItem.ATP, ProductFacilityInventoryItem.computedInventoryCount is =  (InventoryItem.ATP - ProductFacility.MinimumStock).
