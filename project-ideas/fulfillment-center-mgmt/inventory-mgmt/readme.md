@@ -2,13 +2,16 @@
 
 [Inventory data model](Inventory.md)
 
-InventoryItem
-InventoryItemStatus
-InventoryItemDetail
-InventoryItemVariance
-PhysicalInventory
-PhysicalInventoryAndVariance
-InventoryTransfer
+* Facility
+* FacilityLocation
+* ProductFacility
+* ProductFacilityLocation
+* InventoryItem
+* InventoryItemDetail
+* PhysicalInventory
+* InventoryItemVariance
+* PhysicalInventoryAndVariance
+* InventoryTransfer
 
 **Important Notes:**
 
