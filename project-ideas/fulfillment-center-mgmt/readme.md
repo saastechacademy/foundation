@@ -1,5 +1,8 @@
 # **Fulfillment Application Design Document**
 
+1. Fulfillment of sales orders (including basic picking and packing) and receiving of purchase orders
+2. Inventory management including issuance and receipt, and inventory reservation for sales orders
+
 ## [Store Fulfillment Lifecycle](https://docs.hotwax.co/documents/v/learn-hotwax-oms/business-process-models/store.fulfillment)
 
 
