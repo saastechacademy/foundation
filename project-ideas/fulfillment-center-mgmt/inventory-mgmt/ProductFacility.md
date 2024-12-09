@@ -12,10 +12,10 @@ Before we moved to one InventoryItem per Facility per Product, To avoid computat
 *   Use single inventory item per product, facility, and facility location to avoid atp/qoh calculation
 
 
-
-### Refactoring proposal
+### Refactoring task
 * Extend ProductFacility entity, add field, InventoryItemId to ProductFacility entity, 
-* Stop maintaining LastInventoryCount on ProductFacility. 
+* Stop maintaining lastInventoryCount and computedInventoryCount on ProductFacility. 
 * Create a view entity "ProductFacilityInventoryItem" on InventoryItem and ProductFacility. On the view add two fields
 * InventoryItem.ATP AS ProductFacilityInventoryItem.lastInventoryCount
 * (InventoryItem.ATP - ProductFacility.MinimumStock) AS ProductFacilityInventoryItem.computedInventoryCount
+
