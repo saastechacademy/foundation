@@ -14,7 +14,7 @@ The staff gets the list of [Outstanding orders](https://github.com/hotwax/oms-do
   * The user then starts the fulfillment process for set of orders by creating a [Fulfillment wave of orders](createOrderFulfillmentWave.md). A [PickList](PickList.md) is returned for the user to go pick items for preparing the shipments. On success of createOrderFulfillmentWave the OrderItems are tagged "isPicked: Y" in SOLR doc. 
      *  Background process: [Shipments](createShipment.md) are created for orders. 
 
-        - Based on the inventory allocation rules inventory from a certain location is assigned to [Shipment](/udm/intermediate/Shipment.md). **Where are these inventory allocation rules located in the OMS?**
+        - Based on the inventory allocation rules inventory from a certain location is assigned to [Shipment](/udm/intermediate/Shipment.md). **No longer part of scope**
 
         - A background process is initiated to get shipping labels from the shipping provider. This background process is only triggered if the facility is a memeber of the "Auto Shipping Label" facility group (AUTO_SHIPPING_LABEL).
 
@@ -30,6 +30,7 @@ User completes the [Packing](packShipment.md). Alternatively user can choose to 
   *  [rejectShipmentItem](rejectShipmentItem.md).
   *  Add [ShipmentPackage](createShipmentPackage.md)
   *  Move ShipmentItems between packages.
+  *  Activate gift card.
   *  After edits [packShipment](packShipment.md).
   *  [getShippingLabel](getShippingLabel.md).
 
