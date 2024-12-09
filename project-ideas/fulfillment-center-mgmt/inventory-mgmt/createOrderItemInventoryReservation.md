@@ -1,4 +1,4 @@
-**1. Introduction**
+# createOrderItemInventoryReservation
 
 *   **Purpose:** This service reserves inventory for a specific order item within a shipment group at a designated facility in HotWax Commerce (HC).
 *   **Scope:** The service handles finished goods and non-serialized inventory items.
@@ -8,7 +8,7 @@
   * statusId is not used
   * Do negative reservation if not enough in stock.
 
-**2. Service Definition**
+## Service Definition
 
 *   **Service Name:** `createOrderItemInventoryReservation`
 *   **Input Parameters:**
@@ -19,7 +19,7 @@
     *   `facilityId` (required): The ID of the facility where the inventory is located.
     *   `locationSeqId` (optional): The sequence ID of the specific location within the facility.
 
-**3. Data Model**
+## Data Model
 
 *   **Entity Relationships:**
     *   `OrderItem` has a one-to-one relationship with `OrderItemShipGroup` in HC.
@@ -28,7 +28,7 @@
     *   `InventoryItem` has a one-to-many relationship with `InventoryItemDetail`.
     *   `OrderItemShipGrpInvRes` has a many-to-one relationship with `InventoryItem`.
 
-**4. Service Logic**
+## Service Logic
 
 *   **Detailed Steps:**
     1. **Input Validation:**
@@ -38,19 +38,17 @@
         *   Creating an `OrderItemShipGrpInvRes` record to link the reservation to the order item, shipment group, and inventory item.
         *   Create an `InventoryItemDetail` record for the reservation to track the change in inventory. ECA on `InventoryItemDetail` updates `InventoryItem` on `availableToPromise`.
 
-**5. Implementation Notes**
-  
-**HC-Specific Considerations:**
-    *   The `OrderItem` entity in HC includes the `shipGroupSeqId` field, resulting in a one-to-one relationship between `OrderItem` and `OrderItemShipGroup`.
-    *   In HC we have one InventoryItem per facility per product.
-    *   This implementation focuses solely on non-serialized inventory, as that's the only type supported in HC.
+*   **HC-Specific Considerations:**
+  *   The `OrderItem` entity in HC includes the `shipGroupSeqId` field, resulting in a one-to-one relationship between `OrderItem` and `OrderItemShipGroup`.
+  *   In HC we have one InventoryItem per facility per product.
+  *   This implementation focuses solely on non-serialized inventory, as that's the only type supported in HC.
 
 
-**Scenario:**
+## Scenario:
 
 A customer places an order for 1 unit of product "P001" to be shipped from facility "F001".
 
-**Initial State:**
+### Initial State:
 
 | Entity             | Field               | Value        |
 |----------------------|----------------------|--------------|
@@ -69,7 +67,7 @@ A customer places an order for 1 unit of product "P001" to be shipped from facil
 |                    | `datetimeReceived`  | 2024-11-10   |
 
 
-**Service Execution:**
+### Service Execution:
 
 The `createOrderItemInventoryReservation` service is called with the following input parameters:
 
@@ -82,7 +80,7 @@ The `createOrderItemInventoryReservation` service is called with the following i
 | `facilityId`     | "F001"       |
 
 
-**Final State:**
+### Final State:
 
 | Entity                 | Field               | Value        |
 |--------------------------|----------------------|--------------|
