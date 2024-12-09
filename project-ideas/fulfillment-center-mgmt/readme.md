@@ -107,3 +107,14 @@ Modify contents of the Shipment after it is already SHIPMENT_APPROVED or SHIPMEN
 
 
 https://git.hotwax.co/commerce/oms/blob/371fe6c4251c11438e590bf21e98290f8e64a235/applications/product/minilang/shipment/issuance/IssuanceServices.xml#L134
+
+## Receive Shipment
+
+**Shipment Receiver briefly reviews incoming shipment.**
+* If shipment received is a return (has RMA# or Return ID), 
+* If shipment received is for a purchase order (has PO#), Shipment Receiver finds the PO corresponding to the items received and records PO receipt (inventory) quantity.
+
+**Shipment Receiver reviews incoming items. and Shipment Receiver will receive the shipment even if**
+* Shipment Receiver records a higher quantity received than was ordered, inventory reconciliation will report it.
+* The product is a different color than what is in the system, Shipment Receiver will received it. inventory reconciliation will report it.
+* The product that arrives is not the product on the PO or already been received.
