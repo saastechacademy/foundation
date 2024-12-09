@@ -1,4 +1,4 @@
-### **Design Notes for `findOrCreateFacilityInventoryItem` Service**
+### **`findOrCreateFacilityInventoryItem` Service**
 
 #### **Purpose**
 
