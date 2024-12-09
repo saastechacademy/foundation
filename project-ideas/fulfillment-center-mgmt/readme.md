@@ -29,16 +29,23 @@ Order fulfillment is 3 step process,
 ### [Shipment lifecycle](ShipmentStatusWorkflow.md)
 Shipment is created in SHIPMENT_INPUT, then SHIPMENT_APPROVED to SHIPMENT_PACKED and then SHIPMENT_SHIPPED
 
+**On SHIPMENT_APPROVED:**
 * On the SHIPMENT_APPROVED status event of Shipment lifecycle,  systems triggers the process to get Shipping Label (doRateShopping) from the logistics company.
 * On successful execution of shipping label RateShopping, the RateShopping service updates the update ShipmentRouteSegment. Set `shipmentMethodTypeId`, `carrierPartyId`, `actualCost`, `carrierServiceStatusId` (SHRSCS_CONFIRMED). 
 * Once we have Shipping label, Shipment can be moved to SHIPMENT_PACKED status.
 * Ship (Handover in case of BOPIS) the Shipment moves Shipment status to S
 
-Modify contents of the Shipment after it is already SHIPMENT_APPROVED or SHIPMENT_PACKED. 
+**On SHIPMENT_PACKED:**
 
+**On SHIPMENT_SHIPPED:**
+* [createOrderShipmentInventoryIssuance](createOrderShipmentInventoryIssuance.md)
+* Order Item is marked Completed
+* Update Shopify order Fulfilled
+
+**Modify contents of the Shipment after it is already SHIPMENT_APPROVED or SHIPMENT_PACKED.**
 1. If the Approved shipment should be edited, The Shipment is first [reinitializeShipment](reinitializeShipment.md). 
-2. In case the Packed shipment should be edited, It is first [Unpacked](unpackOrderItems.md). The Unpacking process moves the shipment to Approved status.
-3. If Shipment package contents are modified i.e a Shipment was moved from SHIPMENT_APPROVED status to SHIPMENT_INPUT, ensure to [voidShipmentPackageLabel](voidShipmentPackageLabel.md). Recompute the [ShipmentPackageWeight](calcShipmentPackageTotalWeight.md).
+2. In case the Packed shipment should be edited, It is first [Unpacked](unpackOrderItems.md). The Unpacking process moves the shipment to Approved status and then move it SHIPMENT_INPUT by calling [reinitializeShipment](reinitializeShipment.md).
+   1. Shipment package contents are modified i.e a Shipment was moved from SHIPMENT_APPROVED status to SHIPMENT_INPUT, ensure to [voidShipmentPackageLabel](voidShipmentPackageLabel.md). Recompute the [ShipmentPackageWeight](calcShipmentPackageTotalWeight.md).
 
 ```
     <!-- ShipmentRouteSegment CarrierService status -->
@@ -69,7 +76,10 @@ Modify contents of the Shipment after it is already SHIPMENT_APPROVED or SHIPMEN
 ### Fulfillment App
 1) PickList and Picking
 2) Shipment lifecycle
+   * Outgoing Shipment
+   * Incoming Shipment
 3) Shipping Gateway configuration
+4) Inventory physical cycle count
 
 
 ***Shipping Gateway configuration***
