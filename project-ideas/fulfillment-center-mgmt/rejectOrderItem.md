@@ -29,6 +29,9 @@
 5. **Create Order Facility Change:** An `OrderFacilityChange` record is created to log the change in facility for the rejected item.
 6. **Record Inventory Variance:** 
    *    Analyze the rejection reason to compute the ATP (NOT QOH) variance quantity, record inventory variance for the rejected quantity from the facility rejecting the orderItem.
+     *  If `enumTypeId` of `rejectionReasonId` Enumeration  is `REPORT_VAR`, availableToPromiseVar is (-ve) of OrderItem.Qty 
+     *  If `enumTypeId` of `rejectionReasonId` Enumeration  is `REPORT_ALL_VAR`, availableToPromiseVar is (-ve) of InventoryItem.availableToPromiseTotal
+     *  if `enumTypeId` of `rejectionReasonId` Enumeration  is `REPORT_NO_VAR`, No Variance is recorded.
    *    The input parameter `rejectionReasonId` maps to `varianceReasonId` parameter in createPhysicalInventory API.
    *    [createPhysicalInventory](inventory-mgmt/createPhysicalInventory.md). 
 7. **Set Auto Cancel Date:** If the productStore setting `setAutoCancelDate` flag is set to "Y," the service calculates and sets an auto-cancel date for the order item based on the product store's configuration. This is typically used to automatically cancel orders that haven't been paid for within a certain timeframe.
