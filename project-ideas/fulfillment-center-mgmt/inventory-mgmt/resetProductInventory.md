@@ -15,7 +15,7 @@
 
 ```
 
-Use this to reset  inventory levels of facility based on feed from external systems. Any other case, we should consider using service designed for the purpose.
+Use this to reset  inventory levels of Product at given facility based on feed from external systems. Any other case, we should consider using service designed for the purpose.
 The feed coming from external systems will generally have SKU and externalFacilityId, These feeds sometimes happen to have inventory of Products not yet configured at the Facility.
 Use [findOrCreateFacilityInventoryItem](findOrCreateFacilityInventoryItem.md) utility service to get `facilityId`, `productId`, `inventoryItemId`
 
