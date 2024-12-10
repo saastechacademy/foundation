@@ -2,15 +2,13 @@
 
 ```json
 {
-  "facilityId": "Facility123",
   "externalFacilityId": "Facility123",
-  "productId": "Product456",
-  "idType": "Order789",
-  "idValue": "00001",
+  "idType": "SKU",
+  "idValue": "UKS00001",
   "quantity": 10,
   "varianceReasonId": "VAR_EXT_RESET",
   "partyId": "JOHNDOE", 
-  "comments": "ShipmentABC"
+  "comments": "Manhattan updating you"
 }
 
 ```
@@ -25,6 +23,30 @@ Use [findOrCreateFacilityInventoryItem](findOrCreateFacilityInventoryItem.md) ut
 2) getInventoryItem(`inventoryItemId`).availableToPromiseTotal
 3) atpDiff = quantity - getInventoryItem(`inventoryItemId`).availableToPromiseTotal
 4) [createPhysicalInventory](createPhysicalInventory.md)
+
+### Example call to createPhysicalInventory
+
+```json
+{
+  "physicalInventoryDate": "2024-11-20T10:00:00",
+  "partyId": "JOHNDOE",
+  "generalComments": "Manhattan updating you",
+  "inventoryItemVariances": [
+    {
+      "inventoryItemId": "Inventory456",
+      "quantityOnHandVar": 5,
+      "varianceReasonId": "VAR_EXT_RESET",
+      "inventoryItemDetail": {
+        "quantityOnHandDiff": 5,
+        "availableToPromiseDiff": 5,
+        "reasonEnumId": "VAR_EXT_RESET"
+      }
+    }
+  ]
+}
+```
+
+
 
 
 ### NOTE:
