@@ -41,7 +41,7 @@
 }
 ```
 
-```
+```xml
     <!-- Rejection reason -->
     <EnumerationType enumTypeId="REPORT_AN_ISSUE" description="Report an Issue Reason"/>
     <EnumerationType enumTypeId="RPRT_NO_VAR_LOG" description="Report an issue with no variance log"/>
@@ -63,5 +63,9 @@
     <VarianceReason varianceReasonId="MISMATCH" description="Mismatch"/>
     <VarianceReason varianceReasonId="INACTIVE_STORE" description="Inactive store"/>
     <VarianceReason varianceReasonId="NO_VARIANCE_LOG" description="No variance"/>
+
+        <!-- Added by Anil -->
+        <!-- Use VAR_EXT_RESET reason to record daily inventory sync updates. -->
+    <VarianceReason varianceReasonId="VAR_EXT_RESET" description="Reset by External System"/>
 
 ```
