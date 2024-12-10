@@ -3,6 +3,7 @@
 ```json
 {
   "shipmentId": "PS12345",
+  "statusId": "PURCH_SHIP_RECEIVED",
   "destinationFacilityId": "Facility123",
   "shipmentItems": [
     {
