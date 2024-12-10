@@ -2,18 +2,11 @@
 
 [Inventory data model](Inventory.md)
 
-* Facility
-* FacilityLocation
-* ProductFacility
-* ProductFacilityLocation
-* InventoryItem
-* InventoryItemDetail
-* PhysicalInventory
-* InventoryItemVariance
-* PhysicalInventoryAndVariance
-* InventoryTransfer
-
-**Important Notes:**
+##
+1. [Reserve Inventory for OrderItem](createOrderItemInventoryReservation.md)
+2. [Cancel Inventory reservation](cancelOrderItemInvRes.md)
+3. [Record Inventory Variance](createPhysicalInventory.md)
+4. [Get Product inventoryItemId](findOrCreateFacilityInventoryItem.md)
 
 ## Rejection:
 1. Single ATP reduced by rejection
