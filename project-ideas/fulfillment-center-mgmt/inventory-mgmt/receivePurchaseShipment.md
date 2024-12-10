@@ -31,4 +31,6 @@
 ```
 
 ### Workflow
-For each ShipmentItem, call receiveInventorProduct
+
+* Ensure statusId is "PURCH_SHIP_RECEIVED", 
+* For each ShipmentItem, call receiveInventorProduct
