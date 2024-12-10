@@ -1,4 +1,4 @@
-# `receiveInventoryProduct`
+# `receiveProductInventory`
 
 ```json
 {
