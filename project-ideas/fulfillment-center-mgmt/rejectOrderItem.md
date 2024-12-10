@@ -1,7 +1,9 @@
 ## rejectOrderItem
 
 ### Purpose
-Move the OrderItem from assigned fulfillment facility to brokering queue or reject orderItem queue or similar. 
+* Move the OrderItem from assigned fulfillment facility to brokering queue or reject orderItem queue or similar.
+* This service should be used only if NO valid ShipmentItem for the OrderItem exits.
+* To [rejectShipmentItem](rejectShipmentItem.md) use API designed for the purpose.
 
 **NOTE:** As compared to legacy code:
 * Does create or update records in OrderItemShipGroupAssoc entity.
@@ -26,7 +28,8 @@ Move the OrderItem from assigned fulfillment facility to brokering queue or reje
 4. **Create Order History:** An `OrderHistory` record is created with the event type `ITEM_REJECTED` to track the rejection in the order's history.
 5. **Create Order Facility Change:** An `OrderFacilityChange` record is created to log the change in facility for the rejected item.
 6. **Record Inventory Variance:** 
-   *    Analyze the rejection reason to compute the variance quantity, record inventory variance for the rejected quantity from the facility rejecting the orderItem.
+   *    Analyze the rejection reason to compute the ATP (NOT QOH) variance quantity, record inventory variance for the rejected quantity from the facility rejecting the orderItem.
+   *    The input parameter `rejectionReasonId` maps to `varianceReasonId` parameter in createPhysicalInventory API.
    *    [createPhysicalInventory](inventory-mgmt/createPhysicalInventory.md). 
 7. **Set Auto Cancel Date:** If the productStore setting `setAutoCancelDate` flag is set to "Y," the service calculates and sets an auto-cancel date for the order item based on the product store's configuration. This is typically used to automatically cancel orders that haven't been paid for within a certain timeframe.
 8. **Log External Fulfillment:** Create SystemMessage to Notify externals systems. The `createUpdateExternalFulfillmentOrderItem` service is called to create or update an external fulfillment log entry, marking the item as rejected.
@@ -34,19 +37,6 @@ Move the OrderItem from assigned fulfillment facility to brokering queue or reje
 ### Bundle product OrderItem
 
 In case the OrderItem is for bundle product. During the fulfillment process, PRODUCT_COMPONENT of the budles products are reserved `OrderItemShipGrpInvRes`,  picked `PickListItem` and shipped `ShipmentItem`.
-
-
-
-
-
-
-### Key Points
-
-*   **Targeted Rejection:** The service focuses on rejecting only the specified order item within the given ship group(s).
-*   **Inventory and Order Management:** It handles inventory reservation cancellations, facility changes, and order history updates.
-*   **OrderFacilityChange:** Record changes between an orderItem and its fulfillment facilityit. It might trigger a need to re-evaluate the order's fulfillment at the current facility.
-
-
 
 
 ### **OrderHistory**
@@ -77,11 +67,22 @@ In case the OrderItem is for bundle product. During the fulfillment process, PRO
 
 ```xml
     <!-- Rejection reason -->
+    <!-- 
+        The OrderItem rejected by the fulfillment center, could be for few rejectionReason, The rejectionReasonType is used to deduce if rejection impacts inventory ATP or NOT.   
+        The rejectionReason are categorised by rejectionReasonType. 
+        The rejectionReasonId have logical value, (Convention / Configuration)
+        
+        For each rejectionReasonId we have mapping varianceReasonId.        
+        For each OrderItem rejection we record PhysicalInventory and InventoryItemVariance.  
+        The rejectionReasonId maps to the varianceReasonId input parameter to the createPhysicalInventory service.        
+    -->
+
     <EnumerationType enumTypeId="REPORT_AN_ISSUE" description="Report an Issue Reason"/>
     <EnumerationType enumTypeId="RPRT_NO_VAR_LOG" description="Report an issue with no variance log"/>
     <EnumerationType enumTypeId="REPORT_NO_VAR" description="Report an issue with no variance reason" parentTypeId="RPRT_NO_VAR_LOG"/>
     <EnumerationType enumTypeId="REPORT_ALL_VAR" description="Report an issue with all qty variance reason" parentTypeId="REPORT_AN_ISSUE"/>
     <EnumerationType enumTypeId="REPORT_VAR" description="Report an issue with particular qty variance reason" parentTypeId="REPORT_AN_ISSUE"/>
+
     <Enumeration description="Not in Stock" enumCode="NOT_IN_STOCK" enumId="NOT_IN_STOCK" sequenceId="10" enumTypeId="REPORT_ALL_VAR"/>
     <Enumeration description="Worn Display" enumCode="WORN_DISPLAY" enumId="WORN_DISPLAY" sequenceId="20" enumTypeId="REPORT_VAR"/>
     <Enumeration description="Damaged" enumCode="DAMAGED" enumId="REJ_RSN_DAMAGED" sequenceId="30" enumTypeId="REPORT_VAR"/>
@@ -90,5 +91,12 @@ In case the OrderItem is for bundle product. During the fulfillment process, PRO
     <Enumeration description="No variance" enumCode="NO_VARIANCE_LOG" enumId="NO_VARIANCE_LOG" sequenceId="40" enumTypeId="REPORT_NO_VAR"/>
     <!--This rejection reason will be applied to all items in the order/shipment that get rejected due to the rejection of one or more items from the order, to avoid unnecessary splits when the 'Reject Entire Order' setting is enabled.-->
     <Enumeration description="Reject entire order" enumCode="REJECT_ENTIRE_ORDER" enumId="REJECT_ENTIRE_ORDER" sequenceId="41" enumTypeId="REPORT_NO_VAR"/>
+
+   <VarianceReason varianceReasonId="NOT_IN_STOCK" description="Not in Stock"/>
+   <VarianceReason varianceReasonId="WORN_DISPLAY" description="Worn Display"/>
+   <VarianceReason varianceReasonId="REJ_RSN_DAMAGED" description="Damaged"/>
+   <VarianceReason varianceReasonId="MISMATCH" description="Mismatch"/>
+   <VarianceReason varianceReasonId="INACTIVE_STORE" description="Inactive store"/>
+   <VarianceReason varianceReasonId="NO_VARIANCE_LOG" description="No variance"/>
 
 ```
