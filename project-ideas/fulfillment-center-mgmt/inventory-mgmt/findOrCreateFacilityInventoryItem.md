@@ -8,12 +8,34 @@
 - Return the **`InventoryItemId`** for further processing.
 
 ---
+IN Parameters 
+```json
+{
+  "facilityId": "Facility123",
+  "externalFacilityId": "Facility123",
+  "productId": "Product456",
+  "productIdentType": "SHOPIFY_PROD_SKU",
+  "productIdentValue": "00001",
+}
+```
+
+OUT Parameters
+
+```json
+{
+  "productId": "P1001",
+  "facilityId": "WarehouseA",
+  "inventoryItemId": "INV12345"
+}
+ ```
+
 
 #### **Responsibilities**
 
 1. **Lookup**:
     - Search for `inventoryItemId` in the `ProductFacility` table using **`productId`** and **`facilityId`**.
-
+    - if `productId` and `facilityId` are null, use `externalFacilityId` and `productIdentType` and `productIdentValue`
+    - 
 2. **Create if Missing**:
     - If `ProductFacility` or `InventoryItem` does not exist:
         - **Create `InventoryItem`** if it’s missing.
@@ -41,6 +63,27 @@
     - Automatically create `ProductFacility` and `InventoryItem` if missing.
 
 ---
+
+Lookup ProductFacility 
+
+```sql
+select
+pf.inventoryItemId,
+gi.Good_Identification_Type_Id,
+gi.product_id,
+gi.id_value,
+fac.external_id,
+fac.facility_id
+
+from product_facility pf
+join good_Identification gi
+on pf.product_id = gi.product_id
+and gi.Good_Identification_Type_Id = 'SHOPIFY_PROD_SKU'
+join facility fac
+on pf.facility_id = fac.facility_id
+```
+
+
 
 #### **Benefits**
 
