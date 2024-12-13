@@ -3,6 +3,11 @@
 
 Step 1: For each Package in the Shipment, Compute the shipment package weight and update it on the ShipmentPackage.
 
+Step 2: If the facility is part of the `AUTO_SHIPPING_LABEL` facility group. 
+*   [getShippingLabel](getShippingLabel.md) from the logistics company.
+*   Update ShipmentRouteSegment. Set `shipmentMethodTypeId`, `carrierPartyId`, `actualCost`, `carrierServiceStatusId` (SHRSCS_CONFIRMED).
+
+
 Step 2: createShipmentStatus. First create "SHIPMENT_APPROVED" record in ShipmentStatus table 
 
 Step 3: update the StatusId on Shipment table to "SHIPMENT_APPROVED"
