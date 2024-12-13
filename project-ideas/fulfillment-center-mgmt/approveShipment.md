@@ -11,6 +11,7 @@ Step 3: update the StatusId on Shipment table to "SHIPMENT_APPROVED"
 Implementation notes:
 
 ShipmentPackageContent has list of ShipmentItems and Qty of that ShipmentItem. To compute the weight of ShipmentPackage, write a dynamic view that gets me ShipmentPackage weight.
+If Ship from facility is part of the `AUTO_SHIPPING_LABEL` facility group, [request shipping label](getShippingLabel.md)
 
 **View Entity Definition**
 

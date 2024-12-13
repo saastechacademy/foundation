@@ -4,15 +4,19 @@
 
 Get shipping rates from the Carrier party for the ShipmentMethodTypes configured on the ProductStore and meet the deliveryDays/SLA criteria. 
 
-The doRateShopping service's main objective is to identify the most suitable shipping method for a given shipment by comparing rates from various carriers. It takes into account factors such as the shipment's origin and destination, weight, dimensions, desired delivery time, and cost-effectiveness. The service seamlessly integrates with a shipping gateway to retrieve real-time rates and then selects the optimal option.
+The doRateShopping service's main objective is to identify the most suitable shipping method for a given shipment by comparing rates from various carriers. 
+It takes into account factors such as the shipment's origin and destination, weight, dimensions, desired delivery time, and cost-effectiveness. 
+The service seamlessly integrates with a shipping gateway to retrieve real-time rates and then selects the optimal option.
 
 **Detailed Implementation**
 
 1.  **Input and Initialization:**
-    *   Shipment data JSON.
+    *   Shipment
+    *   ShipTo address
+    *   ShipFrom address
+    *   ShipmentPackages
 
 2.  **Shipment and Order Data Retrieval:**
-    *   doRateShopping has no access to OMS database.
 
 3.  **Shipment Route Segment and Configuration Check:**
     *   Checks if the carrier and shipment method are configured for the product store. 
@@ -28,7 +32,7 @@ The doRateShopping service's main objective is to identify the most suitable shi
         ```
     
 5.  **Rate Comparison and Selection:**
-    *   For each qualfied carrierShipmentMethod, call the appropriate carrier service to get rates.  
+    *   For each qualified carrierShipmentMethod, call the appropriate carrier service to get rates.  
     *   Sort retrieved carrier shipmentMethodRates by estimated cost (ascending).
     *   Selects the cheapest method.
 
