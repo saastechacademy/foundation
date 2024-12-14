@@ -67,20 +67,30 @@ OUT Parameters
 Lookup ProductFacility 
 
 ```sql
-select
-pf.inventoryItemId,
-gi.Good_Identification_Type_Id,
-gi.product_id,
-gi.id_value,
-fac.external_id,
-fac.facility_id
-
+select 
+  pf.*,
+  gi.Good_Identification_Type_Id,
+  gi.id_value,
+  fac.external_id
 from product_facility pf
-join good_Identification gi
-on pf.product_id = gi.product_id
-and gi.Good_Identification_Type_Id = 'SHOPIFY_PROD_SKU'
-join facility fac
-on pf.facility_id = fac.facility_id
+  JOIN (
+    SELECT 
+      product_id,
+      id_value,
+      Good_Identification_Type_Id
+    FROM good_Identification
+    WHERE 
+      Good_Identification_Type_Id = 'SHOPIFY_PROD_SKU'
+      AND (thru_date IS NULL OR thru_date > NOW())
+    ORDER BY from_date DESC
+      LIMIT 1
+  ) gi 
+  join facility fac 
+    on pf.facility_id = fac.facility_id
+  join facility_type ft 
+    on fac.facility_type_id = ft.facility_type_id
+where 
+  ft.parent_type_id != 'VIRTUAL_FACILITY'
 ```
 
 
