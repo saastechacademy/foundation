@@ -2,6 +2,10 @@
 
 1.  **Input:**
 
+The shipmentPackageContents and rejectedShipmentItems are optional parameters. Their values will be null, If shipment is not modified since last approved.
+
+
+
 ```json
 
 {
@@ -35,19 +39,15 @@
 }
 ```
 2.  **[reinitiazeShipment](reinitializeShipment.md):**
-
+    *   if rejectedShipmentItems has one or more items, before we reject items, shipment should be in input status. 
+    *   if shipmentPackageContents has one or more items, compare with shipment package contents data in database. if diff is found, ensure shipment is in input status before data is saved to database.
+    
 3.  **Process Shipment Items:**
     *   Reject shipmentItems 
     *   Compute diff between ShipmentPackageContent and the packed items list. Update ShipmentPackageContent state in the database if necessary.
 
 4.  **Update Shipment Status:**
-    *   [approveShipment](approveShipment.md) 
+    *   if the shipment status is input, then 
+      -   call [approveShipment](approveShipment.md).
+      -   if facility is not part of the auto shipping label group, then [getShippingLabel](getShippingLabel.md)
     *   Update the `statusId` of the `Shipment` entity to `SHIPMENT_PACKED` (postcondition), indicating it's been packed and is ready for shipment.
-
-5.  **Fetch Order and Order Item Details:**
-    *   For each `ShipmentItem`, use the `OrderShipment` entity to find the corresponding `orderId` and `orderItemSeqId`.
-
-6.  **Update PicklistOrderItem Items:**
-    *   For each `orderId` and `orderItemSeqId` pair, query the `PicklistOrderItem` entity to find associated items.
-    *   Update the `itemStatusId` of these `PicklistItem` entities to `PICKITEM_PICKED`, indicating they have been picked for the packed shipment.
-
