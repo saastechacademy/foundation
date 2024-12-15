@@ -84,8 +84,8 @@
             "orderId": "OR12345",
             "orderItemSeqId": "001",
             "shipmentId": "10025",
-            "shipmentItemSeqId": "001"
-            "shipGroupSeqId": "001",
+            "shipmentItemSeqId": "001",
+            "shipGroupSeqId": "001"
         }
     ]
 }
