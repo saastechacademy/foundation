@@ -114,3 +114,7 @@ where
     - Use the `inventoryItemId` returned by this service to update ATP, QOH, or record variances.
 
 ---
+
+
+## Additional Notes:
+* Create a view  "ProductFacilityInventoryItem" on InventoryItem and ProductFacility where ProductFacilityInventoryItem.ATP is InventoryItem.ATP, ProductFacilityInventoryItem.computedInventoryCount is =  (InventoryItem.ATP - ProductFacility.MinimumStock).
