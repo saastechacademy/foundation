@@ -8,6 +8,7 @@ The primary goal of the `rejectShipmentItem` service is to handle the rejection 
 *   **`shipmentId` (String):** The ID of the shipment containing the item to be rejected.
 *   **`shipmentItemSeqId` (String):** The sequence ID of the specific item within the shipment.
 *   **`rejectToFacilityId` (String):**
+*   **`updateQOH` (Char):**
 *   **`rejectionReasonId` (String):**
 *   **`comments` (String):**
 

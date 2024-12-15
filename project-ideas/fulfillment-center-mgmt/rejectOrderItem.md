@@ -13,6 +13,7 @@
 * `orderId`
 * `orderItemSeqId`
 * `rejectToFacilityId`
+* `updateQOH`
 * `rejectionReasonId`
 * `comments` optional
 
