@@ -24,8 +24,7 @@
     "shipmentItems": [ 
         {
             "shipmentItemSeqId": "001",
-            "productId": "(Optional) String - Product ID",
-            "sku": "(Optional) String - Product SKU",
+            "productId": "String - Product ID",
             "quantity": "Number - Quantity of the product"
         }
     ],
