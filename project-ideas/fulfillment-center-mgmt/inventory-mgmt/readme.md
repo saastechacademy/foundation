@@ -30,11 +30,10 @@ Link userLogin to event
 Link order,, order item, shipment and shipment item to both events
 
 ## POS Sale:
-1. Reduce ATP and QoH for item sold in store
-Link order and item to event
+1. Inventory issuance for the POS sale should follow the process similar to online sale, create shipment and ship it to complete orderItem. As expected, QOH will be reduced.
 
 ##  Increase ATP and QoH
-Link order, order item, shipment and shipment item to event
+Link order, orderItem, shipment and shipmentItem, resetItemId to event using IID
 
 ## ProductFacility.inventoryItemId
 * Add InventoryItemId to ProductFacility
