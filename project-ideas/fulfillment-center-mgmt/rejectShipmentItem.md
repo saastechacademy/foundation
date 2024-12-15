@@ -18,6 +18,7 @@ The primary goal of the `rejectShipmentItem` service is to handle the rejection 
 *   Delete ShipmentItem
 *   Delete PickListOrderItem,  With OrderId and OrderItemSeqId find PickListOrderItem
 *   Delete OrderShipment
+*   Clear fulfillmentStatus on Solr ORDER document
 *   Call rejectOrderItem service
 
 ### Notes

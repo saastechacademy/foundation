@@ -51,3 +51,4 @@ The shipmentPackageContents and rejectedShipmentItems are optional parameters. T
       -   call [approveShipment](approveShipment.md).
       -   if facility is not part of the auto shipping label group, then [getShippingLabel](getShippingLabel.md)
     *   Update the `statusId` of the `Shipment` entity to `SHIPMENT_PACKED` (postcondition), indicating it's been packed and is ready for shipment.
+    *   Update OrderItem fulfillmentStatus to Packed on SOLR document

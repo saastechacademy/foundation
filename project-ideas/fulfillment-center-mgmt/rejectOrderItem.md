@@ -24,7 +24,6 @@
 ### Workflow
 
 1. **Cancel Inventory Reservation:** Call [cancelOrderItemInvResQty](inventory-mgmt/cancelOrderItemInvRes.md) service to cancel the corresponding inventory reservation for the orderItem quantity. The called service will cancel reservation for marketing package and all its components. 
-2. **Cancel the related PickListOrderItem item:** Get `picklistOrderItems` for `orderId` `orderItemSeqId` and `update#PicklistOrderItem` status to `PICKITEM_CANCELLED`
 3. **Move to Rejected Ship Group:** Move the orderItem to a ship group associated with the `naFacilityId` (a designated facility for rejected items). [Check if OrderItemShipGroup exits](findOrCreateOrderItemShipGroup.md) for the `naFacilityId` else create one and then move `orderItem` to this ship group. 
 4. **Create Order History:** An `OrderHistory` record is created with the event type `ITEM_REJECTED` to track the rejection in the order's history.
 5. **Create Order Facility Change:** An `OrderFacilityChange` record is created to log the change in facility for the rejected item.
@@ -37,11 +36,11 @@
    *    The input parameter `rejectionReasonId` maps to `varianceReasonId` parameter in createPhysicalInventory API.
    *    [createPhysicalInventory](inventory-mgmt/createPhysicalInventory.md). 
 7. **Set Auto Cancel Date:** If the productStore setting `setAutoCancelDate` flag is set to "Y," the service calculates and sets an auto-cancel date for the order item based on the product store's configuration. This is typically used to automatically cancel orders that haven't been paid for within a certain timeframe.
-8. **Log External Fulfillment:** Create SystemMessage to Notify externals systems. The `createUpdateExternalFulfillmentOrderItem` service is called to create or update an external fulfillment log entry, marking the item as rejected.
+9. **Log External Fulfillment:** Create SystemMessage to Notify externals systems. The `createUpdateExternalFulfillmentOrderItem` service is called to create or update an external fulfillment log entry, marking the item as rejected.
 
 ### Bundle product OrderItem
 
-In case the OrderItem is for bundle product. During the fulfillment process, PRODUCT_COMPONENT of the budles products are reserved `OrderItemShipGrpInvRes`,  picked `PickListItem` and shipped `ShipmentItem`.
+In case the OrderItem is for bundle product. During the fulfillment process, PRODUCT_COMPONENT of the bundles products are reserved `OrderItemShipGrpInvRes`,  picked `PickListItem` and shipped `ShipmentItem`.
 
 
 ### **OrderHistory**
