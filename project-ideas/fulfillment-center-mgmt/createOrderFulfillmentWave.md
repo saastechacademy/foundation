@@ -40,8 +40,6 @@
 #### Input Parameters
 
 - facilityId
-- shipmentMethodTypeId
-- statusId
 - pickers
 - orderItems
 
@@ -70,7 +68,7 @@
      * **Pickers Processing:**  
        * Initializes `pickersList` to store the processed pickers.  
        * Iterates over each `picker` in the `pickers` list.  
-       * For each picker, creates a new map with `partyId` and `roleTypeId`.  
+       * For each picker, creates a new map with `partyId` and `roleTypeId` is picker.  
        * Adds each `pickerMap` to `pickersList`.  
        * Assigns `pickersList` to the `pickers` field in `picklistMap`.  
      * **Order Items Processing:**  
