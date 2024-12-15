@@ -16,7 +16,7 @@ The primary goal of the `rejectShipmentItem` service is to handle the rejection 
 *   If Shipment is not in SHIPMENT_INPUT status then call reinitializeShipment.
 *   Delete ShipmentPackageContent
 *   Delete ShipmentItem
-*   With OrderId and OrderItemSeqId find PickListOrderItem and move it to rejected status
+*   Delete PickListOrderItem,  With OrderId and OrderItemSeqId find PickListOrderItem
 *   Delete OrderShipment
 *   Call rejectOrderItem service
 

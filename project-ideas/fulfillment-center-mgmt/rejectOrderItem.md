@@ -29,7 +29,8 @@
 4. **Create Order History:** An `OrderHistory` record is created with the event type `ITEM_REJECTED` to track the rejection in the order's history.
 5. **Create Order Facility Change:** An `OrderFacilityChange` record is created to log the change in facility for the rejected item.
 6. **Record Inventory Variance:** 
-   *    Analyze the rejection reason to compute the ATP (NOT QOH) variance quantity, record inventory variance for the rejected quantity from the facility rejecting the orderItem.
+   *    Analyze the rejection reason to compute the var quantity, record inventory variance for the rejected quantity from the facility rejecting the orderItem.
+     *  if `updateQOH=Y` then QOH else ATP variance quantity 
      *  If `enumTypeId` of `rejectionReasonId` Enumeration  is `REPORT_VAR`, availableToPromiseVar is (-ve) of OrderItem.Qty 
      *  If `enumTypeId` of `rejectionReasonId` Enumeration  is `REPORT_ALL_VAR`, availableToPromiseVar is (-ve) of InventoryItem.availableToPromiseTotal
      *  if `enumTypeId` of `rejectionReasonId` Enumeration  is `REPORT_NO_VAR`, No Variance is recorded.

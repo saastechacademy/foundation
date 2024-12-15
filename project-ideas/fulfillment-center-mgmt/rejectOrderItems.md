@@ -15,6 +15,7 @@ This action is typically taken when a product is found to be defective, unavaila
     "orderId": "ORD001",
     "orderItemSeqId": "0001",
     "rejectToFacilityId": "FAC001",
+    "updateQOH": "",
     "rejectionReasonId": "NOT_IN_STOCK",
     "comments": "The item is currently out of stock."
   },
@@ -22,6 +23,7 @@ This action is typically taken when a product is found to be defective, unavaila
     "orderId": "ORD001",
     "orderItemSeqId": "0002",
     "rejectToFacilityId": "FAC002",
+    "updateQOH": "",
     "rejectionReasonId": "MISMATCH",
     "comments": "The item received does not match the order description."
   },
@@ -29,6 +31,7 @@ This action is typically taken when a product is found to be defective, unavaila
     "orderId": "ORD002",
     "orderItemSeqId": "0001",
     "rejectToFacilityId": "FAC003",
+    "updateQOH": "",
     "rejectionReasonId": "DAMAGE",
     "comments": "The item was found damaged during inspection."
   },
@@ -36,6 +39,7 @@ This action is typically taken when a product is found to be defective, unavaila
     "orderId": "ORD002",
     "orderItemSeqId": "0002",
     "rejectToFacilityId": "FAC004",
+    "updateQOH": "",
     "rejectionReasonId": "WORNDISPLAY",
     "comments": "The item is worn or was part of a display."
   },
@@ -43,6 +47,7 @@ This action is typically taken when a product is found to be defective, unavaila
     "orderId": "ORD003",
     "orderItemSeqId": "0001",
     "rejectToFacilityId": "FAC005",
+    "updateQOH": "",
     "rejectionReasonId": "NOT_IN_STOCK",
     "comments": "The item is unavailable due to low stock levels."
   }
