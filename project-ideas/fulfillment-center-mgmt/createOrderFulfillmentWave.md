@@ -96,5 +96,6 @@
        * Creates a new map (`shipmentMap`) for each group with required shipment details.  
        * Calls the `create#org.apache.ofbiz.shipment.shipment.Shipment` service with `shipmentMap` to create the shipment.
 
+6. The OrderItems are tagged "isPicked: Y" in SOLR doc.
 
 [createPickList](PickList.md)
