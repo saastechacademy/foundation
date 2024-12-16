@@ -212,9 +212,9 @@ This service will take in the product JSON in OMSNewProductsFeed and set up a co
 2. Remove productJson.features into a new list features.
 3. Remove productJson.goodIdentifications into a new list goodIdentifications.
 4. If features is not null, initialize ProductFeatureAppl (name should be the same for entity rest api) list.
-5. Iterate through selecatableFeatures and perform following steps,
-   * If selecatableFeature.productFeatureTypeId doesn't exist, create new.
-   * If selectableFeature.productFeatureId doesn't exist, create new.
+5. Iterate through features and perform following steps,
+   * If feature.productFeatureTypeId doesn't exist, create new.
+   * If feature.productFeatureId doesn't exist, create new.
    * Prepare a map with following values and add to ProductFeature list
      * productFeatureId
      * productFeatureApplTypeId
