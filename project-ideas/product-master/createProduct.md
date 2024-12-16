@@ -1,7 +1,7 @@
 # Shopify/OMS Product Sync Design
 
-Newly created products and product updates in Shopify needs to be synced timely to OMS. This design document is specific to syncing newly creaated Shopify products.  
-Shopify has virtual and variant products. An ideal situation would have to to sync virtual and variant products in separate batch processes, but since Shopify GraphQL API doesn't let variants to be filtered by created date, we will have to sync these together in a single batch process.  
+Newly created products and product updates in Shopify needs to be synced timely to OMS. This design document is specific to syncing newly created Shopify products.  
+Shopify has virtual and variant products. An ideal situation would have to sync virtual and variant products in separate batch processes, but since Shopify GraphQL API doesn't let variants to be filtered by created date, we will have to sync these together in a single batch process.  
 Following would be the flow to sync products,
 1. **mantle-shopify-connector** would produce a periodic json feed of newly created products.
 2. **shopify-oms-bridge** would consume this feed and transform it to produce OMS product json feed.
@@ -225,3 +225,6 @@ This service will take in the product JSON in OMSNewProductsFeed and set up a co
 8. Iterate through goodIdentifications and perform following steps,
    * add fromDate = nowTimestamp to each entry and add it to GoodIdentification list.
 9. If GoodIdentification is not null, add it to productJson map.
+10. Remove productJson.shopifyShopProduct to a new map shopifyShopProduct.
+11. If shopifyShopProduct is not null add it to ShopifyShopProduct (name should be the same for entity rest api) list.
+12. If ShopifyShopProduct is not null, add it to productJson map.
