@@ -2,23 +2,16 @@
 
 [Inventory data model](Inventory.md)
 
-The Distribution center or Retail store are modelled as [Facility](Facility.md), The [Inventory](Inventory.md) for Products managed at the given facility is configured in [ProductFacility](ProductFacility.md). Each location has one InventoryItem to track ATP, and QOH any given product at the facility.
+The Distribution center or Retail store are modelled as [Facility](Facility.md), The [Inventory](Inventory.md) for Products managed at the given facility is configured in [ProductFacility](ProductFacility.md). 
+Each location has one InventoryItem to track ATP, and QOH any given product at the facility. 
+Always use [findOrCreateFacilityInventoryItem](findOrCreateFacilityInventoryItem.md) get InventoryItem for product at facility.
 
 [createExternalInventoryReset](createExternalInventoryReset.md) is used to load initial inventory levels at a Facility, This same service is used to periodic inventory level sync with the Inventory Master (ERP) in the Organization. 
 Use [receivePurchaseShipment](receivePurchaseShipment.md) for incoming shipments. 
 To record corrections in systemic inventory data, use [createPhysicalInventory](createPhysicalInventory.md)
 
-OMS order brokering process, assigns orders to the facility for fulfillment and [createOrderItemInventoryReservation](createOrderItemInventoryReservation.md) for each orderItem.
-
-
-##
-1. [Reserve Inventory for OrderItem](createOrderItemInventoryReservation.md)
-2. [Cancel Inventory reservation](cancelOrderItemInvRes.md)
-3. [Record Inventory Variance](createPhysicalInventory.md)
-4. [Get Product inventoryItemId](findOrCreateFacilityInventoryItem.md)
-5. [createExternalInventoryReset](createExternalInventoryReset.md)
-6. 
-
+OMS order brokering process, assigns orders to the facility for fulfillment and [createOrderItemInventoryReservation](createOrderItemInventoryReservation.md) for each orderItem. 
+The [rejectOrderItem](../rejectOrderItem.md) process also [Cancel Inventory reservation](cancelOrderItemInvRes.md).
 
 
 ## Rejection:
