@@ -12,7 +12,6 @@ Shopify connector would produce a periodic created products feed since last run 
 * id
 * handle
 * title
-* productType
 * featuredMedia
   * mediaContentType
     * preview 
@@ -34,17 +33,40 @@ Shopify connector would produce a periodic created products feed since last run 
   * price
   * compareAtPrice
   * position
+  * requiresComponents
   * selectedOptions
     * name
     * value
   * inventoryItem
     * id
+    * requiresShipping
     * measurement
       * weight
         * unit
         * value
+* bundleComponents
+* hasVariantsThatRequiresComponents
 
 ## Shopify OMS Bridge
+
+Periodically receive and consume ShopifyNewProductsFeed and transform to generated OMSNewProductsFeed.
+Following are the implementation details,
+1. Define and configure *ShopifyNewProductsFeed* SystemMessageType to import Shopify new products feed, define *consumeSmrId* SystemMessageType parameter to be used in the next system message produced in consume service. Refer *ShopifyOrderCancelUpdatesFeed* SystemMessageType.
+2. Convert *consume#ShopifyOrderCancelUpdatesFeed* service to a generic service *consume#ShopifyFeed* to be used as consume service for this flow as well.
+3. Define and configure *GenerateOMSNewProductsFeed* SystemMessageType, refer *GenerateOMSOrderCancelUpdatesFeed* SystemMessageType. Configure *sendSmrId* SystemMessageTypeParameter to send the feed to SFTP.
+4. Implement sendService *generate#OMSNewProductsFeed*, refer implementation details below.
+5. Define and configure *SendOMSNewProductsFeed* SystemMessageType to send the feed to SFTP.
+
+### generate#OMSNewProductsFeed
+1. Fetch SystemMessage record
+2. Fetch related SystemMessageRemote
+3. Fetch shopId from SystemMessageRemote.remoteId
+4. Get products list from the file location in SystemMessage.messageText.
+5. Initiate a local file for the json feed.
+6. Iterate through products list and for each shopifyProduct map call map#Product, refer implementation details below.
+7. Write the product map if returned in service output to the file.
+8. Close the file once the iteration is complete.
+9. If *sendSmrId* SystemMessageTypeParameter is defined, queue *SendOMSNewProductsFeed* SystemMessage.
 
 ### map#Product
 1. Service Parameters
@@ -61,9 +83,16 @@ Shopify connector would produce a periodic created products feed since last run 
 4. Prepare product map
    * product.productId = omsProductId
    * product.internalName = "V" + shopifyProduct.handle
+   * product.productType
+     * default to FINISHED_GOOD
+     * if shopifyProduct.isGiftCard=true, set as DIGITAL_GOOD
+     * if shopifyProduct.variants.inventoryItem.requiresShipping=false, set as DIGITAL_GOOD
+     * if shopifyProduct.hasVariantsThatRequiresComponents=true, set as MARKETING_PKG_PICK
    * product.productName = shopifyProduct.title (currently we replace <|> with "" and store upto 100 characters only, we could consider changing datatype in new implementation)
    * product.detailImageUrl = shopifyProduct.featuredMedia.mediaContentType.preview.image.url
    * product.primaryCategoryId = browse root category of the ProductStore associated with shopId (write helper method/service as needed)
+   * product.isVirtual = Y
+   * product.isVariant = N
    * product.selectableFeatures = iterate through product.options and create a list of maps with following key/value(s)
      * productFeatureId = set if exists
      * feature = shopifyProduct.options.optionValues.name
@@ -71,6 +100,13 @@ Shopify connector would produce a periodic created products feed since last run 
      * sequenceNum = shopifyProduct.options.position
    * product.keywords = shopifyProduct.tags
    * product.variants = for each shopifyProduct.variants call map#ProductVariant with forCreate=true and add the result to this list
+   * productVariant.shopifyShopProduct = [shopId:shopId, shopifyProductId:shopifProduct.id, productId:omsProductId]
+
+> NOTES
+> - Current implementation should support Variant Fixed Bundles, in future add support for Product Fixed Bundles (shopifyProduct.bundleComponents)
+
+> TODO
+> - Modeling for shopifyProduct.tags, currently it's split and saved as ProductKeywords but it can be saved as freetext in a simpler way.
 
 ### map#ProductVariant
 1. Service Parameters
@@ -88,13 +124,25 @@ Shopify connector would produce a periodic created products feed since last run 
 5. Prepare productVariant map
    * productVariant.productId = omsProductId
    * productVariant.internalName = productIdentifier
+   * productVariant.productTypeId
+     * default to FINISHED_GOOD
+     * if shopifyProductVariant.inventoryItem.requireShipping=false, set as DIGITAL_GOOD
+     * if shopifyProductVariant.requiresComponents=true, set as MARKETING_PKG_PICK 
    * productVariant.productName = shopifyProductVariant.title
    * productVariant.detailImageUrl = shopifyProductVariant.image.url
    * productVariant.primaryCategoryId = browse root category of the ProductStore associated with shopId (write helper method/service as needed)
    * productVariant.weight = shopifyProductVariant.inventoryItem.measurement.value
+   * productVariant.shippingWeight = shopifyProductVariant.inventoryItem.measurement.value
    * productVariant.weightUomId = uomId where shopifyProductVariant.inventoryItem.measurement.unit = Uom.abbreviation
+   * productVariant.isVirtual = N
+   * productVariant.isVariant = Y
+   * productVariant.sequenceNum = shopifyProductVariant.position
    * productVariant.standardFeatures = iterate through shopifyProductVariant.selectedOptions and create a list of maps with following key/value(s)
      * productFeatureId = set if exists
      * feature = shopifyProductVariant.selectedOptions.name
      * value = shopifyProductVariant.selectedOptions.value
      * sequenceNum = shopifyProductVariant.position
+   * productVariant.goodIdentifications = add following key value pairs to the list
+     * [goodIdentificationTypeId: "SHOPIFY_PROD_SKU", idValue=productVariant.sku]
+     * [goodIdentificationTypeId: "UPCA", idValue=productVariant.barcode]
+   * productVariant.shopifyShopProduct = [shopId:shopId, shopifyProductId:shopifyProductVariant.id, productId:omsProductId, shopifyInventoryItemId:shopifyProductVariant.inventoryItem.id]
