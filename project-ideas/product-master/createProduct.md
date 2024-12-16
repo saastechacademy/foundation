@@ -93,8 +93,9 @@ Following are the implementation details,
    * product.primaryCategoryId = browse root category of the ProductStore associated with shopId (write helper method/service as needed)
    * product.isVirtual = Y
    * product.isVariant = N
-   * product.selectableFeatures = iterate through product.options and create a list of maps with following key/value(s)
+   * product.features = iterate through product.options and create a list of maps with following key/value(s)
      * productFeatureId = set if exists
+     * productFeatureApplTypeId = "SELECTABLE_FEATURE"
      * feature = shopifyProduct.options.optionValues.name
      * featureType = shopifyProduct.options.name
      * sequenceNum = shopifyProduct.options.position
@@ -137,8 +138,9 @@ Following are the implementation details,
    * productVariant.isVirtual = N
    * productVariant.isVariant = Y
    * productVariant.sequenceNum = shopifyProductVariant.position
-   * productVariant.standardFeatures = iterate through shopifyProductVariant.selectedOptions and create a list of maps with following key/value(s)
+   * productVariant.features = iterate through shopifyProductVariant.selectedOptions and create a list of maps with following key/value(s)
      * productFeatureId = set if exists
+     * productFeatureApplTypeId = "STANDARD_FEATURE"
      * feature = shopifyProductVariant.selectedOptions.name
      * value = shopifyProductVariant.selectedOptions.value
      * sequenceNum = shopifyProductVariant.position
@@ -146,3 +148,80 @@ Following are the implementation details,
      * [goodIdentificationTypeId: "SHOPIFY_PROD_SKU", idValue=productVariant.sku]
      * [goodIdentificationTypeId: "UPCA", idValue=productVariant.barcode]
    * productVariant.shopifyShopProduct = [shopId:shopId, shopifyProductId:shopifyProductVariant.id, productId:omsProductId, shopifyInventoryItemId:shopifyProductVariant.inventoryItem.id]
+
+## OMS API
+
+### create#Product
+This would be the base api the uses entity rest method to create product and related base data in the database.
+1. Parameters
+   * Input Parameters
+     * productJson (type=Map) (expect JSON block below)
+   * Output Parameters
+     * productOutput
+
+```json
+{
+  "internalName": "<sku>",
+  "productTypeId": "<productTypeId>",
+  "productName": "<productName>",
+  "detailImageUrl": "<detailImageUrl>",
+  "weight": "<weight>",
+  "shippingWeight": "<weight>",
+  "weightUomId": "<weightUomId>",
+  "isVirtual": "<Y/N>",
+  "isVariant": "<Y/N>",
+  "primaryCategoryId": "<primaryCategoryId>",
+  "GoodIdentification": [
+    {
+      "goodIdentificationTypeId": "<goodIdentificationTypeId>",
+      "idValue": "<idValue>",
+      "fromDate": "<fromDate>"
+    }
+  ],
+  "ProductFeatureAppl": [
+    {
+      "productFeatureId": "<productFeatureId>",
+      "productFeatureApplTypeId": "<productFeatureApplTypeId>",
+      "sequenceNum": "<sequenceNum>",
+      "fromDate": "<fromDate>"
+    }
+  ]
+}
+```
+
+### create#ProductAndVariants (Application Layer)
+This service will take in the product JSON in OMSNewProductsFeed and set up a complete product and its variants by performing any surrounding crud operations as needed.
+1. Parameters
+   * Input Parameters
+     * productJson (Map)
+2. Remove productJson.variants into a new list productVariants.
+3. Call prepare#ProductCreate with productJson as input.
+4. For the output product map call *create#Product* api service.
+5. Set parentProductId from *create#Product* output.
+6. Iterate through productVariants,
+   * Call prepare#ProductCreate for each variant map.
+   * For the output product map call *create#Product* api service.
+   * Call createProductAssoc for parentProductId and variant productId returned in above step.
+
+### prepare#ProductCreate (Application Layer)
+1. Parameters
+    * Input Parameters
+      * productJson (Map)
+    * Output Parameters
+      * productJson (Map)
+2. Remove productJson.features into a new list features.
+3. Remove productJson.goodIdentifications into a new list goodIdentifications.
+4. If features is not null, initialize ProductFeatureAppl (name should be the same for entity rest api) list.
+5. Iterate through selecatableFeatures and perform following steps,
+   * If selecatableFeature.productFeatureTypeId doesn't exist, create new.
+   * If selectableFeature.productFeatureId doesn't exist, create new.
+   * Prepare a map with following values and add to ProductFeature list
+     * productFeatureId
+     * productFeatureApplTypeId
+     * sequenceNum = selectableFeature.position
+     * fromDate = nowTimestamp
+6. If ProductFeatureAppl is not null, add it to productJson map.
+7. If goodIdentifications is not null, initialize GoodIdentification (name should be the same for entity rest api) list.
+8. Iterate through goodIdentifications and perform following steps,
+   * add fromDate = nowTimestamp to each entry and add it to GoodIdentification list.
+9. If GoodIdentification is not null, add it to productJson map.
