@@ -9,15 +9,14 @@ Fields:
 * productIdentType
 * productIdentValue
 * inventoryItemId
+* inventoryItemATP
+* inventoryItemQOH
 * externalATP
 * externalQOH
-* quantityOnHand Diff
-* availableToPromise Diff
 * unitCost
-* 
 
 Foreign key:
-add resetItemId attribute to InventoryItemDetail entity.
+* add resetItemId attribute to InventoryItemDetail entity.
 
 We want to be able to trace back the business event that caused Inventory movement.
 
