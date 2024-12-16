@@ -111,7 +111,6 @@ Why does the shipment have to be moved out of "approved" status to edit it's con
 
 ### List of scenarios to test createOrderFulfillmentWave
 *   PickList is created, the list of assigned Pickers reconciles with the request
-*   The OrderItem count and the PicklistOrderItem record counts reconciles
 *   The number of unique shipGroupSeqId reconciles with the number of Shipments created.
 *   The number records for each orderId and ShipmentId combination in OrderShipment table reconciles with ShipmentItems
 

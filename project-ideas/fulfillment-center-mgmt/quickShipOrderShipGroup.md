@@ -1,10 +1,41 @@
 # quickShipOrderShipGroup
 
 API to fulfill orders. 
-Shortcut method, if fulfillment center is not executing full pick/pack/ship steps on the floor. 
+Shortcut method, if fulfillment center is not executing full pick/pack/ship steps on the floor.
+This service will be most useful to complete the POS sales. 
 
-1. Service Call: `co.hotwax.poorti.FulfillmentServices.create#SalesOrderShipment`
-2. Service Call (Iteration): `co.hotwax.poorti.SearchServices.update#OrderFulfillmentStatus`
-3. packShipment
-4. shipShipment
-    - completeOrderItem
+### Parameters
+```json
+{
+   "orderId": "10000",
+  "orderItems": [
+    {
+      "orderId": "10000",
+      "orderItemSeqId": "00101",
+      "shipGroupSeqId": "00002",
+      "productId": "10001",
+      "inventoryItemId": "10000",
+      "quantity": 1
+    },
+    {
+      "orderId": "10000",
+      "orderItemSeqId": "00102",
+      "shipGroupSeqId": "00002",
+      "productId": "10017",
+      "inventoryItemId": "10000",
+      "quantity": 1
+    }
+  ]
+}
+```
+
+### Workflow
+1. Service Call: `co.hotwax.poorti.FulfillmentServices.create#SalesOrderShipment`.
+   -  Using the incoming parameters, prepare data to create SalesOrderShipment.
+2. packShipment
+   -  call packShipment for the newly created Shipment. 
+3. shipShipment
+   - call shipShipment to complete the shipment and then complete the orderItems shipped by the shipment.
+   - completeOrderItem
+4. Service Call (Iteration): `co.hotwax.poorti.SearchServices.update#OrderFulfillmentStatus`
+   - update orderItem fulfillment status on Order document in SOLR. 

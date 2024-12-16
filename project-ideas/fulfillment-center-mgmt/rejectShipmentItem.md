@@ -1,7 +1,7 @@
 ### **rejectShipmentItem** 
 
 **Purpose**
-The primary goal of the `rejectShipmentItem` service is to handle the rejection of a specific item within a shipment. This involves cancelling  the shipment item, move PickListOrderItem to rejected status, put the order items in the brokering queue and adjusting inventory levels.
+The primary goal of the `rejectShipmentItem` service is to handle the rejection of a specific item within a shipment.
 
 **Input Parameters**
 
@@ -16,7 +16,6 @@ The primary goal of the `rejectShipmentItem` service is to handle the rejection 
 *   If Shipment is not in SHIPMENT_INPUT status then call reinitializeShipment.
 *   Delete ShipmentPackageContent
 *   Delete ShipmentItem
-*   Delete PickListOrderItem,  With OrderId and OrderItemSeqId find PickListOrderItem
 *   Delete OrderShipment
 *   Clear fulfillmentStatus on Solr ORDER document
 *   Call rejectOrderItem service
