@@ -20,10 +20,6 @@ This guide focuses on writing services in Moqui's Minilang, a domain-specific la
    * **Custom Map:** Organize parameters using a map for clarity.
    * **List Parameters:** Services can accept list-type input parameters.
 
-### Framework Setup for Development
-
-(Same steps as in previous guides, so omitted for brevity)
-
 ## Assignment
 
 ### Tasks
@@ -55,3 +51,12 @@ Push your new service implementations to the "moqui-training" repository on GitH
 1. https://www.youtube.com/watch?v=gAeYvAU9S2Y
 2. https://www.youtube.com/watch?v=5dJbW2MCiqU&list=PL6JSOz3-TrFSMiuGounNRnje-JQDi8l8g&index=11&t=1094s
 3. https://www.youtube.com/watch?v=sWvbrgHuPUQ&list=PL6JSOz3-TrFSMiuGounNRnje-JQDi8l8g&index=12&t=2s
+
+### This assignment tests your ability to:
+* What is DSL?
+* How do we execute a method on java object?
+* How do we execute a static function on java class?
+* Discuss, `service-call` wrapper in mini-lang.
+* Write SQL to select records from the entity `MoquiTraining`, User should be able to filter records by `trainingName` or `trainingId`.
+* Parameterize the above SQL query. Execute parameterised SQL from MySQL Workbench.
+
