@@ -1,6 +1,11 @@
 # shipShipment
 
-Move shipment status to Shipped
-Call completeOrderItem API
+For each shipmentItem in shipment
 
-Note: for now create a shell completeOrderItem service and call it. Later we will get into the details of this service.
+- update#OrderItem status to ITEM_COMPLETED
+- [createItemIssuance](inventory-mgmt/ItemIssuance.md)
+- [cancelOrderItemInvRes](inventory-mgmt/cancelOrderItemInvRes.md)
+
+then, 
+Update shipment status to SHIPMENT_SHIPPED.
+
