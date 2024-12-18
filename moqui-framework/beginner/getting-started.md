@@ -2,13 +2,13 @@
 
 ### Prerequisites
 
-* You must have GIT installed on your computer. Go to [https://git-scm.com/book/en/v2/Getting-Started-Installing-Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) to see installation instructions.
-* The Java version should be Java 8. Check your Java version with the command:
+* GIT installed on your computer. Go to [https://git-scm.com/book/en/v2/Getting-Started-Installing-Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) to see installation instructions.
+* JDK 11. To check your Java version use following command:
   ```bash
   java -version
   ```
-* You should know how to navigate file directories on your machine using the terminal window (Linux/Mac).
-* You must have a GitHub account. Create a new repository named "moqui-training." This will be used for Moqui assignment submissions.
+* Ability to navigate file directories on your machine using the terminal window (Linux/Mac).
+* Active GitHub account. Create a new repository named "moqui-training." This will be used for Moqui assignment submissions.
 * Link the "moqui-training" repository with `training@hotwaxsystems.com`.
 
 ### Introduction
@@ -48,6 +48,7 @@ Create your custom Moqui component.
 
 ### This assignment tests your ability to:
 
+* Read documentation and follow instructions.
 * Create a new custom Moqui component.
 * Add a new entity definition in the component.
 
