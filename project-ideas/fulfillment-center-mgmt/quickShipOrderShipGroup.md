@@ -34,6 +34,6 @@ This service will be most useful to complete the POS sales.
    -  Using the incoming parameters, prepare data to create SalesOrderShipment in `SHIPMENT_SHIPPED` status.
    -  The Picking and Packaging process is not required, the input shipment map will have `shipment` `shipmentItems`,`orderShipments`.
 3. create#ItemIssuance
-   - create itemIssuace record for each ShipmentItem. 
+   - create itemIssuance record for each ShipmentItem. 
 4. Service Call (Iteration): `co.hotwax.poorti.SearchServices.update#OrderFulfillmentStatus`
    - update orderItem fulfillment status on Order document in SOLR. 
