@@ -4,31 +4,11 @@ This guide focuses on setting up a database, loading data, and creating a custom
 
 ### Database Setup and Data Load
 
-Moqui can be configured to use various databases. In this example, we'll set up MySQL.
+Install MySQL version 8.0.32 or higher.
 
 #### Framework Setup for Development
 
-1. **Open a Terminal:** Launch your terminal application.
-2. **Sandbox Directory:** Navigate to your development directory (e.g., `~/sandbox`).
-3. **Clone Repository:** Clone the Moqui framework:
-   ```bash
-   git clone -b master https://github.com/moqui/moqui-framework.git
-   ```
-4. **Add Runtime:**
-   ```bash
-   cd moqui-framework
-   ./gradlew getRuntime
-   ```
-5. **Clone Required Components:** Navigate to the `moqui-framework/runtime/component` directory and clone the necessary components:
-   ```bash
-   git clone -b master https://github.com/moqui/mantle-usl.git
-   git clone -b master https://github.com/moqui/mantle-udm.git
-   ```
-
-### Prerequisites
-
-* **Java 8:** Ensure you have Java 8 installed. Check your version with: `java -version`
-* **MySQL 5.7.x:**  Make sure you have MySQL 5.7.x installed. Check your version with: `mysql -version`
+Follow [getting started guide](getting-started.md)
 
 ## Assignment
 
@@ -37,10 +17,9 @@ Moqui can be configured to use various databases. In this example, we'll set up 
 #### 1. Database Setup
 
 * **Add JDBC Driver:** Add the MySQL JDBC driver dependency to your custom component's `build.gradle` file:
-  ```
-  runtime 'mysql:mysql-connector-java:5.1.47'
-  ```
-  You can download a sample `build.gradle` file for reference and add the dependency.
+
+* MySQL Connector/J 8.0.32
+
 * **Create Database:** Create a database named `moqui` (with UTF-8 character set) using the following command:
    ```sql
    CREATE DATABASE moqui CHARACTER SET utf8;
@@ -80,5 +59,19 @@ Push the newly added data files from your custom component to your "moqui-traini
 3. https://www.youtube.com/watch?v=i2g6X_huUUg&list=PL6JSOz3-TrFSMiuGounNRnje-JQDi8l8g&index=24
 4. https://www.youtube.com/watch?v=b-2Wu4CC1hg
 
+### This assignment tests your ability to:
+
+* What is gradle?
+* Install MySQL 
+* What is CHARACTER SET utf8? 
+  * Why this setting? 
+  * How does it change the MySQL behavior? 
+  * What other character sets are available?
+* What is JDBC Driver? 
+  * Explain `Class.forName(“oracle.jdbc.driver.OracleDriver”);`
+  * What is the IP address of your laptop at this moment? 
+  * What is significance of entity_ds_host in `<default-property name="entity_ds_host" value="127.0.0.1"/>`?
+  * Explain `127.0.0.1` and `localhost`
+* Discuss, How CSV data is loaded in the database by Moqui framework?
 
 
