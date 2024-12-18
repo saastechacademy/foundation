@@ -2,6 +2,11 @@
 
 **Sample shipment JSON representation**
 
+### POS orders are simple case, 
+* POS sales orders are created, for the order, Shipment is created in the completed status. 
+* The Picking and Packaging process is not required, in such scenario, the input shipment map will not have `shipmentPackages`,`shipmentPackageContents`, `shipmentRouteSegments`, `shipmentPackageRouteSegs`
+
+
 ```json
 {
     "shipmentId": "10025",
@@ -70,7 +75,7 @@
                 "gatewayStatus": "SUCCESS"
                 }
             ]
-        },
+        }
     ],
     "shipmentPackageContents":[
     {

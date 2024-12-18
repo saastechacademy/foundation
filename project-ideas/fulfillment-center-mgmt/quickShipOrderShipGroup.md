@@ -31,11 +31,9 @@ This service will be most useful to complete the POS sales.
 
 ### Workflow
 1. Service Call: `co.hotwax.poorti.FulfillmentServices.create#SalesOrderShipment`.
-   -  Using the incoming parameters, prepare data to create SalesOrderShipment.
-2. packShipment
-   -  call packShipment for the newly created Shipment. 
-3. shipShipment
-   - call shipShipment to complete the shipment and then complete the orderItems shipped by the shipment.
-   - completeOrderItem
+   -  Using the incoming parameters, prepare data to create SalesOrderShipment in `SHIPMENT_SHIPPED` status.
+   -  The Picking and Packaging process is not required, the input shipment map will have `shipment` `shipmentItems`,`orderShipments`.
+3. create#ItemIssuance
+   - create itemIssuace record for each ShipmentItem. 
 4. Service Call (Iteration): `co.hotwax.poorti.SearchServices.update#OrderFulfillmentStatus`
    - update orderItem fulfillment status on Order document in SOLR. 
