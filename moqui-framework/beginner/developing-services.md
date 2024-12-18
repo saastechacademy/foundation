@@ -56,3 +56,11 @@ Push all new service implementations and the CSV data file to your "moqui-traini
 1. https://www.youtube.com/watch?v=EpEt9ndJUWA&list=PL6JSOz3-TrFSMiuGounNRnje-JQDi8l8g&index=5&t=1s
 2. https://www.youtube.com/watch?v=6kFwPlPk92c
 
+### This assignment tests your ability to:
+* Discuss the `entity-auto` service type.
+  * Is Name of the entity you defined in Moqui same as entity name in MySQL? 
+  * What did you observe and Why so?
+  * MySQL works with SQL, You did not write SQL, Does this mean, MySQL working with Moqui does not require SQL?
+  * Discuss https://www.geeksforgeeks.org/hibernate-difference-between-orm-and-jdbc/
+  * What is Groovy? Discuss similarity and differences with Java.
+  * What is RESTful API? What is JsonRPC? How is it different from REST API?
