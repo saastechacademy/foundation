@@ -49,21 +49,15 @@
     * **Operation:** Updates the fulfillment status for each order item in Solr.
     * **Steps:**
         * **Iteration:** Loops through each `orderItem` in the `orderItems` list.
-        * **Fields Assignment:**
-            * Sets `orderId` and `orderItemSeqId` from the current `orderItem`.
         * **Service Call:**
             * Sends `orderId`, `orderItemSeqId`, and `orderFulfillmentMap` to the `update#OrderFulfillmentStatus` service.
             * The service updates the order fulfillment status in Solr based on the input parameters.
 3. **Initialize the Picklist Map:**  
    * **Steps:**  
      * **Pickers Processing:**  
-       * Initializes `pickersList` to store the processed pickers.  
-       * Iterates over each `picker` in the `pickers` list.  
-       * For each picker, creates a new map with `partyId` and `roleTypeId` is picker.  
-       * Adds each `pickerMap` to `pickersList`.  
-       * Assigns `pickersList` to the `pickers` field in `picklistMap`.  
+       * Initialize `pickersList` to store the processed pickers.  
 4. **Service Call: `co.hotwax.poorti.FulfillmentServices.create#Picklist`**  
-   * **Operation:** Creates a picklist using the list of created shipments.  
+   * **Operation:** Creates a picklist for the list of created shipments.  
 5. **Return picklistId** The event handler will then use picklistId to generate pdf return to the webapp.
 
 
