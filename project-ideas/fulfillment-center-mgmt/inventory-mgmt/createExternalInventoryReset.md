@@ -18,7 +18,7 @@
 * use externalFacilityId, productIdentType, productIdentValue to [findOrCreateFacilityInventoryItem](findOrCreateFacilityInventoryItem.md)
 * look up InventoryItem for the product at the facility.
 * Compare ATP and QOH at facility with the external inventory to compute quantityOnHandDiff, availableToPromiseDiff. 
-* Prepare following data and save it in the database.
+* If, ATP or QOH diff is found, Prepare following data and save it in the database.
 * On successful processing of input data, create InventoryItemDetail record.
 * In case of any issues in ProductFacility lookup or InventoryItem lookup, Save the input data as is in the database. 
 
@@ -32,8 +32,8 @@
       "inventoryItemId": "INV789012",
       "externalATP": 150,
       "externalQOH": 180,
-      "quantityOnHandDiff": -30,
-      "availableToPromiseDiff": -20,
+      "inventoryItemATP": 180,
+      "inventoryItemATPQOH": 200,
       "unitCost": 12.5
     }
 
