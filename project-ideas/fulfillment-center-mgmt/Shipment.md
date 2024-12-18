@@ -70,36 +70,6 @@
     *   `issuedByUserLoginId`: The user who issued the item.
     *   `issuedDateTime`: Date and time the item was issued.
 
-**Status Definitions**
-
-8.   **StatusItem:**
-    *   Defines the individual statuses a shipment can have.
-    *   Attributes:
-        *   `description`: Human-readable description of the status.
-        *   `sequenceId`:  Likely used for ordering the statuses.
-        *   `statusCode`: A short code for the status (e.g., "APPROVED").
-        *   `statusId`: A unique identifier for the status (e.g., "SHIPMENT_APPROVED").
-        *   `statusTypeId`: Identifies the type of status ("SHIPMENT_STATUS" for shipment statuses).
-
-**Valid Status Changes**
-
-9.   **StatusValidChange:**
-    *   Defines allowed transitions between statuses.
-    *   Attributes:
-        *   `statusId`: The initial status.
-        *   `statusIdTo`: The status the shipment can transition to.
-        *   `transitionName`: A name for the transition (e.g., "Pack").
-        *   `sequenceNum`: (Optional) A number indicating the order of valid transitions for a status.
-        *   `conditionExpression`: (Optional) A conditional expression that must be true for the transition to be allowed.
-
-
-**Relationships:**
-
-*   A **Shipment** has one **ShipmentType**, one **ShipmentStatus**, and many **ShipmentItems**, **ShipmentPackages**, and **ShipmentRouteSegments**.
-*   A **ShipmentItem** belongs to one **Shipment** and relates to one **OrderItem** (from the Order Management System).
-*   A **ShipmentPackage** belongs to one **Shipment**.
-*   A **ShipmentRouteSegment** belongs to one **Shipment**.
-
 ![ERD](Shipment_ER_Diagram.png)
 
 
