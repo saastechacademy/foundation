@@ -117,4 +117,7 @@ where
 
 
 ## Additional Notes:
-* Create a view  "ProductFacilityInventoryItem" on InventoryItem and ProductFacility where ProductFacilityInventoryItem.ATP is InventoryItem.ATP, ProductFacilityInventoryItem.computedInventoryCount is =  (InventoryItem.ATP - ProductFacility.MinimumStock).
+* Create a view  "ProductFacilityInventoryItem" on InventoryItem and ProductFacility 
+  * where ProductFacilityInventoryItem.lastInventoryCount is InventoryItem.availableToPromiseTotal, 
+  * ProductFacilityInventoryItem.computedInventoryCount is =  (InventoryItem.availableToPromiseTotal - ProductFacility.minimumStock).
+
