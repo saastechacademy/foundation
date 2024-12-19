@@ -7,10 +7,10 @@
   "orderId": "Order789",
   "orderItemSeqId": "00001",
   "shipmentId": "ShipmentABC",
-  "shipmentItemSeqId": "00001"
+  "shipmentItemSeqId": "00001",
   "reasonEnumId": "VAR_SHIP_RECV", 
   "quantityAccepted": 10,
-  "quantityRejected": 2,  
+  "quantityRejected": 2  
 }
 ```
 
