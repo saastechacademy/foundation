@@ -23,6 +23,7 @@ The first 5 chapters foundational business concepts that we experience when buil
 8. https://github.com/saastechacademy/foundation/blob/main/udm/beginner/activity.md#setup-up-company-product-store-and-catalog
 9. https://github.com/saastechacademy/foundation/blob/main/udm/beginner/order.md
 10. https://github.com/saastechacademy/foundation/blob/main/udm/beginner/activity.md#order
+11. https://github.com/saastechacademy/foundation/blob/main/udm/beginner/shipment.md
 
 ## UDM Intermediate
 1.  [Design CDP](intermediate/data-model-assignment/activity-design-cdp.md)
