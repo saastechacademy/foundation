@@ -25,12 +25,12 @@ The first 5 chapters foundational business concepts that we experience when buil
 10. https://github.com/saastechacademy/foundation/blob/main/udm/beginner/activity.md#order
 
 ## UDM Intermediate
-1.  [Design CDP](intermediate/activity-design-cdp.md)
-2.  [Design PIM](intermediate/activity-design-pim.md)
-3.  [Design OMS](intermediate/activity-design-order.md)
+1.  [Design CDP](intermediate/data-model-assignment/activity-design-cdp.md)
+2.  [Design PIM](intermediate/data-model-assignment/activity-design-pim.md)
+3.  [Design OMS](intermediate/data-model-assignment/activity-design-order.md)
 
 ## SQL Intermediate
-1.  [SQL 1](intermediate/sql-assignment-1.md)
-1.  [SQL 1](intermediate/sql-assignment-2.md)
-1.  [SQL 1](intermediate/sql-assignment-3.md)
+1.  [SQL 1](intermediate/sql-assignment/sql-assignment-1.md)
+1.  [SQL 1](intermediate/sql-assignment/sql-assignment-2.md)
+1.  [SQL 1](intermediate/sql-assignment/sql-assignment-3.md)
 
