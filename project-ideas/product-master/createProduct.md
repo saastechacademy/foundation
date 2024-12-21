@@ -7,6 +7,9 @@ Following would be the flow to sync products,
 2. **shopify-oms-bridge** would consume this feed and transform it to produce OMS product json feed.
 3. **oms** would consume the transformed product json feed and establish products in OMS database via product API.
 
+> NOTE
+> - We will not store shopify product tags in relational database as there isn't any functional need of those, we can store them directly in document database as needed so skipping them for now.
+
 ## Shopify Connector
 Shopify connector would produce a periodic created products feed since last run time with following fields,
 * id
@@ -76,12 +79,13 @@ Following are the implementation details,
      * forCreate (Boolean)
    * Output
      * product
-2. Check if product already exists in ShopifyShopAndProduct view on following conditions (implement a helper service get#OMSProductId for this)
-   * shopId
-   * internalName = "V" + shopifyProduct.handle OR shopifyProductId = shopifyProduct.id
-3. If product exists and forCreate=true, return
-4. Prepare product map
-   * product.productId = omsProductId
+2. Initialize product map
+3. Check if product already exists, set product.productId = get Product.productId from Product where Product.internalName = "V" + shopifyProduct.handle.
+4. If product.productId exists and forCreate=true, we will only create ShopifyShopProduct record and not setup complete product, but we will also need to go through variants the same way.
+   * Set product.shopifyShopProduct = [shopId:shopId, shopifyProductId:shopifProduct.id]
+   * Set product.variants = for each shopifyProduct.variants call map#ProductVariant with forCreate=forCreate (service input) and add the result to this list
+   * return
+5. Prepare product map
    * product.internalName = "V" + shopifyProduct.handle
    * product.productType
      * default to FINISHED_GOOD
@@ -99,9 +103,8 @@ Following are the implementation details,
      * feature = shopifyProduct.options.optionValues.name
      * featureType = shopifyProduct.options.name
      * sequenceNum = shopifyProduct.options.position
-   * product.keywords = shopifyProduct.tags
    * product.variants = for each shopifyProduct.variants call map#ProductVariant with forCreate=true and add the result to this list
-   * productVariant.shopifyShopProduct = [shopId:shopId, shopifyProductId:shopifProduct.id, productId:omsProductId]
+   * product.shopifyShopProduct = [shopId:shopId, shopifyProductId:shopifyProduct.id]
 
 > NOTES
 > - Current implementation should support Variant Fixed Bundles, in future add support for Product Fixed Bundles (shopifyProduct.bundleComponents)
@@ -118,12 +121,12 @@ Following are the implementation details,
    * Output
      * productVariant
 2. Get productIdentifierEnumId from ProductStore associated to shopId, based on returned value set productIdentifier = shopifyProductVariant.id OR shopifyProductVariant.sku OR shopifyProductVariant.barcode
-3. Check if product already exists in ShopifyShopAndProduct view on following conditions (implement a helper service get#OMSProductId for this)
-    * shopId
-    * internalName = productIdentifier or shopifyProductId = shopifyProductVariant.id
-4. If product exists and forCreate=true, return
-5. Prepare productVariant map
-   * productVariant.productId = omsProductId
+3. Initialize productVariant map
+4. Check if product already exists, set productVariant.productId = get Product.productId from Product where Product.internalName = producIdentifier.
+5. If productVariant.productId exists and forCreate=true, we will only create ShopifyShopProduct record and not setup complete product
+    * Set productVariant.shopifyShopProduct = [shopId:shopId, shopifyProductId:shopifyProduct.id, shopifyInventoryItemId:shopifyProductVariant.inventoryItem.id]
+    * return
+6. Prepare productVariant map
    * productVariant.internalName = productIdentifier
    * productVariant.productTypeId
      * default to FINISHED_GOOD
@@ -147,7 +150,7 @@ Following are the implementation details,
    * productVariant.goodIdentifications = add following key value pairs to the list
      * [goodIdentificationTypeId: "SHOPIFY_PROD_SKU", idValue=productVariant.sku]
      * [goodIdentificationTypeId: "UPCA", idValue=productVariant.barcode]
-   * productVariant.shopifyShopProduct = [shopId:shopId, shopifyProductId:shopifyProductVariant.id, productId:omsProductId, shopifyInventoryItemId:shopifyProductVariant.inventoryItem.id]
+   * productVariant.shopifyShopProduct = [shopId:shopId, shopifyProductId:shopifyProductVariant.id, shopifyInventoryItemId:shopifyProductVariant.inventoryItem.id]
 
 ## OMS API
 
@@ -195,13 +198,31 @@ This service will take in the product JSON in OMSNewProductsFeed and set up a co
    * Input Parameters
      * productJson (Map)
 2. Remove productJson.variants into a new list productVariants.
-3. Call prepare#ProductCreate with productJson as input.
-4. For the output product map call *create#Product* api service.
-5. Set parentProductId from *create#Product* output.
-6. Iterate through productVariants,
-   * Call prepare#ProductCreate for each variant map.
-   * For the output product map call *create#Product* api service.
-   * Call createProductAssoc for parentProductId and variant productId returned in above step.
+3. If productJson.productId != null
+   * Only store ShopifyShopProduct record for productJson.shopifyShopProduct
+   * Set parentProductId = productJson
+   * Else
+     * Remove productJson.shopifyShopProduct as shopifyShopProduct.
+     * Call prepare#ProductCreate with productJson as input.
+     * For the output product map call *create#Product* api service.
+     * Set parentProductId = createProductOutput.productId.
+     * Store ShopifyShopProduct with shopifyShopProduct and createProductOutput.productId as input.
+4. Iterate through productVariants and call *create#ProductVriant* service
+
+### create#ProductVariant (Application Layer)
+1. Parameters
+   * Input Parameters
+     * productVariantJson (Map)
+     * parentProductId
+2. If productVariantJson.productId != null
+   * Only store ShopifyShopProduct record for productVariantJson.shopifyShopProduct
+   * Call create#ProductAssoc for parentProductId and productVariantJson.productId.
+   * Else
+     * Remove productVariantJson.shopifyShopProduct as shopifyShopProduct.
+     * Call prepare#ProductCreate for each variant map.
+     * For the output product map call *create#Product* api service.
+     * Call createProductAssoc for parentProductId and createProductOutput.productId.
+     * Store ShopifyShopProduct with shopifyShopProduct and createProductOutput.productId as input.
 
 ### prepare#ProductCreate (Application Layer)
 1. Parameters
@@ -224,7 +245,3 @@ This service will take in the product JSON in OMSNewProductsFeed and set up a co
 7. If goodIdentifications is not null, initialize GoodIdentification (name should be the same for entity rest api) list.
 8. Iterate through goodIdentifications and perform following steps,
    * add fromDate = nowTimestamp to each entry and add it to GoodIdentification list.
-9. If GoodIdentification is not null, add it to productJson map.
-10. Remove productJson.shopifyShopProduct to a new map shopifyShopProduct.
-11. If shopifyShopProduct is not null add it to ShopifyShopProduct (name should be the same for entity rest api) list.
-12. If ShopifyShopProduct is not null, add it to productJson map.
