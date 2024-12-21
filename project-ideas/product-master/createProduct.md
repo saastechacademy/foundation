@@ -89,7 +89,6 @@ Following are the implementation details,
    * product.internalName = "V" + shopifyProduct.handle
    * product.productType
      * default to FINISHED_GOOD
-     * if shopifyProduct.isGiftCard=true, set as DIGITAL_GOOD
      * if shopifyProduct.variants.inventoryItem.requiresShipping=false, set as DIGITAL_GOOD
      * if shopifyProduct.hasVariantsThatRequiresComponents=true, set as MARKETING_PKG_PICK
    * product.productName = shopifyProduct.title (currently we replace <|> with "" and store upto 100 characters only, we could consider changing datatype in new implementation)
