@@ -1,161 +1,169 @@
-# Moqui services and REST API
+# Assignment: RESTful API Development with Moqui framework and MySQL
 
-Learning objective
-* Define new REST APIs in Moqui
-* Implement CRUD services in Moqui
+## Problem Statement
 
-### Prerequisite
-Complete following tutorial in given order
+In this assignment, you will create and manage orders for an online retail business using RESTful APIs. The focus will be on interacting with a MySQL database to store and manage order-related data through a set of well-designed APIs.
 
-[Services in Moqui](https://youtu.be/6kFwPlPk92c)
+---
 
-[Service XML Actions](https://youtu.be/gAeYvAU9S2Y)
+### This assignment tests your ability to:
 
-[Developing of REST APIs in Moqui](https://youtu.be/IAt0HQVGMrQ)
+- **Define Entities in XML:** Use the Moqui Entity Engine to define database entities in XML format.
+- **Set Up Database Relationships:** Leverage Moqui specifications to establish relationships between entities.
+- **Implement RESTful APIs in Moqui:** Develop and expose services as REST APIs using the Moqui framework.
+- **Handle CRUD Operations:** Implement Create, Read, Update, and Delete functionality through Moqui’s service engine.
+- **Integrate Validation and Business Logic:** Apply strict input validation, such as mandatory field checks and format constraints (e.g., dates as `yyyy-MM-dd`), directly into service definitions.
+- **Secure and Test APIs:** For example, return HTTP status codes:
+  - `201 Created`: When a new resource, such as an order, is successfully created.
 
-[Overview of the Mantle Business Artifacts](https://youtu.be/lV0RqRtrnbU)
+---
 
-[Fork and then clone following repository](https://github.com/hotwax/moqui-tutorial)
+### Tasks
 
-### Tasks 
-1. Data load
-Load data provided in moqui-tutorial component. 
+#### Task 1: Define Entities in XML
 
-2. REST API
-Develop API to perform CRUD operations on order entities.
-Note: You must use the existing OOTB Order entities available in the mantle component for this assignment. 
+Develop the following entities in **XML format** as per the Moqui framework’s Entity Engine specifications. Each entity should define the structure of the database tables, primary keys, relationships, and constraints.
 
-2a. Create Order
-* Identify the entity to create the order with the data as per the below input schema.
-* The input schema for the Create Order API should have the parameters as per the sample request body added below, with the following constraints.
-  * Default currencyUomId parameter to “USD” if not passed in the request.
-  * Default the statusId parameter to “OrderPlaced” if not passed in the request.
-  * The orderName and placedDate parameters is required for creating the order.
+| Entity Name      | Fields                                                                                                   |
+|------------------|---------------------------------------------------------------------------------------------------------|
+| **Party**        | `party_id` (VARCHAR(20), PK), `party_type` (VARCHAR, NOT NULL), `first_name` (VARCHAR), `last_name` (VARCHAR) |
+| **Contact_Mech** | `contact_mech_id` (VARCHAR(20), PK), `party_id` (VARCHAR(20), FK), `street_address` (VARCHAR, NOT NULL), `city` (VARCHAR), `state` (VARCHAR), `postal_code` (VARCHAR) |
+| **Product**      | `product_id` (VARCHAR(20), PK), `product_name` (VARCHAR, NOT NULL), `color` (VARCHAR), `size` (VARCHAR)         |
+| **Order_Header** | `order_id` (VARCHAR(20), PK), `order_date` (DATE, NOT NULL), `party_id` (VARCHAR(20), FK), `shipping_contact_mech_id` (VARCHAR(20), FK), `billing_contact_mech_id` (VARCHAR(20), FK) |
+| **Order_Item**   | `order_item_seq_id` (VARCHAR(20), PK), `order_id` (VARCHAR(20), FK), `product_id` (VARCHAR(20), FK), `quantity` (INT, NOT NULL), `status` (VARCHAR) |
 
-* The successful API request should return the orderId for the new Order created.
+#### Task 2: Develop RESTful APIs for Party Data
 
-```
+Develop RESTful APIs for managing party data:
+
+1. **Create a Party:** POST /parties
+2. **Retrieve Party Details:** GET /parties/{party_id}
+3. **Update a Party:** PUT /parties/{party_id}
+4. **Delete a Party:** DELETE /parties/{party_id}
+5. **Manage Contact Mechanisms for a Party:**
+  - **Add Contact Mechanism:** POST /parties/{party_id}/contacts
+  - **Retrieve Contact Mechanisms:** GET /parties/{party_id}/contacts
+  - **Update Contact Mechanism:** PUT /parties/{party_id}/contacts/{contact_mech_id}
+  - **Delete Contact Mechanism:** DELETE /parties/{party_id}/contacts/{contact_mech_id}
+
+#### Task 3: Develop RESTful APIs for Product Data
+
+Develop RESTful APIs for managing product data:
+
+1. **Create a Product:** POST /products
+2. **Retrieve Product Details:** GET /products/{product_id}
+3. **Update a Product:** PUT /products/{product_id}
+4. **Delete a Product:** DELETE /products/{product_id}
+
+#### Task 4: Develop RESTful APIs for Order Data
+
+Develop RESTful APIs for managing orders:
+
+1. **Create an Order:** POST /orders
+2. **Retrieve Order Details:** GET /orders/{order_id}
+3. **Update an Order:** PUT /orders/{order_id}
+4. **Delete an Order:** DELETE /orders/{order_id}
+5. **Add an Order Item:** POST /orders/{order_id}/items
+
+#### Task 5: Insert Sample Data
+
+The following example data demonstrates typical use cases for an online retail business, including party, product, and order details:
+
+1. **Scenario 1: John Doe’s Order**
+  - **Party Information:**
+    - Name: John Doe
+    - Type: Customer
+    - Contact: +1 650-253-0000, john.doe@example.com
+  - **Shipping Address:**
+    - 1600 Amphitheatre Parkway, Mountain View, CA, 94043
+  - **Order Details:**
+    - 2 units of a red T-Shirt, size M.
+    - 1 unit of blue jeans, size 32.
+
+2. **Scenario 2: Jane Smith’s Order**
+  - **Party Information:**
+    - Name: Jane Smith
+    - Type: Customer
+    - Contact: +1 212-736-3100, jane.smith@example.com
+  - **Shipping Address:**
+    - 350 Fifth Avenue, New York, NY, 10118
+  - **Order Details:**
+    - 1 unit of a white jacket, size L.
+    - 1 unit of sneakers, size 9.
+
+The data is provided in JSON format for clarity:
+
+```json
 {
-    "orderName": "Test Order 1",
-    "currencyUomId": "USD",
-    "salesChannelEnumId": "ScWeb",
-    "statusId": "OrderPlaced"
-    "productStoreId": "OMS_DEFAULT_STORE",
-    "placedDate": "2020-04-17",
-    "approvedDate": "2020-04-19"
-}
-```
-2b. Add Order Items
-* Identify the entities involved in adding items to an order as per the below input schema.
-
-* The input schema for the Add Order Items API should have the parameters as per the sample request body added below, with the following constraints.
-  * The orderId, facilityId and customerPartyId parameters should be mandatory for adding the items to an existing order.
-  * The shipmentMethodEnumId parameter should consider the default value of “ShMthGround” if not provided in the request.
-  * The item_details parameter should be mandatory.
-  * For each item inside the item_details, productId, quantity and unitAmount parameters should be mandatory.
-
-* Use the existing customer with the partyId, “CustJqp”, available in the moqui-tutorial component, for creating the orders.
-* The successful API request should output the orderId and orderPartSeqId.
-
-```
-{
-    "orderId": "100000",
-    "partName": "Test Order Part 1",
-    "facilityId": "ZIRET_WH",
-    "shipmentMethodEnumId": "ShMthGround",
-    "customerPartyId": "CustJqp",
-    "item_details": [{
-        "productId": "DEMO_UNIT",
-        "itemDescription": "Demo Product Unit One",
-        "quantity": "1",
-        "unitAmount": "16.99"
+  "parties": [
+    {
+      "party_id": 1,
+      "party_type": "Customer",
+      "first_name": "John",
+      "last_name": "Doe"
     },
     {
-        "productId": "DEMO_1_1",
-        "itemDescription": "Demo Product Unit Two",
-        "quantity": "2",
-        "unitAmount": "18.99"
-    }]
-}
-
-```
-2c. Get all Orders
-* The API request should return the list of all orders.
-* The output schema for the Get Orders API should have the parameters as per the sample response body added below. 
-
-```
-{
-	"orders": [
-{
-	"orderId": "105001",				
-	"orderName": "sample order 1",
-	"currencyUom": "USD",
-	"salesChannelEnumId": "ScWeb",
-	"statusId": "OrderPlaced",				
-	"placedDate": "2020-04-17",			
-"grandTotal": 54.97,
-      	"customer_details": {
-		"customerPartyId": "100601",
-	"firstName": "Sam",	
-"middleName": "",				
-	"lastName": "Wilson"
-	},
-	"order_parts": [{
-		"orderPartSeqId": "01",	
-           "partName": "Test Order Part 1",	
-"facilityId": "ZIRET_WH",
-           "shipmentMethodEnumId": "ShMthGround",	
-           "partStatusId": "OrderPlaced",
-           "partTotal": 54.97,
-		"item_details": [{
-			"orderItemSeqId": "01",		
-		"productId": "DEMO_UNIT",
-		"itemDescription": "Demo Product One Unit",
-		"quantity":  1,
-		"unitAmount":  16.99
-	}, {
-           "orderItemSeqId": "02",
-                      "productId": "DEMO_1_1",
-                       "itemDescription": "Demo Product Unit Two",
-                       "quantity": "2",
-                       "unitAmount": "18.99"
-    }]
-	}]
-}]
-}
-
-```
-
-2d. Get an Order
-The API request should return information about an order by giving its order id.
-Note: This API should return the information for the order as per the output schema of get orders API. 
-
-2e. Update Order
-* The API request should be able to update the order name for a given order Id, as per the sample request body added below.
-```
-{
-   "orderId": "100000",
-   "orderName": "My first order."
+      "party_id": 2,
+      "party_type": "Customer",
+      "first_name": "Jane",
+      "last_name": "Smith"
+    }
+  ],
+  "contact_mechanisms": [
+    {
+      "contact_mech_id": 1,
+      "party_id": 1,
+      "street_address": "1600 Amphitheatre Parkway",
+      "city": "Mountain View",
+      "state": "CA",
+      "postal_code": "94043"
+    },
+    {
+      "contact_mech_id": 2,
+      "party_id": 2,
+      "street_address": "350 Fifth Avenue",
+      "city": "New York",
+      "state": "NY",
+      "postal_code": "10118"
+    }
+  ],
+  "products": [
+    {
+      "product_id": 1,
+      "product_name": "T-Shirt",
+      "color": "Red",
+      "size": "M"
+    },
+    {
+      "product_id": 2,
+      "product_name": "Jeans",
+      "color": "Blue",
+      "size": "32"
+    },
+    {
+      "product_id": 3,
+      "product_name": "Jacket",
+      "color": "White",
+      "size": "L"
+    },
+    {
+      "product_id": 4,
+      "product_name": "Sneakers",
+      "color": "Black",
+      "size": "9"
+    }
+  ]
 }
 ```
 
-* The output schema for the API should have the parameters as per the sample response body added below.
+#### Task 6: Test APIs
 
-```
-{
-    "orderId": "100000",
-    "orderName": "My first order.",
-    "currencyUomId": "USD",
-    "salesChannelEnumId": "ScWeb",
-    "statusId": "OrderPlaced"
-    "productStoreId": "OMS_DEFAULT_STORE",
-    "placedDate": "2020-04-17",
-    "approvedDate": "2020-04-19",
-    "grandTotal": 54.97
-}
-```
+1. Use tools like Postman or CURL to test each API.
+2. Verify proper responses, such as HTTP status codes `200 OK`, `201 Created`, and `400 Bad Request` for validation errors.
 
+---
 
-### Run APIs
+## Submission Instructions
 
-* Check the working of all the developed REST APIs by executing the requests using Postman.
+- Commit the project code to GitHub.
+- Include screenshots demonstrating successful execution of each API endpoint.

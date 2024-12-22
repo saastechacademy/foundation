@@ -4,11 +4,11 @@
 2. [MySQL Database setup](database-setup.md)
 3. [Developing Service](developing-services.md)
 4. [Writing Services in minilang](writing-services-in-minilang.md)
-5. https://github.com/saastechacademy/foundation/blob/main/moqui-framework/beginner/introduction-to-mantle.md
-6. https://github.com/saastechacademy/foundation/blob/main/moqui-framework/beginner/introduction-to-system-message.md
-7. https://github.com/saastechacademy/foundation/blob/main/moqui-framework/beginner/status.md
-8. https://github.com/saastechacademy/foundation/blob/main/moqui-framework/beginner/define-entity-relationships-index.md
-9. https://github.com/saastechacademy/foundation/blob/main/moqui-framework/beginner/developing-rest-api.md
+5. [Developing REST API](developing-rest-api.md)
+6. https://github.com/saastechacademy/foundation/blob/main/moqui-framework/beginner/introduction-to-mantle.md
+7. https://github.com/saastechacademy/foundation/blob/main/moqui-framework/beginner/introduction-to-system-message.md
+8. https://github.com/saastechacademy/foundation/blob/main/moqui-framework/beginner/status.md
+9. https://github.com/saastechacademy/foundation/blob/main/moqui-framework/beginner/define-entity-relationships-index.md
 10. https://github.com/saastechacademy/foundation/blob/main/moqui-framework/beginner/fulfillment-loc-setup.md
 
 
