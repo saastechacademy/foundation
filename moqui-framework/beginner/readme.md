@@ -1,8 +1,8 @@
 ## Ordered list of recommended reading and assignments
 
-1. https://github.com/saastechacademy/foundation/blob/main/moqui-framework/beginner/getting-started.md
-2. https://github.com/saastechacademy/foundation/blob/main/moqui-framework/beginner/database-setup.md
-3. https://github.com/saastechacademy/foundation/blob/main/moqui-framework/beginner/developing-services.md
+1. [Getting Started](getting-started.md)
+2. [MySQL Database setup](database-setup.md)
+3. [Developing Service](developing-services.md)
 4. https://github.com/saastechacademy/foundation/blob/main/moqui-framework/beginner/writing-services-in-minilang.md
 5. https://github.com/saastechacademy/foundation/blob/main/moqui-framework/beginner/introduction-to-mantle.md
 6. https://github.com/saastechacademy/foundation/blob/main/moqui-framework/beginner/introduction-to-system-message.md

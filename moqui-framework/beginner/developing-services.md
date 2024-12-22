@@ -1,66 +1,78 @@
-## Introduction to Moqui Services
+# Assignment: Developing Service
 
-Moqui services are the fundamental building blocks of logic within Moqui applications. They handle various operations like data retrieval, updates, and complex business processes.
+## Objectives
+
+This assignment evaluates your ability to:
+
+1. Discuss the service type `entity-auto`:
+    - Is the name of the entity you defined in Moqui the same as the entity name in MySQL?
+    - What did you observe, and why?
+    - If MySQL works with SQL but you did not write SQL, does this mean MySQL with Moqui doesn’t require SQL?
+    - Discuss differences between ORM and JDBC ([Reference](https://www.geeksforgeeks.org/hibernate-difference-between-orm-and-jdbc/)).
+
+2. Explain Groovy:
+    - How is it similar to and different from Java?
+
+3. Explore APIs:
+    - What is a RESTful API?
+    - What is JsonRPC, and how does it differ from REST APIs?
+
+## Tasks
+
+### Task 1: Create an Entity-Auto Service
+
+- **Goal:** Generate records in the `MoquiTraining` entity automatically.
+- **Steps:**
+    - Use `entity-auto` service type.
+    - Define input parameters for all non-primary key fields of `MoquiTraining`.
+    - Include validations:
+        - `trainingName` is mandatory.
+        - `trainingDate` must follow `MM/dd/yyyy` format.
+    - Ensure the service returns the `trainingId`.
+
+### Task 2: Implement Services
+
+- **Default Type:** Create a service with the default type to generate `MoquiTraining` records.
+- **Groovy Script:** Write a Groovy service for logic and data creation.
+
+### Task 3: Prepare Data File
+
+- **CSV File:** Create a CSV file to input data into the entity.
+
+### Task 4: Load and Verify Data
+
+- **Load Data:** Populate the entity from the CSV file using Gradle tasks or equivalent.
+- **Verify:**
+    - Check if records are created in the database.
+    - Test services directly via Moqui UI or API calls.
+
+## Submission Instructions
+
+- Commit and push the service implementations and CSV file to the `moqui-training` repository on GitHub.
+
+---
+
+## Tutorial
+
+Moqui services are the backbone of application logic, enabling data management, updates, and workflows.
+
+1. [Moqui Training Video 3](https://www.youtube.com/watch?v=6kFwPlPk92c)
+2. [Moqui Training Video 4](https://www.youtube.com/watch?v=EpEt9ndJUWA&list=PL6JSOz3-TrFSMiuGounNRnje-JQDi8l8g&index=5&t=1s)
+
 
 ### Key Concepts
 
-* **Execution Context:** The central environment for executing Moqui artifacts (screens, services, etc.). It holds state and provides access to framework tools.
-* **Service Definition:** Defines the service's name, parameters, and attributes (e.g., location, authentication).
-* **Service Implementation:** Contains the actual logic of the service, written in Groovy or Java.
-* **Calling Services:** Services can be invoked from other services, screens, or scripts.
+- **Execution Context:** Provides a runtime environment for Moqui artifacts and framework tools.
+- **Service Definition:** Specifies the service name, parameters, and attributes.
+- **Service Implementation:** Contains service logic written in Groovy or Java.
+- **Service Invocation:** Call services from other services, screens, or scripts.
 
-## Assignment
+### Entity-Auto Services
 
-### Tasks
+Entity-auto services simplify operations like create, update, and delete.
 
-#### 1. Create an Entity-Auto Service
+### Validation and Testing
 
-* **Goal:** Create a service that automatically generates records in the `MoquiTraining` entity.
-* **Implementation:**
-    * Use the `entity-auto` service type.
-    * Define input parameters for all non-primary key fields of `MoquiTraining`.
-    * Include validations:
-        * `trainingName` is mandatory.
-        * `trainingDate` format should be "MM/dd/yyyy".
-        * Add other necessary validations.
-    * Ensure the service returns the generated `trainingId`.
+- Input validation ensures data integrity.
+- Test rigorously to meet functional and performance requirements.
 
-#### 2. Implement Services
-
-* **Default Type:** Implement a service with the default type to create `MoquiTraining` records.
-* **Groovy Script:** Implement a service with logic written in a Groovy script to create data.
-
-#### 3. Prepare Data File
-
-* **CSV File:** Create a CSV file to input data into the entity using the new services.
-
-#### 4. Data Load and Verification
-
-* **Load Data:** Execute the data load process (e.g., using Gradle tasks) to populate the entity from the CSV file.
-* **Verify Results:** 
-    * Ensure records are correctly created in the database.
-    * Test the service implementations directly (e.g., through the Moqui UI or API calls) to ensure they function as expected.
-
-### Assignment Submission
-
-Push all new service implementations and the CSV data file to your "moqui-training" repository on GitHub.
-
-**Additional Notes**
-
-* **Entity-Auto Services:**  These services streamline common entity operations like create, update, and delete.
-* **Validation:** Thorough input validation is essential to maintain data integrity.
-* **Flexibility:** Moqui provides multiple ways to implement service logic (Groovy, Java, or other custom methods) to suit your preferences.
-* **Testing:** Always thoroughly test your services to ensure they meet your application's requirements.
-
-### Resources
-1. https://www.youtube.com/watch?v=EpEt9ndJUWA&list=PL6JSOz3-TrFSMiuGounNRnje-JQDi8l8g&index=5&t=1s
-2. https://www.youtube.com/watch?v=6kFwPlPk92c
-
-### This assignment tests your ability to:
-* Discuss the `entity-auto` service type.
-  * Is Name of the entity you defined in Moqui same as entity name in MySQL? 
-  * What did you observe and Why so?
-  * MySQL works with SQL, You did not write SQL, Does this mean, MySQL working with Moqui does not require SQL?
-  * Discuss https://www.geeksforgeeks.org/hibernate-difference-between-orm-and-jdbc/
-  * What is Groovy? Discuss similarity and differences with Java.
-  * What is RESTful API? What is JsonRPC? How is it different from REST API?
