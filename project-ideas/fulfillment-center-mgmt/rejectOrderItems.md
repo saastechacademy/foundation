@@ -17,10 +17,7 @@ For each OrderItem in rejectOrderItem list,
       - statusId = `APPROVED` AND 
       - productId = parameters.productId.
 
-2. If 
-
-Primary lookup entity is OrderShipment
-If maySplit is `Y`, Look OrderShipment by orderId and shipGroupSeqId else, orderId and orderItemSeqId.
+2. If maySplit is `Y`, Look OrderShipment by orderId and shipGroupSeqId else, orderId and orderItemSeqId.
 
 
 **Parameters**
