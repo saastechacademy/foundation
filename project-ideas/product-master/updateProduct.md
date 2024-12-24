@@ -164,7 +164,7 @@ This service will take in the product JSON in OMSProductUpdatesFeed and update a
 3. If features is not null, initialize ProductFeatureAppl (name should be the same for entity rest api) list.
 4. Iterate through features and perform following steps,
     * If feature.productFeatureTypeId doesn't exist, create new.
-    * If feature.productFeatureId doesn't exist, create new.
+    * If feature.productFeatureId doesn't exist, create new with feature.description and productFeatureTypeId returned in above step.
     * Prepare a map with following values and add to ProductFeature list
         * productFeatureId
         * productFeatureApplTypeId

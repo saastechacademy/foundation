@@ -99,8 +99,8 @@ Following are the implementation details,
    * product.features = iterate through product.options and create a list of maps with following key/value(s)
      * productFeatureId = set if exists
      * productFeatureApplTypeId = "SELECTABLE_FEATURE"
-     * feature = shopifyProduct.options.optionValues.name
-     * featureType = shopifyProduct.options.name
+     * productFeatureTypeId = shopifyProduct.options.name
+     * description = shopifyProduct.options.optionValues.name
      * sequenceNum = shopifyProduct.options.position
    * product.variants = for each shopifyProduct.variants call map#ProductVariant with forCreate=true and add the result to this list
    * product.shopifyShopProduct = [shopId:shopId, shopifyProductId:shopifyProduct.id]
@@ -143,8 +143,8 @@ Following are the implementation details,
    * productVariant.features = iterate through shopifyProductVariant.selectedOptions and create a list of maps with following key/value(s)
      * productFeatureId = set if exists
      * productFeatureApplTypeId = "STANDARD_FEATURE"
-     * feature = shopifyProductVariant.selectedOptions.name
-     * value = shopifyProductVariant.selectedOptions.value
+     * productFeatureTypeId = shopifyProductVariant.selectedOptions.name
+     * description = shopifyProductVariant.selectedOptions.value
      * sequenceNum = shopifyProductVariant.position
    * productVariant.goodIdentifications = add following key value pairs to the list
      * [goodIdentificationTypeId: "SHOPIFY_PROD_SKU", idValue=productVariant.sku]
@@ -234,7 +234,7 @@ This service will take in the product JSON in OMSNewProductsFeed and set up a co
 4. If features is not null, initialize ProductFeatureAppl (name should be the same for entity rest api) list.
 5. Iterate through features and perform following steps,
    * If feature.productFeatureTypeId doesn't exist, create new.
-   * If feature.productFeatureId doesn't exist, create new.
+   * If feature.productFeatureId doesn't exist, create new with feature.description and productFeatureTypeId returned in above step.
    * Prepare a map with following values and add to ProductFeature list
      * productFeatureId
      * productFeatureApplTypeId
