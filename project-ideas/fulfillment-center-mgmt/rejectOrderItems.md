@@ -2,9 +2,47 @@
 
 The `rejectOrderItems` 
 
-In following case, first run query to find all ordersItems and then pass list of the OrderItems to this service.
-to reject orders items within a given facility for a specific product where it's part of an in-progress shipment. 
+list of the OrderItems to this service to reject.
+reject orders items within a given facility for a specific product where it's part of an in-progress shipment. 
 This action is typically taken when a product is found to be defective, unavailable, or needs to be removed from pending fulfillments due to other reasons.
+
+Using input parameters, a DynamicView is prepared. 
+
+For each OrderItem in rejectOrderItem list, 
+
+1. If `cascadeRejectByProduct` is `Y`, reject not only the passed in OrderItem, parameters.orderId and parameters.orderItemSeqId are ignored. Instead, all OrderItems for given Product.
+   - Add OrderItem and OrderItemShipGroup to the OrderShipment entity.
+    - add to the condition list, 
+      - facilityId	= parameters.facilityId AND 
+      - statusId = `APPROVED` AND 
+      - productId = parameters.productId.
+
+2. If 
+
+Primary lookup entity is OrderShipment
+If maySplit is `Y`, Look OrderShipment by orderId and shipGroupSeqId else, orderId and orderItemSeqId.
+
+
+**Parameters**
+* "orderId":
+* "orderItemSeqId":
+* "productId": 
+* "facilityId":
+* "rejectToFacilityId":
+* "updateQOH":
+* "rejectionReasonId":
+* "maySplit": Defaults to `N`. Reject all items in the ship group. 
+* "cascadeRejectByProduct": Defaults to `N`. Find other order items in at the facility and reject them as well.
+* "comments": 
+
+**Workflow:**
+* For each OrderItem in the IN parameters
+  1. If `cascadeRejectByProduct` is `Y`, 
+     -Lookup in OrderItemAndShipGroup view WHERE facilityId	= OrderItemShipGroup.facilityId AND statusIs = `APPROVED` and productId = OrderItem.productId.
+  2. for each OrderItemAndShipGroup, If maySplit is `Y`, Look OrderShipment by orderId and shipGroupSeqId else, orderId and orderItemSeqId.
+  3. For each OrderShipment. 
+     - If shipmentId and shipmentItemSeqId is NOT NULL call rejectShipmentItem()
+     - else call rejectOrderItem
 
 **Key points and logic:**
 
@@ -17,6 +55,8 @@ This action is typically taken when a product is found to be defective, unavaila
     "rejectToFacilityId": "FAC001",
     "updateQOH": "",
     "rejectionReasonId": "NOT_IN_STOCK",
+    "maySplit": "N",
+    "cascadeRejectByProduct": "N",
     "comments": "The item is currently out of stock."
   },
   {
@@ -25,6 +65,8 @@ This action is typically taken when a product is found to be defective, unavaila
     "rejectToFacilityId": "FAC002",
     "updateQOH": "",
     "rejectionReasonId": "MISMATCH",
+    "maySplit": "N",
+    "cascadeRejectByProduct": "N",
     "comments": "The item received does not match the order description."
   },
   {
@@ -33,6 +75,8 @@ This action is typically taken when a product is found to be defective, unavaila
     "rejectToFacilityId": "FAC003",
     "updateQOH": "",
     "rejectionReasonId": "DAMAGE",
+    "maySplit": "N",
+    "cascadeRejectByProduct": "N",
     "comments": "The item was found damaged during inspection."
   },
   {
