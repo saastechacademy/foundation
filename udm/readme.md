@@ -5,6 +5,19 @@ https://www.amazon.com/Data-Model-Resource-Book-Vol/dp/0471380237
 
 The first 5 chapters foundational business concepts that we experience when building / implementing business automation solution in any domain including, 
 
+* Introduction: *Key takeaways*
+  - What Is the Intent of This Book and These Models?
+  - Conventions and Standards Used in This Book
+  - The naming conventions for an entity
+  - Role of Entity with the suffix TYPE is added to their name
+  - Subtypes and Supertypes, subtypes represent possible classifications
+  - Non-Mutually Exclusive Sets of Subtypes
+  - Conventions Used in Attribute Naming
+  - Intersection or Association Entities to Handle Many-to-Many Relationships, aka associative entities or cross-reference entities.
+  - [Data Model Patterns](https://www.moqui.org/m/docs/framework/Data+and+Resources/Data+Model+Patterns)
+  - [General Entity Overview](https://cwiki.apache.org/confluence/display/OFBIZ/General+Entity+Overview)
+  - [Design a Taxonomy](https://arpitbhayani.me/blogs/taxonomy-on-sql)
+
 * Customer Relationship Management
 * Product Information Management 
 * Order Management 
