@@ -10,14 +10,16 @@ Using input parameters, a DynamicView is prepared.
 
 For each OrderItem in rejectOrderItem list, 
 
-1. If `cascadeRejectByProduct` is `Y`, reject not only the passed in OrderItem, parameters.orderId and parameters.orderItemSeqId are ignored. Instead, all OrderItems for given Product.
-   - Add OrderItem and OrderItemShipGroup to the OrderShipment entity.
-    - add to the condition list, 
-      - facilityId	= parameters.facilityId AND 
-      - statusId = `APPROVED` AND 
-      - productId = parameters.productId.
+1. Join OrderItem and OrderItemShipGroup entity and OrderShipment and Shipment
+   - add filter for orderItemShipGroup.facilityId AND orderItem.statusId = `APPROVED` AND shipment.status is IN (INPUT, APPROVED)
+   - If `cascadeRejectByProduct` is `Y`, 
+     - add filter for orderItem.productId 
+   - Else add filter for orderId
+   - if maySplit=`N` 
+     - group by orderId, shipGroupSeqId 
+   - else if (parameters.orderItemSeqId NOT ISNULL) AND (`cascadeRejectByProduct` is `N`)
+     - add filter for orderItem.orderItemSeqId = parameters.orderItemSeqId
 
-2. If maySplit is `Y`, Look OrderShipment by orderId and shipGroupSeqId else, orderId and orderItemSeqId.
 
 
 **Parameters**
