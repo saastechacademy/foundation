@@ -30,7 +30,7 @@ Learn Moqui and related technologies to complete following tasks.
 ### Prerequisites
 
 * [GIT](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
-* [JDK 11](https://jdk.java.net/java-se-ri/11-MR3) or compatible JDK distribution.  
+* [JDK 11](https://jdk.java.net/java-se-ri/11-MR3) or [OpenJDK](https://adoptium.net/temurin/archive/?version=11) or any other compatible JDK distribution.  
 * To check your Java version use following command:
   ```bash
   java -version
