@@ -40,7 +40,7 @@ The first 5 chapters foundational business concepts that we experience when buil
     - [Category](beginner/product-category.md)
     - [Product Associations](beginner/product-assoc.md)
 * Chapter 4. Ordering Products
-
+  - [Order](beginner/order.md)
 * Chapter 5. Shipments 
 
 ### Complete following activities
