@@ -9,7 +9,7 @@ https://www.moqui.org/m/docs/mantle/Mantle+Structure+and+UDM/Party
 4. Party roles (i.e., customers, suppliers, internal organizations)
 5. Postal address information (postal addresses and geographic boundaries)
 6. Party contact mechanism—telecommunications numbers and electronic addresses
-7. Party contact mechanism
+7. [Party contact mechanism](contact-mech.md)
 8. Apply Subtypes and Supertypes concepts in data modeling
 9. Apply Intersection or Association Entity concepts
 10. Data Classifications 
@@ -20,7 +20,7 @@ https://www.moqui.org/m/docs/mantle/Mantle+Structure+and+UDM/Party
 2. Setup Party and related entities defined in this document.
 3. Build UI using Forms and Screens 
 4. Demonstrate use of your application to manage sample data from you experience, e.g Collage, departments, students, teaching staff. 
-5. Add Party Contact Mechanism and related entities in your codebase (PartyContactMech and related entites are not defined in this document).
+5. Add [Party Contact Mechanism](contact-mech.md) and related entities in your codebase (PartyContactMech and related entites are not defined in this document).
 6. Prepare sample Contact Mechanism data from your real life experience.
 7. Use your application to manage your contacts.
 
