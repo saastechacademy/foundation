@@ -27,7 +27,18 @@ The first 5 chapters foundational business concepts that we experience when buil
     - What types of communication or contacts have occurred between various parties, and what is necessary to effectively follow up on these communications?
   - [Party](beginner/party.md)
   - 
-* Product Information Management 
+* Chapter 3. Products 
+  - **Prerequisite** Prepare dataset based on following prompts.
+    - Visit your online shopping account history.
+    - Prepare list of products 
+    - Add pricing, category details for each product.
+    - Lookup product bundles on Amazon, take a note of Bundle product name and the names of products included in the bundle. 
+      - https://www.amazon.in/KODAK-Instant-Camera-Printer-inches/dp/B08HCPRN88/
+      - https://www.amazon.in/Remarkable-Starter-Bundle-Original-Built/dp/B08HDL3XJR/
+    - [Product](beginner/product.md)
+    - [Product Feature](beginner/product-feature.md)
+    - [Category](beginner/product-category.md)
+    - [Product Associations](beginner/product-assoc.md)
 * Order Management 
 * Inventory management and Order fulfillment 
 
