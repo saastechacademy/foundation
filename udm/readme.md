@@ -5,7 +5,8 @@ https://www.amazon.com/Data-Model-Resource-Book-Vol/dp/0471380237
 
 The first 5 chapters foundational business concepts that we experience when building / implementing business automation solution in any domain including, 
 
-* Introduction: *Key takeaways*
+* Chapter 1. Introduction: 
+-   **Key takeaways**
   - What Is the Intent of This Book and These Models?
   - Conventions and Standards Used in This Book
   - The naming conventions for an entity
@@ -18,7 +19,7 @@ The first 5 chapters foundational business concepts that we experience when buil
   - [General Entity Overview](https://cwiki.apache.org/confluence/display/OFBIZ/General+Entity+Overview)
   - [Design a Taxonomy](https://arpitbhayani.me/blogs/taxonomy-on-sql)
 
-* People and Organizations
+* Chapter 2. People and Organizations
   - **Prerequisite** Prepare dataset based on following prompts. 
     - What are the attributes or characteristics of the people (students and college staff) and organizations (University / Collage, its departments) that are involved in the course of college education? 
     - What relationships exist between various people, between various organizations, and between people and organizations? ••; 
