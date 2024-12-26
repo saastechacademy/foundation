@@ -18,7 +18,14 @@ The first 5 chapters foundational business concepts that we experience when buil
   - [General Entity Overview](https://cwiki.apache.org/confluence/display/OFBIZ/General+Entity+Overview)
   - [Design a Taxonomy](https://arpitbhayani.me/blogs/taxonomy-on-sql)
 
-* Customer Relationship Management
+* People and Organizations
+  - **Prerequisite** Prepare dataset based on following prompts. 
+    - What are the attributes or characteristics of the people (students and college staff) and organizations (University / Collage, its departments) that are involved in the course of college education? 
+    - What relationships exist between various people, between various organizations, and between people and organizations? ••; 
+    - What are the addresses, phone numbers, and other contact mechanisms of people and organizations, and how can they be contacted? 
+    - What types of communication or contacts have occurred between various parties, and what is necessary to effectively follow up on these communications?
+  - [Party](beginner/party.md)
+  - 
 * Product Information Management 
 * Order Management 
 * Inventory management and Order fulfillment 
