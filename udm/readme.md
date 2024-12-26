@@ -39,8 +39,9 @@ The first 5 chapters foundational business concepts that we experience when buil
     - [Product Feature](beginner/product-feature.md)
     - [Category](beginner/product-category.md)
     - [Product Associations](beginner/product-assoc.md)
-* Order Management 
-* Inventory management and Order fulfillment 
+* Chapter 4. Ordering Products
+
+* Chapter 5. Shipments 
 
 ### Complete following activities
 
