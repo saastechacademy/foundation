@@ -1,76 +1,34 @@
-
-
 ## calcShipmentPackageTotalWeight
+
+# Note: We will do this computation in approveShipment service. I don't think we have use of this service. We will not implement in Moqui.
+
 
 **Purpose:**
 
 The primary goal of this function is to determine the weight of a single package within a shipment. 
 
-**Implementation Details:**
-
-1.  **Input Parameters:**
-    *   `delegator`: The `Delegator` object, providing access to the database for entity operations.
-    *   `shipmentId`: The unique identifier of the shipment.
-
-
-Let's craft a view entity that streamlines the process of accessing product shipping weight for the `calcShipmentPackageTotalWeight` function.
+Prepare dynamic view entity
 
 **View Entity Definition**
 
-```xml
-<view-entity entity-name="ShipmentPackageProductWeightView"
-             package-name="org.apache.ofbiz.shipment.shipment"> 
-    <member-entity entity-alias="SI" entity-name="ShipmentItem"/>
-    <member-entity entity-alias="P" entity-name="Product"/>
+```sql
+SELECT
+    spc.shipment_id,
+    spc.shipment_package_seq_id,
+    spc.quantity,
+    SUM((p.shipping_weight * spc.quantity)) AS total_weight,
+    (SUM((p.shipping_weight * spc.quantity)))*uc.conversion_factor AS total_weight_lbs
+FROM
+    shipment_package_content spc
+JOIN
+    shipment_item si ON spc.shipment_id = si.shipment_id AND spc.shipment_item_seq_id = si.shipment_item_seq_id
+JOIN
+    product p ON si.product_id = p.product_id
+JOIN
+    uom_conversion uc ON p.weight_uom_id = uc.uom_id AND uc.uom_id_to = 'WT_lb'
+WHERE
+    si.shipment_id = 10082
+GROUP BY
+    si.shipment_id and spc.shipment_package_seq_id;
 
-    <alias-all entity-alias="SI">
-        </alias-all>
-    <alias entity-alias="P" name="shippingWeight" field="shippingWeight"/>
-    <alias entity-alias="P" name="productWeight" field="productWeight"/>
-
-    <view-link entity-alias="SI" rel-entity-alias="P">
-        <key-map field-name="productId"/>
-    </view-link>
-</view-entity>
-```
-
-**Explanation:**
-
-*   **`view-entity`:** Defines the view entity named `ShipmentPackageProductWeightView`.
-*   **`member-entity`:** Specifies the base entities involved in the join: `ShipmentItem`, and `Product`.
-*   **`alias-all`:** Includes all attributes from `ShipmentItem` in the view.
-*   **`alias`:** Selectively includes the `shippingWeight` and `productWeight` attributes from the `Product` entity.
-*   **`view-link`:** Establishes the join conditions:
-    *   `ShipmentItem` is linked to `Product` based on `productId`.
-
-**Example Usage in `calcShipmentPackageTotalWeight`**
-
-```java
-// ... (other parts of the function) ...
-
-EntityCondition condition = EntityCondition.makeCondition(
-    EntityCondition.makeCondition("shipmentId", shipmentId)
-);
-List<GenericValue> shipmentPackageItems = EntityQuery.use(delegator)
-    .from("ShipmentPackageProductWeightView")
-    .where(condition)
-    .queryList();
-
-for (GenericValue shipmentPackageItem : shipmentPackageItems) {
-    BigDecimal productWeight = shipmentPackageItem.getBigDecimal("shippingWeight");
-    if (productWeight == null || productWeight.compareTo(BigDecimal.ZERO) == 0) {
-        productWeight = shipmentPackageItem.getBigDecimal("productWeight");
-        if (productWeight == null) {
-            productWeight = BigDecimal.ZERO;
-        }
-    }
-
-    if (productWeight.compareTo(BigDecimal.ZERO) > 0) {
-        BigDecimal quantity = shipmentPackageItem.getBigDecimal("quantity");
-        if (quantity == null) quantity = BigDecimal.ONE;
-        totalWeight = totalWeight.add(productWeight.multiply(quantity));
-    }
-}
-
-// ... (rest of the function) ...
 ```

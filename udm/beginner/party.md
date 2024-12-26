@@ -1,6 +1,29 @@
 Recommended reading
 https://www.moqui.org/m/docs/mantle/Mantle+Structure+and+UDM/Party
 
+### This assignment tests your ability to Model:
+
+1. Organization
+2. Person
+3. Party (organizations or people)
+4. Party roles (i.e., customers, suppliers, internal organizations)
+5. Postal address information (postal addresses and geographic boundaries)
+6. Party contact mechanism—telecommunications numbers and electronic addresses
+7. [Party contact mechanism](contact-mech.md)
+8. Apply Subtypes and Supertypes concepts in data modeling
+9. Apply Intersection or Association Entity concepts
+10. Data Classifications 
+
+
+### Tasks
+1. Setup custom component, "relationshipmgr" 
+2. Setup Party and related entities defined in this document.
+3. Build UI using Forms and Screens 
+4. Demonstrate use of your application to manage sample data from you experience, e.g Collage, departments, students, teaching staff. 
+5. Add [Party Contact Mechanism](contact-mech.md) and related entities in your codebase (PartyContactMech and related entites are not defined in this document).
+6. Prepare sample Contact Mechanism data from your real life experience.
+7. Use your application to manage your contacts.
+
 # Introduction to Party Data Model
 
 This document provides an overview of this model, focusing on its core entities - Party, Person, Organization and PartyRole - and their applications in representing various business relationships. Additionally, we will delve into how to define Parties and their Roles. Finally, we provide sample JSON data for a Person and Organization in various Roles.

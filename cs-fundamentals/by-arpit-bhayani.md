@@ -23,5 +23,6 @@ Network
 * https://arpitbhayani.me/videos/can-you-send-payload-in-http-get
 
 General
+* https://arpitbhayani.me/blogs/architectures-in-distributed-systems
 * https://drive.google.com/file/d/1qMOCSfTgyPKF6HFS1QFrek_A2pRMmwtK/view
 

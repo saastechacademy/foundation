@@ -37,294 +37,20 @@ The application recognizes two primary party roles:
 
 ### Entities
 
-#### 1. `Party`
-
+#### 1. [Party](../../udm/beginner/party.md)
 *   **Purpose:** Represents both customers and carriers as organizations.
-*   **Key Fields:**
-    *   `partyId`: Unique identifier (e.g., "ORG_ACME" for a customer, "FedEx" for a carrier).
-    *   `partyTypeEnumId`:  "PtyOrganization" for both customer and carrier organizations.
-    *   `roles`: Collection of roles indicating the party's function (e.g., ["Customer", "CustomerBillTo"] or ["Carrier"]).
-
-#### 2. `Organization`
-
-*   **Purpose:** Stores additional details specific to organizations (both customers and carriers).
-*   **Key Fields:**
-    *   `partyId`: (PK) Links to the corresponding `Party` record.
-    *   `organizationName`: The name of the organization (e.g., "Acme Corporation" or "FedEx").
-    *   (Other fields from Moqui Mantle as needed: `officeSiteName`, `annualRevenue`, `numEmployees`, etc.)
-
-#### 3. `PartyRole`
-
-*   **Purpose:** Assigns roles (e.g., "Customer", "Carrier") to parties.
-*   **Key Fields:**
-    *   `partyId`: (PK) Links to the corresponding `Party` record.
-    *   `roleTypeId`:  The role identifier (e.g., "Customer" or "Carrier").
 
 ### Shipping Gateway Configuration Entities
 
 Moqui Mantle uses a set of interconnected entities to manage shipping gateway configurations:
 
-#### 1. `ShippingGatewayConfig`
+#### 1. [ShippingGatewayConfig](ShippingGatewayConfig.md)
 
-*   **Description:**
-    *   The central entity storing general configuration for each shipping provider integration.
-    *   Acts as a reference point for all other related entities.
-    *   Each shipping gateway integration should define a `ShippingGatewayType` Enumeration record plus an entity with a shared PK (i.e., PK is `shippingGatewayConfigId`).
+#### 2. [ShippingGatewayBoxType](ShippingGatewayBoxType.md)
 
-*   **Key Fields:**
+#### 3. [ShippingGatewayCarrier](ShippingGatewayCarrier.md)
 
-    *   **shippingGatewayConfigId (ID, Primary Key):** Unique identifier for the configuration.
-    *   **shippingGatewayTypeEnumId (ID):** References an enumeration (`ShippingGatewayType`) to categorize the gateway type (e.g., "Local," "Third-Party").
-    *   **description (Text-Medium):** A human-readable description of the configuration.
-    *   **Service Names (Text-Medium):** References to various Moqui services responsible for different aspects of the integration:
-        *   `getOrderRateServiceName`: Service implementing `mantle.shipment.CarrierServices.get#OrderShippingRate` interface.
-        *   `getShippingRatesBulkName`: Service implementing `mantle.shipment.CarrierServices.get#ShippingRatesBulk` interface.
-        *   `getAutoPackageInfoName`: Service implementing `mantle.shipment.CarrierServices.get#AutoPackageInfo` interface.
-        *   `getRateServiceName`: Service implementing `mantle.shipment.CarrierServices.get#ShippingRate` interface.
-        *   `requestLabelsServiceName`: Service implementing `mantle.shipment.CarrierServices.request#ShippingLabels` interface.
-        *   `refundLabelsServiceName`: Service implementing `mantle.shipment.CarrierServices.refund#ShippingLabels` interface.
-        *   `trackLabelsServiceName`: Service implementing `mantle.shipment.CarrierServices.track#ShippingLabels` interface.
-        *   `validateAddressServiceName`: Service implementing `mantle.shipment.CarrierServices.validate#ShippingPostalAddress` interface.
-
-*   **Relationships:**
-
-    *   **ShippingGatewayType (One):** Links to the enumeration defining the type of gateway.
-    *   **ShippingGatewayBoxType (Many):** Connects to configurations for box types specific to this gateway.
-    *   **ShippingGatewayCarrier (Many):** Associates the gateway with supported carriers.
-    *   **ShippingGatewayMethod (Many):** Defines specific shipping methods offered through this gateway.
-    *   **ShippingGatewayOption (Many):** Holds additional configuration options for the gateway.
-
-#### 2. `CarrierShipmentMethod`
-
-*   **Purpose:** Defines available shipping methods for each carrier.
-*   **Key Fields:**
-    *   `carrierPartyId`: (PK) The `partyId` of the carrier offering this method.
-    *   `shipmentMethodEnumId`: (PK) An ID referencing a standardized shipment method (e.g., "ShMthGround" for Ground shipping).
-    *   `description`, `sequenceNum`, `carrierServiceCode`, `scaCode`, `gatewayServiceCode`: Provide additional details and codes for the shipping method.
-
-#### 3. `CarrierShipmentBoxType`
-
-*   **Purpose:** Specifies the standard box types that each carrier supports.
-*   **Key Fields:**
-    *   `carrierPartyId`: (PK) The `partyId` of the carrier supporting this box type.
-    *   `shipmentBoxTypeId`: (PK) An ID referencing a standardized box type (e.g., "SmallFlatRateBox").
-    *   `packagingTypeCode`, `oversizeCode`: Provide additional information about the box type.
-
-#### 4. `ShippingGatewayBoxType`
-
-*   **Description:**
-    *   Maps standard shipment box types to specific box IDs used by the shipping gateway.
-    *   Used to override `gatewayBoxId` on `ShipmentBoxType`.
-
-*   **Key Fields:**
-    *   `shippingGatewayConfigId` (ID, Primary Key):** Foreign key referencing the parent `ShippingGatewayConfig`.
-    *   `shipmentBoxTypeId` (ID, Primary Key):** Foreign key referencing a standard box type.
-    *   `gatewayBoxId` (Text-Medium):** The box ID used by the shipping gateway.
-
-#### 5. `ShippingGatewayCarrier`
-
-*   **Description:**
-    *   Associates a shipping carrier (represented by the `Party` entity) with a specific gateway configuration.
-
-*   **Key Fields:**
-    *   `shippingGatewayConfigId` (ID, Primary Key):** Foreign key referencing the parent `ShippingGatewayConfig`.
-    *   `carrierPartyId` (ID, Primary Key):** Foreign key referencing the `Party` entity representing the carrier.
-    *   `gatewayAccountId` (Text-Medium):** Account ID used with the gateway for this carrier.
-
-#### 6. `ShippingGatewayMethod`
-
-*   **Description:**
-    *   Maps standard shipping methods (e.g., GROUND, AIR) to specific service codes used by the shipping gateway.
-    *   Used to override `gatewayServiceCode` on `CarrierShipmentMethod`.
-
-*   **Key Fields:**
-    *   `shippingGatewayConfigId` (ID, Primary Key):** Foreign key referencing the parent `ShippingGatewayConfig`.
-    *   `carrierPartyId` (ID, Primary Key):** Foreign key referencing the carrier.
-    *   `shipmentMethodEnumId` (ID, Primary Key):** Foreign key referencing the standard shipping method from the `moqui.basic.Enumeration` table.
-    *   `gatewayServiceCode` (Text-Short):** The service code used by the gateway for this method.
-
-#### 7. `ShippingGatewayOption`
-
-*   **Description:**
-    *   Stores additional configuration options for a shipping gateway.
-
-*   **Key Fields:**
-    *   `shippingGatewayConfigId` (ID, Primary Key):** Foreign key referencing the parent `
-
-
-
-
-
-## API Specification for Party Management
-
-This API specification defines the endpoints and operations for managing parties (customers and organizations) within the shipping gateway application, aligning with the Moqui Mantle service implementations.
-
-
-### Endpoints
-
-1.  **Find Party**
-
-    *   **Endpoint:** `/mantle/party/PartyServices/find#Party` (POST)
-    *   **Purpose:** Search for parties based on various criteria (party ID, type, role, name, contact details, etc.).
-    *   **Request Body:**
-
-```json
-{
-  "partyId": (Optional),
-  "partyTypeEnumId": (Optional),
-  "roleTypeId": (Optional),
-  "organizationName": (Optional),
-  "firstName": (Optional),
-  "lastName": (Optional),
-  "address1": (Optional),
-  "city": (Optional),
-  "postalCode": (Optional),
-  "countryCode": (Optional),
-  "contactNumber": (Optional),
-  "emailAddress": (Optional),
-  "orderByField": (Optional, default: "firstName,organizationName"),
-  "pageIndex": (Optional, default: 0),
-  "pageSize": (Optional, default: 20)
-}
-```
-
-    *   **Response Body:**
-
-```json
-{
-  "partyIdList": [
-    {
-      "partyId": "Party ID"
-    },
-    ...
-  ],
-  "partyIdListCount": (Total count of matching parties)
-}
-```
-
-2.  **Search Party**
-
-    *   **Endpoint:** `/mantle/party/PartyServices/search#Party` (POST)
-    *   **Purpose:** More flexible search for parties using a search index and additional filters (e.g., `anyField` for full-text search, `customerStatusId`).
-    *   **Request Body:** Similar to `findParty`, but with additional search-specific parameters.
-    *   **Response Body:**
-
-```json
-{
-  "documentList": [
-    {
-      "partyId": "Party ID",
-      "partyTypeEnumId": "Party Type",
-      "roles": ["Role1", "Role2"],
-      "organization": {
-        "organizationName": "Organization Name"
-      }
-    },
-    ...
-  ],
-  "documentListCount": (Total count of matching parties)
-}
-```
-
-3.  **Get User Notice Counts**
-
-    *   **Endpoint:** `/mantle/party/PartyServices/get#UserNoticeCounts` (GET)
-    *   **Purpose:** Retrieve counts of various notifications (e.g., messages, tasks) for the authenticated user.
-    *   **Request Body:** (None)
-    *   **Response Body:**
-
-```json
-{
-  "partyId": "User's Party ID",
-  "notificationCount": (Number),
-  "messageCount": (Number),
-  "eventCount": (Number),
-  "taskCount": (Number)
-}
-```
-
-4.  **Create Person**
-
-    *   **Endpoint:** `/mantle/party/PartyServices/create#Person` (POST)
-    *   **Purpose:** Create a new party of type "Person" (may not be directly relevant for your use case).
-    *   **Request Body:** (See Moqui Mantle service definition for parameters)
-    *   **Response Body:**
-
-```json
-{
-  "partyId": "Newly created party ID"
-}
-```
-
-5.  **Create Organization**
-
-    *   **Endpoint:** `/mantle/party/PartyServices/create#Organization` (POST)
-    *   **Purpose:** Create a new organization party (customer or carrier).
-    *   **Request Body:**
-
-```json
-{
-  "partyTypeEnumId": "PtyOrganization",
-  "roles": ["Customer" or "Carrier"],
-  "organization": {
-    "organizationName": "Organization Name"
-  }
-}
-```
-
-    *   **Response Body:**
-
-```json
-{
-  "partyId": "Newly created party ID"
-}
-```
-
-6.  **Update Party Detail**
-
-    *   **Endpoint:** `/mantle/party/PartyServices/update#PartyDetail` (PUT)
-    *   **Purpose:** Update the details of an existing party.
-    *   **Request Body:**
-
-```json
-{
-  "partyId": "Party ID to update",
-  "organization": {
-    "organizationName": "Updated Organization Name"
-  }
-  // Other fields as needed
-}
-```
-
-    *   **Response Body:**
-
-```json
-{
-  "success": true
-}
-```
-
-7.  **Ensure Party Role**
-
-    *   **Endpoint:** `/mantle/party/PartyServices/ensure#PartyRole` (POST)
-    *   **Purpose:** Ensure a party has a specific role.
-    *   **Request Body:**
-
-```json
-{
-  "partyId": "Party ID",
-  "roleTypeId": "Role Type ID"
-}
-```
-
-    *   **Response Body:**
-
-```json
-{
-  "success": true
-}
-```
-ing gateway integrations.
+#### 4. [ShippingGatewayMethod](ShippingGatewayMethod.md)
 
 ## Shipping Gateway Interfaces
 
@@ -431,14 +157,71 @@ Here's sample data to setup FedEx gateway and a detailed system setup guide:
 **Important Note**
 We will copy over limited set entity definition and services from Moqui UDM and USL. 
 
-Useful links
+### Useful links
+
+*   https://github.com/moqui/mantle-shippo/tree/master
+*   https://github.com/hotwax/mantle-fedex
+*   https://github.com/hotwax/mantle-shipstation
+*   https://github.com/hotwax/mantle-shipengine
 
 
-https://github.com/hotwax/mantle-fedex
+```xml
+    <mantle.party.PartySetting partyId="ORG_ZIZI_RETAIL" partySettingTypeId="ValidateAddressGatewayConfigId" settingValue="SHIPPO_DEMO"/>
+    <mantle.party.PartySetting partyId="ORG_ZIZI_RETAIL" partySettingTypeId="DefaultShipmentGatewayConfigId" settingValue="SHIPPO_DEMO"/>
+```
 
-https://github.com/hotwax/mantle-shipstation
+This data defines party-specific settings for address validation and default shipment gateway. Let's break down each part:
+
+*   `mantle.party.PartySetting`: This entity is used to store various settings and preferences for different parties in Moqui. In this case, it's configuring settings for a party with `partyId = "ORG_ZIZI_RETAIL"`. This represents a retail organization the demo data.
+
+*   `partySettingTypeId`: This field indicates the type of setting being configured. There are two settings being defined here:
+
+    *   `ValidateAddressGatewayConfigId`: This setting specifies which shipping gateway configuration should be used for address validation. The `settingValue = "SHIPPO_DEMO"` indicates that the "SHIPPO_DEMO" `ShippingGatewayConfig` (which we discussed earlier) should be used for validating addresses for this party.
+
+    *   `DefaultShipmentGatewayConfigId`: This setting determines the default shipping gateway configuration to be used for this party. Again, `settingValue = "SHIPPO_DEMO"` means that Shippo will be the default gateway for shipments associated with this party.
+
+*   Additional context:
+    *   These settings will be used as defaults if there are no specific settings defined at the store level (referring to a retail store or online store).
+    *   The screens where a store or vendor is not explicitly specified, the "Owner Party" (likely the party who owns or manages the Moqui instance) must be set to use these settings.
 
 
-https://github.com/hotwax/mantle-shipengine
 
+```
+ <mantle.product.store.ProductStore productStoreId="POPC_DEFAULT">
+        <shipOptions carrierPartyId="_NA_" shipmentMethodEnumId="ShMthGround" sequenceNum="1"/>
+        <shipOptions carrierPartyId="USPS" shipmentMethodEnumId="ShMthGround" sequenceNum="5"/>
+        <shipOptions carrierPartyId="USPS" shipmentMethodEnumId="ShMthThirdDay" sequenceNum="6"/>
+        <shipOptions carrierPartyId="USPS" shipmentMethodEnumId="ShMthNextDay" sequenceNum="7"/>
+        <shipOptions carrierPartyId="UPS" shipmentMethodEnumId="ShMthGround" sequenceNum="11"/>
+        <shipOptions carrierPartyId="UPS" shipmentMethodEnumId="ShMthThirdDay" sequenceNum="12"/>
+        <shipOptions carrierPartyId="UPS" shipmentMethodEnumId="ShMthSecondDay" sequenceNum="13"/>
+        <shipOptions carrierPartyId="UPS" shipmentMethodEnumId="ShMthNextDay" sequenceNum="14"/>
+        <shipOptions carrierPartyId="FedEx" shipmentMethodEnumId="ShMthGround" sequenceNum="21"/>
+        <shipOptions carrierPartyId="FedEx" shipmentMethodEnumId="ShMthThirdDay" sequenceNum="22"/>
+        <shipOptions carrierPartyId="FedEx" shipmentMethodEnumId="ShMthSecondDay" sequenceNum="23"/>
+        <shipOptions carrierPartyId="FedEx" shipmentMethodEnumId="ShMthNextDay" sequenceNum="24"/>
+        <shippingGateways carrierPartyId="_NA_" shippingGatewayConfigId="NA_LOCAL"/>
+        <shippingGateways carrierPartyId="USPS" shippingGatewayConfigId="SHIPPO_DEMO"/>
+        <shippingGateways carrierPartyId="UPS" shippingGatewayConfigId="SHIPPO_DEMO"/>
+        <shippingGateways carrierPartyId="FedEx" shippingGatewayConfigId="SHIPPO_DEMO"/>
+    </mantle.product.store.ProductStore>
+```
+This XML snippet demonstrates how to configure shipping options and gateway preferences for a specific product store in Moqui. It provides a template for customizing shipping behavior at the store level.
+
+Here's a breakdown of the data:
+
+*   `mantle.product.store.ProductStore`: This entity represents a product store, which could be a physical retail store or an online store. This configuration is for a store with `productStoreId = "POPC_DEFAULT"`, likely a default or primary store in the demo data.
+
+*   `shipOptions`: This element is used to specify the preferred order of shipping methods for different carriers. Each `shipOptions` entry includes:
+    *   `carrierPartyId`: The ID of the carrier (or "_NA_" for any carrier).
+    *   `shipmentMethodEnumId`: The ID of the shipment method type from the `ShipmentMethod` enumeration.
+    *   `sequenceNum`: A number to determine the order in which the shipping methods should be displayed or considered for this store. Lower numbers have higher priority.
+
+    For example, `shipOptions carrierPartyId="USPS" shipmentMethodEnumId="ShMthGround" sequenceNum="5"` indicates that USPS Ground should have a sequence number of 5 for this store.
+
+*   `shippingGateways`: This element associates specific carriers with shipping gateway configurations for this store. Each `shippingGateways` entry includes:
+    *   `carrierPartyId`: The ID of the carrier (or "_NA_" for any carrier).
+    *   `shippingGatewayConfigId`: The ID of the `ShippingGatewayConfig` to use for this carrier.
+
+    For instance, `shippingGateways carrierPartyId="FedEx" shippingGatewayConfigId="SHIPPO_DEMO"` means that FedEx shipments for this store should be processed through the "SHIPPO_DEMO" gateway configuration.
 

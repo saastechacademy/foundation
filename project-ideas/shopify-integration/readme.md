@@ -1,6 +1,6 @@
 # Shopify Integration.
 
-Data Model of [Shopify Config](/udm/advanced/ShopifyConfig.md) entities. 
+Data Model of [Shopify Config](/project-ideas/shopify-integration/shopify-config) entities. 
 
 
 * Call services for processing data downloaded from Shopify must need ShopifyConfigId and related ProdutStoreId. Consider making it part of request preprossing, before the real service is called. 

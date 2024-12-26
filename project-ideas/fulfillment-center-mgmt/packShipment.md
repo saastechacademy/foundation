@@ -1,71 +1,54 @@
-# **Shipment**
-
 ## packShipment
 
-### Detailed Logic
-
 1.  **Input:**
-    *   Receive `shipmentId` as the input parameter.
 
-2.  **Fetch Shipment:**
-    *   Use `EntityQuery` to retrieve the `Shipment` entity based on the provided `shipmentId`.
-    *   Validate that the shipment exists and is in the `SHIPMENT_APPROVED` status (precondition).
-
-3.  **Fetch Shipment Items:**
-    *   Query the `ShipmentItem` entity to get all items associated with the shipment.
-
-4.  **Update Shipment Status:**
-    *   Update the `statusId` of the `Shipment` entity to `SHIPMENT_PACKED` (postcondition), indicating it's been packed and is ready for shipment.
-
-5.  **Fetch Order and Order Item Details:**
-    *   For each `ShipmentItem`, use the `OrderShipment` entity to find the corresponding `orderId` and `orderItemSeqId`.
-
-6.  **Update Picklist Items:**
-    *   For each `orderId` and `orderItemSeqId` pair, query the `PicklistItem` entity to find associated items.
-    *   Update the `itemStatusId` of these `PicklistItem` entities to `PICKITEM_PICKED`, indicating they have been picked for the packed shipment.
+The shipmentPackageContents and rejectedShipmentItems are optional parameters. Their values will be null, If shipment is not modified since last approved.
 
 
-## Java Code Skeleton
 
-```java
-public static Map<String, Object> packShipment(DispatchContext dctx, Map<String, Object> context) {
-    Delegator delegator = dctx.getDelegator();
-    LocalDispatcher dispatcher = dctx.getDispatcher();
-    GenericValue userLogin = (GenericValue) context.get("userLogin");
+```json
 
-    String shipmentId = (String) context.get("shipmentId");
-
-    try {
-        // 1. Fetch Shipment
-        GenericValue shipment = EntityQuery.use(delegator).from("Shipment").where("shipmentId", shipmentId).queryOne();
-        if (shipment == null || !"SHIPMENT_APPROVED".equals(shipment.getString("statusId"))) {
-            return ServiceUtil.returnError("Shipment not found or not in APPROVED status");
-        }
-
-        // 2. Fetch Shipment Items
-        List<GenericValue> shipmentItems = EntityQuery.use(delegator).from("ShipmentItem").where("shipmentId", shipmentId).queryList();
-
-        // 3. Update Shipment Status
-        shipment.set("statusId", "SHIPMENT_PACKED");
-        shipment.store();
-
-        // 4. Fetch Order and Order Item Details & 5. Update Picklist Items
-        for (GenericValue shipmentItem : shipmentItems) {
-            // ... (Use OrderShipment to find orderId and orderItemSeqId)
-            // ... (Query PicklistItem and update itemStatusId to PICKITEM_PICKED)
-        }
-
-    } catch (GenericEntityException e) {
-        Debug.logError(e, MODULE);
-        return ServiceUtil.returnError(e.getMessage());
+{
+  "shipmentId": "10025",
+  "shipmentPackageContents":[
+    {
+      "shipmentItemSeqId": "001",
+      "shipmentPackageSeqId": "00001",
+      "quantity": 1
+    },
+    {
+      "shipmentPackageSeqId": "00002",
+      "shipmentItemSeqId": "00002",
+      "quantity": 1
     }
-
-    return ServiceUtil.returnSuccess("Shipment packed successfully.");
+    ],
+  "rejectedShipmentItems": [
+    {
+      "shipmentItemSeqId": "00001",
+      "rejectToFacilityId": "FAC003",
+      "rejectionReasonId" : "REJ_RSN_DAMAGED",
+      "comments": "The item was part of a display and is not in acceptable condition."
+    },
+    {
+      "shipmentItemSeqId": "00003",
+      "rejectToFacilityId": "FAC003",
+      "rejectionReasonId" : "REJ_RSN_DAMAGED",
+      "comments": "The item was part of a display and is not in acceptable condition."
+    }
+  ]
 }
 ```
+2.  **[reinitiazeShipment](reinitializeShipment.md):**
+    *   if rejectedShipmentItems has one or more items, before we reject items, shipment should be in input status. 
+    *   if shipmentPackageContents has one or more items, compare with shipment package contents data in database. if diff is found, ensure shipment is in input status before data is saved to database.
+    
+3.  **Process Shipment Items:**
+    *   Reject shipmentItems 
+    *   Compute diff between ShipmentPackageContent and the packed items list. Update ShipmentPackageContent state in the database if necessary.
 
-### Key Corrections
-
-*   **Shipment Status:** The precondition is now correctly checked for `SHIPMENT_APPROVED`, and the postcondition updates the status to `SHIPMENT_PACKED`.
-*   **OFBiz Conventions:** The code adheres to OFBiz conventions for entity queries and updates.
-
+4.  **Update Shipment Status:**
+    *   if the shipment status is input, then 
+      -   call [approveShipment](approveShipment.md).
+      -   if facility is not part of the auto shipping label group, then [getShippingLabel](getShippingLabel.md)
+    *   Update the `statusId` of the `Shipment` entity to `SHIPMENT_PACKED` (postcondition), indicating it's been packed and is ready for shipment.
+    *   Update OrderItem fulfillmentStatus to Packed on SOLR document

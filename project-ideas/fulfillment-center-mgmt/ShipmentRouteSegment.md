@@ -1,8 +1,6 @@
-The `ShipmentPackageRouteSeg` and `ShipmentRouteSegment` entities, their roles within the Apache OFBiz framework, and the customizations made in HotWax Commerce.
+### ShipmentPackageRouteSeg
 
-### ShipmentPackageRouteSeg (Apache OFBiz)
-
-*   **Purpose:** The `ShipmentPackageRouteSeg` entity in Apache OFBiz is designed to establish a connection between individual packages within a shipment (`ShipmentPackage`) and the specific route segments (`ShipmentRouteSegment`) they traverse during transit. It allows for tracking and managing the movement of each package along different legs of the shipment's journey.
+*   **Purpose:** The `ShipmentPackageRouteSeg` entity connects `ShipmentPackage` and the specific route segments (`ShipmentRouteSegment`) they traverse during transit.
 
 *   **Key Attributes:**
     *   `shipmentId`, `shipmentPackageSeqId`, `shipmentRouteSegmentId`: These form the primary key, uniquely identifying each record and linking it to the corresponding shipment, package, and route segment.
@@ -31,10 +29,12 @@ The `ShipmentPackageRouteSeg` and `ShipmentRouteSegment` entities, their roles w
     *   `packagePickupDate`: The date and time of the package pickup.
     *   `gatewayMessage` and `gatewayStatus`: Information about the status and any messages from the shipping gateway integration.
 
+**Detailed Implementation**
+    *   GET, PUT, POST, DELETE Rest resources.
 
-**ShipmentRouteSegment in Apache OFBiz**
+**ShipmentRouteSegment**
 
-*   **Purpose:** The `ShipmentRouteSegment` entity in Apache OFBiz represents a single leg or step in the transportation of a shipment from its origin to its destination. It stores details about this specific segment, including:
+*   **Purpose:** The `ShipmentRouteSegment` It stores details about this specific segment, including:
     *   Origin and destination facilities
     *   Carrier information
     *   Shipping method
@@ -76,5 +76,6 @@ HotWax Commerce extends this entity to include:
 *   `referenceNumber`: Provides an additional reference number for the segment.
 *   `actualCarrierCode`: Stores the actual carrier code used.
 
-**Usage in HotWax Commerce**
+**Detailed Implementation**
+*   GET, PUT, POST, DELETE Rest resources.
 

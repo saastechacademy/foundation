@@ -1,3 +1,31 @@
+### This assignment tests your ability to Model:
+1. Product definition
+2. Product Types
+3. Product category, Association Entities pattern
+    - Entities pattern
+        - Type entity
+        - Subtypes
+        - Association
+4. Product identification, Non-Mutually Exclusive Sets of Subtypes pattern
+5. Product Feature, Product Feature Subtypes
+   - Entities pattern 
+      - Type entity 
+      - Subtypes
+      - Association 
+6. Product pricing
+7. Product to product associations
+8. [Taxonomy](https://arpitbhayani.me/blogs/taxonomy-on-sql)
+
+
+### Tasks
+1. Setup custom component, "productinformationmgr"
+2. Setup Product and related entities defined in this document.
+3. Build UI using Forms and Screens
+4. Demonstrate use of your application to manage sample product data from your experience. Prepare set of data for product features and categories. 
+5. Add Entities and UI for managing ProductFeatures of various feature types.
+6. Add Entities and UI for managing Product categorization using Product Category entities.
+
+
 # Introduction to Product Model
 This document provides an overview of the Product model, focusing on its core entities—Product, ProductContent, ProductPrice, and others—and their applications in representing various product details. Additionally, we will define the key entities and provide sample JSON data for Product.
 
