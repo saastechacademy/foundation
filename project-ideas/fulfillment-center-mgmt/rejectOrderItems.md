@@ -69,7 +69,12 @@ WHERE  oisg.facility_id = '102'
   AND  oi.order_ID IN 
        (SELECT DISTINCT oi_inner.order_id
         FROM   order_item oi_inner
-        WHERE  oi_inner.PRODUCT_ID = '12888');
+        JOIN order_item_ship_group oisg_inner 
+            ON  oi_inner.ORDER_ID = oisg_inner.ORDER_ID
+            AND oi_inner.SHIP_GROUP_SEQ_ID = oisg_inner.SHIP_GROUP_SEQ_ID
+        WHERE  oi_inner.PRODUCT_ID = '12888'
+            AND oisg_inner.facility_id = '102'
+            AND oi_inner.status_id = 'ITEM_APPROVED');
 ```
 #### **Explanation**
 
