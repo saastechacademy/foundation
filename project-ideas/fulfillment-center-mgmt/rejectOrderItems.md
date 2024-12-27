@@ -1,11 +1,12 @@
 ## **rejectOrderItems**
+**NOTE:** Only REST API for to reject OrderItem during fulfillment process, from outstanding order to just before Shipment is packed.   
 
 ### **Purpose**
 Identifies and rejects `OrderItems` within a specified facility for a given product that are part of an in-progress shipment. This action is taken when a product is defective, unavailable, or must otherwise be removed from pending fulfillments.
 
 ---
 
-### **Parameters**
+### **Parameters** List of orderItems. For each orderItem following parameters
 - **orderId**  
 - **orderItemSeqId**  
 - **productId**  

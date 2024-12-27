@@ -1,4 +1,5 @@
 ## rejectOrderItem
+**NOTE** For internal use only. not available as REST API.
 
 ### Purpose
 * Move the OrderItem from assigned fulfillment facility to brokering queue or reject orderItem queue or similar.
