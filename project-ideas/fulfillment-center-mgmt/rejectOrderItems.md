@@ -30,7 +30,7 @@ Identifies and rejects `OrderItems` within a specified facility for a given prod
 
 ### **Primary SQL Retrieval Logic**
 
-Depending on whether you need to reject all items in orders containing a certain product (**cascade**) or only specific items with that product (**item delete**), use one of the two statements below.
+Depending on whether you need to reject all items in orders containing a certain product (**cascade reject**) or only specific items with that product (**item reject**), use one of the two statements below.
 
 #### **Common Joins**
 - **`order_item_ship_group` (oisg)** on `ORDER_ID` and `SHIP_GROUP_SEQ_ID` to establish the link between `OrderItem` and its ship group.  
@@ -44,7 +44,7 @@ Depending on whether you need to reject all items in orders containing a certain
 
 ---
 
-#### **1. Cascade Delete Code**
+#### **1. Cascade Reject Code**
 ```sql
 SELECT oi.ORDER_ID,
        oi.ORDER_ITEM_SEQ_ID,
@@ -82,12 +82,12 @@ The **key condition** is:
      FROM order\_item oi\_inner  
      WHERE oi\_inner.PRODUCT\_ID \= '12888')
 ```
-2.  This means we want **all orders** (and their items) **that contain a product with ID `12888`**. This is useful for a **cascade delete** because it affects all items within orders containing the specified product—**not just the single item** tied directly to that product.
+2.  This means we want **all orders** (and their items) **that contain a product with ID `12888`**. This is useful for a **cascade reject** because it affects all items within orders containing the specified product—**not just the single item** tied directly to that product.
 
-Use this statement if you need to **delete multiple items** that may be affected when a product is removed (or similar scenario).
+Use this statement if you need to **reject multiple items** that may be affected when a product is removed (or similar scenario).
 ---
 
-#### **2. Item Delete Code**
+#### **2. Item Reject Code**
 ```sql
 SELECT oi.ORDER_ID,
        oi.ORDER_ITEM_SEQ_ID,
@@ -119,7 +119,7 @@ Similar to the cascade query above, except:
  ```
 
 1.  This **directly filters** the result set to only include items where the product ID is `12888`.  
-2. This is helpful when you only want to **delete or reject the specific item** that has `product_id = '12888'`, rather than affecting all items in orders that contain `12888`.
+2. This is helpful when you only want to **reject the specific item** that has `product_id = '12888'`, rather than affecting all items in orders that contain `12888`.
 
 Use this statement if you need to **target a specific item or set of items** by product ID without impacting other items in the same order.
 
