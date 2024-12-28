@@ -1,10 +1,7 @@
-rejectOrderItems
-## **rejectOrderItem**
-=======
-## rejectOrderItem
+# rejectOrderItem
 **NOTE** For internal use only. not available as REST API.
 
-### Purpose
+## Purpose
 * Move the OrderItem from assigned fulfillment facility to brokering queue or reject orderItem queue or similar.
 * This service should be used only if NO valid ShipmentItem for the OrderItem exits.
 * To [rejectShipmentItem](rejectShipmentItem.md) use API designed for the purpose.
@@ -25,7 +22,7 @@ rejectOrderItems
 * List of cancelled Inventory reservations.
 
 
-### Workflow
+## Workflow
 
 1. **Cancel Inventory Reservation:** Call [cancelOrderItemInvResQty](inventory-mgmt/cancelOrderItemInvRes.md) service to cancel the corresponding inventory reservation for the orderItem quantity. The called service will cancel reservation for marketing package and all its components. 
 3. **Move to Rejected Ship Group:** Move the orderItem to a ship group associated with the `naFacilityId` (a designated facility for rejected items). [Check if OrderItemShipGroup exits](findOrCreateOrderItemShipGroup.md) for the `naFacilityId` else create one and then move `orderItem` to this ship group. 
@@ -42,12 +39,12 @@ rejectOrderItems
 7. **Set Auto Cancel Date:** If the productStore setting `setAutoCancelDate` flag is set to "Y," the service calculates and sets an auto-cancel date for the order item based on the product store's configuration. This is typically used to automatically cancel orders that haven't been paid for within a certain timeframe.
 9. **Log External Fulfillment:** Create SystemMessage to Notify externals systems. The `createUpdateExternalFulfillmentOrderItem` service is called to create or update an external fulfillment log entry, marking the item as rejected.
 
-### Bundle product OrderItem
+## Bundle product OrderItem
 
 In case the OrderItem is for bundle product. During the fulfillment process, PRODUCT_COMPONENT of the bundles products are reserved `OrderItemShipGrpInvRes`,  picked `PickListItem` and shipped `ShipmentItem`.
 
 
-### **OrderHistory**
+## **OrderHistory**
   **Enumerations**
 ```
 | Enum Id         | Enum Type Id       | Enum Code  | Enum Name           | Description        |
@@ -58,7 +55,7 @@ In case the OrderItem is for bundle product. During the fulfillment process, PRO
 | view            | ITEM_SHIPPED       | ORDER_EVENT_TYPE | Shipped             |                    |
 ```
 
-### **OrderFacilityChange**
+## **OrderFacilityChange**
   **Enumerations**
 
 ```
@@ -72,29 +69,14 @@ In case the OrderItem is for bundle product. During the fulfillment process, PRO
 | view    | UNFILLABLE           | BROKERING_REASN_TYPE | Unfillable            |                                  |
 ```
 
-
-```xml
-    <!-- Rejection reason -->
-    <!-- 
-        The OrderItem rejected by the fulfillment center, could be for few rejectionReason, The rejectionReasonType is used to deduce if rejection impacts inventory ATP or NOT.   
-        The rejectionReason are categorised by rejectionReasonType. 
-        The rejectionReasonId have logical value, (Convention / Configuration)
-        
-        For each rejectionReasonId we have mapping varianceReasonId.        
-        For each OrderItem rejection we record PhysicalInventory and InventoryItemVariance.  
-        The rejectionReasonId maps to the varianceReasonId input parameter to the createPhysicalInventory service.        
-    -->
-
-
-### **Overview**  
+## **Overview**  
 `rejectOrderItem` is an internal service that rejects a single `OrderItem`. This service applies whether or not a valid `ShipmentItem` exists:
 
 1. If **no `ShipmentItem`** exists, it simply rejects the `OrderItem` and updates the relevant records.  
 2. If a **`ShipmentItem`** does exist, the logic for `rejectShipmentItem` is used as part of rejecting the `OrderItem`, ensuring both the shipment data and order data remain consistent.
 
----
 
-### **Parameters (IN)**
+## **Parameters (IN)**
 
 - **`orderId`**  
 
@@ -120,16 +102,13 @@ In case the OrderItem is for bundle product. During the fulfillment process, PRO
 - **`comments`** *(optional)*  
   Free-text comments detailing why the item is rejected (e.g., “Item is broken,” “Item mismatched,” etc.).
 
----
 
-### **Output (OUT)**
+## **Output (OUT)**
 
 - **List of Canceled Inventory Reservations**  
   Identifiers and details of any inventory reservations that were canceled due to this rejection.
 
----
-
-### **Workflow**
+## **Workflow**
 
 1. **Check for ShipmentItem**  
    - If a `shipmentId` and `shipmentItemSeqId` are provided, check if they are valid and associated with this `OrderItem`.  
@@ -172,16 +151,13 @@ In case the OrderItem is for bundle product. During the fulfillment process, PRO
 8. **Log External Fulfillment**  
    - Create a system message or call the `createUpdateExternalFulfillmentOrderItem` service to notify external systems of the rejected item.  
 
----
 
-### **Handling Bundle Product OrderItems**
+## **Handling Bundle Product OrderItems**
 If the `OrderItem` refers to a *bundle product*, its component items (linked via `OrderItemShipGrpInvRes`, `PickListItem`, and `ShipmentItem`) are also reserved, picked, and shipped together. When rejecting the *parent* `OrderItem`, be sure to evaluate if any underlying component items also need to be adjusted or rejected, particularly during the inventory reservation and/or shipment cancellation steps.
 
----
+## **Relevant Enumerations**
 
-### **Relevant Enumerations**
-
-#### **OrderHistory**  
+### **OrderHistory**  
 | Enum Id           | Enum Type Id       | Enum Code          | Enum Name            | Description  |
 |-------------------|--------------------|--------------------|----------------------|--------------|
 | ITEM_BKD_REJECTED | ORDER_EVENT_TYPE   | BROKERING_REJECTED | Brokering Rejected   |              |
@@ -189,7 +165,7 @@ If the `OrderItem` refers to a *bundle product*, its component items (linked via
 | ITEM_CANCELLED    | ORDER_EVENT_TYPE   | CANCELLED          | Cancelled            |              |
 | ITEM_SHIPPED      | ORDER_EVENT_TYPE   | SHIPPED            | Shipped              |              |
 
-#### **OrderFacilityChange**  
+### **OrderFacilityChange**  
 | Enum Id       | Enum Type Id          | Enum Code           | Enum Name             | Description                          |
 |---------------|-----------------------|---------------------|-----------------------|--------------------------------------|
 | BROKERED      | BROKERING_REASN_TYPE  | BROKERING_REASN_TYPE| Brokered             |                                      |
@@ -199,7 +175,7 @@ If the `OrderItem` refers to a *bundle product*, its component items (linked via
 | RELEASED      | BROKERING_REASN_TYPE  | RELEASED           | Released             |                                      |
 | UNFILLABLE    | BROKERING_REASN_TYPE  | UNFILLABLE         | Unfillable           |                                      |
 
-#### **Rejection Reason & Variance Mapping**  
+### **Rejection Reason & Variance Mapping**  
 Each `rejectionReasonId` is associated with a `varianceReasonId` in the inventory system to indicate how quantity or availability should be adjusted:
 
 | Enumeration        | enumTypeId       | Description                                | VarianceReason                          |
@@ -236,9 +212,8 @@ Each `rejectionReasonId` is associated with a `varianceReasonId` in the inventor
     <VarianceReason varianceReasonId="INACTIVE_STORE" description="Inactive store"/>
     <VarianceReason varianceReasonId="NO_VARIANCE_LOG" description="No variance"/>
 </details>
----
 
-### **Usage Notes**
+## **Usage Notes**
 
 1. **Shipment Item or No Shipment Item**  
    - If `shipmentId` and `shipmentItemSeqId` are not provided (or no valid shipment exists), rejection proceeds directly with the inventory and facility changes.  
