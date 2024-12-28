@@ -1,18 +1,12 @@
-## **rejectOrderItems**
+# **rejectOrderItems**
 **NOTE:** Only REST API for to reject OrderItem during fulfillment process, from outstanding order to just before Shipment is packed.   
 
-### **Overview**
+## **Overview**
 The `rejectorderitems` REST API endpoint is used to reject one or more `OrderItems`. Internally, it builds a list of items to reject and calls `rejectOrderItem()` for each item. The actual rejection logic (including the cancellation of shipments, if needed) is handled by `rejectOrderItem()`. There is no separate `rejectShipmentItem` service.
 
 Typical reasons for rejection include defective products, unavailable stock, or other conditions that require removing items from pending fulfillments.
 
----
-
-rejectOrderItems
-### **Parameters**
-
-=======
-### **Parameters** List of orderItems. For each orderItem following parameters
+## **Parameters** List of orderItems. For each orderItem following parameters
 
 - **orderId**  
 - **orderItemSeqId**  
@@ -33,15 +27,12 @@ rejectOrderItems
 - **comments**  
   - Free-text comments explaining the reason for rejection.
 
----
-
-### **Output (OUT)**
+## **Output (OUT)**
 
 - **List of Canceled Inventory Reservations**  
   Identifiers and details of any inventory reservations that were canceled due to this rejection.
 
----
-### **Key Workflow**
+## **Key Workflow**
 
 1. The **`rejectorderitems`** REST endpoint is called with a list of items to reject from a facility.  
 2. **`rejectorderitems`** applies the **`cascadeRejectByProduct`** and **`maySplit`** logic to determine which items actually need to be rejected:
@@ -49,15 +40,14 @@ rejectOrderItems
    - If **`maySplit = N`**, entire ship groups are rejected instead of individual items. Otherwise, only the specific items passed in the payload are rejected.  
 3. For each resolved item in the final rejection list:
    - The endpoint invokes **`rejectOrderItem()`** with the appropriate parameters.
----
 
-### **SQL Logic**
+## **SQL Logic**
 
 Use one of the following SQL statements based on whether you need to:
 1. Reject only the specific items that match the product ID (**item-level**).
 2. Reject all items in orders that contain a specific product (**cascade**).
 
-#### **Common Joins**
+### **Common Joins**
 - `order_item_ship_group (oisg)`  
   - Join on `ORDER_ID` and `SHIP_GROUP_SEQ_ID` to link `OrderItem` to its shipment group.
 - `order_shipment (os)` (LEFT JOIN)  
@@ -65,7 +55,7 @@ Use one of the following SQL statements based on whether you need to:
 - `shipment (sh)` (LEFT JOIN)  
   - Join on `SHIPMENT_ID`. Some shipments might not exist or be fully linked yet.
 
-#### **Common Filter Conditions**
+### **Common Filter Conditions**
 - `oisg.facility_id = '102'`  
   - Ensures we only select items from the specified facility (example uses ID `102`).
 - `oi.status_id = 'ITEM_APPROVED'`  
@@ -73,9 +63,7 @@ Use one of the following SQL statements based on whether you need to:
 - `sh.status_id IS NULL OR sh.status_id IN ('SHIPMENT_INPUT', 'SHIPMENT_APPROVED')`  
   - Ensures that items are in an in-progress shipment (not yet shipped).
 
----
-
-#### **1. Item-Level Reject**
+### **1. Item-Level Reject**
 ```sql
 SELECT oi.ORDER_ID,
        oi.ORDER_ITEM_SEQ_ID,
@@ -109,9 +97,7 @@ WHERE  oisg.facility_id = '102'
 
 2. This is helpful when you only want to **reject the specific item** that has `product_id = '12888'`, rather than affecting all items in orders that contain item `12888`.
 
----
-
-#### **2. Cascade Reject**
+### **2. Cascade Reject**
 ```sql
 SELECT oi.ORDER_ID,
        oi.ORDER_ITEM_SEQ_ID,
@@ -162,9 +148,7 @@ The **key condition** is:
 ```
 2.  This means we want **all orders** (and their items) **that contain a product with ID `12888`**. This is useful for a **cascade reject** because it affects all items within orders containing the specified product—**not just the single item** tied directly to that product.
 
----
-
-### **Example Input Parameters**
+## **Example Input Parameters**
 
 ```json
 [
