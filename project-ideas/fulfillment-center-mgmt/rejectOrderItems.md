@@ -1,4 +1,5 @@
 ## **rejectOrderItems**
+**NOTE:** Only REST API for to reject OrderItem during fulfillment process, from outstanding order to just before Shipment is packed.   
 
 ### **Overview**
 The `rejectorderitems` REST API endpoint is used to reject one or more `OrderItems`. Internally, it builds a list of items to reject and calls `rejectOrderItem()` for each item. The actual rejection logic (including the cancellation of shipments, if needed) is handled by `rejectOrderItem()`. There is no separate `rejectShipmentItem` service.
@@ -7,7 +8,11 @@ Typical reasons for rejection include defective products, unavailable stock, or 
 
 ---
 
+rejectOrderItems
 ### **Parameters**
+
+=======
+### **Parameters** List of orderItems. For each orderItem following parameters
 
 - **orderId**  
 - **orderItemSeqId**  
