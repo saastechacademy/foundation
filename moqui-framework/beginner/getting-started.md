@@ -3,6 +3,7 @@
 ### This assignment tests your ability to:
 
 * Read documentation and follow instructions.
+* Read Moqui official documentation. 
 * Create a new custom Moqui component.
 * Add a new entity definition in the component.
 * Working knowledge of git and ability to use Github for managing sourcecode.
@@ -29,6 +30,7 @@ Learn Moqui and related technologies to complete following tasks.
 
 ### Prerequisites
 
+* [Introduction to Moqui Framework](https://www.moqui.org/m/docs/framework/Introduction)
 * [GIT](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
 * [JDK 11](https://jdk.java.net/java-se-ri/11-MR3) or [OpenJDK](https://adoptium.net/temurin/archive/?version=11) or any other compatible JDK distribution.  
 * To check your Java version use following command:
