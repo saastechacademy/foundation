@@ -2,6 +2,7 @@
 
 ### This assignment tests your ability to:
 
+* Prepare your work plan and discuss your strategy and execution plan.
 * Read documentation and follow instructions.
 * Read Moqui official documentation. 
 * Create a new custom Moqui component.
@@ -10,7 +11,8 @@
 
 ### Tasks
 Learn Moqui and related technologies to complete following tasks.
-1. Configure the Moqui Framework on your local machine.
+1. Prepare step-by-step work plan tasks listed below.
+2. Configure the Moqui Framework on your local machine.
 2. Verify that the application is up and running.
 3. Configure the `xsd` files for Entity Definition, Service Definition, and Service REST API XML schema locations in your IDE.
 4. Clone the "moqui-training" repository into the `component` folder under `runtime` in `moqui-framework`.
