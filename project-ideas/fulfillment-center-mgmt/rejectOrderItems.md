@@ -10,15 +10,11 @@ Typical reasons for rejection include defective products, unavailable stock, or 
 ### **Parameters**
 
 - **orderId**  
-  - Unique identifier for the order.
 - **orderItemSeqId**  
-  - Unique identifier for the order item within the order.
 - **productId**  
-  - Identifier for the product to be rejected (if needed).
 - **facilityId**  
-  - The facility where the item is currently located.
 - **rejectToFacilityId**  
-  - Facility to which rejected items are transferred or recorded.
+  - Facility to which rejected items are transferred.
 - **updateQOH**  
   - Flag indicating whether to update quantity on hand.
 - **rejectionReasonId**  
@@ -27,17 +23,25 @@ Typical reasons for rejection include defective products, unavailable stock, or 
   - Defaults to **N**. When set to **Y**, only the specified order item is rejected (rather than the entire ship group).
 - **cascadeRejectByProduct**  
   - Defaults to **N**. When set to **Y**, rejects all items in the specified facility that have the same `productId`.
+- **rejectionReasonId**  
+  - Reason for the rejection (e.g., `NOT_IN_STOCK`, `MISMATCH`, `REJ_RSN_DAMAGED`). Maps to a corresponding **`varianceReasonId`** in the inventory system.
 - **comments**  
   - Free-text comments explaining the reason for rejection.
+
+---
+
+### **Output (OUT)**
+
+- **List of Canceled Inventory Reservations**  
+  Identifiers and details of any inventory reservations that were canceled due to this rejection.
 
 ---
 ### **Key Workflow**
 
 1. The **`rejectorderitems`** REST endpoint is called with a list of items to reject from a facility.  
 2. **`rejectorderitems`** applies the **`cascadeRejectByProduct`** and **`maySplit`** logic to determine which items actually need to be rejected:
-   - If **`cascadeRejectByProduct = Y`**, additional items sharing the same product within the facility are included in the rejection list.  
-   - If **`maySplit = N`**, entire ship groups are rejected instead of individual items.  
-   - Otherwise, only the specific items passed in the payload are rejected.  
+   - If **`cascadeRejectByProduct = Y`**, additional order containing the rejected product at that faciloity sharing are included in the rejection list.  
+   - If **`maySplit = N`**, entire ship groups are rejected instead of individual items. Otherwise, only the specific items passed in the payload are rejected.  
 3. For each resolved item in the final rejection list:
    - The endpoint invokes **`rejectOrderItem()`** with the appropriate parameters.
 ---

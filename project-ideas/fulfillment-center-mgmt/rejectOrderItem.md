@@ -11,18 +11,14 @@
 ### **Parameters (IN)**
 
 - **`orderId`**  
-  The unique identifier of the order containing the item to be rejected.
 
 - **`orderItemSeqId`**  
-  The sequence ID identifying the specific order item within the order.
 
 - **`shipmentId` (optional)**  
   The ID of the shipment containing the item to be rejected.  
-  - Required only if the `OrderItem` is already linked to a specific shipment.
 
 - **`shipmentItemSeqId` (optional)**  
   The sequence ID of the specific item within the shipment.  
-  - Required only if the `OrderItem` is already linked to a specific `ShipmentItem`.
 
 - **`rejectToFacilityId`**  
   The facility where the rejected item will be redirected or recorded (e.g., a designated “Not Available” or “Brokering” facility).
@@ -66,7 +62,7 @@
 
 3. **Move to Rejected Ship Group**  
    - Identify (or create) the `OrderItemShipGroup` associated with the `naFacilityId` (or the designated facility for rejected items).  
-   - Move the `OrderItem` from its current ship group or shipment to this newly determined “rejected” group.  
+   - Move the `OrderItem` from its current ship group to this newly determined “rejected” group.  
    - Update or create `OrderItemShipGroupAssoc` records to ensure the item is now assigned to the correct facility/ship group.
 
 4. **Create Order History**  
@@ -75,7 +71,6 @@
 
 5. **Create Order Facility Change**  
    - Record the change of facility in an `OrderFacilityChange` record.  
-   - For instance, if the item is being transferred from a fulfillment center to a “not available” or “rejected” facility, this step documents that transition.
 
 6. **Record Inventory Variance**  
    - Determine how the rejection reason affects inventory. For example:  
@@ -88,16 +83,13 @@
 
 7. **Set Auto Cancel Date (Optional)**  
    - If the store configuration has `setAutoCancelDate = "Y"`, compute and assign an automatic cancel date for the rejected item.  
-   - This is often used to automatically cancel or close out an order if certain criteria (e.g., payment) are not met in time.
-
 8. **Log External Fulfillment**  
    - Create a system message or call the `createUpdateExternalFulfillmentOrderItem` service to notify external systems of the rejected item.  
-   - This ensures all external fulfillment or third-party logistics providers are updated accordingly.
 
 ---
 
 ### **Handling Bundle Product OrderItems**
-If the `OrderItem` refers to a *bundle product*, its component items (linked via `OrderItemShipGrpInvRes`, `PickListItem`, and `ShipmentItem`) are also typically reserved, picked, and shipped together. When rejecting the *parent* `OrderItem`, be sure to evaluate if any underlying component items also need to be adjusted or rejected, particularly during the inventory reservation and/or shipment cancellation steps.
+If the `OrderItem` refers to a *bundle product*, its component items (linked via `OrderItemShipGrpInvRes`, `PickListItem`, and `ShipmentItem`) are also reserved, picked, and shipped together. When rejecting the *parent* `OrderItem`, be sure to evaluate if any underlying component items also need to be adjusted or rejected, particularly during the inventory reservation and/or shipment cancellation steps.
 
 ---
 
