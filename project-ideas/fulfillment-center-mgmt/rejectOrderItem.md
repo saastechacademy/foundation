@@ -36,7 +36,7 @@
   Identifiers and details of any inventory reservations that were canceled due to this rejection.
 
 
-### **Workflow**
+## **Workflow**
 
 1. **Check for ShipmentItem**  
    - If a `shipmentId` and `shipmentItemSeqId` are provided, check if they are valid and associated with this `OrderItem`.  
