@@ -57,16 +57,7 @@ Following are the implementation details,
 4. Implement sendService *generate#OMSProductUpdatesFeed*, refer implementation details below.
 5. Define and configure *SendOMSProductUpdatesFeed* SystemMessageType to send the feed to SFTP.
 
-### generate#OMSProductUpdatesFeed
-1. Fetch SystemMessage record
-2. Fetch related SystemMessageRemote
-3. Fetch shopId from SystemMessageRemote.remoteId
-4. Get products list from the file location in SystemMessage.messageText.
-5. Initiate a local file for the json feed.
-6. Iterate through products list and for each shopifyProduct map call map#Product with forCreate=false, refer implementation details below.
-7. Write the product map if returned in service output to the file.
-8. Close the file once the iteration is complete.
-9. If *sendSmrId* SystemMessageTypeParameter is defined, queue *SendOMSNewProductsFeed* SystemMessage.
+### [generate#OMSProductUpdatesFeed](generateOMSProductUpdatesFeed.md)
 
 ### map#Product
 Refer implementation details in [createProduct.md](https://github.com/saastechacademy/foundation/blob/main/project-ideas/product-master/createProduct.md).
@@ -115,75 +106,8 @@ This would be the base api the uses entity rest method to create product and rel
 }
 ```
 
-### update#ProductAndVariants (Application Layer)
-This service will take in the product JSON in OMSProductUpdatesFeed and update and create any new variants by performing any surrounding crud operations as needed.
-1. Parameters
-   * Input Parameters
-     * productJson (Map)
-2. Remove productJson.variants into a new list productVariants.
-3. Remove productJson.shopifyShopProduct as shopifyShopProduct.
-4. If productJson.productId = null (handleChanged)
-    * Call prepare#ProductCreate (refer in [createProduct.md](https://github.com/saastechacademy/foundation/blob/main/project-ideas/product-master/createProduct.md)) with productJson as input.
-    * For the output product map call *create#Product* (refer in [createProduct.md](https://github.com/saastechacademy/foundation/blob/main/project-ideas/product-master/createProduct.md)) api service.
-    * Set parentProductId = createProductOutput.productId.
-    * Store ShopifyShopProduct with shopifyShopProduct and createProductOutput.productId as input.
-    * Else
-        * Call prepare#ProductUpdate with productJson as input.
-        * For the output product map call *update#Product* api service.
-        * Set parentProductId = updateProductOutput.productId.
-        * Store ShopifyShopProduct with shopifyShopProduct and updateProductOutput.productId as input.
-        * Iterate through updateProductOutput.deleteProductFeatureAppls list and call delete#org.apache.ofbiz.product.feature.ProductFeatureAppl.
-5. Iterate through productVariants and call update#ProductVariant service.
+### [update#ProductAndVariants](updateProductAndVariants.md)
 
-### update#ProductVariant (Application Layer)
-1. Parameters
-   * Input Parameters
-     * productVariantJson (Map)
-     * parentProductId
-2. Remove productVariantJson.shopifyShopProduct as shopifyShopProduct.
-3. If productVariantJson.productId = null (handleChanged)
-    * Call prepare#ProductCreate (refer in [createProduct.md](https://github.com/saastechacademy/foundation/blob/main/project-ideas/product-master/createProduct.md)) with productJson as input.
-    * For the output product map call *create#Product* (refer in [createProduct.md](https://github.com/saastechacademy/foundation/blob/main/project-ideas/product-master/createProduct.md)) api service.
-    * Call createProductAssoc for parentProductId and createProductOutput.productId returned in above step.
-    * Store ShopifyShopProduct with shopifyShopProduct and createProductOutput.productId as input.
-    * Else
-        * Call prepare#ProductUpdate with productJson as input.
-        * For the output product map call *update#Product* api service.
-        * Validate and call create#ProductAssoc if it doesn't exist for parentProductId and updateProductOutput.productId.
-        * Store ShopifyShopProduct with shopifyShopProduct and updateProductOutput.productId as input
-        * Iterate through output deleteProductFeatureAppls list and call delete#org.apache.ofbiz.product.feature.ProductFeatureAppl.
+### [update#ProductVariant](updateProductVariant.md)
 
-### prepare#ProductUpdate (Application Layer)
-1. Parameters
-    * Input Parameters
-        * productJson (Map)
-    * Output Parameters
-        * productJson (Map)
-        * deleteProductFeatureAppls (List)
-2. Remove productJson.price into a new map priceMap
-3. If priceMap is not null, initialize ProductPrice list.
-    * Check if it already exists in the database, if yes set price in db object and add to ProductPrice list
-4. Remove productJson.features into a new list features.
-5. If features is not null, initialize ProductFeatureAppl (name should be the same for entity rest api) list.
-6. Iterate through features and perform following steps,
-    * If feature.productFeatureTypeId doesn't exist, create new.
-    * If feature.productFeatureId doesn't exist, create new with feature.description and productFeatureTypeId returned in above step.
-    * Prepare a map with following values and add to ProductFeature list
-        * productFeatureId
-        * productFeatureApplTypeId
-        * sequenceNum = selectableFeature.position
-        * fromDate = nowTimestamp
-7. Fetch current active ProductFeatureAppl list from DB as currentProductFeatureAppls.
-8. Initialize deleteProductFeatureAppls list.
-9. Iterate through currentProductFeatureAppls, for each entry toBeDeleted=true and iterate through ProductFeatureAppls,
-   * For each entry initialize toBeDeleted=true and iterate through ProductFeatureAppls
-   * If currentProductFeatureAppls.entry.productFeatureId matches ProductFeatureAppl.entry.productFeatureId (No need to add feature if it already exists)
-     * Remove ProductFeatureAppl.entry
-     * Set toBeDeleted=false
-   * At the end of ProductFeatureAppls iteration, if toBeDeleted=true add currentProductFeatureAppls.entry to deleteProductFeatureAppls list.
-10. If ProductFeatureAppl is not null, add it to productJson map.
-11. Remove productJson.goodIdentifications into a new list goodIdentifications.
-12. If goodIdentifications is not null, initialize GoodIdentification (name should be the same for entity rest api) list.
-13. Iterate through goodIdentifications and perform following steps,
-    * Check if it already exists in the database, if yes set idValue in db object and add to GoodIdentification list
-    * If not add fromDate = nowTimestamp to this entry and add it to GoodIdentification list.
+### [prepare#ProductUpdate](prepareProductUpdate.md)
