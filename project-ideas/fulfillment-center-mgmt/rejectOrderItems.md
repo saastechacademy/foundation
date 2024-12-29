@@ -1,12 +1,12 @@
 # **rejectOrderItems**
-**NOTE:** Only REST API for to reject OrderItem during fulfillment process, from outstanding order to just before Shipment is packed.   
+> NOTE: This REST API is used exclusively for rejecting OrderItems during the fulfillment process—from an outstanding order up until just before the shipment is packed. Once the shipment is packed, items can no longer be rejected through this endpoint.
 
 ## **Overview**
 The `rejectorderitems` REST API endpoint is used to reject one or more `OrderItems`. Internally, it builds a list of items to reject and calls `rejectOrderItem()` for each item. The actual rejection logic (including the cancellation of shipments, if needed) is handled by `rejectOrderItem()`. There is no separate `rejectShipmentItem` service.
 
 Typical reasons for rejection include defective products, unavailable stock, or other conditions that require removing items from pending fulfillments.
 
-## **Parameters** List of orderItems. For each orderItem following parameters
+## **Parameters**
 
 - **orderId**  
 - **orderItemSeqId**  
@@ -34,25 +34,95 @@ Typical reasons for rejection include defective products, unavailable stock, or 
 
 ## **Key Workflow**
 
-1. The **`rejectorderitems`** REST endpoint is called with a list of items to reject from a facility.  
-2. **`rejectorderitems`** applies the **`cascadeRejectByProduct`** and **`maySplit`** logic to determine which items actually need to be rejected:
-   - If **`cascadeRejectByProduct = Y`**, additional order containing the rejected product at that fulfillment facility are included in the rejection list.  
-   - If **`maySplit = N`**, entire ship groups are rejected instead of individual items. Otherwise, only the specific items passed in the payload are rejected.  
-3. Evaluate cascadeRejectByProduct,maySplit 
-   - if `maySplit = Y` and `cascadeRejectByProduct = N`: lookup the OrderItem and OrderShipment join for the orderItem and call rejectOrderItem
-   - if `maySplit = N` and `cascadeRejectByProduct = N`: lookup the OrderItem and OrderItemShipGroup and OrderShipment and Shipment join for list of orderItems in the given order assigned to facility for fulfullment. 
-   - if `maySplit = Y` and `cascadeRejectByProduct = Y`
-   - if `maySplit = N` and `cascadeRejectByProduct = Y`
-4. For each resolved item in the final rejection list:
-   - The endpoint invokes **`rejectOrderItem()`** with the appropriate parameters.
+1. **`rejectorderitems`** is called with a list of items to reject.  
+2. It applies **`cascadeRejectByProduct`** and **`maySplit`** to determine which items to reject:  
+   * **`cascadeRejectByProduct = Y`**: Include other items with the same product in that facility.  
+   * **`maySplit = N`**: Reject entire ship groups rather than specific items.  
+3. Based on **`maySplit`** and **`cascadeRejectByProduct`** values, the system queries order/shipment data:  
+   * **`maySplit = N`, `cascadeRejectByProduct = N`**: Reject only the single item.  
+   * **`maySplit = Y`, `cascadeRejectByProduct = N`**: Reject all items in the specified ship group.  
+   * **`maySplit = Y`, `cascadeRejectByProduct = Y`**: Reject items with the same product ID, but only those specifically targeted or matching criteria.  
+   * **`maySplit = N`, `cascadeRejectByProduct = Y`**: Reject entire ship groups for all orders containing the specified product.  
+4. For each item to reject, **`rejectOrderItem()`** is called with the appropriate parameters.
 
-## **SQL Logic**
+## cascadeRejectByProduct = N
 
-Use one of the following SQL statements based on whether you need to:
-1. Reject only the specific items that match the product ID (**item-level**).
-2. Reject all items in orders that contain a specific product (**cascade**).
+### 1. **maySplit = N and cascadeRejectByProduct = N**
 
-### **Common Joins**
+```sql
+SELECT oi.ORDER_ID,
+       oi.ORDER_ITEM_SEQ_ID,
+       oisg.SHIP_GROUP_SEQ_ID,
+       oi.PRODUCT_ID,
+       oisg.FACILITY_ID,
+       oi.STATUS_ID AS item_status,
+       sh.STATUS_ID AS shipment_status,
+       oi.CREATED_STAMP
+FROM order_item oi
+JOIN order_item_ship_group oisg 
+     ON  oi.ORDER_ID = oisg.ORDER_ID
+     AND oi.SHIP_GROUP_SEQ_ID = oisg.SHIP_GROUP_SEQ_ID
+LEFT JOIN order_shipment os 
+     ON  oi.order_id = os.order_id
+LEFT JOIN shipment sh 
+     ON  os.SHIPMENT_ID = sh.SHIPMENT_ID
+WHERE oi.order_id = '4567'
+  AND oisg.ship_group_seq_id = '0001';
+```
+
+#### **Explanation**
+
+1. **No Cascading**  
+   Does not look for items sharing the same `productId` (i.e., `cascadeRejectByProduct = N`).
+
+2. **Reject Entire Ship Group**  
+   Since `maySplit = N`, this query covers all items under the specified `orderId` and `ship_group_seq_id`.  
+   - No `order_item_seq_id` filter is included.  
+   - All items in `SHIP_GROUP_SEQ_ID = '0001'` will be targeted.
+
+3. **Optional Shipment Joins**  
+   Left joins to `order_shipment` and `shipment` retrieve any in-progress shipment status but do not affect filtering when `maySplit = N`.
+
+---
+
+### 2. **maySplit = Y and cascadeRejectByProduct = N**
+
+```sql
+SELECT oi.ORDER_ID,
+       oi.ORDER_ITEM_SEQ_ID,
+       oisg.SHIP_GROUP_SEQ_ID,
+       oi.PRODUCT_ID,
+       oisg.FACILITY_ID,
+       oi.STATUS_ID AS item_status,
+       sh.STATUS_ID AS shipment_status,
+       oi.CREATED_STAMP
+FROM order_item oi
+JOIN order_item_ship_group oisg 
+     ON  oi.ORDER_ID = oisg.ORDER_ID
+     AND oi.SHIP_GROUP_SEQ_ID = oisg.SHIP_GROUP_SEQ_ID
+LEFT JOIN order_shipment os 
+     ON  oi.order_id = os.order_id
+LEFT JOIN shipment sh 
+     ON  os.SHIPMENT_ID = sh.SHIPMENT_ID
+WHERE oi.order_id = '4567'
+  AND oisg.ship_group_seq_id = '0001'
+  AND order_item_seq_id = '0001';
+```
+
+#### **Explanation**
+
+1. **Reject Single Item**  
+   With `maySplit = Y`, the query targets only the specified `order_item_seq_id = '0001'`.
+
+2. **No Cascading**  
+   `cascadeRejectByProduct = N` means only this exact item is considered, regardless of shared `productId` elsewhere.
+
+3. **Ship Group-Specific**  
+   `ship_group_seq_id = '0001'` restricts selection to items in that group. In combination with the single `order_item_seq_id`, it precisely identifies the specific item to reject.
+
+## cascadeRejectByProduct = Y
+
+#### **Common Joins**
 - `order_item_ship_group (oisg)`  
   - Join on `ORDER_ID` and `SHIP_GROUP_SEQ_ID` to link `OrderItem` to its shipment group.
 - `order_shipment (os)` (LEFT JOIN)  
@@ -68,7 +138,7 @@ Use one of the following SQL statements based on whether you need to:
 - `sh.status_id IS NULL OR sh.status_id IN ('SHIPMENT_INPUT', 'SHIPMENT_APPROVED')`  
   - Ensures that items are in an in-progress shipment (not yet shipped).
 
-### **1. Item-Level Reject**
+### 3. maySplit = Y and cascadeRejectByProduct = Y
 ```sql
 SELECT oi.ORDER_ID,
        oi.ORDER_ITEM_SEQ_ID,
@@ -102,7 +172,7 @@ WHERE  oisg.facility_id = '102'
 
 2. This is helpful when you only want to **reject the specific item** that has `product_id = '12888'`, rather than affecting all items in orders that contain item `12888`.
 
-### **2. Cascade Reject**
+### 4. maySplit = N and cascadeRejectByProduct = Y
 ```sql
 SELECT oi.ORDER_ID,
        oi.ORDER_ITEM_SEQ_ID,
