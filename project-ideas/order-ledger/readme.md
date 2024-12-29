@@ -1,6 +1,6 @@
 # Order ledger
-A repository of Orders. 
+We don't need this component. 
 
-The [storeOrder](storeOrder.md) is the lower level service to PUT new order in the repository. 
+The oms lower level services will be in OMS component. 
 
-
+The Shipify Integration component will do the heavy lifting of preparing data. 
