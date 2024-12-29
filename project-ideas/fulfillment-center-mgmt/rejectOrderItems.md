@@ -36,9 +36,14 @@ Typical reasons for rejection include defective products, unavailable stock, or 
 
 1. The **`rejectorderitems`** REST endpoint is called with a list of items to reject from a facility.  
 2. **`rejectorderitems`** applies the **`cascadeRejectByProduct`** and **`maySplit`** logic to determine which items actually need to be rejected:
-   - If **`cascadeRejectByProduct = Y`**, additional order containing the rejected product at that faciloity sharing are included in the rejection list.  
+   - If **`cascadeRejectByProduct = Y`**, additional order containing the rejected product at that fulfillment facility are included in the rejection list.  
    - If **`maySplit = N`**, entire ship groups are rejected instead of individual items. Otherwise, only the specific items passed in the payload are rejected.  
-3. For each resolved item in the final rejection list:
+3. Evaluate cascadeRejectByProduct,maySplit 
+   - if `maySplit = Y` and `cascadeRejectByProduct = N`: lookup the OrderItem and OrderShipment join for the orderItem and call rejectOrderItem
+   - if `maySplit = N` and `cascadeRejectByProduct = N`: lookup the OrderItem and OrderItemShipGroup and OrderShipment and Shipment join for list of orderItems in the given order assigned to facility for fulfullment. 
+   - if `maySplit = Y` and `cascadeRejectByProduct = Y`
+   - if `maySplit = N` and `cascadeRejectByProduct = Y`
+4. For each resolved item in the final rejection list:
    - The endpoint invokes **`rejectOrderItem()`** with the appropriate parameters.
 
 ## **SQL Logic**
