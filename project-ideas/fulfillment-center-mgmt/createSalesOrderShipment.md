@@ -2,7 +2,7 @@
 
 **Purpose:**
 
-*   The service input is list of OrderItem to be shipped in one shipment, using the OrderItem data, it prepares the data needed to call [createShipment](createShipment.md).
+*   The service input is list of OrderItem to be shipped in one shipment, using the OrderItem data, it prepares the data needed to call [createShipment](../oms/createShipment.md).
 
 **Inputs:**
 

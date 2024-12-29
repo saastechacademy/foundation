@@ -1,29 +1,20 @@
 
 ## `create#Order` Service
 
-### 1. Overview
+The `create#Order` The service is responsible for saving the prepared data to the database.
 
-The `create#Order` service is the core service responsible for the actual creation of an order in Hotwax. After all necessary validations and data preparations are handled by the `create#SalesOrder` service, the `create#Order` service is invoked to finalize the process. This service directly interacts with the database to persist order details, ensuring all entities, such as products, customer information, payment preferences, and shipment details, are correctly linked and stored.
-
-### 2. Role of `create#Order` in the Process
-
-The `create#Order` service acts as the final step in the order creation workflow. Once `create#SalesOrder` has:
-- Validated the input data,
-- Set default values for any missing or optional fields,
-- Ensured that all required entities are either present or created (e.g., customer, shipping address, payment preferences),
-the `create#Order` service is responsible for saving the prepared data as an official order record.
-
-This service ensures the proper creation and linking of the following entities:
+This service creates data in following entities:
 - **OrderHeader**: The main order record, storing information such as order date, customer details, and total amounts.
+- **OrderIdentificaion**:
+- **OrderRole**:
+- **OrderContactMech**:
+- **OrderPaymentPreference**: Information about the payment method used for the order.
 - **OrderItems**: Line items representing the products or services being ordered, including quantity, price, and any adjustments.
 - **OrderAdjustments**: Any promotions, discounts, or taxes applied to the order.
-- **OrderPaymentPreference**: Information about the payment method used for the order.
 - **OrderItemShipGroup**: Shipment details, including the shipping method, carrier, and destination.
+- **OrderItemGroup**:
+- **OrderItemAssoc**:
 
-
-<details>
-<summary>Sample create order json</summary>
-<br>
 
 ```json
 {
@@ -182,6 +173,5 @@ This service ensures the proper creation and linking of the following entities:
     }    
 }
 ```
-</details>
 
 You can adjust this JSON to meet your specific requirements by adding or removing entities and fields as needed.
