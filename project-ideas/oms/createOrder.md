@@ -6,6 +6,7 @@ The `create#Order` The service is responsible for saving the prepared data to th
 This service creates data in following entities:
 - **OrderHeader**: The main order record, storing information such as order date, customer details, and total amounts.
 - **OrderIdentificaion**:
+- **OrderRole**:
 - **OrderContactMech**:
 - **OrderPaymentPreference**: Information about the payment method used for the order.
 - **OrderItems**: Line items representing the products or services being ordered, including quantity, price, and any adjustments.
