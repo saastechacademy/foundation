@@ -50,7 +50,7 @@
    - Once the shipment records are handled (or if no shipment item existed), continue to the following steps to complete the `OrderItem` rejection.
 
 2. **Cancel Inventory Reservation**  
-   - Call the [cancelOrderItemInvResQty](inventory-mgmt/cancelOrderItemInvRes.md) service to cancel any existing inventory reservations for the rejected `OrderItem`.  
+   - Call the [cancelOrderItemInvResQty](../oms/cancelOrderItemInvRes.md) service to cancel any existing inventory reservations for the rejected `OrderItem`.  
    - This cancellation applies to both the main item and any package components if the item is part of a marketing package.
 
 3. **Move to Rejected Ship Group**  
@@ -69,7 +69,7 @@
 6. **Record Inventory Variance**  
    - Determine how the rejection reason affects inventory. For example:  
      - If `updateQOH = Y`, the item’s quantity-on-hand may decrease in the rejecting facility.  
-     - If the `rejectionReasonId` maps to an enumeration type that requires a variance (e.g., `REPORT_VAR`, `REPORT_ALL_VAR`), create the appropriate variance through [createPhysicalInventory](inventory-mgmt/createPhysicalInventory.md).  
+     - If the `rejectionReasonId` maps to an enumeration type that requires a variance (e.g., `REPORT_VAR`, `REPORT_ALL_VAR`), create the appropriate variance through [createPhysicalInventory](../oms/createPhysicalInventory.md).  
        - `REPORT_VAR` typically reduces `availableToPromise` by the order quantity.  
        - `REPORT_ALL_VAR` may reduce the entire `InventoryItem.availableToPromiseTotal`.  
        - `REPORT_NO_VAR` indicates no variance record is created.  
