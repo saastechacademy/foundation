@@ -9,6 +9,7 @@ The shipmentPackageContents and rejectedShipmentItems are optional parameters. T
 ```json
 
 {
+  "facilityId" : "STORE_10",
   "shipmentId": "10025",
   "shipmentPackageContents":[
     {
@@ -24,12 +25,16 @@ The shipmentPackageContents and rejectedShipmentItems are optional parameters. T
     ],
   "rejectedShipmentItems": [
     {
+      "orderId":"10000",
+      "orderItemSeqId":"0001",
       "shipmentItemSeqId": "00001",
       "rejectToFacilityId": "FAC003",
       "rejectionReasonId" : "REJ_RSN_DAMAGED",
       "comments": "The item was part of a display and is not in acceptable condition."
     },
     {
+      "orderId":"10000",
+      "orderItemSeqId":"0002",
       "shipmentItemSeqId": "00003",
       "rejectToFacilityId": "FAC003",
       "rejectionReasonId" : "REJ_RSN_DAMAGED",
