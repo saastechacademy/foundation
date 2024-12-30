@@ -202,7 +202,7 @@ This service will take in the order JSON in OMSNewOrdersFeed and set up a comple
      * Set adjustmentAttributes = remove orderAdjustmentAttributes from the entry
      * If adjustmentAttributes set entry.OrderAdjustmentAttribute = adjustmentAttributes
      * Add entry to orderContext.OrderAdjustment list
-7. Initialize shipGroups list
+7. Initialize orderContext.OrderItemShipGroup list
    * Iterate through orderJson.orderItemShipGroups as orderItemShipGroup
    * Initialize shipGroup map
      * shipGroup.shipmentMethodTypeId = orderItemShipGroup.shipmentMethodTypeId
@@ -211,23 +211,25 @@ This service will take in the order JSON in OMSNewOrdersFeed and set up a comple
      * shipGroup.maySplit = orderItemShipGroup.maySplit
      * shipGroup.contactMechId = shipToAddressContactMechId
      * shipGroup.telecomContactMechId = shipToPhoneContactMechId
-     * Initialize OrderItem list
-   * Iterate orderItemShipGroup as orderItem
-     * Initialize item map
-       * item.externalId = orderItem.externalId
-       * item.orderItemTypeId = orderItem.orderItemTypeId
-       * item.statusId = orderItem.statusId
-       * item.isPromo = orderItem.isPromo
-       * item.quantity = orderItem.quantity
-       * item.unitPrice = orderItem.unitPrice
-       * item.itemDescription = orderItem.itemDescription
-       * productId = productId where Product.internalName = orderItem.productSku
-       * If productId, set item.productId = productId
-         * Else call create#Product with [internalName:productSku] (New Transaction)
-         * set item.productId = createProductOutput.productId
-       * If orderItem.orderItemAttributes set item.OrderItemAttribute = orderItem.orderItemAttributes
-       * If orderItem.orderAdjustments initialize item.OrderAdjustment list
-         * Iterate through orderItem.orderAdjustments
+     * Initialize shipGroup.OrderItem list
+     * Iterate orderItemShipGroup.orderItems as orderItem
+       * Initialize item map
+         * item.externalId = orderItem.externalId
+         * item.orderItemTypeId = orderItem.orderItemTypeId
+         * item.statusId = orderItem.statusId
+         * item.isPromo = orderItem.isPromo
+         * item.quantity = orderItem.quantity
+         * item.unitPrice = orderItem.unitPrice
+         * item.itemDescription = orderItem.itemDescription
+         * productId = productId where Product.internalName = orderItem.productSku
+         * If productId, set item.productId = productId
+           * Else call create#Product with [internalName:productSku] (New Transaction)
+           * set item.productId = createProductOutput.productId
+         * If orderItem.orderItemAttributes set item.OrderItemAttribute = orderItem.orderItemAttributes
+         * If orderItem.orderAdjustments initialize item.OrderAdjustment list
+           * Iterate through orderItem.orderAdjustments
              * Set adjustmentAttributes = remove orderAdjustmentAttributes from the entry
              * If adjustmentAttributes set entry.OrderAdjustmentAttribute = adjustmentAttributes
              * Add entry to item.OrderAdjustment list
+       * Add item map to shipGroup.OrderItem list
+     * Add shipGroup map to orderContext.OrderItemShipGroup list
