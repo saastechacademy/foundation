@@ -11,8 +11,7 @@ Following would be the flow to sync products,
 > - Designs reflect the assumption that order items will always be exploded.
 
 > TODO
-> - Support to create product if it doesn't exist
-> - Support related to tips/donations
+> - Support to create a dummy product for non-existing Shopify product
 
 ## Shopify Connector
 Shopify connector would produce a periodic created orders feed since last run time with following fields,
