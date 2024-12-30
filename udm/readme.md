@@ -6,6 +6,8 @@ Required reading: The first five chapters of [Data Model book](https://www.amazo
 
 ## Chapter 1: Introduction
 
+[Chapter 1 Notes](beginner/chapter_1.md)
+
 Chapter 1 lays the groundwork for why universal data models exist and how they can streamline database design. By emphasizing abstraction, standardization, and reusability, Len Silverston introduces a methodology that helps organizations build robust, scalable data architectures. The chapter underscores the importance of tailoring universal models to each organization’s nuanced requirements while still leveraging the time-saving advantages of a pre-built foundation.
 
 ### **Questions**
