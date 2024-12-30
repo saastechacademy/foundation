@@ -59,11 +59,9 @@ Following are the implementation details,
 
 ### [generate#OMSProductUpdatesFeed](generateOMSProductUpdatesFeed.md)
 
-### map#Product
-Refer implementation details in [createProduct.md](https://github.com/saastechacademy/foundation/blob/main/project-ideas/product-master/createProduct.md).
+### [map#Product](https://github.com/saastechacademy/foundation/blob/main/project-ideas/product-master/mapProduct.md)
 
-### map#ProductVariant
-Refer implementation details in [createProduct.md](https://github.com/saastechacademy/foundation/blob/main/project-ideas/product-master/createProduct.md).
+### [map#ProductVariant](https://github.com/saastechacademy/foundation/blob/main/project-ideas/product-master/mapProductVariant.md)
 
 ## OMS API
 
