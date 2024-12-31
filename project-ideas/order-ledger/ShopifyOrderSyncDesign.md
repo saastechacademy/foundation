@@ -9,9 +9,14 @@ Following would be the flow to sync products,
 > Notes
 > - Not setting origin facility contact mechs as it doesn't make sense for already completed or cancelled orders or until the order is brokered.
 > - Designs reflect the assumption that order items will always be exploded.
+> - Not adding bill from ContactMech details as they are just copied from payToPartyId
 
 > TODO
+> - Check and add support for OrderNote(s)
 > - Support to create a dummy product for non-existing Shopify product
+> - Support to create OrderPaymentPreference(s) for Shopify order transactions
+> - Support to create OrderPaymentPreference for Shopify order payment term
+> - Support to create OrderItemAssociation(s) for exchange orders
 
 ## Shopify Connector
 Shopify connector would produce a periodic created orders feed since last run time with following fields,
@@ -37,3 +42,5 @@ Following are the implementation details,
 ### [create#Customer](createCustomer.md)
 
 ### [create#SalesOrder](createSalesOrder.md)
+
+### [findOrCreate#Product](../oms/findOrCreateProduct.md)
