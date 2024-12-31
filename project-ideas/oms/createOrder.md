@@ -18,175 +18,160 @@ This service creates data in following entities:
 
 ```json
 {
-  "orderId": "ORD123456",
-  "orderTypeId": "SALES_ORDER",
-  "statusId": "ORDER_CREATED",
-  "entryDate": "2024-12-29T10:30:00Z",
-  "priority": "MEDIUM",
-  "currencyUom": "USD",
-  "grandTotal": 120.50,
-  "orderName": "John Doe's Order",
-  "orderRoles": [
-    {
-      "partyId": "CUST123",
-      "roleTypeId": "CUSTOMER"
-    },
-    {
-      "partyId": "EMP456",
-      "roleTypeId": "SALES_REP"
-    }
-  ],
-  "orderItems": [
-    {
-      "orderItemSeqId": "00001",
-      "productId": "PROD001",
-      "productName": "Wireless Mouse",
-      "quantity": 1,
-      "unitPrice": 25.00,
-      "itemDescription": "Ergonomic wireless mouse with Bluetooth",
-      "statusId": "ITEM_ORDERED",
-      "shipGroupSeqId": "00001",
-      "requestedDeliveryDate": "2024-12-31",
-      "requestedDeliveryTime": "10:00:00",
-      "requestedShipMethTypeId": "GROUND",
-      "deliveryWindow": 2.0,
-      "orderItemAttributes": [
+    "currencyUom": "USD",
+    "customerClassificationId": null,
+    "entryDate": "2024-07-30T15:23:47+0000",
+    "externalId": "444455555",
+    "orderDate": "2024-07-25T04:07:49.956",
+    "orderName": "#499999",
+    "orderTypeId": "SALES_ORDER",
+    "statusId": "ORDER_CREATED",
+    "originFacilityId": "",
+    "presentmentCurrencyCode": "USD",
+    "priority": "2",
+    "productStoreId": "STORE",
+    "salesChannelEnumId": "UNKNWN_SALES_CHANNEL",
+    "webSiteId": "WEBSTORE",
+    "adjustments": [
         {
-          "attrName": "color",
-          "attrValue": "Black",
-          "attrDescription": "Preferred color"
+            "orderAdjustmentTypeId": "SHIPPING_CHARGES",
+            "amount": "500",
+            "exemptAmount": "2.5",
+            "comments": "",
+            "sourcePercentage": "5",
+            "adjustmentAttributes": [
+                {
+                    "attrName": "taxAuthority",
+                    "attrValue": "State of California",
+                    "attrDescription": "state tax"
+                }
+            ]
+        }
+    ],
+    "orderAttributes": [
+        {
+            "attrName": "item",
+            "attrValue": "testing attribute",
+            "attrDescription": ""
+        }
+    ],
+    "orderContactMechs": [
+        {
+            "contactMechId": "100489",
+            "contactMechPurposeTypeId": "SHIPPING_LOCATION"
         },
         {
-          "attrName": "warranty",
-          "attrValue": "2 years",
-          "attrDescription": "Warranty period"
-        }
-      ]
-    },
-    {
-      "orderItemSeqId": "00002",
-      "productId": "PROD002",
-      "productName": "Keyboard",
-      "quantity": 1,
-      "unitPrice": 35.00,
-      "itemDescription": "Mechanical keyboard with backlight",
-      "statusId": "ITEM_ORDERED",
-      "shipGroupSeqId": "00002",
-      "requestedDeliveryDate": "2024-12-31",
-      "requestedDeliveryTime": "15:00:00",
-      "requestedShipMethTypeId": "EXPRESS",
-      "deliveryWindow": 1.5,
-      "orderItemAttributes": [
-        {
-          "attrName": "keyLayout",
-          "attrValue": "QWERTY",
-          "attrDescription": "Keyboard layout"
-        }
-      ]
-    },
-    {
-      "orderItemSeqId": "00003",
-      "productId": "PROD003",
-      "productName": "Monitor",
-      "quantity": 1,
-      "unitPrice": 150.00,
-      "itemDescription": "24-inch 1080p LED Monitor",
-      "statusId": "ITEM_ORDERED",
-      "shipGroupSeqId": "00001",
-      "requestedDeliveryDate": "2024-12-31",
-      "requestedDeliveryTime": "14:00:00",
-      "requestedShipMethTypeId": "GROUND",
-      "deliveryWindow": 3.0,
-      "orderItemAttributes": []
-    },
-    {
-      "orderItemSeqId": "00004",
-      "productId": "PROD004",
-      "productName": "USB-C Hub",
-      "quantity": 1,
-      "unitPrice": 50.00,
-      "itemDescription": "7-port USB-C Hub with Power Delivery",
-      "statusId": "ITEM_ORDERED",
-      "shipGroupSeqId": "00002",
-      "requestedDeliveryDate": "2024-12-31",
-      "requestedDeliveryTime": "16:00:00",
-      "requestedShipMethTypeId": "EXPRESS",
-      "deliveryWindow": 1.0,
-      "orderItemAttributes": [
-        {
-          "attrName": "portCount",
-          "attrValue": "7",
-          "attrDescription": "Number of ports"
+            "contactMechId": "100490",
+            "contactMechPurposeTypeId": "PHONE_SHIPPING"
         },
         {
-          "attrName": "powerDelivery",
-          "attrValue": "Yes",
-          "attrDescription": "Supports Power Delivery"
+            "contactMechId": "100491",
+            "contactMechPurposeTypeId": "SHIPPING_EMAIL"
+        },
+        {
+            "contactMechId": "100495",
+            "contactMechPurposeTypeId": "ORDER_EMAIL"
         }
-      ]
-    }
-  ],
-  "orderAdjustments": [
-    {
-      "adjustmentType": "PROMOTION_ADJUSTMENT",
-      "description": "10% Discount",
-      "amount": -5.00
-    },
-    {
-      "adjustmentType": "TAX_ADJUSTMENT",
-      "description": "Sales Tax",
-      "amount": 5.50
-    }
-  ],
-  "orderPaymentPreferences": [
-    {
-      "paymentMethodTypeId": "CREDIT_CARD",
-      "statusId": "PAYMENT_NOT_PROCESSED",
-      "amount": 120.50
-    }
-  ],
-  "orderItemShipGroups": [
-    {
-      "shipGroupSeqId": "00001",
-      "carrierPartyId": "UPS",
-      "shipmentMethodTypeId": "GROUND",
-      "facilityId": "FAC123",
-      "contactMechId": "ADD123",
-      "isGift": false
-    },
-    {
-      "shipGroupSeqId": "00002",
-      "carrierPartyId": "FEDEX",
-      "shipmentMethodTypeId": "EXPRESS",
-      "facilityId": "FAC124",
-      "contactMechId": "ADD124",
-      "isGift": true
-    }
-  ],
-  "orderItemGroups": [
-    {
-      "orderId": "ORD123456",
-      "orderItemGroupSeqId": "GRP001",
-      "groupName": "Brokering Group 1",
-      "parentGroupSeqId": null,
-      "orderItemGroupTypeId": "BROKERING_ITEM_GRP",
-      "fulfillmentLocationId": "FAC123"
-    }
-  ],
-  "orderItemGroupAssoc": [
-    {
-      "orderId": "ORD123456",
-      "orderItemSeqId": "00001",
-      "orderItemGroupSeqId": "GRP001"
-    },
-    {
-      "orderId": "ORD123456",
-      "orderItemSeqId": "00002",
-      "orderItemGroupSeqId": "GRP001"
-    }
-  ]
+    ],
+    "orderIdentifications": [
+        {
+            "idType": "SHOPIFY_ORD_NAME",
+            "idValue": "2345678876545"
+        },
+        {
+            "idType": "SHOPIFY_ORD_ID",
+            "idValue": "4444992255"
+        }  
+    ],
+    "orderPaymentPref": [
+        {
+            "paymentMethodTypeId": "EXT_SHOP_OTHR_GTWAY",
+            "maxAmount": "25000",
+            "statusId": "PAYMENT_AUTHORIZED",
+            "paymentMode": "",
+            "cardName": "",
+            "manualAuthCode": null,
+            "manualRefNum": "45545454545454",
+            "createdByUserLogin": "nishtha.jain",
+            "orderId": "100783"
+        }
+    ],
+    "orderRoles": [
+        {
+            "partyId": "100395",
+            "roleTypeId": "PLACING_CUSTOMER"   
+        },
+        {
+            "partyId": "100395",
+            "roleTypeId": "END_USER_CUSTOMER"
+        },
+        {
+            "partyId": "100395",
+            "roleTypeId": "SHIP_TO_CUSTOMER"
+        },
+        {
+            "partyId": "100395",
+            "roleTypeId": "BILL_TO_CUSTOMER"
+        }
+    ],
+    "shipGroups": [
+        {
+            "facilityId": "NEW_ERA_HARAJUKU",
+            "maySplit": "Y",
+            "shipmentMethodTypeId": "STOREPICKUP",
+            "carrierPartyId": "_NA_",
+            "shipAfterDate": "",
+            "shipByDate": "",
+            "trackingNumber": "8888888888",
+            "contactMechId": "100489",
+            "telecomContactMechId": "100490",
+            "items": [
+                {
+                    "externalId": "100097001712202",
+                    "productId": "10022",
+                    "sku": "BLACK_BELL_BOTTOM_S",
+                    "quantity": 1,
+                    "statusId": "ITEM_CREATED",
+                    "itemDescription": "",
+                    "unitPrice": 500,
+                    "unitListPrice": 1370,
+                    "status": {
+                        "statusId": "ITEM_CREATED",
+                        "statusDatetime": "2024-07-30T15:23:47+0000",
+                        "statusUserLogin": "nishtha.jain"
+                    },
+                    "adjustments": [
+                        {
+                            "orderAdjustmentTypeId:"EXT_PROMO_ADJUSTMENT",
+                            "amount": "200",
+                            "exemptAmount": "2.5",
+                            "comments": "IDK",
+                            "sourcePercentage": "5",
+                            "adjustmentAttributes": [
+                                {
+                                    "attrName": "description",
+                                    "attrValue": "Early bird discount"
+                                }
+                            ]
+                        }
+                    ],
+                    "orderItemAttributes": [
+                        {
+                            "attrName": "_pickupstore",
+                            "attrValue": "NEW_ERA_HARAJUKU",
+                            "attrDescription": ""
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "status": {
+        "statusId": "ORDER_CREATED",
+        "statusUserLogin": "nishtha.jain",
+        "statusDatetime": "2024-07-30T15:23:47+0000"
+    }    
 }
-
 ```
 
 You can adjust this JSON to meet your specific requirements by adding or removing entities and fields as needed.
