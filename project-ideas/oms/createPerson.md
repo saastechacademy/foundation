@@ -8,17 +8,6 @@ In parameters
   "lastName": "Person"
 }
 
-```
-
-Prepare following JSON and call `create#org.apache.ofbiz.party.party.Party`
-
-```json
-{
-  "partyTypeId": "PERSON",
-  "person": {
-    "firstName": "Good",
-    "lastName": "Person"
-  }
-}
-
-```
+Workflow
+1. Create Party
+2. Create Person
