@@ -1,4 +1,4 @@
-### create#Product
+### create#org.apache.ofbiz.product.product.Product
 This would be the base api the uses entity rest method to create product and related base data in the database.
 1. Parameters
     * Input Parameters
