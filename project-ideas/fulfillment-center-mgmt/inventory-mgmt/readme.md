@@ -11,7 +11,7 @@ Use [receivePurchaseShipment](receivePurchaseShipment.md) for incoming shipments
 To record corrections in systemic inventory data, use [createPhysicalInventory](../../oms/createPhysicalInventory.md)
 
 OMS order brokering process, assigns orders to the facility for fulfillment and [createOrderItemInventoryReservation](../../oms/createOrderItemInventoryReservation.md) for each orderItem. 
-The [rejectOrderItem](../rejectOrderItem.md) process also [Cancel Inventory reservation](../../oms/cancelOrderItemInvRes.md).
+The [rejectOrderItem](../rejectOrderItem.md) process also [Cancel Inventory reservation](../../oms/cancelOrderItemInventoryReservation).
 
 
 ## Rejection:
