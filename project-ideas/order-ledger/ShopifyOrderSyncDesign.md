@@ -34,6 +34,6 @@ Following are the implementation details,
 
 ### [create#PostalAddress](../oms/createPostalAddress.md)
 
-### [create#Customer](../oms/createCustomer.md)
+### [create#Customer](createCustomer.md)
 
 ### [create#SalesOrder](createSalesOrder.md)
