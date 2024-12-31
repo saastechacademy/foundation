@@ -32,16 +32,17 @@
     * order.email = shopifyOrder.email
     * order.shopifyShopOrder = [shopId:shopId, shopifyOrderId:shopifyOrder.id]
     * order.orderAdjustments
-        * Iterate through shopifyOrder.shippingLines and shopifyOrder.shippingLines.originalPriceSet.presentmentMoney.amount > 0
-            * Add to orderAdjustments list [orderAdjustmentTypeId:"SHIPPING_CHARGES", amount:shopifyOrder.shippingLines.originalPriceSet.presentmentMoney.amount, comments:shopifyOrder.shippingLines.title]
+        * Iterate through shopifyOrder.shippingLines
+            * If shopifyOrder.shippingLines.originalPriceSet.presentmentMoney.amount > 0   
+               * Add to orderAdjustments list [orderAdjustmentTypeId:"SHIPPING_CHARGES", amount:shopifyOrder.shippingLines.originalPriceSet.presentmentMoney.amount, comments:shopifyOrder.shippingLines.title]
             * If shopifyOrder.shippingLines.taxLines and taxLines.priceSet.presentmentMoney.amount > 0
                 * Add to order adjustments list [orderAdjustmentTypeId:"SHIPPING_SALES_TAX", amount:taxAmount, sourcePercentage:shopifyOrder.shippingLines.taxLines.ratePercentage, comments:shopifyOrder.shippingLines.taxLines.title]
-            * If shopifyOrder.shippingLines.discountAllocations
+            * Iterate shopifyOrder.shippingLines.discountAllocations
                 * Set shippingDiscountAdjustment = [orderAdjustmentTypeId:"EXT_PROMO_ADJUSTMENT", amount:(shopifyOrder.shippingLines.discountAllocations.allocatedAmountSet.presentmentMoney.amount).negate(), comments:"ExternalDiscount"]
-                * If shopifyOrder.shippingLines.discountAllocations.discountCodeApplication
+                * If shopifyOrder.shippingLines.discountAllocations.discountCodeApplication exists
                     * Set shippingDiscountAdjustment.orderAdjustmentAttributes (List) = [[attrName:"DISCOUNT_CODE", attrValue:shopifyOrder.shippingLines.discountAllocations.discountCodeApplication.discountCodeApplication.code]]
-                    * If shopifyOrder.shippingLines.discountAllocations.discountCodeApplication.pricingPercentageValue
-                    * Set shippingDiscountAdjustment.sourcePercentage = shopifyOrder.shippingLines.discountAllocations.discountCodeApplication.pricingPercentageValue.percentage
+                    * If shopifyOrder.shippingLines.discountAllocations.discountCodeApplication.pricingPercentageValue exists
+                       * Set shippingDiscountAdjustment.sourcePercentage = shopifyOrder.shippingLines.discountAllocations.discountCodeApplication.pricingPercentageValue.percentage
             * If shopifyOrder.totalTipReceivedSet.presentmentMoney.amount > 0
                 * Add to orderAdjustments list [orderAdjustmentTypeId:"DONATION_ADJUSTMENT", amount:shopifyOrder.totalTipReceivedSet.presentmentMoney.amount, comments:"Tip"]
     * order.orderItemShipGroups
