@@ -32,8 +32,8 @@ Following are the implementation details,
 
 ## OMS API
 
-### [create#PostalAddress](createPostalAddress.md)
+### [create#PostalAddress](../oms/createPostalAddress.md)
 
-### [create#Customer](createCustomer.md)
+### [create#Customer](../oms/createCustomer.md)
 
 ### [create#SalesOrder](createSalesOrder.md)
