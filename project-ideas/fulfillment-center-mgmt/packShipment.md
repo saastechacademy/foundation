@@ -28,14 +28,19 @@ The shipmentPackageContents and rejectedShipmentItems are optional parameters. T
 
   "rejectOrderItems": [
     {
-      "orderItemSeqId":"0001",
-      "shipmentItemSeqId": "00001",
-      "rejectToFacilityId": "FAC003",
-      "rejectionReasonId" : "REJ_RSN_DAMAGED",
-      "rejectionComments": "The item was part of a display and is not in acceptable condition."
+      "orderId": "ORD001",
+      "orderItemSeqId": "0002",
+      "rejectToFacilityId": "FAC002",
+      "updateQOH": "",
+      "rejectionReasonId": "MISMATCH",
+      "maySplit": "N",
+      "cascadeRejectByProduct": "N",
+      "comments": "The item received does not match the order description."
     },
     {
+      "orderId": "ORD001",
       "orderItemSeqId":"0002",
+      "rejectToFacilityId": "FAC002",
       "shipmentItemSeqId": "00003",
       "rejectToFacilityId": "FAC003",
       "rejectionReasonId" : "REJ_RSN_DAMAGED",
