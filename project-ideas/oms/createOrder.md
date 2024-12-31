@@ -48,14 +48,14 @@ This service creates data in following entities:
             ]
         }
     ],
-    "orderAttributes": [
+    "attributes": [
         {
             "attrName": "item",
             "attrValue": "testing attribute",
             "attrDescription": ""
         }
     ],
-    "orderContactMechs": [
+    "contactMechs": [
         {
             "contactMechId": "100489",
             "contactMechPurposeTypeId": "SHIPPING_LOCATION"
@@ -73,7 +73,7 @@ This service creates data in following entities:
             "contactMechPurposeTypeId": "ORDER_EMAIL"
         }
     ],
-    "orderIdentifications": [
+    "identifications": [
         {
             "idType": "SHOPIFY_ORD_NAME",
             "idValue": "2345678876545"
@@ -83,7 +83,7 @@ This service creates data in following entities:
             "idValue": "4444992255"
         }  
     ],
-    "orderPaymentPref": [
+    "paymentPreferences": [
         {
             "paymentMethodTypeId": "EXT_SHOP_OTHR_GTWAY",
             "maxAmount": "25000",
@@ -96,7 +96,7 @@ This service creates data in following entities:
             "orderId": "100783"
         }
     ],
-    "orderRoles": [
+    "roles": [
         {
             "partyId": "100395",
             "roleTypeId": "PLACING_CUSTOMER"   
@@ -155,7 +155,7 @@ This service creates data in following entities:
                             ]
                         }
                     ],
-                    "orderItemAttributes": [
+                    "itemAttributes": [
                         {
                             "attrName": "_pickupstore",
                             "attrValue": "NEW_ERA_HARAJUKU",
