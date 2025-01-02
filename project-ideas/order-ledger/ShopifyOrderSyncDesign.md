@@ -37,9 +37,14 @@ Following are the implementation details,
 
 ## OMS API
 
+### Seed Data
+```xml
+<org.apache.ofbiz.common.datasource.DataSourceType dataSourceTypeId="EXTERNAL_SYSTEM" description="External System"/>
+<org.apache.ofbiz.common.datasource.DataSource dataSourceId="SHOPIFY" dataSourceTypeId="EXTERNAL_SYSTEM"/>
+```
 ### [create#PostalAddress](../oms/createPostalAddress.md)
 
-### [create#Customer](createCustomer.md)
+### [findOrCreate#Customer](findOrCreateCustomer.md)
 
 ### [create#SalesOrder](createSalesOrder.md)
 
