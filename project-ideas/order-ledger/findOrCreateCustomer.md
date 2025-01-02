@@ -1,4 +1,4 @@
-# findOrCreate#Customer
+# findOrCreate#Customer (Application Layer)
 1. Parameters
     * Input
         * externalId
