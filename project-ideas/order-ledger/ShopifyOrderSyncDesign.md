@@ -40,7 +40,7 @@ Following are the implementation details,
 ### Seed Data
 ```xml
 <org.apache.ofbiz.common.datasource.DataSourceType dataSourceTypeId="EXTERNAL_SYSTEM" description="External System"/>
-<org.apache.ofbiz.common.datasource.DataSource dataSourceId="SHOPIFY" dataSourceTypeId="EXTERNAL_SYSTEM"/>
+<org.apache.ofbiz.common.datasource.DataSource dataSourceId="SHOPIFY" dataSourceTypeId="EXTERNAL_SYSTEM" description="Shopify"/>
 ```
 ### [create#PostalAddress](../oms/createPostalAddress.md)
 
