@@ -27,7 +27,7 @@
     * If "SAVE_BILL_TO_INF" setting in ProductStoreSetting is "Y"
         * order.billToAddress = [toName:shopifyOrder.billingAddress.name, address1:shopifyOrder.billingAddress.address1, address2:shopifyOrder.billingAddress.address2, city:shopifyOrder.billingAddress.city, postalCode:shopifyOrder.billingAddress.zip, stateProvineGeoId:geoId where shopifyOrder.billingAddress.provinceCode=Geo.geoCode, countryGeoId:geoId where shopifyOrder.billingAddress.countryCodeV2=Geo.geoCode, geoPoint:[[dataSourceId:"GEOPT_GOOGLE", latitude:shopifyOrder.billingAddress.latitude, longitude:shopifyOrder.billingAddress.longitude]]]
         * order.billToPhone = shopifyOrder.billingAddress.phone
-    * order.customer = [externalId:shopifyOrder.customer.id, firstName:shopifyOrder.customer.firstName, lastName:shopifyOrder.customer.lastName, email:shopifyOrder.customer.email]
+    * order.customer = [externalId:shopifyOrder.customer.id, firstName:shopifyOrder.customer.firstName, lastName:shopifyOrder.customer.lastName, dataSourceId:"SHOPIFY", email:shopifyOrder.customer.email]
     * order.productStoreId = ProductStore.productStoreId
     * order.email = shopifyOrder.email
     * order.shopifyShopOrder = [shopId:shopId, shopifyOrderId:shopifyOrder.id]
