@@ -44,7 +44,7 @@ Following are the implementation details,
 ```
 ### [create#PostalAddress](../oms/createPostalAddress.md)
 
-### [findOrCreate#Customer](findOrCreateCustomer.md)
+### [findOrCreate#Party](../oms/findOrCreateParty.md)
 
 ### [create#SalesOrder](createSalesOrder.md)
 
