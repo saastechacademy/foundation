@@ -19,8 +19,8 @@ This service will take in the order JSON in OMSNewOrdersFeed and set up a comple
     * orderContext.attributes = orderJson.attributes
     * orderContext.adjustments = orderJson.adjustments
 4. Initialize orderContext.roles list
-    * Call findOrCreate#Customer for orderJson.customer
-    * Add [partyId:findOrCreateCustomerOutput.partyId, roleTypeId:"SHIP_TO_CUSTOMER"] to orderContext.roles
+    * Call findOrCreate#Party for orderJson.customer
+    * Add [partyId:findOrCreatePartyOutput.partyId, roleTypeId:"SHIP_TO_CUSTOMER"] to orderContext.roles
     * Get ProductStore for orderJson.productStoreId
     * Add [partyId:ProductStore.payToPartyId, roleTypeId:"SHIP_TO_CUSTOMER"] to orderContext.roles
 5. Initialize orderContext.contactMechs list
