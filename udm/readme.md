@@ -64,6 +64,7 @@ The study of UDM is guided by ideas discussed in the book **Data Model Resource 
 **Activity:**
 
 - [Order](beginner/order.md)
+- [Design OMS](intermediate/data-model-assignment/activity-design-order.md)
 
 ---
 
