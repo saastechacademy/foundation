@@ -22,7 +22,7 @@ This service will take in the order JSON in OMSNewOrdersFeed and set up a comple
     * Call findOrCreate#Party for orderJson.customer
     * Add [partyId:findOrCreatePartyOutput.partyId, roleTypeId:"SHIP_TO_CUSTOMER"] to orderContext.roles
     * Get ProductStore for orderJson.productStoreId
-    * Add [partyId:ProductStore.payToPartyId, roleTypeId:"SHIP_TO_CUSTOMER"] to orderContext.roles
+    * Add [partyId:ProductStore.payToPartyId, roleTypeId:"SHIP_FROM_VENDOR"] to orderContext.roles
 5. Initialize orderContext.contactMechs list
     * For orderJson.shipToAddress map call create#PostalAddress
     * Set shipToAddressContactMechId = createPostalAddressOutput.contactMechId
