@@ -23,7 +23,8 @@ Input JSON
       "statusId": "RETURN_RECEIVED",
       "expectedItemStatus": "INV_RETURNED",
       "returnQuantity": 1,
-      "returnPrice": 60
+      "returnPrice": 60,
+      "reason": "Return Reason Note"
     }
   ],
   "identifications": [
