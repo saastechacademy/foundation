@@ -21,17 +21,19 @@ Build skills in following categories
 ### Programming Languages 
 * [Java](https://www.scaler.com/topics/java/)
 
+## Application development frameworks
+1. https://github.com/saastechacademy/foundation/tree/main/moqui-framework/beginner
+2. https://cwiki.apache.org/confluence/display/OFBIZ/OFBiz+Tutorial+-+A+Beginners+Development+Guide+for+Release+18.12+and+Release+22.01
+
 ## Data Modeling
 *  [What is data modeling?](https://www.ibm.com/topics/data-modeling)
 *  Universal Data Model, First five chapters of the book: The Data Model Resource Book, Vol. 1
 *  [UDM](udm/readme.md)
 
 ### Early Traction
-1. https://github.com/saastechacademy/foundation/tree/main/moqui-framework/beginner
-2. https://cwiki.apache.org/confluence/display/OFBIZ/OFBiz+Tutorial+-+A+Beginners+Development+Guide+for+Release+18.12+and+Release+22.01
-3. https://www.moqui.org/m/docs/framework/Framework+Features
-4. https://www.moqui.org/m/docs/framework/IDE+Setup/IntelliJ+IDEA+Setup
-5. https://www.youtube.com/watch?v=mxToh2rX7NY
+1. https://www.moqui.org/m/docs/framework/Framework+Features
+2. https://www.moqui.org/m/docs/framework/IDE+Setup/IntelliJ+IDEA+Setup
+3. https://www.youtube.com/watch?v=mxToh2rX7NY
 
 
 ## HotWax Commerce official documentation 
