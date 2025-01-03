@@ -24,8 +24,8 @@ This service will take in the order JSON in OMSNewOrdersFeed and set up a comple
     * Get ProductStore for orderJson.productStoreId
     * Add [partyId:ProductStore.payToPartyId, roleTypeId:"SHIP_FROM_VENDOR"] to orderContext.roles
 5. Initialize orderContext.contactMechs list
-    * For orderJson.shipToAddress map call create#PostalAddress
-    * Set shipToAddressContactMechId = createPostalAddressOutput.contactMechId
+    * For orderJson.shipToAddress map call create#ContactMech with input as [contactMechTypeId:"POSTAL_ADDRESS", postalAddress:orderJson.shipToAddress]
+    * Set shipToAddressContactMechId = createContactMechOutput.contactMechId
     * Add [contatctMechId:shipToAddressContactMechId, contactMechPurposeTypeId:"SHIPPING_LOCATION"] to orderContext.contactMechs
     * Call create#ContactMech for [contactMechTypeId:"TELECOM_NUMBER", infoString:orderJson.shipToPhone]
     * Set shipToPhoneContactMechId = createContactMechOutput.contactMechId
@@ -33,8 +33,8 @@ This service will take in the order JSON in OMSNewOrdersFeed and set up a comple
     * Call create#ContactMech for [contactMechTypeId:"EMAIL_ADDRESS", infoString:orderJson.email]
     * Add [contatctMechId:createContactMechOutput.contactMechId, contactMechPurposeTypeId:"ORDER_EMAIL"] to orderContext.contactMechs
     * If orderJson.billToAddress
-        * For orderJson.billToAddress map call create#PostalAddress
-        * Add [contatctMechId:createPostalAddressOutput.contactMechId, contactMechPurposeTypeId:"BILLING_LOCATION"] to orderContext.contactMechs
+        * For orderJson.billToAddress map call create#ContactMech with input as [contactMechTypeId:"POSTAL_ADDRESS", postalAddress:orderJson.billToAddress]
+        * Add [contatctMechId:createContactMechOutput.contactMechId, contactMechPurposeTypeId:"BILLING_LOCATION"] to orderContext.contactMechs
     * If orderJson.billToPhone
         * Call create#ContactMech for [contactMechTypeId:"TELECOM_NUMBER", infoString:orderJson.billToPhone]
         * Add [contatctMechId:createContactMechOutput.contactMechId, contactMechPurposeTypeId:"PHONE_BILLING"] to orderContext.contactMechs
