@@ -17,9 +17,199 @@ Following would be the flow to sync products,
 > - Support to create OrderPaymentPreference(s) for Shopify order transactions
 > - Support to create OrderPaymentPreference for Shopify order payment term
 > - Support to create OrderItemAssociation(s) for exchange orders
+> - Support to create OrderNote for shopifyOrder.note
+> - Handle shopifyOrder.tags
 
 ## Shopify Connector
 Shopify connector would produce a periodic created orders feed since last run time with following fields,
+
+```
+Order {
+    id
+    name
+    displayFulfillmentStatus
+    createdAt
+    cancelledAt
+    channelInformation {
+        channelDefinition {
+            handle
+        }
+    }
+    customAttributes {
+        key
+        value
+    }
+    customer {
+        id
+        firstName
+        lastName
+        email
+    }
+    phone
+    email
+    tags
+    note
+    currencyCode
+    presentmentCurrencyCode
+    totalPriceSet {
+        presentmentMoney {
+            amount
+            currencyCode
+        }
+    }
+    currentTotalPriceSet {
+        presentmentMoney {
+            amount
+            currencyCode
+        }
+    }
+    shippingAddress {
+        name
+        address1
+        address2
+        city
+        zip
+        provinceCode
+        countryCodeV2
+        latitude
+        longitude
+        phone
+    }
+    billingAddress {
+        name
+        address1
+        address2
+        city
+        zip
+        provinceCode
+        countryCodeV2
+        latitude
+        longitude
+        phone
+    }
+    shippingLines (first: 5) {
+        edges {
+            node {
+                title
+                originalPriceSet {
+                    presentmentMoney {
+                        amount
+                        currencyCode
+                    }
+                }
+                discountAllocations {
+                    allocatedAmountSet {
+                        presentmentMoney {
+                            amount
+                            currencyCode
+                        }
+                    }
+                    discountApplication {
+                         ... on DiscountCodeApplication {
+                            code
+                            targetType
+                            value {
+                                ... on PricingPercentageValue {
+                                    percentage
+                                }
+                            }
+                        }
+                    }
+                }
+                taxLines {
+                    title
+                    priceSet {
+                        presentmentMoney {
+                            amount
+                            currencyCode
+                        }
+                    }
+                }
+            }
+        }
+    }
+    totalTipReceivedSet {
+        presentmentMoney {
+            amount
+            currencyCode
+        }
+    }
+    fulfillmentOrders (first: 5) {
+        edges {
+            node {
+                id
+                status
+                assignedLocation {
+                    location {
+                        id
+                    }
+                }
+                deliveryMethod {
+                    methodType
+                    serviceCode
+                }
+                lineItems (first: 5) {
+                    edges {
+                        node {
+                            id
+                            lineItem {
+                                id
+                                sku
+                                variant {
+                                    id
+                                    barcode
+                                    title
+                                }
+                                originalUnitPriceSet {
+                                    presentmentMoney {
+                                        amount
+                                    }
+                                }
+                                quantity
+                                nonFulfillableQuantity
+                                customAttributes {
+                                    key
+                                    value
+                                }
+                                taxLines {
+                                    title
+                                    ratePercentage
+                                    priceSet {
+                                        presentmentMoney {
+                                            amount
+                                            currencyCode
+                                        }
+                                    }
+                                }
+                                discountAllocations {
+                                    allocatedAmountSet {
+                                        presentmentMoney {
+                                            amount
+                                            currencyCode
+                                        }
+                                    }
+                                    discountApplication {
+                                        ... on DiscountCodeApplication {
+                                            code
+                                            value {
+                                                ... on PricingPercentageValue {
+                                                    percentage
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            totalQuantity
+                            remainingQuantity
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+```
 
 ## Shopify OMS Bridge
 
