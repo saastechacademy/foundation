@@ -22,10 +22,10 @@
         * If shopifyOrder.displayFulfillmentStatus="FULFILLED", set as "ORDER_COMPLETED"
         * If shopifyOrder.cancelledAt is not null, set as "ORDER_CANCELLED"
     * order.attributes = Iterate through shopifyOrder.customAttributes if not null and add to list [attrName:shopifyOrder.customAttributes.key, attrValue:shopifyOrder.customAttributes.value]
-    * order.shipToAddress = [toName:shopifyOrder.shippingAddress.name, address1:shopifyOrder.shippingAddress.address1, address2:shopifyOrder.shippingAddress.address2, city:shopifyOrder.shippingAddress.city, postalCode:shopifyOrder.shippingAddress.zip, stateProvineGeoId:geoId where shopifyOrder.shippingAddress.provinceCode=Geo.geoCode, countryGeoId:geoId where shopifyOrder.shippingAddress.countryCodeV2=Geo.geoCode, latitude:shopifyOrder.shippingAddress.latitude, longitude:shopifyOrder.shippingAddress.longitude]
+    * order.shipToAddress = [toName:shopifyOrder.shippingAddress.name, address1:shopifyOrder.shippingAddress.address1, address2:shopifyOrder.shippingAddress.address2, city:shopifyOrder.shippingAddress.city, postalCode:shopifyOrder.shippingAddress.zip, stateProvinceGeoId:geoId where shopifyOrder.shippingAddress.provinceCode=Geo.geoCode, countryGeoId:geoId where shopifyOrder.shippingAddress.countryCodeV2=Geo.geoCode, latitude:shopifyOrder.shippingAddress.latitude, longitude:shopifyOrder.shippingAddress.longitude]
     * order.shipToPhone = shopifyOrder.shippingAddress.phone
     * If "SAVE_BILL_TO_INF" setting in ProductStoreSetting is "Y"
-        * order.billToAddress = [toName:shopifyOrder.billingAddress.name, address1:shopifyOrder.billingAddress.address1, address2:shopifyOrder.billingAddress.address2, city:shopifyOrder.billingAddress.city, postalCode:shopifyOrder.billingAddress.zip, stateProvineGeoId:geoId where shopifyOrder.billingAddress.provinceCode=Geo.geoCode, countryGeoId:geoId where shopifyOrder.billingAddress.countryCodeV2=Geo.geoCode, latitude:shopifyOrder.billingAddress.latitude, longitude:shopifyOrder.billingAddress.longitude]
+        * order.billToAddress = [toName:shopifyOrder.billingAddress.name, address1:shopifyOrder.billingAddress.address1, address2:shopifyOrder.billingAddress.address2, city:shopifyOrder.billingAddress.city, postalCode:shopifyOrder.billingAddress.zip, stateProvinceGeoId:geoId where shopifyOrder.billingAddress.provinceCode=Geo.geoCode, countryGeoId:geoId where shopifyOrder.billingAddress.countryCodeV2=Geo.geoCode, latitude:shopifyOrder.billingAddress.latitude, longitude:shopifyOrder.billingAddress.longitude]
         * order.billToPhone = shopifyOrder.billingAddress.phone
     * order.customer = [externalId:shopifyOrder.customer.id, firstName:shopifyOrder.customer.firstName, lastName:shopifyOrder.customer.lastName, dataSourceId:"SHOPIFY", email:shopifyOrder.customer.email]
     * order.productStoreId = ProductStore.productStoreId
@@ -39,7 +39,7 @@
               * If shopifyOrder.shippingLines.taxLines.priceSet.presentmentMoney.amount > 0
                   * Add to order.adjustments list [orderAdjustmentTypeId:"SHIPPING_SALES_TAX", amount:taxAmount, sourcePercentage:shopifyOrder.shippingLines.taxLines.ratePercentage, comments:shopifyOrder.shippingLines.taxLines.title]
             * Iterate through shopifyOrder.shippingLines.discountAllocations
-                * Set shippingDiscountAdjustment = [orderAdjustmentTypeId:"EXT_PROMO_ADJUSTMENT", amount:(shopifyOrder.shippingLines.discountAllocations.allocatedAmountSet.presentmentMoney.amount).negate(), comments:"ExternalDiscount"]
+                * Set shippingDiscountAdjustment = [orderAdjustmentTypeId:"EXT_PROMO_ADJUSTMENT", amount:(shopifyOrder.shippingLines.discountAllocations.allocatedAmountSet.presentmentMoney.amount).negate(), comments:"External Discount"]
                 * If shopifyOrder.shippingLines.discountAllocations.discountCodeApplication exists
                     * Set shippingDiscountAdjustment.attributes (List) = [[attrName:"DISCOUNT_CODE", attrValue:shopifyOrder.shippingLines.discountAllocations.discountCodeApplication.discountCodeApplication.code]]
                     * If shopifyOrder.shippingLines.discountAllocations.discountCodeApplication.pricingPercentageValue exists
@@ -67,7 +67,7 @@
                             * Add following map to orderAdjustments list - [orderAdjustmentTypeId:"SALES_TAX", amount:taxAmount, sourcePercentage:shopifyOrder.fulfillmentOrders.lineItems.taxLines.ratePercentage, comments:shopifyOrder.fulfillmentOrders.lineItems.taxLines.title]
                         * Iterate through shopifyOrder.fulfillmentOrders.lineItems.linetItem.discountAllocations
                             * Calculate discount amount for exploded order items, discountAmount = shopifyOrder.fulfillmentOrders.lineItems.linetItem.discountAllocations.allocatedAmountSet.presentmentMoney.amount / shopifyOrder.fulfillmentOrders.lineItems.lineItem.quantity
-                            * Set discountAdjustment = [orderAdjustmentTypeId:"EXT_PROMO_ADJUSTMENT", amount:discountAmount.negate(), comments:"ExternalDiscount"]
+                            * Set discountAdjustment = [orderAdjustmentTypeId:"EXT_PROMO_ADJUSTMENT", amount:discountAmount.negate(), comments:"External Discount"]
                             * If shopifyOrder.fulfillmentOrders.lineItems.linetItem.discountAllocations.discountCodeApplication
                                 * Set discountAdjustment.attributes (List) = [[attrName:"DISCOUNT_CODE", attrValue:shopifyOrder.fulfillmentOrders.lineItems.linetItem.discountAllocations.discountCodeApplication.code]]
                                 * If shopifyOrder.fulfillmentOrders.lineItems.linetItem.discountAllocations.discountCodeApplication.pricingPercentageValue
