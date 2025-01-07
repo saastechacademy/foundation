@@ -16,9 +16,12 @@ Following would be the flow to sync products,
 > - Support to create a dummy product for non-existing Shopify product
 > - Support to create OrderPaymentPreference(s) for Shopify order transactions
 > - Support to create OrderPaymentPreference for Shopify order payment term
+> - Support for preorder and backorder
 > - Support to create OrderItemAssociation(s) for exchange orders
 > - Support to create OrderNote for shopifyOrder.note
-> - Handle shopifyOrder.tags
+> - Handle shopifyOrder.tags (Free Text or Keywords?)
+> - What is the purpose of storing shopifyOrder.statusPageUrl (order_status_url in rest)
+> - Analyze all the communication events created in legacy flow
 
 ## Shopify Connector
 Shopify connector would produce a periodic created orders feed since last run time with following fields,
@@ -43,7 +46,6 @@ Order {
         id
         firstName
         lastName
-        email
     }
     phone
     email
@@ -234,7 +236,7 @@ Following are the implementation details,
 ```
 ### [create#PostalAddress](../oms/createPostalAddress.md)
 
-### [findOrCreate#Party](../oms/findOrCreateParty.md)
+### [findOrCreate#Person](../oms/findOrCreatePerson.md)
 
 ### [create#SalesOrder](createSalesOrder.md)
 
