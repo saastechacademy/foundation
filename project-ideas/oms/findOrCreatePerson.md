@@ -5,6 +5,7 @@
         * firstName
         * lastName
         * dataSourceId
+        * contactMechs (list of [contactMechId:<contactMechId>, purposes:[[contactMechPurposeTypeId:<contactMechPurposeTypeId>]]])
         * roles (list of [roleTypeId:<roleTypeId>])
         * identifications (list of [partyIdentificationTypeId:<partyIdentificationTypeId>, idValue:<idValue>])
     * Output
