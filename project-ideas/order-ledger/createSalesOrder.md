@@ -1,4 +1,4 @@
-### create#SalesOrder (Application Layer)
+### co.hotwax.orderledger.order.OrderServices.create#SalesOrder (Application Layer - OMS)
 This service will take in the order JSON in OMSNewOrdersFeed and set up a complete order by performing any surrounding crud operations as needed.
 1. Parameters
     * Input Parameters

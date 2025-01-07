@@ -1,4 +1,4 @@
-# findOrCreate#Person
+# co.hotwax.oms.PartyServices.findOrCreate#Person (OMS)
 1. Parameters
     * Input
         * externalId
