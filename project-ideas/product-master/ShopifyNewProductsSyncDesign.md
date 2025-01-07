@@ -70,7 +70,7 @@ Following are the implementation details,
 
 ### Seed Data
 ```xml
-<moqui.service.message.SystemMessageType systemMessageTypeId="FeedErrorFile"/>
+<moqui.service.message.SystemMessageType systemMessageTypeId="FeedErrorFile" parentTypeId="LocalFeedFile"/>
 
 <moqui.service.message.SystemMessageType systemMessageTypeId="NewProductsFeed"
         description="New Products Feed"
