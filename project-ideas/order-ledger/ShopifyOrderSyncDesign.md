@@ -233,6 +233,23 @@ Following are the implementation details,
 ```xml
 <org.apache.ofbiz.common.datasource.DataSourceType dataSourceTypeId="EXTERNAL_SYSTEM" description="External System"/>
 <org.apache.ofbiz.common.datasource.DataSource dataSourceId="SHOPIFY" dataSourceTypeId="EXTERNAL_SYSTEM" description="Shopify"/>
+
+<moqui.service.message.SystemMessageType systemMessageTypeId="NewOrdersFeed"
+        description="New Orders Feed"
+        parentTypeId="LocalFeedFile"
+        consumeServiceName="co.hotwax.orderledger.system.FeedServices.consume#OMSFeedSystemMessage"
+        receivePath=""
+        receiveResponseEnumId="MsgRrMove"
+        receiveMovePath=""
+        sendService="co.hotwax.orderledger.order.OrderServices.create#SalesOrder"
+        sendPath="${contentRoot}/oms/NewOrdersFeed"/>
+
+<moqui.basic.EnumerationType enumTypeId="ORDER_SYS_JOB" description="Order Jobs"/>
+<moqui.basic.Enumeration enumId="POL_NEWORDRS_FD" enumCode="POL_NEWORDRS_FD" description="Poll New Orders Feed" enumTypeId="ORDER_SYS_JOB"/>
+<moqui.service.job.ServiceJob jobName="poll_SystemMessageFileSftp_NewOrdersFeed" jobTypeEnumId="POL_NEWORDRS_FD" description="Poll New Orders Feed"
+        serviceName="co.hotwax.ofbiz.SystemMessageServices.poll#SystemMessageFileSftp" cronExpression="0 0 * * * ?" paused="Y">
+    <parameters parameterName="systemMessageTypeId" parameterValue="NewOrdersFeed"/>
+</moqui.service.job.ServiceJob>
 ```
 ### [create#PostalAddress](../oms/createPostalAddress.md)
 
@@ -241,3 +258,5 @@ Following are the implementation details,
 ### [create#SalesOrder](createSalesOrder.md)
 
 ### [findOrCreate#Product](../oms/findOrCreateProduct.md)
+
+### [consume#OMSFeedSystemMessage](consumeOMSFeedSystemMessage.md)

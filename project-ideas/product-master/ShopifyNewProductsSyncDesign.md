@@ -68,6 +68,28 @@ Following are the implementation details,
 
 ## OMS API
 
+### Seed Data
+```xml
+<moqui.service.message.SystemMessageType systemMessageTypeId="FeedErrorFile"/>
+
+<moqui.service.message.SystemMessageType systemMessageTypeId="NewProductsFeed"
+        description="New Products Feed"
+        parentTypeId="LocalFeedFile"
+        consumeServiceName="co.hotwax.orderledger.system.FeedServices.consume#OMSFeedSystemMessage"
+        receivePath=""
+        receiveResponseEnumId="MsgRrMove"
+        receiveMovePath=""
+        sendService="co.hotwax.oms.ProductServices.create#ProductAndVariants"
+        sendPath="${contentRoot}/oms/NewProductsFeed"/>
+
+<moqui.basic.EnumerationType enumTypeId="PRODUCT_SYS_JOB" description="Product Jobs"/>
+<moqui.basic.Enumeration enumId="POL_NEWPRDTS_FD" enumCode="POL_NEWPRDTS_FD" description="Poll New Products Feed" enumTypeId="PRODUCT_SYS_JOB"/>
+<moqui.service.job.ServiceJob jobName="poll_SystemMessageFileSftp_NewProductsFeed" jobTypeEnumId="POL_NEWPRDTS_FD" description="Poll New Products Feed"
+        serviceName="co.hotwax.ofbiz.SystemMessageServices.poll#SystemMessageFileSftp" cronExpression="0 0 * * * ?" paused="Y">
+    <parameters parameterName="systemMessageTypeId" parameterValue="NewProductsFeed"/>
+</moqui.service.job.ServiceJob>
+```
+
 ### [create#Product](../oms/createProduct.md)
 
 ### [create#ProductAndVariants](createProductAndVariants.md)
@@ -75,3 +97,5 @@ Following are the implementation details,
 ### [create#ProductVariant](createProductVariant.md)
 
 ### [prepare#ProductCreate](prepareProductCreate.md)
+
+### [consume#OMSFeedSystemMessage](../order-ledger/consumeOMSFeedSystemMessage.md)
