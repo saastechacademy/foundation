@@ -1,4 +1,4 @@
-# Shopify/OMS Product Sync Design
+# Shopify/OMS New Products Sync Design
 
 Newly created products and product updates in Shopify needs to be synced timely to OMS. This design document is specific to syncing newly created Shopify products.  
 Shopify has virtual and variant products. An ideal situation would have to sync virtual and variant products in separate batch processes, but since Shopify GraphQL API doesn't let variants to be filtered by created date, we will have to sync these together in a single batch process.  

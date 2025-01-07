@@ -1,4 +1,4 @@
-# Shopify/OMS Product Sync Design
+# Shopify/OMS Product Updates Sync Design
 
 Newly created products and product updates in Shopify needs to be synced timely to OMS. This design document is specific to syncing Shopify product (virtual) updates.  
 There is a possibility of new variants being added to an existing virtual product on Shopify, we will need to consider and handle this scenario in this design.  
