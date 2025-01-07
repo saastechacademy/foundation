@@ -1,4 +1,4 @@
-### map#SalesOrder
+### co.hotwax.sob.order.ShopifyOrderMappingServices.map#SalesOrder (shopify-oms-bridge)
 1. Service Parameters
     * Input
         * shopifyOrder (Map)

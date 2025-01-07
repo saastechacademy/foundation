@@ -1,4 +1,4 @@
-### findOrCreate#Product
+### co.hotwax.oms.ProductServices.findOrCreate#Product (OMS)
 1. Parameters
    * Input
      * internalName
