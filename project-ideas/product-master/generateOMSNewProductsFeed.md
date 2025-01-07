@@ -1,4 +1,4 @@
-### generate#OMSNewProductsFeed
+# co.hotwax.sob.system.FeedServices.generate#OMSNewProductsFeed (shopify-oms-bridge)
 1. Fetch SystemMessage record
 2. Fetch related SystemMessageRemote
 3. Fetch shopId from SystemMessageRemote.remoteId

@@ -1,4 +1,4 @@
-### prepare#ProductUpdate (Application Layer)
+# co.hotwax.oms.ProductServices.prepare#ProductUpdate (Application Layer - OMS)
 1. Parameters
     * Input Parameters
         * productJson (Map)

@@ -1,4 +1,4 @@
-### map#ProductVariant
+# co.hotwax.sob.product.ProductMappingServices.map#ProductVariant (shopify-oms-bridge)
 1. Service Parameters
     * Input
         * shopifyProductVariant

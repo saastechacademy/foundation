@@ -1,4 +1,4 @@
-### prepare#ProductCreate (Application Layer)
+# co.hotwax.oms.ProductServices.prepare#ProductCreate (Application Layer - OMS)
 1. Parameters
     * Input Parameters
         * productJson (Map)
@@ -21,4 +21,4 @@
 8. If ProductFeatureAppl is not null, add it to productJson map.
 9. If goodIdentifications is not null, initialize GoodIdentification (name should be the same for entity rest api) list.
 10. Iterate through goodIdentifications and perform following steps,
-* add fromDate = nowTimestamp to each entry and add it to GoodIdentification list.
+    * add fromDate = nowTimestamp to each entry and add it to GoodIdentification list.
