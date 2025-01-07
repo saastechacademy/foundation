@@ -258,3 +258,5 @@ Following are the implementation details,
 ### [create#SalesOrder](createSalesOrder.md)
 
 ### [findOrCreate#Product](../oms/findOrCreateProduct.md)
+
+### [consume#OMSFeedSystemMessage](consumeOMSFeedSystemMessage.md)

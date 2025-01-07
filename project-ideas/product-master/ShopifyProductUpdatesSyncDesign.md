@@ -91,3 +91,5 @@ Following are the implementation details,
 ### [update#ProductVariant](updateProductVariant.md)
 
 ### [prepare#ProductUpdate](prepareProductUpdate.md)
+
+### [consume#OMSFeedSystemMessage](../order-ledger/consumeOMSFeedSystemMessage.md)

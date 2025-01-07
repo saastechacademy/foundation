@@ -97,3 +97,5 @@ Following are the implementation details,
 ### [create#ProductVariant](createProductVariant.md)
 
 ### [prepare#ProductCreate](prepareProductCreate.md)
+
+### [consume#OMSFeedSystemMessage](../order-ledger/consumeOMSFeedSystemMessage.md)
