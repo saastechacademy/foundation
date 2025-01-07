@@ -54,3 +54,7 @@ Test complete order life cycle for an existing order imported from Shopify. To t
 
 ### Deprecate TelecomNumber entity and store it in ContactMech.infoString
 Reason for this proposal is that we are not maintaining this information and just storing it as received from the external systems.
+
+#### Broken Business Processes
+
+#### Broken UI
