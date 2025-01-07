@@ -59,13 +59,30 @@ Following are the implementation details,
 
 ### [generate#OMSProductUpdatesFeed](generateOMSProductUpdatesFeed.md)
 
-### map#Product
-Refer implementation details in [createProduct.md](https://github.com/saastechacademy/foundation/blob/main/project-ideas/product-master/createProduct.md).
+### [map#Product](mapProduct.md)
 
-### map#ProductVariant
-Refer implementation details in [createProduct.md](https://github.com/saastechacademy/foundation/blob/main/project-ideas/product-master/createProduct.md).
+### [map#ProductVariant](mapProductVariant.md)
 
 ## OMS API
+
+### Seed Data
+```xml
+<moqui.service.message.SystemMessageType systemMessageTypeId="ProductUpdatesFeed"
+        description="Product Updates Feed"
+        parentTypeId="LocalFeedFile"
+        consumeServiceName="co.hotwax.orderledger.system.FeedServices.consume#OMSFeedSystemMessage"
+        receivePath=""
+        receiveResponseEnumId="MsgRrMove"
+        receiveMovePath=""
+        sendService="co.hotwax.oms.ProductServices.update#ProductAndVariants"
+        sendPath="${contentRoot}/oms/ProductUpdatesFeed"/>
+
+<moqui.basic.Enumeration enumId="POL_PRDTUPDTS_FD" enumCode="POL_PRDTUPDTS_FD" description="Poll Product Updates Feed" enumTypeId="PRODUCT_SYS_JOB"/>
+<moqui.service.job.ServiceJob jobName="poll_SystemMessageFileSftp_ProductUpdatesFeed" jobTypeEnumId="POL_PRDTUPDTS_FD" description="Poll Product Updates Feed"
+        serviceName="co.hotwax.ofbiz.SystemMessageServices.poll#SystemMessageFileSftp" cronExpression="0 0 * * * ?" paused="Y">
+    <parameters parameterName="systemMessageTypeId" parameterValue="ProductUpdatesFeed"/>
+</moqui.service.job.ServiceJob>
+```
 
 ### [update#Product](../oms/updateProduct.md)
 
