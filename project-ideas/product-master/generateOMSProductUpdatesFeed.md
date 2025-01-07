@@ -1,4 +1,4 @@
-### generate#OMSProductUpdatesFeed
+# co.hotwax.sob.system.FeedServices.generate#OMSProductUpdatesFeed (shopify-oms-bridge)
 1. Fetch SystemMessage record
 2. Fetch related SystemMessageRemote
 3. Fetch shopId from SystemMessageRemote.remoteId
@@ -8,4 +8,3 @@
 7. Write the product map if returned in service output to the file.
 8. Close the file once the iteration is complete.
 9. If *sendSmrId* SystemMessageTypeParameter is defined, queue *SendOMSNewProductsFeed* SystemMessage.
-

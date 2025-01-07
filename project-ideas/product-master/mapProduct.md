@@ -1,3 +1,4 @@
+# co.hotwax.sob.product.ProductMappingServices.map#Product (shopify-oms-bridge)
 1. Service Parameters
     * Input
         * shopifyProduct (Map)

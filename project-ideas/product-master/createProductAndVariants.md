@@ -1,4 +1,4 @@
-### create#ProductAndVariants (Application Layer)
+# co.hotwax.oms.ProductServices.create#ProductAndVariants (Application Layer - OMS)
 This service will take in the product JSON in OMSNewProductsFeed and set up a complete product and its variants by performing any surrounding crud operations as needed.
 1. Parameters
     * Input Parameters

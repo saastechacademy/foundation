@@ -1,4 +1,4 @@
-### update#ProductVariant (Application Layer)
+# co.hotwax.oms.ProductServices.update#ProductVariant (Application Layer - OMS)
 1. Parameters
     * Input Parameters
         * productVariantJson (Map)
@@ -15,4 +15,3 @@
         * Validate and call create#ProductAssoc if it doesn't exist for parentProductId and updateProductOutput.productId.
         * Store ShopifyShopProduct with shopifyShopProduct and updateProductOutput.productId as input
         * Iterate through output deleteProductFeatureAppls list and call delete#org.apache.ofbiz.product.feature.ProductFeatureAppl.
-
