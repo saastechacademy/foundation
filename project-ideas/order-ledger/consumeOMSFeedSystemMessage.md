@@ -1,4 +1,4 @@
-# co.hotwax.orderledger.system.FeedServices.consume#OMSFeedSystemMessage
+# co.hotwax.orderledger.system.FeedServices.consume#OMSFeedSystemMessage (OMS)
 1. Implements _org.moqui.impl.SystemMessageServices.consume#SystemMessage_.
 2. Get the systemMessage record from SystemMessageAndType view entity.
 3. Set filePathRef = location reference of systemMessage.messageText.

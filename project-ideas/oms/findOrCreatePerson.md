@@ -15,3 +15,5 @@
    * If firstName and lastName are null return error "Party not found with externalId: ${externalId}. Couldn't create a Party for null firstName and lastName."
    * Call create#Person in context
    * set partyId = createPersonOutput.partyId
+
+[create#Person](createPerson.md)
