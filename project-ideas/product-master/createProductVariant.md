@@ -5,7 +5,7 @@
         * parentProductId
 2. If productVariantJson.productId != null
     * Only store ShopifyShopProduct record for productVariantJson.shopifyShopProduct
-    * Call create#ProductAssoc for parentProductId and productVariantJson.productId.
+    * Call create#ProductAssoc for parentProductId and productVariantJson.productId with productAssocTypeId = 'PRODUCT_VARIANT'
     * Else
         * Remove productVariantJson.shopifyShopProduct as shopifyShopProduct.
         * Call prepare#ProductCreate for each variant map.
