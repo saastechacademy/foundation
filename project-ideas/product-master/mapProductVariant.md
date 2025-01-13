@@ -27,7 +27,7 @@
     * productVariant.isVirtual = N
     * productVariant.isVariant = Y
     * productVariant.sequenceNum = shopifyProductVariant.position
-    * productVariant.price = [productPriceTypeId:"LIST_PRICE", productPricePurposeId:"PURCHASE", currencyUomId:ProductStore.defaultCurrencyUomId, price:shopifyVariant.price]
+    * productVariant.price = [productPriceTypeId:"LIST_PRICE", productPricePurposeId:"PURCHASE", currencyUomId:ProductStore.defaultCurrencyUomId, price:shopifyVariant.price,productStoreGroupId:ProductStore.primaryStoreGroupId]
     * productVariant.features = iterate through shopifyProductVariant.selectedOptions and create a list of maps with following key/value(s)
         * productFeatureId = set if exists
         * productFeatureApplTypeId = "STANDARD_FEATURE"
