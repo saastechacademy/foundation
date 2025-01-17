@@ -61,4 +61,4 @@
 5. **Return picklistId** The event handler will then use picklistId to generate pdf return to the webapp.
 
 
-[createPickList](PickList.md)
+[createPickList](../oms/createPickList)

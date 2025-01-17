@@ -1,4 +1,4 @@
-## create#PhysicalInventory
+## create#org.apache.ofbiz.product.inventory.PhysicalInventory
 
 ### Workflow
 

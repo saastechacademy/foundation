@@ -25,4 +25,9 @@ Write JOLT transformation to map Shopify order json to HotWax Order JSON.
 
 The data sync process ensure, no duplicate record is created. The sync process should also allow configuration for content based skipping of objects e.g Orders tagged Re-Curate should be not be synched with HC. 
 The data sync pipeline should preferably filter objects and only process data sync for select set of orders. 
- 
+
+
+https://github.com/hotwax/press-release-faq/tree/main/integration/shopify
+https://github.com/hotwax/press-release-faq/blob/main/auditing/audit-and-correct-shopify-pre-order-details.md
+https://github.com/hotwax/press-release-faq/blob/main/auditing/shopify-graphql-api-log-auditing.md
+https://github.com/hotwax/press-release-faq/blob/main/import/pos-sales-inventory.md

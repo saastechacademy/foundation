@@ -1,3 +1,27 @@
+### This assignment tests your ability to Model:
+1. Order and order items
+2. Order parties and contact mechanisms
+3. Order adjustments
+4. Order status and terms
+5. Order Item Associations
+
+Model order data such that businesses has information to answer many questions about orders; For instance:
+
+1. When is the expected delivery time?
+2. Who is responsible for paying for the order?
+3. What is the price for each product that is ordered?
+4. What people and organizations are involved in the order?
+5. Who placed the order? To whom is the order being shipped?
+
+
+### Tasks
+1. Setup custom component, "ordermgmtsystem"
+2. Setup Order and related entities defined in this document.
+3. Build UI using Forms and Screens.
+4. Demonstrate use of your application to manage sample order data. Prepare set of sample data based on your online shopping experience.
+5. Add Entities and UI for managing Order contactmech, Order status, Order adjustments, Order payments.
+
+
 # Introduction to Order Data Model
 
 This document provides an overview of the Order data model, focusing on its core entities - OrderHeader, OrderPart, OrderItem, and related entities. It describes the structure for handling purchase and sales orders, splitting them for shipping and handling, and tracking order statuses. Additionally, we provide sample JSON data for orders with multiple parts and items.
