@@ -1,8 +1,8 @@
 # What?
-Learn building business automation sofware.
+Learn building business automation software.
 
 Build skills in following categories
-*  Sotware Development
+*  Software Development
 *  System Design
 *  Business processes
 *  Data Modeling
@@ -36,7 +36,7 @@ This training program requires a solid foundation in software development princi
 2. [Design PIM](udm/beginner/activity-design-pim.md)
 
 ### Module 3: Order and Shipment Data Modeling
-* Universal Data Model, Read **[Chapter 3 and Chapter 4](udm/readme.md)** of the book: The Data Model Resource Book, Vol. 1
+* Universal Data Model, Read **[Chapter 4 and Chapter 5](udm/readme.md)** of the book: The Data Model Resource Book, Vol. 1
 * [Design OMS](udm/intermediate/data-model-assignment/activity-design-order.md)
 * [Order Fulfillment System](udm/intermediate/data-model-assignment/activity-design-fulfillment.md)
 
@@ -49,38 +49,34 @@ This training program requires a solid foundation in software development princi
 ### Module 5: Official Documentation and Application Usage
 * https://docs.hotwax.co/documents/v/documents-1
 * [Internal Usage Guidelines](https://docs.hotwax.co/everything#shopify)
-* [Launchpad Login](https://launchpad.hotwax.io/home)
-* [User Management App Login](https://launchpad.hotwax.io/login?redirectUrl=https://users-dev.hotwax.io/login)
-* [Job Manager App (Job Management+Job Workflows) Login](https://docs.hotwax.co/documents/v/retail-operations/workflow/job-manager)
-* [Facility Management App Login](https://facilities.hotwax.io/tabs/find-facilities)
-* [ATP App Login](https://launchpad.hotwax.io/login?isLoggedOut=true&redirectUrl=https://atp.hotwax.io/login)
-* [Routing App Login](https://launchpad.hotwax.io/login?isLoggedOut=true&redirectUrl=https://order-routing.hotwax.io/login)
-* [Fulfillment App Login](https://launchpad.hotwax.io/login?redirectUrl=https://fulfillment-dev.hotwax.io/login)
-* [Picking App Login](https://picking-dev.hotwax.io/)
-* [BOPIS Fulfillment App Login](https://bopis-dev.hotwax.io/)
-* [Receiving App Login](https://launchpad.hotwax.io/login?redirectUrl=https://receiving-dev.hotwax.io/login)
-* [Cycle Counting App Login](https://inventorycount-dev.hotwax.io/login)
-* [Import App Login](https://import.hotwax.io/purchase-order)
-* [Pre-Order Management App Login](https://launchpad.hotwax.io/login?redirectUrl=https://preorder-dev.hotwax.io/login)
+* [Launchpad](https://launchpad.hotwax.io/home)
+* [User Management](https://launchpad.hotwax.io/login?redirectUrl=https://users-dev.hotwax.io/login)
+* [Job Manager App (Job Management+Job Workflows)](https://docs.hotwax.co/documents/v/retail-operations/workflow/job-manager)
+* [Facility Management](https://facilities.hotwax.io/tabs/find-facilities)
+* [ATP](https://launchpad.hotwax.io/login?isLoggedOut=true&redirectUrl=https://atp.hotwax.io/login)
+* [Routing](https://launchpad.hotwax.io/login?isLoggedOut=true&redirectUrl=https://order-routing.hotwax.io/login)
+* [Fulfillment](https://launchpad.hotwax.io/login?redirectUrl=https://fulfillment-dev.hotwax.io/login)
+* [Picking](https://picking-dev.hotwax.io/)
+* [BOPIS Fulfillment](https://bopis-dev.hotwax.io/)
+* [Receiving](https://launchpad.hotwax.io/login?redirectUrl=https://receiving-dev.hotwax.io/login)
+* [Cycle Counting](https://inventorycount-dev.hotwax.io/login)
+* [Import](https://import.hotwax.io/purchase-order)
+* [Pre-Order Management](https://launchpad.hotwax.io/login?redirectUrl=https://preorder-dev.hotwax.io/login)
 * [Apply Safety Stock](https://docs.hotwax.co/documents/v/retail-operations/inventory/safety-stock)
 * [Create Draft Orders](https://docs.google.com/document/d/1ucpl4w0bt_EPL8jS1KCENKwS2FuPvMlGbMBrZmCNg40/edit?usp=sharing)
 * [Product Store Configurations](https://docs.hotwax.co/documents/v/system-admins/product-store/product-store)
 * [Training activity](https://docs.google.com/document/d/1ceDBoj3MeHvJFoCOK3WvZFBxNCc7T_xS1iZaMZxqaF8/edit?tab=t.0#heading=h.y8japeeqpuci)
-* [OMS Login](https://dev-oms.hotwax.io/commerce/control/main,https://dev-oms.hotwax.io/commerce/control/main)
-* [Shopify Backend Login](https://admin.shopify.com/store/hc-sandbox/orders,https://admin.shopify.com/store/hc-sandbox/orders)
-* [eCommerce](https://hc-sandbox.myshopify.com/,https://hc-sandbox.myshopify.com/)
+* [OMS](https://dev-oms.hotwax.io/commerce/control/main)
+* [Shopify Backend Login](https://admin.shopify.com/store/hc-sandbox/orders)
+* [eCommerce](https://hc-sandbox.myshopify.com/)
 
-### Early Traction
+## Resources:
+
 1. https://github.com/saastechacademy/foundation/tree/main/moqui-framework/beginner
 2. https://cwiki.apache.org/confluence/display/OFBIZ/OFBiz+Tutorial+-+A+Beginners+Development+Guide+for+Release+18.12+and+Release+22.01
 3. https://www.moqui.org/m/docs/framework/Framework+Features
 4. https://www.moqui.org/m/docs/framework/IDE+Setup/IntelliJ+IDEA+Setup
 5. https://www.youtube.com/watch?v=mxToh2rX7NY
-
-
-
-## References:
-
-1. https://cwiki.apache.org/confluence/display/OFBIZ/Data+Model+Diagrams
-2. https://cwiki.apache.org/confluence/download/attachments/13271792/OFBizDatamodelBook_Combined_20171001.pdf
-3. https://www.amazon.com/Data-Model-Resource-Book-Vol/dp/0471380237
+6. https://cwiki.apache.org/confluence/display/OFBIZ/Data+Model+Diagrams
+7. https://cwiki.apache.org/confluence/download/attachments/13271792/OFBizDatamodelBook_Combined_20171001.pdf
+8. https://www.amazon.com/Data-Model-Resource-Book-Vol/dp/0471380237
