@@ -27,14 +27,14 @@
     * productVariant.isVirtual = N
     * productVariant.isVariant = Y
     * productVariant.sequenceNum = shopifyProductVariant.position
-    * productVariant.price = [productPriceTypeId:"LIST_PRICE", productPricePurposeId:"PURCHASE", currencyUomId:ProductStore.defaultCurrencyUomId, price:shopifyVariant.price,productStoreGroupId:ProductStore.primaryStoreGroupId]
+    * productVariant.prices = Check if ProductPrice exists. If yes set [[productPriceTypeId:"LIST_PRICE", productPricePurposeId:"PURCHASE", currencyUomId:ProductStore.defaultCurrencyUomId, price:shopifyVariant.price,productStoreGroupId:ProductStore.primaryStoreGroupId, fromDate:ProductPrice.fromDate]] else set [[productPriceTypeId:"LIST_PRICE", productPricePurposeId:"PURCHASE", currencyUomId:ProductStore.defaultCurrencyUomId, price:shopifyVariant.price,productStoreGroupId:ProductStore.primaryStoreGroupId]]
     * productVariant.features = iterate through shopifyProductVariant.selectedOptions and create a list of maps with following key/value(s)
         * productFeatureId = set if exists
         * productFeatureApplTypeId = "STANDARD_FEATURE"
         * productFeatureTypeId = shopifyProductVariant.selectedOptions.name
         * description = shopifyProductVariant.selectedOptions.value
         * sequenceNum = shopifyProductVariant.position
-    * productVariant.goodIdentifications = add following key value pairs to the list
-        * [goodIdentificationTypeId: "SHOPIFY_PROD_SKU", idValue=productVariant.sku]
-        * [goodIdentificationTypeId: "UPCA", idValue=productVariant.barcode]
+    * productVariant.identifications = add following key value pairs to the list
+        * Check if GoodIdentification exists for productVariant.productId and goodIdentificationTypeId="SHOPIFY_PROD_SKU". If yes add [goodIdentificationTypeId: "SHOPIFY_PROD_SKU", idValue=productVariant.sku, fromDate:GoodIdentification.fromDate] else add [goodIdentificationTypeId: "SHOPIFY_PROD_SKU", idValue=productVariant.sku]
+        * Check if GoodIdentification exists for productVariant.productId and goodIdentificationTypeId="UPCA". If yes add [goodIdentificationTypeId: "UPCA", idValue=productVariant.barcode, fromDate:GoodIdentification.fromDate] else add [goodIdentificationTypeId: "UPCA", idValue=productVariant.barcode]
     * productVariant.shopifyShopProduct = [shopId:shopId, shopifyProductId:shopifyProductVariant.id, shopifyInventoryItemId:shopifyProductVariant.inventoryItem.id]
