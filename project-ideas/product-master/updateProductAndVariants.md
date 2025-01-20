@@ -15,5 +15,6 @@ This service will take in the product JSON in OMSProductUpdatesFeed and update a
         * For the output product map call *update#Product* api service.
         * Set parentProductId = updateProductOutput.productId.
         * Store ShopifyShopProduct with shopifyShopProduct and updateProductOutput.productId as input.
-        * Iterate through updateProductOutput.deleteProductFeatureAppls list and call delete#org.apache.ofbiz.product.feature.ProductFeatureAppl.
+        * Iterate through prepareProductUpdateOutput.deleteProductFeatureAppls list and call delete#org.apache.ofbiz.product.feature.ProductFeatureAppl.
+        * Iterate through prepareProductUpdateOutput.deleteProductKeywords list and call delete#org.apache.ofbiz.product.product.ProductKeyword.
 5. Iterate through productVariants and call update#ProductVariant service.
