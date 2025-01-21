@@ -1,6 +1,6 @@
 # Assignment: Developing Service
 
-### This assignment tests your ability to:
+## This assignment tests your ability to:
 
 1. Discuss the service type `entity-auto`:
     - Is the name of the entity you defined in Moqui the same as the entity name in MySQL?

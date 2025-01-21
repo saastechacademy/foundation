@@ -1,29 +1,31 @@
-## Ordered list of recommended reading and assignments
+# Recommended Reading and Assignments
 
 1. [Getting Started](getting-started.md)
-2. [MySQL Database setup](database-setup.md)
-3. [Developing Service](developing-services.md)
-4. [Writing Services in minilang](writing-services-in-minilang.md)
-5. [Developing REST API](developing-rest-api.md)
+2. [MySQL Database Setup](database-setup.md)
+3. [Developing Services](developing-services.md)
+4. [Writing Services in Minilang](writing-services-in-minilang.md)
+5. [Developing REST APIs](developing-rest-api.md)
 
+# Resetting IntelliJ IDEA Project Settings for a Moqui Project
 
-## Resetting IntelliJ IDEA Project Settings for a Moqui Project
+## Steps:
 
-**Steps:**
+1. **Close the Moqui Project in IntelliJ:** Ensure the project is not open in the IDE.
 
-1. **Close the Moqui Project in IntelliJ:**  Make sure the project isn't open in the IDE.
-2. **Navigate to Your Project Folder:**  Open your terminal and use the `cd` command to navigate to the main folder of your Moqui project (the one that contains the `gradlew` file).
-3. **Delete the `.idea` Folder:** Run the following command in the terminal:
-    ```bash
-    rm -rf .idea
-    ```
-    This removes IntelliJ's project-specific settings.
-4. **Reopen IntelliJ:**  Launch IntelliJ IDEA.
-5. **Open Project as New:**
-    * Go to **File -> Open...** and select your Moqui project folder.
-    * **Important:** Do NOT use the "Recent Projects" menu option, as this could re-import the old settings.
+2. **Navigate to the Project Folder:** Open a terminal and use the `cd` command to navigate to the root folder of your Moqui project (the folder containing the `gradlew` file).
 
-**Explanation:**
+3. **Delete the `.idea` Folder:** Run the following command to remove IntelliJ's project-specific settings:
+   ```bash
+   rm -rf .idea
+   ```
 
-* IntelliJ stores project-specific settings in the hidden `.idea` folder.  Deleting this folder forces the IDE to rebuild its project configuration from scratch when you reopen the project.
-* This is useful when you want to clear out any cached settings, resolve configuration issues, or start fresh with a Moqui project. 
+4. **Reopen IntelliJ IDEA:** Start IntelliJ IDEA.
+
+5. **Open the Project as New:**
+   - Navigate to **File -> Open...** and select your Moqui project folder.
+   - **Important:** Avoid using the "Recent Projects" option to prevent re-importing old settings.
+
+## Explanation:
+
+- IntelliJ IDEA stores project-specific settings in the hidden `.idea` folder. Deleting this folder forces the IDE to recreate the project configuration when reopening the project.
+- This process is effective for resolving configuration issues, clearing cached settings, or starting fresh with a Moqui project.
