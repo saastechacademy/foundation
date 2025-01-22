@@ -23,13 +23,7 @@
     * product.primaryCategoryId = browse root category of the ProductStore associated with shopId (write helper method/service as needed)
     * product.isVirtual = Y
     * product.isVariant = N
-    * product.features = iterate through shopifyProduct.options and create a list of maps with following key/value(s)
-        * productFeatureTypeId = set if exists where ProductFeatureType.productFeatureTypeId=(shopifyProduct.options.name).replace(" ","")
-        * productFeatureId = if productFeatureTypeId!=null,set if exists where ProductFeature.productFeatureTypeId=productFeatureTypeId and ProductFeature.description=shopifyProduct.options.optionValues.name
-        * productFeatureApplTypeId = "SELECTABLE_FEATURE"
-        * productFeatureTypeDesc = shopifyProduct.options.name
-        * description = shopifyProduct.options.optionValues.name
-        * sequenceNum = shopifyProduct.options.position
+    * product.features = iterate through shopifyProduct.options and shopifyProduct.optionValues and add [productFeatureTypeDesc:shopifyProduct.options.name, featureDesc:shopifyProduct.options.optionValues.name, productFeatureApplTypeId:'SELECTABLE_FEATURE', sequenceNum:shopifyProduct.options.position]
     * product.keywords = iterate through shopifyProduct.tags and add [keywordTypeId:"KWT_TAG", statusId:"KW_APPROVED", keyword:shopifyProduct.tags.entry]
     * product.variants = for each shopifyProduct.variants call map#ProductVariant with forCreate=true and add the result to this list
     * product.shopifyShopProduct = [shopId:shopId, shopifyProductId:shopifyProduct.id]
