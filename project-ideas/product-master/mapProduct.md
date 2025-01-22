@@ -24,9 +24,10 @@
     * product.isVirtual = Y
     * product.isVariant = N
     * product.features = iterate through shopifyProduct.options and create a list of maps with following key/value(s)
-        * productFeatureId = set if exists
+        * productFeatureTypeId = set if exists where ProductFeatureType.productFeatureTypeId=(shopifyProduct.options.name).replace(" ","")
+        * productFeatureId = if productFeatureTypeId!=null,set if exists where ProductFeature.productFeatureTypeId=productFeatureTypeId and ProductFeature.description=shopifyProduct.options.optionValues.name
         * productFeatureApplTypeId = "SELECTABLE_FEATURE"
-        * productFeatureTypeId = shopifyProduct.options.name
+        * productFeatureTypeDesc = shopifyProduct.options.name
         * description = shopifyProduct.options.optionValues.name
         * sequenceNum = shopifyProduct.options.position
     * product.keywords = iterate through shopifyProduct.tags and add [keywordTypeId:"KWT_TAG", statusId:"KW_APPROVED", keyword:shopifyProduct.tags.entry]
