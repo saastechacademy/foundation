@@ -1,4 +1,4 @@
-# co.hotwax.oms.ProductServices.update#ProductAndVariants (Application Layer - OMS)
+# co.hotwax.oms.product.ProductServices.update#ProductAndVariants (Application Layer - OMS)
 This service will take in the product JSON in OMSProductUpdatesFeed and update and create any new variants by performing any surrounding crud operations as needed.
 1. Parameters
     * Input Parameters

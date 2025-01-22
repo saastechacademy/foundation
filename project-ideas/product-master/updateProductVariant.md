@@ -1,4 +1,4 @@
-# co.hotwax.oms.ProductServices.update#ProductVariant (Application Layer - OMS)
+# co.hotwax.oms.product.ProductServices.update#ProductVariant (Application Layer - OMS)
 1. Parameters
     * Input Parameters
         * productVariantJson (Map)
