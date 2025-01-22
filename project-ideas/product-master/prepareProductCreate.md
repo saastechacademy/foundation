@@ -1,4 +1,4 @@
-# co.hotwax.oms.ProductServices.prepare#ProductCreate (Application Layer - OMS)
+# co.hotwax.oms.product.ProductServices.prepare#ProductCreate (Application Layer - OMS)
 1. Parameters
     * Input Parameters
         * productJson (Map)
