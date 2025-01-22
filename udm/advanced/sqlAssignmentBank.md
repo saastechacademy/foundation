@@ -1,6 +1,6 @@
 # SQL Assignment Bank
 
-These are SQL prompts that can be used as assingmnets or evaluation questions for someone learning SQL. Answering these will require a deep understanding of the OFBiz datamodel (UDM?) as well as how business processes connect to that model because every prompt will not specify which tables need to be quiered.
+These are SQL prompts that can be used as assignments or evaluation questions for someone learning SQL. Answering these will require a deep understanding of the OFBiz datamodel (UDM?) as well as how business processes connect to that model because every prompt will not specify which tables need to be quiered.
 
 **Non Return Refunds**
 
@@ -57,7 +57,7 @@ Fields:
 
 **Net Transfers**
 
-At the end of every month, a retailer wants to see effectivley how much inventory was moved between facilitieis. Compute the net amount of transfers between all facilities. If two facilities transfered a product back and forth with quantity 3 and 2 respectively, the net transfer is 1.
+At the end of every month, a retailer wants to see effectivley how much inventory was moved between facilities. Compute the net amount of transfers between all facilities. If two facilities transfered a product back and forth with quantity 3 and 2 respectively, the net transfer is 1.
 
 Fields:
 1. Facility 1
