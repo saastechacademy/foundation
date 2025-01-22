@@ -28,7 +28,7 @@
     * productVariant.isVariant = Y
     * productVariant.sequenceNum = shopifyProductVariant.position
     * productVariant.prices = Check if ProductPrice exists. If yes set [[productPriceTypeId:"LIST_PRICE", productPricePurposeId:"PURCHASE", currencyUomId:ProductStore.defaultCurrencyUomId, price:shopifyVariant.price,productStoreGroupId:ProductStore.primaryStoreGroupId, fromDate:ProductPrice.fromDate]] else set [[productPriceTypeId:"LIST_PRICE", productPricePurposeId:"PURCHASE", currencyUomId:ProductStore.defaultCurrencyUomId, price:shopifyVariant.price,productStoreGroupId:ProductStore.primaryStoreGroupId]]
-    * productVariant.features = iterate through shopifyProductVariant.selectedOptions and create a list of maps with following key/value(s)
+    * productVariant.features = iterate through shopifyProductVariant.selectedOptions and add [productFeatureTypeDesc:shopifyProductVariant.selectedOptions.name, featureDesc:shopifyProductVariant.selectedOptions.value, productFeatureApplTypeId:'STANDARD_FEATURE', sequenceNum:shopifyProductVariant.position]
         * productFeatureId = set if exists
         * productFeatureApplTypeId = "STANDARD_FEATURE"
         * productFeatureTypeId = shopifyProductVariant.selectedOptions.name
