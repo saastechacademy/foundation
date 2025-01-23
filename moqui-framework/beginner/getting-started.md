@@ -4,13 +4,13 @@
 
 Before diving into Moqui development, ensure you have the following tools and resources set up:
 
-### **Moqui Framework**
+### Moqui Framework
 - [Introduction to Moqui Framework](https://www.moqui.org/m/docs/framework/Introduction)
 
-### **Git Installation**
+### Git Installation
 - [Git Installation Guide](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
 
-### **Java Development Kit (JDK 11)**
+### Java Development Kit (JDK 11)
 Install JDK 11:
 - [JDK 11](https://jdk.java.net/java-se-ri/11-MR3)
 - [OpenJDK](https://adoptium.net/temurin/archive/?version=11)
@@ -20,22 +20,22 @@ Verify Java installation by running:
 java -version
 ```
 
-### **IDE Installation**
+### IDE Installation
 Install IntelliJ IDEA:
 - [Download IntelliJ IDEA](https://www.jetbrains.com/idea/download/?section=mac)
 
 Set up IntelliJ IDEA for Moqui development:
 - [IDE Setup Guide](https://www.moqui.org/m/docs/framework/IDE+Setup/IntelliJ+IDEA+Setup)
 
-### **GitHub Account**
+### GitHub Account
 Ensure you have an active GitHub account to create repositories for your Moqui components.
 
-### **Familiarity with Command Line**
+### Familiarity with Command Line
 Be comfortable navigating file directories using the terminal (Linux/Mac) or command prompt (Windows).
 
 ## Setting Up Moqui for Development
 
-### **Step 1: Clone the Moqui Framework**
+### Step 1: Clone the Moqui Framework
 1. Open a terminal.
 2. Create a sandbox folder for your Moqui projects:
 3. Clone the Moqui Framework repository:
@@ -43,11 +43,11 @@ Be comfortable navigating file directories using the terminal (Linux/Mac) or com
    git clone -b master https://github.com/moqui/moqui-framework.git
    ```
 
-### **Step 2: Initialize the Runtime Component**
+### Step 2: Initialize the Runtime Component
 1. Navigate to the `moqui-framework` directory:
-2. Run the following command to set up the runtime:
+2. Set up the default runtime directory
 
-### **Step 3: Run the Moqui Application**
+### Step 3: Run the Moqui Application
 1. Load data and run the Moqui application:
 
 2. Open a browser and navigate to your local Moqui.
@@ -57,6 +57,11 @@ Be comfortable navigating file directories using the terminal (Linux/Mac) or com
    - Password: `moqui`
 
 **Note:** Ignore any ElasticSearch connection warnings/errors.
+
+### Step 4: Create your `moqui-training` Component
+1. Create the `moqui-training` component within the runtime/component folder.
+2. Within your component folder create the standard directories.
+3. Create the component.xml file with the appropriate name.
 
 ## Deliverables
 
