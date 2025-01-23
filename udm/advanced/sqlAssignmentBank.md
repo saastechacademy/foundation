@@ -34,7 +34,7 @@ Fields to include in results:
 
 **Kit Return Inventory Update**
 
-A return was received and completed for a kit product (marketing package). Write an SQL to calculate how much QoH was increased for its copmonents.
+A return was received and completed for a kit product (marketing package). Write an SQL to calculate how much QoH was increased for its components.
 
 Fields:
 1. Return ID
