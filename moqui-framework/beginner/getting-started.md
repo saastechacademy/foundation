@@ -61,7 +61,7 @@ Be comfortable navigating file directories using the terminal (Linux/Mac) or com
 ### Step 4: Create your `moqui-training` Component
 1. Create the `moqui-training` component within the runtime/component folder.
 2. Within your component folder create the standard directories.
-3. Create the component.xml file with the appropriate name.
+3. Create the component.xml file with the appropriate name. [Reference](https://github.com/moqui/moqui-runtime/blob/master/base-component/webroot/component.xml)
 
 ## Deliverables
 
