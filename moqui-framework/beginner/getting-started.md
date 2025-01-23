@@ -58,6 +58,11 @@ Be comfortable navigating file directories using the terminal (Linux/Mac) or com
 
 **Note:** Ignore any ElasticSearch connection warnings/errors.
 
+## Deliverables
+
+- Moqui Framework installed and running on your local machine.
+- IntelliJ IDEA configured for Moqui development.
+
 ---
 
 ## Additional Resources
@@ -75,9 +80,3 @@ Be comfortable navigating file directories using the terminal (Linux/Mac) or com
 - [Creating an Entity](https://www.moqui.org/m/docs/framework/Quick+Tutorial#MyFirstEntity)
 - [Adding Data](https://www.moqui.org/m/docs/framework/Quick+Tutorial#AddSomeData)
 
----
-
-## Deliverables
-
-- Moqui Framework installed and running on your local machine.
-- IntelliJ IDEA configured for Moqui development.
