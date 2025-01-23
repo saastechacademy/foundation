@@ -6,7 +6,63 @@ The `rejectorderitems` REST API endpoint is used to reject one or more `OrderIte
 
 Typical reasons for rejection include defective products, unavailable stock, or other conditions that require removing items from pending fulfillments.
 
-## **Parameters**
+## **Example Input Parameters**
+
+```json
+[
+  {
+    "orderId": "ORD001",
+    "orderItemSeqId": "0001",
+    "rejectToFacilityId": "FAC001",
+    "updateQOH": "",
+    "rejectionReasonId": "NOT_IN_STOCK",
+    "maySplit": "N",
+    "cascadeRejectByProduct": "N",
+    "comments": "The item is currently out of stock."
+  },
+  {
+    "orderId": "ORD001",
+    "orderItemSeqId": "0002",
+    "rejectToFacilityId": "FAC002",
+    "updateQOH": "",
+    "rejectionReasonId": "MISMATCH",
+    "maySplit": "N",
+    "cascadeRejectByProduct": "N",
+    "comments": "The item received does not match the order description."
+  },
+  {
+    "orderId": "ORD002",
+    "orderItemSeqId": "0001",
+    "rejectToFacilityId": "FAC003",
+    "updateQOH": "",
+    "rejectionReasonId": "DAMAGE",
+    "maySplit": "N",
+    "cascadeRejectByProduct": "N",
+    "comments": "The item was found damaged during inspection."
+  },
+  {
+    "orderId": "ORD002",
+    "orderItemSeqId": "0002",
+    "rejectToFacilityId": "FAC004",
+    "updateQOH": "",
+    "rejectionReasonId": "WORNDISPLAY",
+    "comments": "The item is worn or was part of a display."
+  },
+  {
+    "orderId": "ORD003",
+    "orderItemSeqId": "0001",
+    "rejectToFacilityId": "FAC005",
+    "updateQOH": "",
+    "rejectionReasonId": "NOT_IN_STOCK",
+    "comments": "The item is unavailable due to low stock levels."
+  }
+]
+```
+
+
+
+
+## **Parameters for each OrderItem**
 
 - **orderId**  
 - **orderItemSeqId**  
@@ -222,59 +278,6 @@ The **key condition** is:
             AND oi_inner.status_id = 'ITEM_APPROVED')
 ```
 2.  This means we want **all orders** (and their items) **that contain a product with ID `12888`**. This is useful for a **cascade reject** because it affects all items within orders containing the specified product—**not just the single item** tied directly to that product.
-
-## **Example Input Parameters**
-
-```json
-[
-  {
-    "orderId": "ORD001",
-    "orderItemSeqId": "0001",
-    "rejectToFacilityId": "FAC001",
-    "updateQOH": "",
-    "rejectionReasonId": "NOT_IN_STOCK",
-    "maySplit": "N",
-    "cascadeRejectByProduct": "N",
-    "comments": "The item is currently out of stock."
-  },
-  {
-    "orderId": "ORD001",
-    "orderItemSeqId": "0002",
-    "rejectToFacilityId": "FAC002",
-    "updateQOH": "",
-    "rejectionReasonId": "MISMATCH",
-    "maySplit": "N",
-    "cascadeRejectByProduct": "N",
-    "comments": "The item received does not match the order description."
-  },
-  {
-    "orderId": "ORD002",
-    "orderItemSeqId": "0001",
-    "rejectToFacilityId": "FAC003",
-    "updateQOH": "",
-    "rejectionReasonId": "DAMAGE",
-    "maySplit": "N",
-    "cascadeRejectByProduct": "N",
-    "comments": "The item was found damaged during inspection."
-  },
-  {
-    "orderId": "ORD002",
-    "orderItemSeqId": "0002",
-    "rejectToFacilityId": "FAC004",
-    "updateQOH": "",
-    "rejectionReasonId": "WORNDISPLAY",
-    "comments": "The item is worn or was part of a display."
-  },
-  {
-    "orderId": "ORD003",
-    "orderItemSeqId": "0001",
-    "rejectToFacilityId": "FAC005",
-    "updateQOH": "",
-    "rejectionReasonId": "NOT_IN_STOCK",
-    "comments": "The item is unavailable due to low stock levels."
-  }
-]
-```
 
 **Implementation Detail**:  
 - The `rejectorderitems` endpoint receives the array above.  
