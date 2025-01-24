@@ -4,7 +4,7 @@ The study of UDM is guided by ideas discussed in the book **Data Model Resource 
 
 [Book Link: Data Model Resource Book, Volume 1](https://www.amazon.com/Data-Model-Resource-Book-Vol/dp/0471380237)
 
-## Required reading: The first five chapters of [Data Model book](https://www.amazon.com/Data-Model-Resource-Book-Vol/dp/0471380237). Follow the steps given below.
+## Read following chapters and complete assgnments for each.
 
 #### Chapter 1: Introduction
 
