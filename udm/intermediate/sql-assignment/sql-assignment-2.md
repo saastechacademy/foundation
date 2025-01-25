@@ -1,8 +1,3 @@
-# SQL Assignment 2
-
-As a member of the analytics team, your task is to use SQL to extract specific data sets that provide insights across various departments. Retrieve the following data for analysis.
-
-## 1. Sales Performance and Customer Behavior
 
 ### a. Completed Sales Orders
 

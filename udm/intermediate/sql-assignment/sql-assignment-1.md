@@ -1,9 +1,3 @@
-# SQL Assignment 1
-
-As the data analyst for the fulfillment team, your task is to create SQL queries to answer specific business questions. Use the company's data model to retrieve accurate data that will help optimize shipping, logistics, and revenue tracking.
-
-## Task Categories
-
 ### 1. Shipment Analysis
 
 Provide SQL queries for the following:

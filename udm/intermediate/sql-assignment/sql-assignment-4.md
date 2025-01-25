@@ -1,7 +1,3 @@
-# SQL Assignment 4
-
-You are part of the operations team tasked with ensuring smooth order processing and inventory management for a retailer. 
-
 ## Questions:
 
 ### Question 1: Investigating BOPIS Order Import Delays

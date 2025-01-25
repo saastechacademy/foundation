@@ -1,7 +1,3 @@
-# SQL Assignment 3
-
-As part of the operations and analytics team, your task is to write SQL queries to provide insights into order fulfillment, returns, and shipping patterns.
-
 ## Analysis Questions
 
 ### 1. Single-Item Orders Fulfilled from Warehouses (Last Month)
