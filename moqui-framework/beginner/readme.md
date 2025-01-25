@@ -31,8 +31,3 @@
 
 - IntelliJ IDEA stores project-specific settings in the hidden `.idea` folder. Deleting this folder forces the IDE to recreate the project configuration when reopening the project.
 - This process is effective for resolving configuration issues, clearing cached settings, or starting fresh with a Moqui project.
-=======
-2. [MySQL Database setup](database-setup.md)
-3. [Developing Service](developing-services.md)
-4. [Writing Services in minilang](writing-services-in-minilang.md)
-5. [Developing REST API](developing-rest-api.md)
