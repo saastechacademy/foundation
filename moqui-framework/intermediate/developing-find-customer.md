@@ -63,5 +63,5 @@ Using the provided `FindParty.groovy` file as a reference, create a new dynamic 
 
 ## Deliverables
 1. A fully functional `FindCustomer.groovy` file.
-2. Updated `PartyServices.xml` file with the `findCustomer`, `createCustomer`, and `updateCustomer` service definitions.
-3. Updated `PartyViewEntities.xml` file with the `FindCustomerView` entity definition.
+2. `PartyServices.xml` file with the `findCustomer`, `createCustomer`, and `updateCustomer` service definitions.
+3. `PartyViewEntities.xml` file with the `FindCustomerView` entity definition.
