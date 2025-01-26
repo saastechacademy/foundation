@@ -74,10 +74,10 @@ How does the principle of iterative refinement prevent data model stagnation and
 **Activity:**
 
 - Read chapter 3 of the Universal Data Model book.
-- [Product](beginner/product.md)
-- [Product Feature](beginner/product-feature.md)
-- [Category](beginner/product-category.md)
-- [Product Associations](beginner/product-assoc.md)
+- [Product](beginner/Product/product.md)
+- [Product Feature](beginner/Product/product-feature.md)
+- [Category](beginner/Product/product-category.md)
+- [Product Associations](beginner/Product/product-assoc.md)
 
 ---
 
@@ -91,7 +91,7 @@ How does the principle of iterative refinement prevent data model stagnation and
 
 **Activity:**
 - Read chapter 4 of the Universal Data Model book.
-- [Order](beginner/order.md)
+- [Order](beginner/Order/order.md)
 - [Design OMS](intermediate/data-model-assignment/activity-design-order.md)
 
 ---
