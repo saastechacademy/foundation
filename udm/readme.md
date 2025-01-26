@@ -54,8 +54,8 @@ How does the principle of iterative refinement prevent data model stagnation and
 **Activity:**
  
 - Read chapter 2 of the Universal Data Model book.
-- [Party](beginner/party.md)
-- [Contact Mechanism](beginner/contact-mech.md)
+- [Party](beginner/Party/party.md)
+- [Contact Mechanism](beginner/Party/contact-mech.md)
 
 
 ---
