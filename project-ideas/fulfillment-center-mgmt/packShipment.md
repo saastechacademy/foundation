@@ -9,7 +9,10 @@ The shipmentPackageContents and rejectedShipmentItems are optional parameters. T
 ```json
 
 {
+  "facilityId" : "STORE_10",
   "shipmentId": "10025",
+  "orderId":"10000",
+
   "shipmentPackageContents":[
     {
       "shipmentItemSeqId": "001",
@@ -22,18 +25,26 @@ The shipmentPackageContents and rejectedShipmentItems are optional parameters. T
       "quantity": 1
     }
     ],
-  "rejectedShipmentItems": [
+
+  "rejectOrderItems": [
     {
-      "shipmentItemSeqId": "00001",
-      "rejectToFacilityId": "FAC003",
-      "rejectionReasonId" : "REJ_RSN_DAMAGED",
-      "comments": "The item was part of a display and is not in acceptable condition."
+      "orderId": "ORD001",
+      "orderItemSeqId": "0002",
+      "rejectToFacilityId": "FAC002",
+      "updateQOH": "",
+      "rejectionReasonId": "MISMATCH",
+      "maySplit": "N",
+      "cascadeRejectByProduct": "N",
+      "comments": "The item received does not match the order description."
     },
     {
+      "orderId": "ORD001",
+      "orderItemSeqId":"0002",
+      "rejectToFacilityId": "FAC002",
       "shipmentItemSeqId": "00003",
       "rejectToFacilityId": "FAC003",
       "rejectionReasonId" : "REJ_RSN_DAMAGED",
-      "comments": "The item was part of a display and is not in acceptable condition."
+      "rejectionComments": "The item was part of a display and is not in acceptable condition."
     }
   ]
 }

@@ -432,7 +432,7 @@ The new cancel order API and services would be implemented in the Moqui framewor
     
 #### Moqui OMS API
 
-**cancel#SalesOrderItem**  
+**[cancel#SalesOrderItem](../fulfillment-center-mgmt/cancelOrderItem.md)**  
 We will consider that order items would always be exploded in OMS and implement the logic accordingly. Given that order item quantity would always be 1 so we don't need quantity as an input. We also don't need to calculate cancelQuantity and identify order items explicitly. We could simply validate order item status and update status and cancelQuantity fields on order item. Refer OFBiz OrderServices.cancel#OrderItem service for relevant code and implement the new service as described below.
 1. Input
    - orderId
@@ -449,7 +449,7 @@ We will consider that order items would always be exploded in OMS and implement 
 8. Call create#CommunicationEvent inline with relevant input. Refer ShopifyOrderServices.cancel#ShopifyOrderItem method. This can be a simple entity auto operation.
 9. Call change#SalesOrderItemStatus inline with relevant input. A new service to be implemented, refer implementation details below.
 
-**cancel#OrderItemInvResQty**  
+**[cancelOrderItemInventoryReservation](../oms/cancelOrderItemInventoryReservation.md)**  
 Considering that order items would always be exploded and each order item would represent a single quantity, there should ideally only be one associated inventory reservation record to be removed,
 1. Input
    - orderId

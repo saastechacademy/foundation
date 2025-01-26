@@ -14,7 +14,7 @@ The staff gets the list of Outstanding orders
   * facilityId, item approved, shipmentMethod, fulfillmentStatus is NULL
 
 
-  * The user then starts the fulfillment process for set of orders by creating a [Fulfillment wave of orders](createOrderFulfillmentWave.md). A [PickList](../oms/PickList.md) is returned for the user to go pick items for preparing the shipments.
+  * The user then starts the fulfillment process for set of orders by creating a [Fulfillment wave of orders](createOrderFulfillmentWave.md). A [PickList](../oms/createPickList) is returned for the user to go pick items for preparing the shipments.
      *  Background process: [Shipments](../oms/createShipment.md) are created for orders.
         - If the order item is a kit product, a distinct reservation will be created with the same order item for each product in the kit. When creating a picklist and shipment, all reservations will be included to ensure a proper fulfillment lifecycle.
 

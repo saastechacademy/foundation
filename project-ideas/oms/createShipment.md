@@ -1,4 +1,4 @@
-## createShipment
+## create#org.apache.ofbiz.shipment.shipment.Shipment
 
 **Sample shipment JSON representation**
 

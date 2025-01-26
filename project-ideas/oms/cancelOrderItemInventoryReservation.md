@@ -1,5 +1,5 @@
-## cancelOrderItemInvRes
-The `cancelOrderItemInvRes` service to handle the cancellation of inventory reservations associated with a specific order item. 
+## cancelOrderItemInventoryReservation
+The `cancelOrderItemInventoryReservation` service to handle the cancellation of inventory reservations associated with a specific order item. 
 
 ### Purpose
 Adjust inventory reservations and release reserved inventory back into the available pool. Used in scenarios where an order item is canceled, modified, or rejected, and the reserved inventory needs to be updated accordingly.
