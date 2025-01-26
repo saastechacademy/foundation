@@ -1,168 +1,144 @@
+# SQL Assignment 2
 
-### a. Completed Sales Orders
+Below is a structured list of queries for **Mixed Party + Order** scenarios and **Inventory Management & Transfers**, along with several additional questions. Each section contains the **Business Problem** and the **Fields to Retrieve**, **without** example SQL code.
 
-Retrieve data for physical items from completed sales orders:
+---
 
-- `ORDER_ID`
-- `ORDER_ITEM_SEQ_ID`
-- `PRODUCT_ID`
-- `PRODUCT_TYPE_ID`
-- `IS_PHYSICAL`
-- `IS_DIGITAL`
-- `SALES_CHANNEL_ENUM_ID`
+## 5. Mixed Party + Order Queries
+
+### 5.1 Shipping Addresses for October 2023 Orders
+
+**Business Problem:**  
+Customer Service might need to verify addresses for orders placed or completed in October 2023. This helps ensure shipments are delivered correctly and prevents address-related issues.
+
+**Fields to Retrieve:**  
+- `ORDER_ID` 
+- `PARTY_ID` (Customer ID)  
+- `CUSTOMER_NAME` (or FIRST_NAME / LAST_NAME)  
+- `STREET_ADDRESS`  
+- `CITY` 
+- `STATE_PROVINCE`
+- `POSTAL_CODE`  
+- `COUNTRY_CODE`  
+- `ORDER_STATUS`  
 - `ORDER_DATE`
-- `ENTRY_DATE`
-- `STATUS_ID`
-- `STATUS_DATETIME`
-- `ORDER_TYPE_ID`
-- `PRODUCT_STORE_ID`
 
-### b. Completed Return Items
 
-Fetch details of completed returns:
+### 5.2 Orders from New York
 
-- `RETURN_ID`
-- `ORDER_ID`
-- `PRODUCT_STORE_ID`
-- `STATUS_DATETIME`
-- `ORDER_NAME`
-- `FROM_PARTY_ID`
-- `RETURN_DATE`
-- `ENTRY_DATE`
-- `RETURN_CHANNEL_ENUM_ID`
+**Business Problem:**  
+Companies often want region-specific analysis to plan local marketing, staffing, or promotions in certain areas—here, specifically, New York.
 
-### c. Completed Orders in July 2023
-
-Retrieve orders completed in July 2023:
-
-- `ORDER_ID`
-- `ORDER_ITEM_SEQ_ID`
-- `Shopify Order ID`
-- `Shopify Product ID`
-
-### d. Completed Orders in August 2023
-
-Fetch data for orders completed in August 2023:
-
-- `PRODUCT_ID`
-- `PRODUCT_TYPE_ID`
-- `PRODUCT_STORE_ID`
-- `TOTAL_QUANTITY`
-- `INTERNAL_NAME`
-- `FACILITY_ID`
-- `EXTERNAL_ID`
-- `FACILITY_TYPE_ID`
-- `ORDER_HISTORY_ID`
-- `ORDER_ID`
-- `ORDER_ITEM_SEQ_ID`
-- `SHIP_GROUP_SEQ_ID`
-
-## 2. Fulfillment Efficiency and Operational Review
-
-### a. Shipping Addresses for October 2023 Orders
-
-Retrieve shipping addresses for orders completed in October 2023:
-
-- `ORDER_ID`
-- `CONTACT_MECH_ID` (Shipping Address)
-
-### b. Warehouse Performance for September 2023
-
-Fetch data on physical items completed from the warehouse in September 2023:
-
-- `ORDER_ID`
-- `ORDER_ITEM_SEQ_ID`
-- `PRODUCT_ID`
-- `QUANTITY`
-- `FACILITY_ID`
-- `SHIP_GROUP_SEQ_ID`
-- `ORDER_STATUS`
-- `STATUS_DATETIME`
-
-### c. Procurement Patterns for September 2023
-
-Retrieve details of physical items ordered in September 2023:
-
-- `ORDER_ID`
-- `ORDER_ITEM_SEQ_ID`
-- `PRODUCT_ID`
-- `QUANTITY`
-- `ORDER_DATE`
-- `ORDER_STATUS`
-- `PRODUCT_TYPE_ID`
-
-## 3. Financial Health and Order Integrity
-
-### a. Newly Created Sales Orders and Payment Methods
-
-Fetch data on all newly created sales orders:
-
-- `ORDER_ID`
+**Fields to Retrieve:**  
+- `ORDER_ID` 
+- `CUSTOMER_NAME` 
+- `STREET_ADDRESS` (or shipping address detail)  
+- `CITY`  
+- `STATE_PROVINCE`
+- `POSTAL_CODE` 
 - `TOTAL_AMOUNT`
-- `PAYMENT_METHOD` (e.g., Cash, Mastercard, Visa, PayPal)
-- `Shopify Order ID`
+- `ORDER_DATE`  
+- `ORDER_STATUS`
 
-## 4. Customer Relations and Satisfaction
+---
 
-### a. New Customers Acquired in June 2023
+### 5.3 Top-Selling Product in New York
 
-Retrieve data for customers created in June 2023:
+**Business Problem:**  
+Merchandising teams need to identify the best-selling product(s) in a specific region (New York) for targeted restocking or promotions.
 
-- `CUSTOMER_ID`
-- `CUSTOMER_NAME`
-- `EMAIL`
-- `PHONE`
-- `ENTRY_DATE`
-- `CUSTOMER_STATUS`
+**Fields to Retrieve:**  
+- `PRODUCT_ID`  
+- `INTERNAL_NAME`
+- `TOTAL_QUANTITY_SOLD`  
+- `CITY` / `STATE` (within New York region) 
+- `REVENUE` (optionally, total sales amount)
 
-### b. Appeasements Issued in July
+### 7.3 Store-Specific (Facility-Wise) Revenue
 
-Fetch details of appeasements issued:
+**Business Problem:**  
+Different physical or online stores (facilities) may have varying levels of performance. The business wants to compare revenue across facilities for sales planning and budgeting.
 
-- `ORDER_ID`
-- `APPEASEMENT_REASON`
-- `APPEASEMENT_DATE`
-- `APPEASEMENT_AMOUNT`
-- `COMMENTS`
+**Fields to Retrieve:**  
+- `FACILITY_ID`
+- `FACILITY_NAME`  
+- `TOTAL_ORDERS` 
+- `TOTAL_REVENUE`  
+- `DATE_RANGE` 
 
-### c. Distinguishing Returns from Appeasements
+## 8. Inventory Management & Transfers
 
-- **Returns**: Products sent back by customers; involves refunds or exchanges.
-- **Appeasements**: Compensation offered without requiring product returns.
+### 8.1 Lost and Damaged Inventory
 
-### d. Detailed Return Information
+**Business Problem:**  
+Warehouse managers need to track “shrinkage” such as lost or damaged inventory to reconcile physical vs. system counts.
 
-Retrieve detailed return data:
+**Fields to Retrieve:**  
+- `INVENTORY_ITEM_ID` 
+- `PRODUCT_ID` 
+- `FACILITY_ID` 
+- `QUANTITY_LOST_OR_DAMAGED` 
+- `REASON_CODE` (Lost, Damaged, Expired, etc.)  
+- `TRANSACTION_DATE`
 
-- `RETURN_ID`
-- `ENTRY_DATE`
-- `RETURN_ADJUSTMENT_TYPE_ID`
-- `AMOUNT`
-- `COMMENTS`
-- `ORDER_ID`
-- `ORDER_DATE`
-- `RETURN_DATE`
-- `PRODUCT_STORE_ID`
+### 8.2 Low Stock or Out of Stock Items Report
 
-### e. Orders with Multiple Returns
+**Business Problem:**  
+Avoiding out-of-stock situations is critical. This report flags items that have fallen below a certain reorder threshold or have zero available stock.
 
-Identify orders with multiple returns:
+**Fields to Retrieve:**  
+- `PRODUCT_ID`
+- `PRODUCT_NAME` 
+- `FACILITY_ID`  
+- `QOH` (Quantity on Hand)  
+- `ATP` (Available to Promise)  
+- `REORDER_THRESHOLD` 
+- `DATE_CHECKED`
 
-- `ORDER_ID`
-- `RETURN_ID`
-- `RETURN_DATE`
-- `RETURN_REASON`
-- `RETURN_QUANTITY`
+### 8.3 Retrieve the Current Facility (Physical or Virtual) of Open Orders
 
-## 5. Inventory Management and Variance Analysis
+**Business Problem:**  
+The business wants to know where open orders are currently assigned, whether in a physical store or a virtual facility (e.g., a distribution center or online fulfillment location).
 
-### a. Lost and Damaged Inventory
+**Fields to Retrieve:**  
+- `ORDER_ID`  
+- `ORDER_STATUS`
+- `FACILITY_ID`  
+- `FACILITY_NAME`  
+- `FACILITY_TYPE_ID`
 
-Retrieve data on inventory variances due to loss or damage:
+### 8.4 Items Where QOH and ATP Differ
 
+**Business Problem:**  
+Sometimes the **Quantity on Hand (QOH)** doesn’t match the **Available to Promise (ATP)** due to pending orders, reservations, or data discrepancies. This needs review for accurate fulfillment planning.
+
+**Fields to Retrieve:**  
 - `PRODUCT_ID`
 - `FACILITY_ID`
-- `VARIANCE_TYPE`
-- `QUANTITY`
-- `ENTRY_DATE`
-- `REASON`
+- `QOH` (Quantity on Hand)  
+- `ATP` (Available to Promise)  
+- `DIFFERENCE` (QOH - ATP)
+
+### 8.5 Order Item Current Status Changed Date-Time
+
+**Business Problem:**  
+Operations teams need to audit when an order item’s status (e.g., from “Pending” to “Shipped”) was last changed, for shipment tracking or dispute resolution.
+
+**Fields to Retrieve:**  
+- `ORDER_ID` 
+- `ORDER_ITEM_SEQ_ID` 
+- `CURRENT_STATUS_ID` 
+- `STATUS_CHANGE_DATETIME`
+- `CHANGED_BY`
+
+
+### 8.6 Total Orders by Sales Channel
+
+**Business Problem:**  
+Marketing and sales teams want to see how many orders come from each channel (e.g., web, mobile app, in-store POS, marketplace) to allocate resources effectively.
+
+**Fields to Retrieve:**  
+- `SALES_CHANNEL`
+- `TOTAL_ORDERS`
+- `TOTAL_REVENUE`
+- `REPORTING_PERIOD` 
