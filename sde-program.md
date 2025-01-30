@@ -40,13 +40,17 @@ This training program requires a solid foundation in software development princi
 * [Design OMS](udm/intermediate/data-model-assignment/activity-design-order.md)
 * [Order Fulfillment System](udm/intermediate/data-model-assignment/activity-design-fulfillment.md)
 
-### Module 4: SQL Assignment
+### Module 4: Developing application with [Apache OFBiz](https://ofbiz.apache.org)
+* [Getting Started](https://ofbiz.apache.org/developers.html)
+* [Developing Application](https://cwiki.apache.org/confluence/display/OFBIZ/OFBiz+Tutorial+-+A+Beginners+Development+Guide+for+Release+18.12+and+Release+22.01) with Apache OFBiz 
+
+### Module 5: SQL Assignment
 * Get read only access OMS test database.
 * [SQL Assignment 1](udm/intermediate/sql-assignment/sql-assignment-1.md)
 * [SQL Assignment 2](udm/intermediate/sql-assignment/sql-assignment-2.md)
 * [SQL Assignment 3](udm/intermediate/sql-assignment/sql-assignment-3.md)
 
-### Module 5: Official Documentation and Application Usage
+### Module 6: Official Documentation and Application Usage
 * https://docs.hotwax.co/documents/v/documents-1
 * [Internal Usage Guidelines](https://docs.hotwax.co/everything#shopify)
 * [Launchpad](https://launchpad.hotwax.io/home)
