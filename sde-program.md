@@ -36,7 +36,9 @@ This training program requires a solid foundation in software development princi
 
 ### Module 3: Developing application with [Apache OFBiz](https://ofbiz.apache.org)
 * [Getting Started](https://ofbiz.apache.org/developers.html)
-* [Configure Product Store](udm/beginner/activity.md)
+* [Party Activity](udm/beginner/activity.md#party-data-model)
+* [Setup Company Product Store and Catalog](udm/beginner/activity.md#setup-up-company-product-store-and-catalog)
+* [Order Activity](udm/beginner/activity.md#order)
 * [Developing Application](https://cwiki.apache.org/confluence/display/OFBIZ/OFBiz+Tutorial+-+A+Beginners+Development+Guide+for+Release+18.12+and+Release+22.01) with Apache OFBiz 
 
 ### Module 4: SQL Assignment
