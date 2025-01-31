@@ -22,8 +22,8 @@ This training program requires a solid foundation in software development princi
 ## Training program outline
 * You are assigned project to develop software for **[NotNaked](ubpl/NotNaked/Introduction.md)**. NotNaked is a D2C fashion brand.
 * During the training program, you will
-    * design application data model as per Universal Data Model design princepals, deploy it on [MySQL](https://www.mysql.com/).
-    * build server side **[Moqui](https://www.moqui.org)** application as per the SOA design princepals.
+    * design application data model as per Universal Data Model design principles, deploy it on [MySQL](https://www.mysql.com/).
+    * build server side **[Moqui](https://www.moqui.org)** application as per the SOA design principles.
     * publish REST API
     * Integrate with [Shopify](https://shopify.dev/docs/api/) eCommerce store.
 
