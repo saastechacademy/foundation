@@ -237,7 +237,7 @@ Following are the implementation details,
 <moqui.service.message.SystemMessageType systemMessageTypeId="NewOrdersFeed"
         description="New Orders Feed"
         parentTypeId="LocalFeedFile"
-        consumeServiceName="co.hotwax.orderledger.system.FeedServices.consume#OMSFeedSystemMessage"
+        consumeServiceName="co.hotwax.orderledger.system.FeedServices.consume#OMSFeed"
         receivePath=""
         receiveResponseEnumId="MsgRrMove"
         receiveMovePath=""
@@ -259,4 +259,4 @@ Following are the implementation details,
 
 ### [findOrCreate#Product](../oms/findOrCreateProduct.md)
 
-### [consume#OMSFeedSystemMessage](consumeOMSFeedSystemMessage.md)
+### [consume#OMSFeed](consumeOMSFeed.md)
