@@ -32,10 +32,11 @@ This training program requires a solid foundation in software development princi
 *  Universal Data Model, Read **[First three chapters](udm/readme.md)** of the book: The Data Model Resource Book, Vol. 1
 
 ### Module 2: Order and Shipment Data Modeling
-* Universal Data Model, Read **[Chapter 4 and Chapter 5](udm/readme.md)** of the book: The Data Model Resource Book, Vol. 1
+* Universal Data Model, Read **[Chapter 4 and Chapter 5](udm/readme.md#chapter-4-ordering-products)** of the book: The Data Model Resource Book, Vol. 1
 
 ### Module 3: Developing application with [Apache OFBiz](https://ofbiz.apache.org)
 * [Getting Started](https://ofbiz.apache.org/developers.html)
+* [Configure Product Store](udm/beginner/activity.md)
 * [Developing Application](https://cwiki.apache.org/confluence/display/OFBIZ/OFBiz+Tutorial+-+A+Beginners+Development+Guide+for+Release+18.12+and+Release+22.01) with Apache OFBiz 
 
 ### Module 4: SQL Assignment
