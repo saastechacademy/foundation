@@ -162,7 +162,7 @@ Example: ABC Organization manufactures different products, including a smartphon
 #### 4. Product Dimension
 - **Description**: Stores the dimensions of the product, including weight, length, and other custom dimensions.
 
-- **Key Attributes**: `productId`, `dimensionTypeId`
+- **Key Attributes**: `productId`, `dimensionTypeEnumId`
 - **Example**: Lets create the relevant productDimensions information.
 ```json
 {
