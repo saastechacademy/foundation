@@ -31,24 +31,25 @@ This training program requires a solid foundation in software development princi
 *  [What is data modeling?](https://www.ibm.com/topics/data-modeling)
 *  Universal Data Model, Read **[First three chapters](udm/readme.md)** of the book: The Data Model Resource Book, Vol. 1
 
-### Module 2: Detailed Design
-1. [Design CDP](udm/beginner/activity-design-cdp.md)
-2. [Design PIM](udm/beginner/activity-design-pim.md)
-
-### Module 3: Order and Shipment Data Modeling
+### Module 2: Order and Shipment Data Modeling
 * Universal Data Model, Read **[Chapter 4 and Chapter 5](udm/readme.md)** of the book: The Data Model Resource Book, Vol. 1
-* [Design OMS](udm/intermediate/data-model-assignment/activity-design-order.md)
-* [Order Fulfillment System](udm/intermediate/data-model-assignment/activity-design-fulfillment.md)
 
-### Module 4: Developing application with [Apache OFBiz](https://ofbiz.apache.org)
+### Module 3: Developing application with [Apache OFBiz](https://ofbiz.apache.org)
 * [Getting Started](https://ofbiz.apache.org/developers.html)
 * [Developing Application](https://cwiki.apache.org/confluence/display/OFBIZ/OFBiz+Tutorial+-+A+Beginners+Development+Guide+for+Release+18.12+and+Release+22.01) with Apache OFBiz 
 
-### Module 5: SQL Assignment
+### Module 4: SQL Assignment
 * Get read only access OMS test database.
 * [SQL Assignment 1](udm/intermediate/sql-assignment/sql-assignment-1.md)
 * [SQL Assignment 2](udm/intermediate/sql-assignment/sql-assignment-2.md)
 * [SQL Assignment 3](udm/intermediate/sql-assignment/sql-assignment-3.md)
+
+### Module 5: Detailed Design
+1. [Design CDP](udm/beginner/activity-design-cdp.md)
+2. [Design PIM](udm/beginner/activity-design-pim.md)
+3. [Design OMS](udm/intermediate/data-model-assignment/activity-design-order.md)
+4. [Order Fulfillment System](udm/intermediate/data-model-assignment/activity-design-fulfillment.md)
+
 
 ### Module 6: Official Documentation and Application Usage
 * https://docs.hotwax.co/documents/v/documents-1

@@ -93,7 +93,6 @@ How does the principle of iterative refinement prevent data model stagnation and
 **Activity:**
 - Read chapter 4 of the Universal Data Model book.
 - [Order](beginner/Order/order.md)
-- [Design OMS](intermediate/data-model-assignment/activity-design-order.md)
 
 ---
 
