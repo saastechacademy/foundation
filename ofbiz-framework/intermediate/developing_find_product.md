@@ -39,7 +39,7 @@ By completing this assignment, you will:
    - Product ID  
    - Product name  
    - Price (LIST_PRICE)
-   - Product features  
+   - Product features
 3. Ensure that the entity correctly joins relevant tables, such as `Product`, `ProductCategory`, and `ProductPrice`.  
 4. Test the entity definition to confirm that it retrieves product data as expected.  
 
@@ -50,9 +50,10 @@ By completing this assignment, you will:
    - Product name  
    - Price range  
    - Product feature  
-3. Implement logic to support case-insensitive and partial matches when searching.  
-4. Ensure the service returns a list of products that match the provided criteria.  
-5. Validate the service by calling it with different search parameters.  
+3. Ensure the service allows filtering based on any type of product feature, such as color or size.
+4. Implement logic to support case-insensitive and partial matches when searching for products.  
+5. Ensure the service returns a list of products that match the provided criteria.  
+6. Validate the service by calling it with different search parameters.  
 
 ### Step 5: Creating and Updating Products  
 1. Define a service called `createProduct` to add new products. The service should:  
