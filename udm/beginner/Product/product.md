@@ -82,6 +82,9 @@ Example: ABC Organization manufactures different products, including a smartphon
       "productId": "PROM001",
       "productName": "Laptop-Phone-Promotional-Package",
       "productTypeEnumId": "FINISHED_GOOD",
+      "isVirtual": "Y",
+      "isVarient": "N",
+    },
     }
   ]
 }
@@ -152,8 +155,7 @@ Example: ABC Organization manufactures different products, including a smartphon
     {
       "productId": "PROM001",
       "productPriceId": "PRC_PHN_LPT_PROM1",
-      "productName": "Laptop-Phone-Promotional-Package",
-      "productTypeEnumId": "PROMOTIONAL_PRICE",
+      "priceTypeEnumId": "PROMOTIONAL_PRICE",
       "price": 1999.99
     }
   ]
