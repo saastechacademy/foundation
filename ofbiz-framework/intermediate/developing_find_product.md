@@ -1,4 +1,4 @@
-# Assignment: Product Data Model in Apache OFBiz
+# Assignment: Build a Dynamic Product Finder
 
 ## Objective  
 You will be designing a "Find Product" view screen to simplify product management. The retailer requires that the product's name be unique for each product.  
