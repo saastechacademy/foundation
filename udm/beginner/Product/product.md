@@ -221,13 +221,13 @@ Example: ABC Organization manufactures different products, including a smartphon
     {
       "productId": "PROM001",
       "toProductId": "PROD10001",
-      "productAssocTypeEnumId": "MARKT_PACKAGE",
+      "productAssocTypeEnumId": "COMPONENT",
       "fromdate": "2023-10-01"
     },
     {
       "productId": "PROM001",
       "toProductId": "PROD20001",
-      "productAssocTypeEnumId": "MARKT_PACKAGE",
+      "productAssocTypeEnumId": "COMPONENT",
       "fromdate": "2023-10-01"
     }
   ]
