@@ -1,4 +1,4 @@
-# createExternalInventoryReset
+# create#[ExternalInventoryReset](ExternalInventoryReset.md)
 
 
 ```json
