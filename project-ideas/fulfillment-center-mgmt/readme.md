@@ -137,6 +137,15 @@ Why does the shipment have to be moved out of "approved" status to edit it's con
 
 https://git.hotwax.co/commerce/oms/blob/371fe6c4251c11438e590bf21e98290f8e64a235/applications/product/minilang/shipment/issuance/IssuanceServices.xml#L134
 
+## Transfer Order
+
+The advice for moving inventory from one storage facility to other. It helps manage the workflow. 
+The TO is an OrderType like SalesOrder and PurchaseOrder. 
+The API for to [createTransferOrder](createTransferOrder.md) builds on the [createOrder](../oms/createOrder.md)
+
+
+
+
 ## Receive Shipment
 
 **Shipment Receiver briefly reviews incoming shipment.**
