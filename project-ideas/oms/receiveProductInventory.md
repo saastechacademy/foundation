@@ -18,7 +18,7 @@
 1. Inventory Item Handling:
     * reasonEnumId is the enum of type "IID_REASON". The Inventory Item Detail Reason is saved in InventoryItemDetail record. 
     * It checks if `inventoryItemId` is provided.
-    * If not, call helper service to get [inventoryItemId](findOrCreateFacilityInventoryItem.md)
+    * If not, call [findOrCreateFacilityInventoryItem](findOrCreateFacilityInventoryItem.md) helper service to get inventoryItemId
 
 2. Inventory Item Detail and Shipment Receipt:
     * call the `createInventoryItemDetail` service to record the change in inventory.
