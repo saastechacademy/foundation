@@ -1,9 +1,9 @@
 # Assignment: Build a Dynamic Customer Finder
 
 **Objective:**  
-You will be designing a "Find Customer" view screen to simplify customer management. The retailer requires that the customer's email address, identified by `contactMechPurposeId="EmailPrimary"`, serves as the unique identifier for each customer.
+You will be designing a "Find Customer" view screen to simplify customer management. The retailer requires that the customer's primary email address serve as the unique identifier for each customer.
 
-Using the provided `FindParty.groovy` file as a reference, create a new dynamic query script, `FindCustomer.groovy`, along with a corresponding service (`findCustomer`) and a view-entity (`FindCustomerView`). Additionally, implement `createCustomer` and `updateCustomer` services for managing customer records. The goal is to enable flexible querying of customer data and provide the capability to create and update customer records dynamically.
+You will define a structured approach for managing customer information, implement services for customer creation and updates, and establish relationships between customers and contact mechanisms. This will involve working with entities, services, and events within the OFBiz framework.  
 
 ## Assignment Steps
 
