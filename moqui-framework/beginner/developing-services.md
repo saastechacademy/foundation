@@ -1,76 +1,66 @@
-# Assignment: Developing Service
+# Assignment: Create a Custom Service in Moqui
 
-### This assignment tests your ability to:
+## Objectives
 
-1. Discuss the service type `entity-auto`:
-    - Is the name of the entity you defined in Moqui the same as the entity name in MySQL?
-    - What did you observe, and why?
-    - If MySQL works with SQL but you did not write SQL, does this mean MySQL with Moqui doesn’t require SQL?
-    - Discuss differences between ORM and JDBC ([Reference](https://www.geeksforgeeks.org/hibernate-difference-between-orm-and-jdbc/)).
+This assignment evaluates your ability to:
 
-2. Explain Groovy:
-    - How is it similar to and different from Java?
-
-3. Explore APIs:
-    - What is a RESTful API?
-    - What is JsonRPC, and how does it differ from REST APIs?
+- Follow Moqui documentation and instructions effectively.
+- Define and implement a new service in a custom Moqui component.
+- Utilize Moqui’s Service Tools for testing and validation.
+- Demonstrate proficiency in Git and GitHub for source code management.
+- Follow proper JAVA naming conventions.
 
 ## Tasks
 
-### Task 1: Create an Entity-Auto Service
+### **Step 1: Define a New Service**
+1. Inside the `moqui-training` component, create a directory structure to store service definitions.
+2. Define a create service for the `MoquiTraining` entity with the following:
+   - An input parameter: `trainingName` (String, **required**).
+   - Allow any other parameters to be sent optionally.
+   - A logic to generate a response string such as `"Training [trainingName] created successfully!"`.
+   - Ensure the service is defined using Moqui’s XML schema for services and marks `trainingName` as a required parameter.
 
-- **Goal:** Generate records in the `MoquiTraining` entity automatically.
-- **Steps:**
-    - Use `entity-auto` service type.
-    - Define input parameters for all non-primary key fields of `MoquiTraining`.
-    - Include validations:
-        - `trainingName` is mandatory.
-        - `trainingDate` must follow `MM/dd/yyyy` format.
-    - Ensure the service returns the `trainingId`.
+### **Step 2: Implement the Service Logic**
+1. Create a Groovy file to implement the service logic.
+2. The logic should:
+   - Validate that `trainingName` is provided and return an error if it is missing.
+   - Accept and process any additional parameters sent.
+   - Return the response string as defined above.
 
-### Task 2: Implement Services
+### **Step 3: Expose the Service as a REST API**
+1. In the `services` directory of your component, configure the REST API using a `Service REST API XML` file (e.g., `MoquiTraining.rest.xml`).
+2. Define an endpoint for the create service.
 
-- **Default Type:** Create a service with the default type to generate `MoquiTraining` records.
-- **Groovy Script:** Write a Groovy service for logic and data creation.
+### **Step 4: Load Demo Data**
+1. Create a file named `TrainingDemoData.xml` in the `data` directory of your `moqui-training` component.
+2. Define sample data entries for the `MoquiTraining` entity.
+3. Use the Moqui Data Loader to import the data:
+   - Run the Moqui application and access the Data Import tool.
+   - Import the `TrainingDemoData.xml` file.
 
-### Task 3: Prepare Data File
+### **Step 5: Test the Service in Moqui UI**
+1. Run the Moqui application and access the Service Tools section.
+2. Execute the create service by providing a value for the `trainingName` parameter.
+3. Optionally, pass additional parameters and verify they are handled correctly.
+4. Verify that the response matches the expected output.
 
-- **CSV File:** Create a CSV file to input data into the entity.
-
-### Task 4: Load and Verify Data
-
-- **Load Data:** Populate the entity from the CSV file using Gradle tasks or equivalent.
-- **Verify:**
-    - Check if records are created in the database.
-    - Test services directly via Moqui UI or API calls.
-
-## Submission Instructions
-
-- Commit and push the service implementations and CSV file to the `moqui-training` repository on GitHub.
-
----
-
-## Tutorial
-
-Moqui services are the backbone of application logic, enabling data management, updates, and workflows.
-
-1. [Moqui Training Video 3](https://www.youtube.com/watch?v=6kFwPlPk92c)
-2. [Moqui Training Video 4](https://www.youtube.com/watch?v=EpEt9ndJUWA&list=PL6JSOz3-TrFSMiuGounNRnje-JQDi8l8g&index=5&t=1s)
+### **Step 6: Test the REST API**
+1. Test the REST API using Postman:
+   - Open Postman and create a new POST request.
+   - Set the base URL + the rest endpoint. Both can be found in the Swagger documentation.
+   - In the **Body** tab, select `raw` and enter a test JSON payload.
+   - Click **Send** and verify the API response matches the expected output.
 
 
-### Key Concepts
+## Deliverables
 
-- **Execution Context:** Provides a runtime environment for Moqui artifacts and framework tools.
-- **Service Definition:** Specifies the service name, parameters, and attributes.
-- **Service Implementation:** Contains service logic written in Groovy or Java.
-- **Service Invocation:** Call services from other services, screens, or scripts.
+1. A link to the GitHub repository containing your `moqui-training` component.
 
-### Entity-Auto Services
+## Evaluation Criteria
 
-Entity-auto services simplify operations like create, update, and delete.
-
-### Validation and Testing
-
-- Input validation ensures data integrity.
-- Test rigorously to meet functional and performance requirements.
-
+- The `moqui-training` component is correctly structured.
+- The create service is properly defined, implemented, and tested.
+- The service logic validates the required parameter `trainingName` and processes additional optional parameters.
+- Demo data is correctly loaded using `TrainingDemoData.xml` and visible in Moqui.
+- Proper usage of Git and GitHub for version control.
+- Clean and readable code adhering to Java naming conventions.

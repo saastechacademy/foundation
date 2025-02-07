@@ -50,7 +50,7 @@
    - Once the shipment records are handled (or if no shipment item existed), continue to the following steps to complete the `OrderItem` rejection.
 
 2. **Cancel Inventory Reservation**  
-   - Call the [cancelOrderItemInvResQty](../oms/cancelOrderItemInvRes.md) service to cancel any existing inventory reservations for the rejected `OrderItem`.  
+   - Call the [cancelOrderItemInventoryReservation](../oms/cancelOrderItemInventoryReservation) service to cancel any existing inventory reservations for the rejected `OrderItem`.  
    - This cancellation applies to both the main item and any package components if the item is part of a marketing package.
 
 3. **Move to Rejected Ship Group**  

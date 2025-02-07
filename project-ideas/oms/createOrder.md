@@ -1,19 +1,25 @@
 
-## `create#Order` Service
+## `create#org.apache.ofbiz.order.order.OrderHeader` Service
 
 The `create#Order` The service is responsible for saving the prepared data to the database.
 
 This service creates data in following entities:
-- **OrderHeader**: The main order record, storing information such as order date, customer details, and total amounts.
-- **OrderIdentificaion**:
-- **OrderRole**:
-- **OrderContactMech**:
-- **OrderPaymentPreference**: Information about the payment method used for the order.
-- **OrderItems**: Line items representing the products or services being ordered, including quantity, price, and any adjustments.
-- **OrderAdjustments**: Any promotions, discounts, or taxes applied to the order.
-- **OrderItemShipGroup**: Shipment details, including the shipping method, carrier, and destination.
-- **OrderItemGroup**:
-- **OrderItemAssoc**:
+
+| Entity Name           | Alias                | Description                                              |
+|-----------------------|----------------------|----------------------------------------------------------|
+| OrderHeader | order             | Root entity representing the order details.              |
+| OrderRole | roles          | Associates roles (e.g., customer, salesperson) to the order. |
+| OrderItem | items          | Line items in the order, representing purchased products. |
+| OrderItemAttribute | itemAttributes | Dynamic attributes associated with order items.          |
+| OrderAdjustment | adjustments    | Adjustments applied to the order, such as discounts or taxes. |
+| OrderPaymentPreference | paymentPreferences | Payment preferences associated with the order.            |
+| OrderItemShipGroup | itemShipGroups | Defines shipping details for order items.               |
+| OrderItemGroup | itemGroups     | Groups order items for brokering purposes.              |
+| OrderItemGroupAssoc | itemGroupAssoc | Associates order items with specific groups.             |
+| ContactMech | mech         | Represents a contact mechanism, such as a postal address.|
+| PostalAddress | address       | Details of the postal address for the contact mechanism. |
+
+
 
 
 ```json
@@ -48,14 +54,14 @@ This service creates data in following entities:
             ]
         }
     ],
-    "orderAttributes": [
+    "attributes": [
         {
             "attrName": "item",
             "attrValue": "testing attribute",
             "attrDescription": ""
         }
     ],
-    "orderContactMechs": [
+    "contactMechs": [
         {
             "contactMechId": "100489",
             "contactMechPurposeTypeId": "SHIPPING_LOCATION"
@@ -73,7 +79,7 @@ This service creates data in following entities:
             "contactMechPurposeTypeId": "ORDER_EMAIL"
         }
     ],
-    "orderIdentifications": [
+    "identifications": [
         {
             "idType": "SHOPIFY_ORD_NAME",
             "idValue": "2345678876545"
@@ -83,7 +89,7 @@ This service creates data in following entities:
             "idValue": "4444992255"
         }  
     ],
-    "orderPaymentPref": [
+    "paymentPreferences": [
         {
             "paymentMethodTypeId": "EXT_SHOP_OTHR_GTWAY",
             "maxAmount": "25000",
@@ -96,7 +102,7 @@ This service creates data in following entities:
             "orderId": "100783"
         }
     ],
-    "orderRoles": [
+    "roles": [
         {
             "partyId": "100395",
             "roleTypeId": "PLACING_CUSTOMER"   
@@ -155,7 +161,7 @@ This service creates data in following entities:
                             ]
                         }
                     ],
-                    "orderItemAttributes": [
+                    "itemAttributes": [
                         {
                             "attrName": "_pickupstore",
                             "attrValue": "NEW_ERA_HARAJUKU",
