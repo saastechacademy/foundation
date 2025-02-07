@@ -62,7 +62,7 @@ By completing this assignment, you will:
    - Create a new product only if it does not already exist.  
 2. Define a service called `updateProduct` to modify product details. The service should:  
    - Accept a product ID as a required input.  
-   - Allow updates to the product’s category, price, and features.  
+   - Allow updates to the product’s price, and features.  
    - Ensure that the product exists before applying updates.  
 3. Test both services by creating and updating product records in OFBiz.  
 

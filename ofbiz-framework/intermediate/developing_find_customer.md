@@ -1,4 +1,4 @@
-# Assignment:   
+# Assignment: Build a Dynamic Customer Finder
 
 ## Objective  
 You will be designing a "Find Customer" view screen to simplify customer management. The retailer requires that the customer's email address, identified by `contactMechPurposeTypeId="EmailPrimary"`, serves as the unique identifier for each customer.
