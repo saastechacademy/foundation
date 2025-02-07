@@ -23,7 +23,7 @@ Prerequisite Data:
 Product Variant Association
 	Variant Product Association
 
-```
+``` xml
 <ProductAssoc fromDate="2001-05-13 12:00:00.0" productAssocTypeId="PRODUCT_VARIANT" productId="T-Shirt" productIdTo="SS-SR" quantity="1.0" reason=""/>
 <ProductAssoc fromDate="2001-05-13 12:00:00.0" productAssocTypeId="PRODUCT_VARIANT" productId="T-Shirt" productIdTo="SS-SB" quantity="1.0" reason=""/>
 ```
@@ -50,7 +50,7 @@ Prerequisite Data:
 
 Product Component Association:
 
-```
+``` xml 
   <ProductAssoc productId="Compaq_260S" productIdTo="Compaq_Monitor" productAssocTypeId="PRODUCT_COMPONENT" quantity="1" fromDate="2007-01-01 12:00:00.0"/>
   <ProductAssoc productId="Compaq_260S" productIdTo="Compaq_Keyboard" productAssocTypeId="PRODUCT_COMPONENT" quantity="1" fromDate="2007-01-01 12:00:00.0"/>
   <ProductAssoc productId="Compaq_260S" productIdTo="Compaq_CPU" productAssocTypeId="PRODUCT_COMPONENT" quantity="1" fromDate="2007-01-01 12:00:00.0"/>
@@ -103,7 +103,7 @@ Prerequisite Data:
  Click here to view Prerequisite Data
 Product Complement Association:
 
-```	
+```	xml 
 <ProductAssoc productAssocTypeId="PRODUCT_COMPLEMENT" productId="9000" productIdTo="9004" sequenceNum="1" fromDate="2010-07-16 18:07:41.64"/>
 <ProductAssoc productAssocTypeId="PRODUCT_COMPLEMENT" productId="9000" productIdTo="9005" sequenceNum="2" fromDate="2010-07-16 18:06:59.267"/>
 ```
@@ -127,7 +127,7 @@ Prerequisite Data:
  Click here to view Prerequisite Data
 Also Bought Association:
 
-```	
+```	xml 
 <ProductAssoc productAssocTypeId="ALSO_BOUGHT" productId="9000" productIdTo="9004" fromDate="2010-07-16 18:06:59.267"/>
 <ProductAssoc productAssocTypeId="ALSO_BOUGHT" productId="9000" productIdTo="9005" fromDate="2010-07-16 18:07:41.64"/>
 ```

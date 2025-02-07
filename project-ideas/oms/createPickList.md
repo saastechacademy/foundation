@@ -1,4 +1,6 @@
-## **PickList Entity Design**
+## create#org.apache.ofbiz.shipment.picklist.Picklist
+
+**PickList Entity Design**
 
 NOTE: Simplified version of Picklist data model.
 
@@ -29,7 +31,7 @@ NOTE: Simplified version of Picklist data model.
 *   `shipmentId` reference the `Shipment` entity.
 
 
-### **createPickList**
+### **create#org.apache.ofbiz.shipment.picklist.Picklist**
 
 **Sample JSON**
 ```
