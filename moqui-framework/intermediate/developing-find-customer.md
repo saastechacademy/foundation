@@ -4,8 +4,7 @@
 You will be designing a "Find Customer" view screen to simplify customer management. The retailer requires that the customer's primary email address serve as the unique identifier for each customer.
 
 You will define a structured approach for managing customer information, implement services for customer creation and updates, and establish relationships between customers and contact mechanisms. This will involve working with entities, services, and events within the OFBiz framework.  
-
-## Assignment Steps
+Assignment Steps
 
 ### Step 1: Analyze the Reference File (`FindParty.groovy`)
 - Review the provided `FindParty.groovy` file.

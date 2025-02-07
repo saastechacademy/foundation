@@ -20,7 +20,7 @@ The staff gets the list of Outstanding orders
 
 Alternativley the user can choose to not proceed with picking and instead choose the following actions:
 
-  *  The user can choose to [rejectOrderItem](rejectOrderItem.md) if for some reason orderItem cannot be fulfilled.
+  *  The user can choose to [rejectOrderItems](rejectOrderItems.md) if for some reason orderItem cannot be fulfilled.
   *  The user can choose to [cancelOrderItem](cancelOrderItem.md) on request of the customer or Customer Service Rep (CSR).
 
 ### Step 2: 
@@ -61,12 +61,11 @@ Shipment is created in SHIPMENT_INPUT, then SHIPMENT_APPROVED to SHIPMENT_PACKED
 Why does the shipment have to be moved out of "approved" status to edit it's contents? For example fulfillment team may want to reject an item after begining pack pick process, in which case shipment will already be packed.
 
 -   To pack a Shipment, we need shipping label. To give shipping label, shipping carrier need to know the package dimensions and weight.
--   Approving the shipment means communicates that the shipment is now ready for packing, and package type and weight are not final.
+-   Approving the shipment means communicates that the shipment is now ready for packing, and package type and weight are now final.
 
 
 1. If the Approved shipment should be edited, The Shipment is first [reinitializeShipment](reinitializeShipment.md).To avoid error, the reinitialize process calls [voidShipmentLabel](voidShipmentLabel.md).
-2. In case the Packed shipment should be edited, it is first [Unpacked](unpackOrderItems.md). The Unpacking process moves the shipment to Approved status and then moves it to SHIPMENT_INPUT by calling [reinitializeShipment](reinitializeShipment.md).
-   1. Shipment package contents are modified i.e a Shipment was moved from SHIPMENT_APPROVED status to SHIPMENT_INPUT, ensure to [voidShipmentPackageLabel](voidShipmentPackageLabel.md). Recompute the [ShipmentPackageWeight](calcShipmentPackageTotalWeight.md).
+2. In case the Packed shipment should be edited, first [reinitializeShipment](reinitializeShipment.md). It moves shipment from SHIPMENT_PACKED status to SHIPMENT_INPUT, ensure to [voidShipmentPackageLabel](voidShipmentPackageLabel.md). Recompute the [ShipmentPackageWeight](calcShipmentPackageTotalWeight.md).
 
 ```
     <!-- ShipmentRouteSegment CarrierService status -->
@@ -87,7 +86,7 @@ Why does the shipment have to be moved out of "approved" status to edit it's con
 ### [Setting up a New Shipping Carrier](https://github.com/saastechacademy/foundation/blob/main/ofbiz-framework/intermediate/setupShippingCarrier.md)
 
 ### Pre-Requisits, NOT included in Fulfillment App. 
-1) Setup Faciity with Locations
+1) Setup Facility with Locations
 2) Setup Product and Inventory configurations
 3) Import product inventory
 4) Import Orders 
@@ -135,14 +134,25 @@ Why does the shipment have to be moved out of "approved" status to edit it's con
 3.  What if during Shipment processing, we may have to get ShippingLabel. In this case we can skip the rate shopping step, Read carrrier Party and shipmentMethodTypeId from the ShipmentRouteSegment entity.
 4.  Are we honoring the shipmentMethodType suggested by brokering engine? Brokering engine evaluates distance between fulfillment location and deliver location, if the distance is within the range of ZONE 2, Brokering engine suggests ShipmentMethodType. The Rate shopping process should include the suggested shipmentMethodType.
 
+## [Inventory Management](inventoryManagementProcess.md)
 
-https://git.hotwax.co/commerce/oms/blob/371fe6c4251c11438e590bf21e98290f8e64a235/applications/product/minilang/shipment/issuance/IssuanceServices.xml#L134
+## Transfer Order
+
+The advice for moving inventory from one storage facility to other. It helps manage the workflow. 
+The TO is an OrderType like SalesOrder and PurchaseOrder. 
+The API for to [createTransferOrder](createTransferOrder.md) builds on the [createOrder](../oms/createOrder.md)
+An inventory storage location may receive [InTransferShipment](createInTransferShipment.md) or ship [OutTransferShipment](createOutTransferShipment.md) for a transfer order. 
+
+
+
+
 
 ## Receive Shipment
 
 **Shipment Receiver briefly reviews incoming shipment.**
 * If shipment received is a return (has RMA# or Return ID), 
 * If shipment received is for a purchase order (has PO#), Shipment Receiver finds the PO corresponding to the items received and records PO receipt (inventory) quantity.
+* If shipment received is for a ASN, shipment receiver finds the Shipment.
 
 **Shipment Receiver reviews incoming items. and Shipment Receiver will receive the shipment even if**
 * Shipment Receiver records a higher quantity received than was ordered, inventory reconciliation will report it.
