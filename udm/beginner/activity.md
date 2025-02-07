@@ -108,7 +108,7 @@ Use the product store manager screen to execute the following steps.
      - Supplier Agent
      - Supplier
      - Vendor
-
+     
 ### Activity 3 – Product Store Group
 1. **Create a Product Store Group:**  
    - **Store Group Name:** `Company Store Group`
