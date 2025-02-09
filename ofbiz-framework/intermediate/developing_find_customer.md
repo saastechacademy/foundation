@@ -26,7 +26,7 @@ By completing this assignment, you will:
    - `Person` 
    - `ContactMech`
 4. Understand how these entities relate to each other and how they will be used to store customer data.  
-5. Use this understanding to properly design the entity relationships in the later steps of the assignment.  
+5. Use this understanding to properly design the view entity relationships in the later steps of the assignment.  
 
 ### Step 2: Setting Up the Plugin  
 1. Create a new plugin named `CustomerManagement` using Gradle.  
