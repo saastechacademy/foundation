@@ -67,11 +67,11 @@ By completing this assignment, you will:
 3. Test both services by creating and updating customer records in OFBiz.  
 
 ### Step 6: Establishing and Updating Relationships Between Parties  
-1. Define a service named `createRelationship` to establish a relationship between two parties. The service should:  
+1. Define a service named `createCustomerRelationship` to establish a relationship between two parties. The service should:  
    - Accept two party IDs as inputs.  
    - Require a relationship type identifier.  
    - Store the relationship details in the database.  
-2. Define a service named `updateRelationship` to modify an existing relationship between two parties. The service should:  
+2. Define a service named `updateCustomerRelationship` to modify an existing relationship between two parties. The service should:  
    - Accept the two party IDs and relationship type as inputs.  
    - Allow updating the status of the relationship.  
 3. Test both services by creating and updating relationships between parties.  
