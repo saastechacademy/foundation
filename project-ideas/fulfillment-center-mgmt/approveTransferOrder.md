@@ -1,6 +1,6 @@
-# create#TransferOrder
+# approve#TransferOrder
 
-The service to create approve Transfer Orders.
+The service to approve Transfer Orders.
 
 TODO add more details
 1. The status update and reservation operations will be done in-line in the Approve service.
