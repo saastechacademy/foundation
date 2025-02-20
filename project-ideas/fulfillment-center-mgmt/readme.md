@@ -174,6 +174,53 @@ Two new Order Item Status will be introduced to manage the lifecycle of Transfer
    4. Completed
    5. Cancelled
 
+NOTE Here the item will not transition to APPROVED status since in the Approve TO process, the next possible status could be either 
+Pending Fulfillment or Pending Receipt based on the statusFlowId.
+
+##### New Status Items 
+```
+<moqui.basic.StatusItem statusId="ITEM_PENDING_FULFILLMENT" statusTypeId="ORDER_ITEM_STATUS" statusCode="PENDING_FULFILLMENT" description="Pending Fulfillment"/>
+
+<moqui.basic.StatusItem statusId="ITEM_PENDING_RECEIPT" statusTypeId="ORDER_ITEM_STATUS" statusCode="PENDING_RECEIPT" description="Pending Receipt"/>
+```
+
+##### New Status Flow and transitions
+1. Transfer Orders Pending Fulfillment
+```
+<!-- Status Flow for Transfer Orders Store to Warehouse -->
+<moqui.basic.StatusFlow statusFlowId="TO_PendingFulfill" description="Status transitions for Transfer Orders where Fulfillment is managed by OMS and Receiving is managed by 3rd party e.g. Store to Warehouse"/>
+
+<!-- Status Transitions for Transfer Orders Store to Warehouse -->
+<moqui.basic.StatusFlowTransition statusFlowId="TO_PendingFulfill" statusId="ITEM_CREATED" toStatusId="ITEM_PENDING_FULFILLMENT" transitionSequence="1" transitionName="Approve & Pending Fulfillment Item"/>
+
+<moqui.basic.StatusFlowTransition statusFlowId="TO_PendingFulfill" statusId="ITEM_PENDING_FULFILLMENT" toStatusId="ITEM_COMPLETED" transitionSequence="2" transitionName="Complete Item"/>
+```
+
+2. Transfer Orders Pending Receipt
+```
+<!-- Status Flow for Transfer Orders Warehouse to Store -->
+<moqui.basic.StatusFlow statusFlowId="TO_PendingReceive" description="Status transitions for Transfer Orders where Fulfillment is managed by 3rd party and Receiving is managed by OMS e.g. Warehouse to Store"/>
+
+<!-- Status Transitions for Transfer Orders Warehouse to Store -->
+<moqui.basic.StatusFlowTransition statusFlowId="TO_PendingReceive" statusId="ITEM_CREATED" toStatusId="ITEM_PENDING_RECEIPT" transitionSequence="1" transitionName="Approve & Pending Receipt Item"/>
+
+<moqui.basic.StatusFlowTransition statusFlowId="TO_PendingReceive" statusId="ITEM_PENDING_RECEIPT" toStatusId="ITEM_COMPLETED" transitionSequence="2" transitionName="Complete Item"/>
+```
+
+3. Transfer Orders Pending Fulfillment & Receipt
+```
+<!-- Status Flow for Transfer Orders Store to Store -->
+<moqui.basic.StatusFlow statusFlowId="TO_PendingFulfillAndReceive" description="Status transitions for Transfer Orders where both Fulfillment and Receiving is managed by OMS e.g. Store to Store"/>
+
+<!-- Status Transitions for Transfer Orders Store to Store -->
+<moqui.basic.StatusFlowTransition statusFlowId="TO_PendingFulfillAndReceive" statusId="ITEM_CREATED" toStatusId="ITEM_PENDING_FULFILLMENT" transitionSequence="1" transitionName="Approve & Pending Fulfillment Item"/>
+
+<moqui.basic.StatusFlowTransition statusFlowId="TO_PendingFulfillAndReceive" statusId="ITEM_PENDING_FULFILLMENT" toStatusId="ITEM_PENDING_RECEIPT" transitionSequence="2" transitionName="Pending Receipt Item"/>
+
+<moqui.basic.StatusFlowTransition statusFlowId="TO_PendingFulfillAndReceive" statusId="ITEM_PENDING_RECEIPT" toStatusId="ITEM_COMPLETED" transitionSequence="3" transitionName="Complete Item"/>
+
+```
+
 #### Transfer Order Life cycle
 
 1. TOs where Fulfillment location is managed by OMS and Receiving location is managed by third party e.g. Store to Warehouse
@@ -183,11 +230,11 @@ Two new Order Item Status will be introduced to manage the lifecycle of Transfer
          1. TO and TO Items in CREATED status
       2. TO Approval
          1. TO updated from status CREATED to APPROVED
-         2. TO Item: statusId="ITEM_CREATED" toStatusId="ITEM_PENDING_FULFILLMENT" transitionName="Approve & Pending Fulfillment Item"
+         2. TO Item: statusId="ITEM_CREATED" toStatusId="ITEM_PENDING_FULFILLMENT" transitionSequence="1" transitionName="Approve & Pending Fulfillment Item"
          3. Here item reservations should happen in approval since fulfillment in OMS.
       3. TO Fulfillment
          1. TO updated from status APPROVED to COMPLETED
-         2. TO Item: statusId="ITEM_PENDING_FULFILLMENT" toStatusId="ITEM_COMPLETED" transitionName="Complete Item" 
+         2. TO Item: statusId="ITEM_PENDING_FULFILLMENT" toStatusId="ITEM_COMPLETED" transitionSequence="2" transitionName="Complete Item" 
       
 
 2. TOs where Fulfillment location is managed by third party and Receiving location is managed by OMS e.g. Warehouse to Store
@@ -197,11 +244,11 @@ Two new Order Item Status will be introduced to manage the lifecycle of Transfer
            1. TO and TO Items in CREATED status
        2. TO Approval
            1. TO updated from status CREATED to APPROVED
-           2. TO Item: statusId="ITEM_CREATED" toStatusId="ITEM_PENDING_RECEIPT" transitionName="Approve & Pending Receipt Item"
+           2. TO Item: statusId="ITEM_CREATED" toStatusId="ITEM_PENDING_RECEIPT" transitionSequence="1" transitionName="Approve & Pending Receipt Item"
            3. Here No item reservations should happen in approval since only receiving in OMS.
        3. TO Receiving
            1. TO updated from status APPROVED to COMPLETED
-           2. TO Item: statusId="ITEM_PENDING_RECEIPT" toStatusId="ITEM_COMPLETED" transitionName="Complete Item"
+           2. TO Item: statusId="ITEM_PENDING_RECEIPT" toStatusId="ITEM_COMPLETED" transitionSequence="2" transitionName="Complete Item"
 
 
 3. TOs where both Fulfillment and Receiving locations are managed by OMS e.g. Store to Store
@@ -211,14 +258,14 @@ Two new Order Item Status will be introduced to manage the lifecycle of Transfer
            1. TO and TO Items in CREATED status
        2. TO Approval
            1. TO updated from status CREATED to APPROVED
-           2. TO Item: statusId="ITEM_CREATED" toStatusId="ITEM_PENDING_FULFILLMENT" transitionName="Approve & Pending Fulfillment Item"
+           2. TO Item: statusId="ITEM_CREATED" toStatusId="ITEM_PENDING_FULFILLMENT" transitionSequence="1" transitionName="Approve & Pending Fulfillment Item"
            3. Here item reservations should happen in approval since fulfillment in OMS.
        3. TO Fulfillment
           1. TO should still be in APPROVED status
-          2. TO Item: statusId="ITEM_PENDING_FULFILLMENT" toStatusId="ITEM_PENDING_RECEIPT" transitionName="Pending Receipt Item" 
+          2. TO Item: statusId="ITEM_PENDING_FULFILLMENT" toStatusId="ITEM_PENDING_RECEIPT" transitionSequence="2" transitionName="Pending Receipt Item" 
       4. TO Receiving
             1. TO updated from status APPROVED to COMPLETED
-            2. TO Item: statusId="ITEM_PENDING_RECEIPT" toStatusId="ITEM_COMPLETED" transitionName="Complete Item"
+            2. TO Item: statusId="ITEM_PENDING_RECEIPT" toStatusId="ITEM_COMPLETED" transitionSequence="3" transitionName="Complete Item"
 
 **NOTE**
 1. The Fulfillment App will list all TOs where Order is Approved and Items are Pending Fulfillment so that they are eligible to be shipped in OMS.
@@ -230,13 +277,23 @@ in the Receiving App, the option “Receive and Close” will be used which shou
 5. The apps will use the statusFlowId to correctly send the statusId and toStatusId type info, and the application layer will validate
 the status transitions and perform the required updates.
 
-##### Receiving unexpected items in a TO
+#### Approve Transfer Order
+
+1. Once the TOs are imported in OMS in Created Status, the approval flow for TOs should run.
+2. The [approveTransferOrder](approveTransferOrder.md) service will handle approval of Created TOs in the system.
+3. The Order Header status will be updated from CREATED to APPROVED.
+4. For the Order Item, the OH.statusFlowId will be used to update the status of the item to the next possible status. 
+5. The item status will be updated from CREATED to either PENDING_FULFILL or PENDING_RECEIVE, we do not need APPROVED order item status here in the item lifecycle. 
+6. The StatusFlowTransition.transitionSequence will be used to identify the next possible status for each statusFlowId, the first transactionSequence is the required one.
+7. Item Reservations should happen only when item status transition is being done to PENDING_FULFILL.
+
+#### Receiving unexpected items in a TO
 
 - While receiving a TO, if a new unexpected item is received, the system allows the addition of new item to the TO while receiving.
-- The new Order item should be created in the Pending Receipt status, and then further receiving updates should happen. 
+- The new Order item should be created in the Pending Receipt status, and then further receiving updates should happen.
 
-TODO 
-1. scenarios of TO cancellation 
+**TODO** TO Cancellation
+1. scenarios of TO cancellation
 
 ## Receive Shipment
 
