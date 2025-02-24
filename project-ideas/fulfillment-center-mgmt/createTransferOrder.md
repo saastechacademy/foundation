@@ -155,21 +155,21 @@ The API for managing TO builds on the [createOrder](../oms/createOrder.md)
             {
                "orderItemTypeId": "PRODUCT_ORDER_ITEM",
                "statusId": "ITEM_CREATED",
-               "externalId": 1,
+               "externalId": "1",
                "quantity": 2,
                "productId": "58160"
             },
             {
                "orderItemTypeId": "PRODUCT_ORDER_ITEM",
                "statusId": "ITEM_CREATED",
-               "externalId": 2,
+               "externalId": "2",
                "quantity": 2,
                "productId": "58163"
             },
             {
                "orderItemTypeId": "PRODUCT_ORDER_ITEM",
                "statusId": "ITEM_CREATED",
-               "externalId": 3,
+               "externalId": "3",
                "quantity": 4,
                "productId": "58162"
             }
