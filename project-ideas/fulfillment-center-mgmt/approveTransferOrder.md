@@ -36,7 +36,7 @@ Approve single Transfer Order
       1. statusDatetime = ec.user.nowTimestamp
       2. orderId
       3. statusId = "ORDER_APPROVED"
-   6. NOTE Points 3, 4 & 5 can be wrapped in a generic OMS service to update Order Status
+   6. NOTE Points 3, 4 & 5 can be wrapped in a generic OMS service to update Order Status?
    7. Entity Find on StatusFlowTransition with conditions on
       1. statusFlowId
       2. statusId = "ITEM_CREATED"  //can we skip this condition and only check transitionSequence=1 ???
@@ -51,7 +51,8 @@ Approve single Transfer Order
            2. orderId
            3. orderItemSeqId
            4. statusId = toItemStatusId
-       4. If toItemStatusId = "ITEM_PENDING_FULFILLMENT", then call reserve item inventory **TODO** check reserve inventory service impl
+       4. Here above can also be wrapped in a generic service to update Order Item Status?
+       5. If toItemStatusId = "ITEM_PENDING_FULFILLMENT", then call reserve item inventory **TODO** check reserve inventory service impl
 
     
 ### update#OrderStatus service
