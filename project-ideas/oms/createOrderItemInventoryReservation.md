@@ -17,7 +17,6 @@
     *   `productId` (required): The ID of the product to reserve.
     *   `quantity` (required): The quantity to reserve.
     *   `facilityId` (required): The ID of the facility where the inventory is located.
-    *   `locationSeqId` (optional): The sequence ID of the specific location within the facility.
 
 ## Data Model
 

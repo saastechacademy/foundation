@@ -1,4 +1,4 @@
-### **`findOrCreateFacilityInventoryItem` Service**
+### **`findOrCreateProductInventoryItem` Service**
 
 #### **Purpose**
 
@@ -23,8 +23,6 @@ OUT Parameters
 
 ```json
 {
-  "productId": "P1001",
-  "facilityId": "WarehouseA",
   "inventoryItemId": "INV12345"
 }
  ```
