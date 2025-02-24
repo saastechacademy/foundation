@@ -35,7 +35,7 @@ Approve single Transfer Order
    5. Call create#org.apache.ofbiz.order.order.OrderStatus
       1. statusDatetime = ec.user.nowTimestamp
       2. orderId
-      3. statusId = ORDER_APPROVED
+      3. statusId = "ORDER_APPROVED"
    6. NOTE Points 3, 4 & 5 can be wrapped in a generic OMS service to update Order Status
    7. Entity Find on StatusFlowTransition with conditions on
       1. statusFlowId
@@ -47,7 +47,7 @@ Approve single Transfer Order
        1. Call update#org.apache.ofbiz.order.order.OrderItem in-map="[orderId:orderId, orderItemSeqId:orderItem.orderItemSeqId, statusId:toItemStatusId]"
        2. Update the Order Item Status in Solr? **TODO** check existing update#OrdeItemFulfillmentStatus service used in fulfillment app
        3. Call create#org.apache.ofbiz.order.order.OrderStatus
-           1. statusDatetime - ec.user.nowTimestamp
+           1. statusDatetime = ec.user.nowTimestamp
            2. orderId
            3. orderItemSeqId
            4. statusId = toItemStatusId
