@@ -29,7 +29,7 @@ Approve single Transfer Order
 
 2. Service Actions
    1. Entity Find One on Order Header using orderId - orderHeader
-   2. Set statusFlowId = orderHeader.statusFlowId
+   2. Get statusFlowId = orderHeader.statusFlowId
    3. Call update#org.apache.ofbiz.order.order.OrderHeader in-map="[orderId:orderId, statusId:'ORDER_APPROVED']"
    4. Update the Order Status in Solr? **TODO** check existing update#OrderFulfillmentStatus service used in fulfillment app
    5. Call create#org.apache.ofbiz.order.order.OrderStatus
@@ -51,7 +51,7 @@ Approve single Transfer Order
            2. orderId
            3. orderItemSeqId
            4. statusId = toItemStatusId
-       4. Here above can also be wrapped in a generic service to update Order Item Status?
+       4. Here above points can also be wrapped in a generic service to update Order Item Status?
        5. If toItemStatusId = "ITEM_PENDING_FULFILLMENT", then call reserve item inventory **TODO** check reserve inventory service impl
 
     
