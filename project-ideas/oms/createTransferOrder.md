@@ -91,7 +91,7 @@ The API for managing TO builds on the [createOrder](../oms/createOrder.md)
 | shipGroups.items.quantity                              | shipGroups.items.quantity                    |                                                                                        |
 | shipGroups.items.productIdentifications.idValue <br/> shipGroups.items.productIdentifications.idType | shipGroups.items.productId                   | - Fetch productId from GoodIdentifications using idValue and goodIdentifiicationTypeId |
 
-## create#SalesOrder Service
+## create#TransferOrder Service
 
 1. Input Parameters
    1. payload  - This will be the order JSON Map.
@@ -117,7 +117,7 @@ The API for managing TO builds on the [createOrder](../oms/createOrder.md)
             - Entity find on ProductAssocAndFrom view with conditions on productIdTo=<productId>, productAssocTypeId="PRODUCT_VARIANT" with date filter order by -fromDate
             - Set shipGroups.items.itemDescription from productName from ProductAssocAndFrom result
    4. Call create#org.apache.ofbiz.order.order.OrderHeader in-map="payload"
-   5. TODO discuss the creation of TO in Solr ?
+   5. Call oms service call#CreateOrderIndex with orderId transaction="force-new" ignore-error="true"
 
 ### Fields not handled with comparison to as-is impl
 1. salesChannelEnumId
