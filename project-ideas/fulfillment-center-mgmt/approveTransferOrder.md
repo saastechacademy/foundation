@@ -30,38 +30,15 @@ Approve single Transfer Order
 2. Service Actions
    1. Entity Find One on Order Header using orderId - orderHeader
    2. Get statusFlowId = orderHeader.statusFlowId
-   3. Call update#org.apache.ofbiz.order.order.OrderHeader in-map="[orderId:orderId, statusId:'ORDER_APPROVED']"
-   4. Update the Order Status in Solr? **TODO** check existing update#OrderFulfillmentStatus service used in fulfillment app
-   5. Call create#org.apache.ofbiz.order.order.OrderStatus
-      1. statusDatetime = ec.user.nowTimestamp
-      2. orderId
-      3. statusId = "ORDER_APPROVED"
-   6. NOTE Points 3, 4 & 5 can be wrapped in a generic OMS service to update Order Status?
-   7. Entity Find on StatusFlowTransition with conditions on
+   3. Call oms service change#OrderStatus in-map="[orderId:orderId, statusId:'ORDER_APPROVED']" 
+   4. Update the order status in Solr
+   5. Entity Find on StatusFlowTransition with conditions on
       1. statusFlowId
       2. statusId = "ITEM_CREATED"  //can we skip this condition and only check transitionSequence=1 ???
       3. transitionSequence = "1"  //here first transition refers to the corresponding status for approve item 
-   8. Set the toItemStatusId = statusFlowTransition.toStatusId
-   9. Entity Find on Order Item using orderId - orderItems list
-   10. Iterate on orderItems list
-       1. Call update#org.apache.ofbiz.order.order.OrderItem in-map="[orderId:orderId, orderItemSeqId:orderItem.orderItemSeqId, statusId:toItemStatusId]"
-       2. Update the Order Item Status in Solr? **TODO** check existing update#OrdeItemFulfillmentStatus service used in fulfillment app
-       3. Call create#org.apache.ofbiz.order.order.OrderStatus
-           1. statusDatetime = ec.user.nowTimestamp
-           2. orderId
-           3. orderItemSeqId
-           4. statusId = toItemStatusId
-       4. Here above points can also be wrapped in a generic service to update Order Item Status?
-       5. If toItemStatusId = "ITEM_PENDING_FULFILLMENT", then call reserve item inventory **TODO** check reserve inventory service impl
-
-    
-### update#OrderStatus service
-   - Call update#org.apache.ofbiz.order.order.OrderHeader
-   - Call create#org.apache.ofbiz.order.order.OrderStatus
-   - Call update#OrderFulfillmentStatus for update in Solr?
-
-
-### update#OrderItemStatus service
-   - Call update#org.apache.ofbiz.order.order.OrderItem
-   - Call create#org.apache.ofbiz.order.order.OrderStatus
-   - Call update#OrderItemFulfillmentStatus for update in Solr?
+   6. Set the toItemStatusId = statusFlowTransition.toStatusId
+   7. Entity Find Related shipGroups from orderHeader - facilityId required for input of reservation service
+   8. Iterate and find related items from shipGroup
+      1. Call oms service change#OrderItemStatus in-map="[orderId:orderId, orderItemSeqId:orderItem.orderItemSeqId, statusId:toItemStatusId]" for each item
+      2. Update the Order Item Status in Solr
+   9. If toItemStatusId = "ITEM_PENDING_FULFILLMENT", call oms service process#OrderFacilityAllocation in-map="[orderId:orderId, facilityAllocation: facilityAllocation]"
