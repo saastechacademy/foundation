@@ -180,7 +180,6 @@ Pending Fulfillment or Pending Receipt based on the statusFlowId.
 ##### New Status Items 
 ```
 <moqui.basic.StatusItem statusId="ITEM_PENDING_FULFILLMENT" statusTypeId="ORDER_ITEM_STATUS" statusCode="PENDING_FULFILLMENT" description="Pending Fulfillment"/>
-
 <moqui.basic.StatusItem statusId="ITEM_PENDING_RECEIPT" statusTypeId="ORDER_ITEM_STATUS" statusCode="PENDING_RECEIPT" description="Pending Receipt"/>
 ```
 
@@ -192,7 +191,6 @@ Pending Fulfillment or Pending Receipt based on the statusFlowId.
 
 <!-- Status Transitions for Transfer Orders Store to Warehouse -->
 <moqui.basic.StatusFlowTransition statusFlowId="TO_PendingFulfill" statusId="ITEM_CREATED" toStatusId="ITEM_PENDING_FULFILLMENT" transitionSequence="1" transitionName="Approve & Pending Fulfillment Item"/>
-
 <moqui.basic.StatusFlowTransition statusFlowId="TO_PendingFulfill" statusId="ITEM_PENDING_FULFILLMENT" toStatusId="ITEM_COMPLETED" transitionSequence="2" transitionName="Complete Item"/>
 ```
 
@@ -203,7 +201,6 @@ Pending Fulfillment or Pending Receipt based on the statusFlowId.
 
 <!-- Status Transitions for Transfer Orders Warehouse to Store -->
 <moqui.basic.StatusFlowTransition statusFlowId="TO_PendingReceive" statusId="ITEM_CREATED" toStatusId="ITEM_PENDING_RECEIPT" transitionSequence="1" transitionName="Approve & Pending Receipt Item"/>
-
 <moqui.basic.StatusFlowTransition statusFlowId="TO_PendingReceive" statusId="ITEM_PENDING_RECEIPT" toStatusId="ITEM_COMPLETED" transitionSequence="2" transitionName="Complete Item"/>
 ```
 
@@ -214,9 +211,7 @@ Pending Fulfillment or Pending Receipt based on the statusFlowId.
 
 <!-- Status Transitions for Transfer Orders Store to Store -->
 <moqui.basic.StatusFlowTransition statusFlowId="TO_PendingFulfillAndReceive" statusId="ITEM_CREATED" toStatusId="ITEM_PENDING_FULFILLMENT" transitionSequence="1" transitionName="Approve & Pending Fulfillment Item"/>
-
 <moqui.basic.StatusFlowTransition statusFlowId="TO_PendingFulfillAndReceive" statusId="ITEM_PENDING_FULFILLMENT" toStatusId="ITEM_PENDING_RECEIPT" transitionSequence="2" transitionName="Pending Receipt Item"/>
-
 <moqui.basic.StatusFlowTransition statusFlowId="TO_PendingFulfillAndReceive" statusId="ITEM_PENDING_RECEIPT" toStatusId="ITEM_COMPLETED" transitionSequence="3" transitionName="Complete Item"/>
 
 ```
@@ -285,7 +280,7 @@ the status transitions and perform the required updates.
 ### Approve Transfer Order
 
 1. Once the TOs are imported in OMS in Created Status, the approval flow for TOs should run.
-2. The [approveTransferOrder](approveTransferOrder.md) service will handle approval of Created TOs in the system.
+2. The [approveTransferOrder](../oms/approveTransferOrder.md) service will handle approval of Created TOs in the system.
 3. The Order Header status will be updated from CREATED to APPROVED.
 4. For the Order Item, the OH.statusFlowId will be used to update the status of the item to the next possible status. 
 5. The item status will be updated from CREATED to either PENDING_FULFILL or PENDING_RECEIVE, we do not need APPROVED order item status here in the item lifecycle. 
