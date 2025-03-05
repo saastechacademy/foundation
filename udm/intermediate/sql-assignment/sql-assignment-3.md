@@ -125,7 +125,7 @@ Retailers want to see how many (and which) facilities (stores, warehouses, virtu
 ### 10 Total Items in Various Virtual Facilities
 
 **Business Problem:**  
-Virtual facilities (such as online-only fulfillment centers) handle a different inventory process. The company wants a snapshot of total stock across these virtual locations.
+Retailers need to study the relation of inventory levels of products to the type of facility it's stored at. Retrieve all inventory levels for products at locations and include the facility type Id. Do not retrieve facilities that are of type Virtual.
 
 **Fields to Retrieve:**  
 - `PRODUCT_ID`  
