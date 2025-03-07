@@ -20,7 +20,6 @@ The API for managing TO builds on the [createOrder](../oms/createOrder.md)
       "orderName": "TO0034444",
       "statusFlowId": "TO_PendingFulfill",
       "productStoreId": "STORE",
-      "statusId": "ORDER_CREATED",
       "originExternalFacilityId": "150",
       "destinationExternalFacilityId": "94",
       "orderDate": "2025-01-29",
@@ -30,11 +29,10 @@ The API for managing TO builds on the [createOrder](../oms/createOrder.md)
             "carrierPartyId": "_NA_",
             "items": [
                {
-                  "statusId": "ITEM_CREATED",
                   "externalId": "1",
                   "quantity": 2,
                   "productId": "",
-                  "productIdentifications": [
+                  "goodIdentifications": [
                      {
                         "idValue": "164013",
                         "idType": "NETSUITE_PRODUCT_ID"
@@ -46,7 +44,7 @@ The API for managing TO builds on the [createOrder](../oms/createOrder.md)
                   "externalId": "2",
                   "quantity": 2,
                   "productId": "",
-                  "productIdentifications": [
+                  "goodIdentifications": [
                      {
                         "idValue": "164367",
                         "idType": "NETSUITE_PRODUCT_ID"
@@ -58,7 +56,7 @@ The API for managing TO builds on the [createOrder](../oms/createOrder.md)
                   "externalId": "3",
                   "quantity": 4,
                   "productId": "",
-                  "productIdentifications": [
+                  "goodIdentifications": [
                      {
                         "idValue": "164368",
                         "idType": "NETSUITE_PRODUCT_ID"
@@ -89,7 +87,7 @@ The API for managing TO builds on the [createOrder](../oms/createOrder.md)
 | shipGroups.items.statusId                              | shipGroups.items.statusId                    |                                                                                        |
 | shipGroups.items.externalId                            | shipGroups.items.externalId                  |                                                                                        |
 | shipGroups.items.quantity                              | shipGroups.items.quantity                    |                                                                                        |
-| shipGroups.items.productIdentifications.idValue <br/> shipGroups.items.productIdentifications.idType | shipGroups.items.productId                   | - Fetch productId from GoodIdentifications using idValue and goodIdentifiicationTypeId |
+| shipGroups.items.goodIdentifications.idValue <br/> shipGroups.items.goodIdentifications.idType | shipGroups.items.productId                   | - Fetch productId from GoodIdentifications using idValue and goodIdentifiicationTypeId |
 
 ## create#TransferOrder Service
 
@@ -98,39 +96,34 @@ The API for managing TO builds on the [createOrder](../oms/createOrder.md)
 
 2. Service Actions
    1. Set payload.orderTypeId = "TRANSFER_ORDER"
-   2. Prepare entryDate as ec.user.nowTimestamp and set in payload.entryDate
-   3. Iterate on payload.shipGroups
+   2. Set payload.statusId = "ORDER_CREATED"
+   3. Set entryDate as ec.user.nowTimestamp and set in payload.entryDate
+   4. Set createdBy as ec.user.getUsername()?:ec.user.getUserId()
+   5. Get ProductStore using payload.productStoreId, required for the TO creation
+   6. Set salesChannelEumId as productStore.defaultSalesChannelEnumId if not in the payload
+   7. Set currencyUom as productStore.defaultCurrencyUomId if not in the payload
+   8. Iterate on payload.shipGroups - shipGroup
       1. Get the OMS Facility ID for originExternalFacilityId and destinationExternalFacilityId
          1. Fetch and remove the originExternalFacilityId from payload
          2. Fetch and remove the destinationExternalFacilityId from payload
          3. Entity Find on Facility entity with operator IN and condition on externalId field with above values
-         4. Set the OMS Facility corresponding to originExternalFacilityId in payload.shipGroups.facilityId and payload.originFacilityId
-         5. Set the OMS Facility corresponding to destinationExternalFacilityId in payload.shipGroups.orderFacilityId
-      2. Iterate on shipGroups.items
+         4. Set the OMS Facility corresponding to originExternalFacilityId in shipGroup.facilityId and shipGroup.originFacilityId
+         5. Set the OMS Facility corresponding to destinationExternalFacilityId in shipGroup.orderFacilityId
+      2. Iterate on shipGroup.items - item
          1. Set shipGroups.items.orderItemTypeId - PRODUCT_ORDER_ITEM
-         2. Check if productId available in the payload or not
-         3. If not, check for productIdentifications in the payload and get the OMS productId 
-            - Fetch and remove the shipGroups.items.productIdentifications
-            - Entity Find on GoodIdentification using productIdentifications.idType and idValue
-            - Set the productId in shipGroups.items.productId
-         4. Prepare the itemDescription for shipGroups.items
-            - Entity find on ProductAssocAndFrom view with conditions on productIdTo=<productId>, productAssocTypeId="PRODUCT_VARIANT" with date filter order by -fromDate
-            - Set shipGroups.items.itemDescription from productName from ProductAssocAndFrom result
-   4. Call create#org.apache.ofbiz.order.order.OrderHeader in-map="payload"
-   5. Call oms service call#CreateOrderIndex with orderId transaction="force-new" ignore-error="true"
-
-### Fields not handled with comparison to as-is impl
-1. salesChannelEnumId
-   - set from ProductStore.defaultSalesChannelEnumId?
-2. currencyUom
-   - set from ProductStore.defaultCurrencyUom?
-3. shipGroups.maySplit
-4. shipGroups.isGift
-5. shipGroups.items.prodCatalogId
-6. shipGroups.items.isPromo
-7. shipGroups.items.unitPrice
-8. shipGroups.items.unitListPrice
-9. shipGroups.items.isModifiedPrice
+         2. Set item.statusId = "ITEM_CREATED"
+         3. Check if productId available in the payload or not
+         4. If not, check for goodIdentifications in the payload and get the OMS productId 
+            1. Fetch and remove the item.goodIdentifications
+            2. Iterate on item.goodIdentifications - goodIdentification
+            3. Entity Find on GoodIdentification using idType and idValue
+            4. Set the productId in item.productId
+            5. Break the loop if productId is found
+         5. Prepare the itemDescription for item
+            1. Entity find on ProductAssocAndFrom view with conditions on productIdTo=<productId>, productAssocTypeId="PRODUCT_VARIANT" with date filter order by -fromDate
+            2. Set shipGroups.items.itemDescription from productName from ProductAssocAndFrom result
+   9. Call create#org.apache.ofbiz.order.order.OrderHeader in-map="payload" transaction="force-new" 
+   10. Call oms service call#CreateOrderIndex with orderId transaction="force-new" ignore-error="true"
 
 ### Payload prepared for OOTB create#org.apache.ofbiz.order.order.OrderHeader
 
