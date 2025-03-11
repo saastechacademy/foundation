@@ -140,7 +140,7 @@ Why does the shipment have to be moved out of "approved" status to edit it's con
 
 The advice for moving inventory from one storage facility to other. It helps manage the workflow. 
 The TO is an OrderType like SalesOrder and PurchaseOrder. 
-The API for to [createTransferOrder](createTransferOrder.md) builds on the [createOrder](../oms/createOrder.md)
+The API for to [createTransferOrder](../oms/createTransferOrder.md) builds on the [createOrder](../oms/createOrder.md)
 An inventory storage location may receive [InTransferShipment](createInTransferShipment.md) or ship [OutTransferShipment](createOutTransferShipment.md) for a transfer order. 
 
 
