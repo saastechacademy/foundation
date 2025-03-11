@@ -82,7 +82,7 @@
 
 
 ### **Handling Bundle Product OrderItems**
-If the `OrderItem` refers to a *bundle product*, its component items (linked via `OrderItemShipGrpInvRes`, `PickListItem`, and `ShipmentItem`) are also typically reserved, picked, and shipped together. When rejecting the *parent* `OrderItem`, be sure to evaluate if any underlying component items also need to be adjusted or rejected, particularly during the inventory reservation and/or shipment cancellation steps.
+If the `OrderItem` refers to a *bundle product*, its component items (linked via `OrderItemShipGrpInvRes`, `PickListItem`, and `ShipmentItem`) are also typically reserved, picked, and shipped together. When rejecting the *parent* `OrderItem`, be sure to evaluate if any underlying component items also need to be adjusted or rejected, particularly during the inventory reservation and/or shipment cancellation steps. `cancelOrderItemInventoryReservation` take care to delete the `OrderItemShipGrpInvRes` for the bundle product.
 
 
 ## **Relevant Enumerations**
@@ -106,25 +106,24 @@ If the `OrderItem` refers to a *bundle product*, its component items (linked via
 | UNFILLABLE    | BROKERING_REASN_TYPE  | UNFILLABLE         | Unfillable           |                                      |
 
 ### **Rejection Reason & Variance Mapping**  
-Each `rejectionReasonId` is associated with a `varianceReasonId` in the inventory system to indicate how quantity or availability should be adjusted:
 
-| Enumeration        | enumTypeId       | Description                                | VarianceReason                          |
-|--------------------|------------------|--------------------------------------------|-----------------------------------------|
-| NOT_IN_STOCK       | REPORT_ALL_VAR   | Not in Stock                               | NOT_IN_STOCK                            |
-| WORN_DISPLAY       | REPORT_VAR       | Worn Display                               | WORN_DISPLAY                            |
-| REJ_RSN_DAMAGED    | REPORT_VAR       | Damaged                                    | REJ_RSN_DAMAGED                         |
-| MISMATCH           | REPORT_VAR       | Mismatch                                   | MISMATCH                                |
-| INACTIVE_STORE     | REPORT_NO_VAR    | Inactive store; no variance logged         | INACTIVE_STORE                          |
-| NO_VARIANCE_LOG    | REPORT_NO_VAR    | No variance                                | NO_VARIANCE_LOG                         |
-| REJECT_ENTIRE_ORDER| REPORT_NO_VAR    | Reject entire order; no variance tracking  | (maps to NO_VARIANCE or custom logic)   |
+| Enumeration        | enumTypeId       | Description                                |                           |
+|--------------------|------------------|--------------------------------------------|
+| NOT_IN_STOCK       | REPORT_ALL_VAR   | Not in Stock                               |
+| WORN_DISPLAY       | REPORT_VAR       | Worn Display                               |
+| REJ_RSN_DAMAGED    | REPORT_VAR       | Damaged                                    |
+| MISMATCH           | REPORT_VAR       | Mismatch                                   |
+| INACTIVE_STORE     | REPORT_NO_VAR    | Inactive store; no variance logged         |
+| NO_VARIANCE_LOG    | REPORT_NO_VAR    | No variance                                |
+| REJECT_ENTIRE_ORDER| REPORT_NO_VAR    | Reject entire order; no variance tracking  |
 
 ---
 
 ## **Usage Notes**
 
 1. **Shipment Item or No Shipment Item**  
-   - If `shipmentId` and `shipmentItemSeqId` are not provided (or no valid shipment exists), rejection proceeds directly with the inventory and facility changes.  
-   - If these values are provided and a valid `ShipmentItem` **does** exist, the steps in **Check for ShipmentItem** remove the item from the shipment before continuing the rest of the rejection process.
+   - If  no valid shipment exists for `OrderItem`, rejection proceeds directly with the inventory and facility changes.  
+   - If valid `ShipmentItem` **does** exist, the steps in **Check for ShipmentItem** remove the item from the shipment before continuing the rest of the rejection process.
 
 2. **Auditing & Tracking**  
    - All relevant changes (shipment handling, inventory, facility assignment, order history, etc.) are logged, ensuring complete traceability.
@@ -150,11 +149,4 @@ By following these guidelines, you ensure that an `OrderItem`—whether it has a
     <Enumeration description="No variance" enumCode="NO_VARIANCE_LOG" enumId="NO_VARIANCE_LOG" sequenceId="40" enumTypeId="REPORT_NO_VAR"/>
     <!--This rejection reason will be applied to all items in the order/shipment that get rejected due to the rejection of one or more items from the order, to avoid unnecessary splits when the 'Reject Entire Order' setting is enabled.-->
     <Enumeration description="Reject entire order" enumCode="REJECT_ENTIRE_ORDER" enumId="REJECT_ENTIRE_ORDER" sequenceId="41" enumTypeId="REPORT_NO_VAR"/>
-
-    <VarianceReason varianceReasonId="NOT_IN_STOCK" description="Not in Stock"/>
-    <VarianceReason varianceReasonId="WORN_DISPLAY" description="Worn Display"/>
-    <VarianceReason varianceReasonId="REJ_RSN_DAMAGED" description="Damaged"/>
-    <VarianceReason varianceReasonId="MISMATCH" description="Mismatch"/>
-    <VarianceReason varianceReasonId="INACTIVE_STORE" description="Inactive store"/>
-    <VarianceReason varianceReasonId="NO_VARIANCE_LOG" description="No variance"/>
 </details>
