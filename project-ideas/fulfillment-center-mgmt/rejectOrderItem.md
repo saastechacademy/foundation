@@ -12,16 +12,12 @@
 
 - **orderItemSeqId**  
 
-- **shipmentId (optional)**  
-
-- **shipmentItemSeqId (optional)**  
-
 - **rejectToFacilityId**  
-
+   default to `_NA_`
 - **updateQOH**  
   Determines if the quantity-on-hand (QOH) should be affected by this rejection:
   - **`Y`** – Update the QOH in the rejecting facility.
-  - **`N`** – Do not update the QOH; typically affects only the “available to promise” (ATP).
+  - **`N`** – Do not update the QOH; typically affects only the “available to promise” (ATP) (default).
 
 - **rejectionReasonId**  
   Reason for the rejection (e.g., `NOT_IN_STOCK`, `MISMATCH`, `REJ_RSN_DAMAGED`). Maps to a corresponding **`varianceReasonId`** in the inventory system.
@@ -39,7 +35,7 @@
 ## **Workflow**
 
 1. **Check for ShipmentItem**  
-   - If a `shipmentId` and `shipmentItemSeqId` are provided, check if they are valid and associated with this `OrderItem`.  
+   - Get the valid `ShipmentItem` associated with this `OrderItem`.  
    - If a valid `ShipmentItem` is found, apply the `rejectShipmentItem` logic:
      1. If the shipment is **not** in `SHIPMENT_INPUT` status, call `reinitializeShipment`.  
      2. Delete any associated `ShipmentPackageContent` records.  
@@ -51,12 +47,13 @@
 
 2. **Cancel Inventory Reservation**  
    - Call the [cancelOrderItemInventoryReservation](../oms/cancelOrderItemInventoryReservation) service to cancel any existing inventory reservations for the rejected `OrderItem`.  
-   - This cancellation applies to both the main item and any package components if the item is part of a marketing package.
+   - This cancellation service cancel the reservation for main item and any package components if the item is part of a marketing package.
 
 3. **Move to Rejected Ship Group**  
-   - Identify (or create) the `OrderItemShipGroup` associated with the `naFacilityId` (or the designated facility for rejected items).  
-   - Move the `OrderItem` from its current ship group or shipment to this newly determined “rejected” group.  
-   - Update or create `OrderItemShipGroupAssoc` records to ensure the item is now assigned to the correct facility/ship group.
+   - Call the `find#OrderItemShipGroup` service to get the shipgroup associated with `rejectToFacilityId` (or the designated facility for rejected items)
+   - Add service to move item to shipgorup
+      - Move the `OrderItem` from its current ship group to this newly determined “rejected” group.  
+      - Update or create `OrderItemShipGroupAssoc` records to ensure the item is now assigned to the correct facility/ship group. (this is for backward compatibility)
 
 4. **Create Order History**  
    - Insert an `OrderHistory` record with the event type `ITEM_REJECTED` (or the relevant enumeration).  
