@@ -82,9 +82,8 @@ The API for managing TO builds on the [createOrder](../oms/createOrder.md)
    7. Set currencyUom as productStore.defaultCurrencyUomId if not in the payload
    8. Iterate on payload.shipGroups - shipGroup
       1. Remove and set destinationFacilityId from shipGroup as orderFacilityId in shipGroup
-      2. Iterate on shipGroup.items - item
-         1. Set shipGroups.items.orderItemTypeId - PRODUCT_ORDER_ITEM
-         2. Set item.statusId = "ITEM_CREATED"
+      2. Set orderItemTypeId for all items in shipGroup as "PRODUCT_ORDER_ITEM" 
+      3. Set statusId for all items in shipGroup as "ITEM_CREATED"
    9. Call create#org.apache.ofbiz.order.order.OrderHeader in-map="payload" 
    10. Call oms service call#CreateOrderIndex with orderId async="true" ignore-error="true"
 
