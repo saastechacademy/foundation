@@ -1,8 +1,11 @@
 # Approve Transfer Orders
 
-1. The process to approve transfer order and correctly update the Order Item Status to either ITEM_PENDING_FULFILLMENT or ITEM_PENDING_RECEIPT on the basis of OH.statusFlowId.
-2. In the core Approve TO service, for each TO, header status update will happen and if the next valid item status transition for its statusFLowId is ITEM_PENDING_FULFILLMENT, the items should be iterated and reservations should happen.
-3. The status update and reservation operations will be done in-line in the Approve service. 
+The process to approve transfer order.
+
+1. The Order Header status will be updated from ORDER_CREATED to ORDER_APPROVED.
+2. For the Order Item, the OH.statusFlowId will be used to update the status of the item to the next possible status for "Approve Item" transition.
+3. Reserve the item if next item status to transition is ITEM_PENDING_FULFILL.
+4. The status update and reservation operations will be done in-line in the Approve service.
 
 **NOTE** Handle the transaction timeout (increase than default, say 5 min) since TO can have bulk items to be reserved.
 
@@ -39,6 +42,6 @@ Approve single Transfer Order
    6. Set the toItemStatusId = statusFlowTransition.toStatusId
    7. Entity Find Related shipGroups from orderHeader - facilityId required for input of reservation service
    8. Iterate and find related items from shipGroup
-      1. Call oms service change#OrderItemStatus in-map="[orderId:orderId, orderItemSeqId:orderItem.orderItemSeqId, statusId:toItemStatusId]" for each item
-      2. Update the Order Item Status in Solr
-   9. If toItemStatusId = "ITEM_PENDING_FULFILLMENT", call oms service process#OrderFacilityAllocation in-map="[orderId:orderId, facilityAllocation: facilityAllocation]"
+      1. Call oms service change#OrderItemStatus in-map="[orderId:orderId, orderItemSeqId:orderItem.orderItemSeqId, statusId:toItemStatusId]" for each item 
+      2. If toItemStatusId = "ITEM_PENDING_FULFILL", call oms service create#OrderItemInventoryReservation in-map="[orderId:orderId, orderItemSeqId:orderItem.orderItemSeqId, quantity:orderItem.quantity]"
+   9. Update Order Index in Solr for change in order and item status
