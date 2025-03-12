@@ -159,7 +159,7 @@ of Transfer Order.
 
 #### Valid Status for Transfer Orders
 
-Two new Order Item Status will be introduced to manage the lifecycle of Transfer Orders which are PENDING_FULFILLMENT and PENDING_RECEIPT.
+Three new Order Item Status will be introduced to manage the lifecycle of Transfer Orders - ITEM_PENDING_FULFILL, ITEM_PENDING_RECEIPT and ITEM_PENDING_FULFILL_RECEIPT.
 
 1. Order Header - Transfer Order
    1. ORDER_CREATED
