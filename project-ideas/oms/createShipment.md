@@ -57,12 +57,24 @@
               "quantity": 1,
               "packageContents": {
                 "quantity": 1
+              },
+              "OrderShipment": {
+                "orderId": "4",
+                "orderItemSeqId": "01",
+                "shipGroupSeqId": "00002",
+                "quantity": 1
               }
             },
             {
               "productId": "10004",
               "quantity": 1,
               "packageContents": {
+                "quantity": 1
+              },
+              "OrderShipment": {
+                "orderId": "4",
+                "orderItemSeqId": "02",
+                "shipGroupSeqId": "00002",
                 "quantity": 1
               }
             }
@@ -80,9 +92,4 @@
   ]
 }
 ```
-#### OrderShipment 
-- For every item in the Shipment, use create#org.apache.ofbiz.order.order.OrderShipment to create OrderShipment record.
-- This should be done separately in the code and not via Shipment payload (no relationship to be added in ShipmentItem) as Shipment and Order are 2 separate
-services and OrderShipment is like an integration entity to store the order and shipment associations.
-
 
