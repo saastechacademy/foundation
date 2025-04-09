@@ -95,8 +95,8 @@ Typical reasons for rejection include defective products, unavailable stock, or 
    * **`cascadeRejectByProduct = Y`**: Include other items with the same product in that facility.  
    * **`maySplit = N`**: Reject entire ship groups rather than specific items.  
 3. Based on **`maySplit`** and **`cascadeRejectByProduct`** values, the system queries order/shipment data:  
-   * **`maySplit = N`, `cascadeRejectByProduct = N`**: Reject only the single item.  
-   * **`maySplit = Y`, `cascadeRejectByProduct = N`**: Reject all items in the specified ship group.  
+   * **`maySplit = Y`, `cascadeRejectByProduct = N`**: Reject only the single item.  
+   * **`maySplit = N`, `cascadeRejectByProduct = N`**: Reject all items in the specified ship group.  
    * **`maySplit = Y`, `cascadeRejectByProduct = Y`**: Reject items with the same product ID, but only those specifically targeted or matching criteria.  
    * **`maySplit = N`, `cascadeRejectByProduct = Y`**: Reject entire ship groups for all orders containing the specified product.  
 4. For each item to reject, **`rejectOrderItem()`** is called with the appropriate parameters.
