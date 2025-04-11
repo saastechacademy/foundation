@@ -2,85 +2,55 @@
 > NOTE: This REST API is used exclusively for rejecting OrderItems during the fulfillment process—from an outstanding order up until just before the shipment is packed. Once the shipment is packed, items can no longer be rejected through this endpoint.
 
 ## **Overview**
-The `rejectorderitems` REST API endpoint is used to reject one or more `OrderItems`. Internally, it builds a list of items to reject and calls `rejectOrderItem()` for each item. The actual rejection logic (including the cancellation of shipments, if needed) is handled by `rejectOrderItem()`. There is no separate `rejectShipmentItem` service.
-
+The `rejectorderitems` REST API endpoint is used to reject one or more `OrderItems`. Internally, it builds a list of items to reject and calls `rejectOrderItem()` for each item. The actual rejection logic (including the cancellation of shipments, if needed) is handled by `rejectOrderItem()`.
 Typical reasons for rejection include defective products, unavailable stock, or other conditions that require removing items from pending fulfillments.
 
 ## **Example Input Parameters**
-
+  - ** User can pass the list of object while calling the rest api **  
 ```json
-[
-  {
-    "orderId": "ORD001",
-    "orderItemSeqId": "0001",
-    "rejectToFacilityId": "FAC001",
-    "updateQOH": "",
-    "rejectionReasonId": "NOT_IN_STOCK",
-    "maySplit": "N",
-    "cascadeRejectByProduct": "N",
-    "comments": "The item is currently out of stock."
-  },
-  {
-    "orderId": "ORD001",
-    "orderItemSeqId": "0002",
-    "rejectToFacilityId": "FAC002",
-    "updateQOH": "",
-    "rejectionReasonId": "MISMATCH",
-    "maySplit": "N",
-    "cascadeRejectByProduct": "N",
-    "comments": "The item received does not match the order description."
-  },
-  {
-    "orderId": "ORD002",
-    "orderItemSeqId": "0001",
-    "rejectToFacilityId": "FAC003",
-    "updateQOH": "",
-    "rejectionReasonId": "DAMAGE",
-    "maySplit": "N",
-    "cascadeRejectByProduct": "N",
-    "comments": "The item was found damaged during inspection."
-  },
-  {
-    "orderId": "ORD002",
-    "orderItemSeqId": "0002",
-    "rejectToFacilityId": "FAC004",
-    "updateQOH": "",
-    "rejectionReasonId": "WORNDISPLAY",
-    "comments": "The item is worn or was part of a display."
-  },
-  {
-    "orderId": "ORD003",
-    "orderItemSeqId": "0001",
-    "rejectToFacilityId": "FAC005",
-    "updateQOH": "",
-    "rejectionReasonId": "NOT_IN_STOCK",
-    "comments": "The item is unavailable due to low stock levels."
-  }
-]
+{
+  "orderId": "ORD001",
+  "rejectToFacilityId": "REJECTED_ITM_PARKING",
+  "items": [
+    {
+      "orderItemSeqId": "0001",
+      "quantity": "1",
+      "updateQOH": "",
+      "maySplit": "N",
+      "cascadeRejectByProduct": "N",
+      "comments": "The item is currently out of stock.",
+      "rejectionReasonId": "NOT_IN_STOCK"
+    },
+    {
+      "orderItemSeqId": "0002",
+      "quantity": "1",
+      "updateQOH": "",
+      "maySplit": "N",
+      "cascadeRejectByProduct": "N",
+      "comments": "The item received does not match the order description.",
+      "rejectionReasonId": "MISMATCH"
+    }
+  ]
+}
 ```
-
-
-
 
 ## **Parameters for each OrderItem**
 
 - **orderId**  
-- **orderItemSeqId**  
-- **productId**  
-- **facilityId**  
 - **rejectToFacilityId**  
-  - Facility to which rejected items are transferred.
-- **updateQOH**  
+- **items.orderItemSeqId**  
+- **items.productId**  
+- **items.quantity**
+  - If not provided, the default is 1.
+- **items.updateQOH**  
   - Flag indicating whether to update quantity on hand.
-- **rejectionReasonId**  
-  - Reason for the rejection (e.g., damage, mismatch).
-- **maySplit**  
-  - Defaults to **N**. When set to **Y**, only the specified order item is rejected (rather than the entire ship group).
-- **cascadeRejectByProduct**  
-  - Defaults to **N**. When set to **Y**, rejects all items in the specified facility that have the same `productId`.
-- **rejectionReasonId**  
+- **items.rejectionReasonId**  
   - Reason for the rejection (e.g., `NOT_IN_STOCK`, `MISMATCH`, `REJ_RSN_DAMAGED`). Maps to a corresponding **`varianceReasonId`** in the inventory system.
-- **comments**  
+- **items.maySplit**  
+  - Defaults to **N**. When set to **Y**, only the specified order item is rejected (rather than the entire ship group).
+- **items.cascadeRejectByProduct**  
+  - Defaults to **N**. When set to **Y**, rejects all items in the specified facility that have the same `productId`.
+- **items.comments**  
   - Free-text comments explaining the reason for rejection.
 
 ## **Output (OUT)**
