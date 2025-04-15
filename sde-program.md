@@ -16,7 +16,7 @@ This training program requires a solid foundation in software development princi
 
 * **[Revision Control (Git)](https://www.scaler.com/topics/git/):**  A working understanding of Git is essential.
 * **Databases [SQL](https://www.scaler.com/topics/sql/) and [MySQL](https://www.scaler.com/topics/course/sql-using-mysql-course/):**  Familiarity with SQL and MySQL is crucial.
-* **Programming Language [Java](https://www.scaler.com/topics/java/):**  Proficiency in Java is required.
+* **Programming Language [Java](https://www.scaler.com/topics/java/):**  Proficiency in [Java](https://docs.oracle.com/javase/tutorial/) is required.
 * **Optional but Recommended:** Basic Web Development (HTML, CSS, JavaScript), REST APIs, and the Moqui Framework.
 
 ## Training program outline
