@@ -122,3 +122,22 @@ Moqui provides a robust and flexible framework for managing shipping operations,
 *   `ShippingGatewayConfig` has one-to-many relationships with `ShippingGatewayCarrier`, `ShippingGatewayMethod`, `ShippingGatewayBoxType`, and `ShippingGatewayOption`. This means a single gateway configuration can have multiple associated carriers, methods, box type mappings, and additional options.
 *   `CarrierShipmentMethod` has a many-to-one relationship with `ShippingGatewayMethod`, allowing you to override method codes for specific gateways.
 *   `ShipmentBoxType` has a many-to-one relationship with `ShippingGatewayBoxType`, enabling box type mapping for different gateways.
+
+
+
+```xml
+<mantle.shipment.carrier.ShippingGatewayConfig shippingGatewayConfigId="SHIPPO_DEMO"
+        shippingGatewayTypeEnumId="ShGtwyShippo" description="Shippo API Demo"
+        ... >
+    
+    <!-- set your Shippo Account IDs for carriers with records like these -->
+    <carriers carrierPartyId="UPS" gatewayAccountId=""/>
+    <carriers carrierPartyId="FedEx" gatewayAccountId=""/>
+    <carriers carrierPartyId="DHLX" gatewayAccountId="shippo_dhlexpress_account"/>
+    <carriers carrierPartyId="USPS" gatewayAccountId="shippo_usps_account"/>
+
+</mantle.shipment.carrier.ShippingGatewayConfig>
+
+
+```
+
