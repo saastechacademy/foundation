@@ -102,20 +102,17 @@ This section outlines the **real-world setup flow** aligned with how a multi-ten
 
 ### 🧩 How it All Comes Together
 
-| Concern | Solution |
-|--------|----------|
-| Retailer wants to use Shippo | Define 1 `ShippingGatewayConfig`, use `SystemMessageRemote` with `tenantPartyId` for token. |
-| Retailer has FedEx and UPS accounts | Use `ShippingGatewayCarrier` with `gatewayAccountId` per carrier. |
-| Shipments must use correct gateway | Lookup `SystemMessageRemote` by `tenantPartyId + systemMessageRemoteTypeEnumId`. |
-| Avoid code duplication | Keep services shared and config-driven. |
+| Concern | Solution                                                                                        |
+|--------|-------------------------------------------------------------------------------------------------|
+| Retailer wants to use Shippo | Choose `ShippingGatewayConfig`, setup `SystemMessageRemote` with `tenantPartyId` for token. |
+| Retailer has FedEx and UPS accounts | Use `ShippingGatewayCarrier` with `gatewayAccountId` per carrier.                               |
+| Shipments must use correct gateway | Lookup `SystemMessageRemote` by `tenantPartyId + systemMessageRemoteTypeEnumId`.                |
 
 ---
 
-### ✅ Final Recommendation
+### ✅ Summary
 Use Moqui's existing model with:
 - **One gateway config per service provider** (Shippo, FedEx, etc.)
 - **SystemMessageRemote (with tenantPartyId)** for per-retailer token + endpoint
-- **ShippingGatewayCarrier** to map supported carriers
-
-This gives you a clean, flexible, and Moqui-aligned multi-tenant shipping gateway architecture.
+- **ShippingGatewayCarrier (with tenantPartyId)** to map supported carriers
 
