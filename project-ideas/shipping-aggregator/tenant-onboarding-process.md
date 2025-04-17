@@ -6,8 +6,6 @@
 - Retailer submits:
     - Preferred shipping gateway (e.g., Shippo)
     - API token/credentials
-    - List of carriers they plan to use
-    - Optional carrier account numbers
 
 ---
 
@@ -34,25 +32,11 @@
 
 ---
 
-### 📦 Step 4: Register Each Carrier Used by the Retailer
-```xml
-<ShippingGatewayCarrier
-    shippingGatewayConfigId="SHIPPO_CONFIG"
-    carrierPartyId="FEDEX"
-    tenantPartyId="RETAILER_123"
-    gatewayAccountId="shippo_fedex_account_abc"/>
-```
-
-Repeat for each carrier the retailer uses.
-
----
-
-### 🎟️ Step 5: Generate JWT Token for Retailer
+### 🎟️ Step 4: Generate JWT Token for Retailer
 - Embed the following in the JWT:
 ```json
 {
-  "tenantPartyId": "RETAILER_123",
-  "shippingGatewayConfigId": "SHIPPO_CONFIG"
+  "tenantPartyId": "RETAILER_123"
 }
 ```
 - This token is required in the Authorization header of API requests.
@@ -61,7 +45,6 @@ Repeat for each carrier the retailer uses.
 
 ### 📡 Step 6: Retailer Uses the Gateway API
 - Retailer’s OMS uses the JWT token to:
-    - Identify tenant and gateway
-    - Route shipping label or tracking requests securely
+    - Identify tenant
 
 ---
