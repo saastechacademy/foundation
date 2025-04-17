@@ -51,6 +51,7 @@ Moqui Mantle uses a set of interconnected entities to manage shipping gateway co
 ## Shipping Gateway Interfaces
 
 These interfaces define the contract that your shipping gateway integrations will need to fulfill to interact with the Moqui Framework and provide shipping functionality:
+Ref: https://github.com/moqui/mantle-usl/blob/master/service/mantle/shipment/CarrierServices.xml
 
 1.  **`get#OrderShippingRate`:**
     *   **Purpose:** Calculates the shipping rate for an entire order, potentially consisting of multiple items and packages.
