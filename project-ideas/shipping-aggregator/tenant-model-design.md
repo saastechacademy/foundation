@@ -63,7 +63,7 @@ This document outlines the design approach for implementing a **Shipping Gateway
 ```xml
 <SystemMessageRemote
     systemMessageRemoteId="SHIPPO_RETAILER_123"
-    systemMessageRemoteTypeEnumId="SmrShippo"
+    systemMessageRemoteTypeEnumId="ShGtwyShippo"
     tenantPartyId="RETAILER_123"
     authToken="shippo_live_token_abc123"
     serviceUrl="https://api.goshippo.com"

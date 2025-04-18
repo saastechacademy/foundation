@@ -36,7 +36,8 @@
 - Embed the following in the JWT:
 ```json
 {
-  "tenantPartyId": "RETAILER_123"
+  "tenantPartyId": "RETAILER_123",
+  "shippingGatewayConfigId": "SHIPPO_CONFIG"
 }
 ```
 - This token is required in the Authorization header of API requests.
