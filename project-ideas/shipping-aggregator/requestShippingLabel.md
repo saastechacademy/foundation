@@ -27,6 +27,74 @@ This document outlines the architecture and control flow for handling `requestSh
 }
 ```
 
+### Full JSON Payload for requestShippingLabel
+```json
+{
+  "carrierPartyId": "FEDEX",
+  "carrierAccountId": "123456",
+  "imageType": "PDF",
+  "pickupType": "DROPOFF_AT_FEDEX_LOCATION",
+  "shipFromAddress": {
+    "name": "Warehouse A",
+    "address1": "123 Main St",
+    "city": "Austin",
+    "stateProvinceGeoId": "TX",
+    "postalCode": "73301",
+    "countryGeoId": "USA",
+    "telecomNumber": "+1-512-555-1234"
+  },
+  "shipToAddress": {
+    "name": "Customer B",
+    "address1": "456 Elm St",
+    "city": "Dallas",
+    "stateProvinceGeoId": "TX",
+    "postalCode": "75001",
+    "countryGeoId": "USA",
+    "telecomNumber": "+1-214-555-9876"
+  },
+  "shipmentPackages": [
+    {
+      "shipmentPackageSeqId": "001",
+      "length": 10,
+      "width": 5,
+      "height": 4,
+      "weight": 2,
+      "weightUnit": "LB",
+      "description": "Shoes",
+      "shipmentPackageContents": [
+        {
+          "orderId": "OR123",
+          "orderItemSeqId": "0001",
+          "shipmentItemSeqId": "0001",
+          "productSKU": "SKU-001",
+          "quantity": 1
+        }
+      ]
+    },
+    {
+      "shipmentPackageSeqId": "002",
+      "length": 8,
+      "width": 4,
+      "height": 3,
+      "weight": 1.5,
+      "weightUnit": "LB",
+      "description": "T-shirt",
+      "shipmentPackageContents": [
+        {
+          "orderId": "OR123",
+          "orderItemSeqId": "0002",
+          "shipmentItemSeqId": "0002",
+          "productSKU": "SKU-002",
+          "quantity": 2
+        }
+      ]
+    }
+  ]
+}
+
+```
+
+
 ---
 
 ### 🧠 Control Flow Diagram
