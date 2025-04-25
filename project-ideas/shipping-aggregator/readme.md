@@ -12,7 +12,7 @@ This project aims to build a lightweight shipping gateway application that simpl
     *   Ensure data privacy and security.
 
 2.  **Shipping API Integration and Abstraction:**
-    *   Seamlessly integrate with multiple shipping providers (e.g., FedEx, UPS, USPS).
+    *   Integrate with multiple shipping providers (e.g., FedEx, UPS, USPS).
     *   Abstract the complexities of each provider's API into a simplified, unified API for customers.
     *   Enable label generation, tracking, and other essential shipping functions through the API.
     *   Ensure reliable communication and error handling with shipping providers.

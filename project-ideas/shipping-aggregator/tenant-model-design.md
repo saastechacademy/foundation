@@ -6,7 +6,7 @@ This document outlines the design approach for implementing a **Shipping Gateway
 
 ### ✅ Core Goals
 1. **Centralized configuration** of shipping gateway integrations.
-2Clean separation of shared gateway logic and per-retailer data.
+2. Clean separation of shared gateway logic and per-retailer data.
 
 ---
 
