@@ -133,8 +133,16 @@ Below are the XML definitions for the three core entities, modeled in alignment 
 ```
 ### 🔐 Tenant Credential Storage
 
+### 📄 SystemMessageRemote Entity
+
+The `SystemMessageRemote` entity is designed to store tenant-specific authentication tokens and endpoint information for a given shipping gateway. 
+
+#### Key Fields:
+- **remoteId**: This field will be used to store the `client_id` for each retailer's FedEx account.
+- **sharedSecret**: This field will be used to store the `client_secret` associated with the retailer's FedEx account.
+
+
 #### 🗂 `SystemMessageRemote`
-> Stores tenant-specific authentication tokens and endpoint information for a given shipping gateway.
 ```xml
 <entity entity-name="SystemMessageRemote" package="shipping.gateway">
     <field name="systemMessageRemoteId" type="id" is-pk="true"/>
@@ -144,6 +152,8 @@ Below are the XML definitions for the three core entities, modeled in alignment 
     <field name="endpointBaseUrl" type="text-long"/>
     <field name="remoteUser" type="text-short"/>
     <field name="remotePassword" type="text-short"/>
+    <field name="remoteId" type="text-short"/>
+    <field name="sharedSecret" type="text-short"/>
 
     <relationship type="one" related="mantle.party.Party">
         <key-map field-name="tenantPartyId"/>
@@ -157,5 +167,3 @@ Below are the XML definitions for the three core entities, modeled in alignment 
 - These three entities are sufficient to define and classify each tenant (retailer) in the system.
 - You may define additional `RoleType` entries (e.g., `Tenant`, `Carrier`) as needed.
 - This model supports scalable onboarding, multi-tenancy, and future extensibility (e.g., billing, limits, user assignments).
-
-
