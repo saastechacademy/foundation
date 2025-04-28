@@ -1,98 +1,135 @@
-# Shipping Gateway Application: Project Requirements, Data Model, and API Specification
+# Shipping Gateway API Specification
 
-## Project Overview
+---
 
-This project aims to build a lightweight shipping gateway application that simplifies shipping management for e-commerce businesses. The application will provide a unified API for integrating with multiple shipping providers (e.g., FedEx, UPS, USPS) and offer a user-friendly interface for customers to manage their shipping needs. The application will not persist shipment data; all shipment details will be passed within the API requests and responses.
+## 1. Introduction
 
-## Key Requirements
+The Shipping Gateway Microservice provides a unified API interface for integrating with multiple shipping providers (e.g., FedEx, UPS, Shippo, DHL). It acts as a stateless pass-through system, processing shipment rate, label, and tracking requests without persisting shipment data.
 
-1.  **Customer/User Management:**
-    *   Securely handle customer registration and account management.
-    *   Provide an interface for managing API keys and authentication.
-    *   Ensure data privacy and security.
+This system supports multi-tenant operations, using a JWT token to identify the tenant and the associated shipping gateway configuration.
 
-2.  **Shipping API Integration and Abstraction:**
-    *   Integrate with multiple shipping providers (e.g., FedEx, UPS, USPS).
-    *   Abstract the complexities of each provider's API into a simplified, unified API for customers.
-    *   Enable label generation, tracking, and other essential shipping functions through the API.
-    *   Ensure reliable communication and error handling with shipping providers.
+---
 
-## Proposed Solutions
+## 2. Key Requirements
 
-### Technology Stack
+- **Customer/User Management:**  
+  Securely manage tenant retailers and their API access through JWT tokens.
 
-*   **Moqui Framework:** For building the web interface, backend logic, and API facade.
-*   **Apache Shiro:** For user authentication, session management, and API key-based authentication.
-*   **Database (MySQL):** For storing customer data, API keys, and shipping information.
-*   **SDKs/Libraries:** Utilize official SDKs or libraries from shipping providers (if available).
+- **Unified Shipping API Abstraction:**  
+  Integrate with multiple carriers while exposing a single clean API interface to OMS clients.
 
-## Data Model and Entity Relationships
+- **Stateless Shipment Handling:**  
+  The Shipping Gateway does not store or persist any shipment data. All data is passed through temporarily.
 
-### Party Roles
+- **Multi-Tenant Isolation:**  
+  Each API call is isolated to a specific retailer tenant based on the JWT token.
 
-The application recognizes two primary party roles:
+- **Reliable Error Management:**  
+  Standardized error responses and graceful error handling for communication with carrier APIs.
 
-1.  **Customers:** Organizations that utilize the shipping gateway to manage their shipping operations.
-2.  **Carriers:** Shipping providers (e.g., FedEx, UPS, DHL) that integrate with the application.
+- **Scalability and Extensibility:**  
+  Easily plug new carrier integrations in the future without breaking the API contract.
 
-### Entities
+---
 
-#### 1. [Party](../../udm/beginner/party.md)
-*   **Purpose:** Represents both customers and carriers as organizations.
+## 3. Entity Model Reference
 
-### Shipping Gateway Configuration Entities
+The Shipping Gateway Microservice uses a lightweight multi-tenant data model.
 
-Moqui Mantle uses a set of interconnected entities to manage shipping gateway configurations:
+Key entities:
 
-#### 1. [ShippingGatewayConfig](ShippingGatewayConfig.md)
+- **Party** — Represents both tenants (retailers) and shipping carriers.
+- **PartyRole** — Distinguishes between Tenant and Carrier parties.
+- **ShippingGatewayConfig** — Defines the configuration for each shipping gateway (e.g., FedEx, UPS).
+- **SystemMessageRemote** — Stores tenant-specific API credentials securely.
 
-#### 2. [ShippingGatewayCarrier](ShippingGatewayCarrier.md)
+👉 Refer to the full [Entity Model Design](entity-model.md) document for detailed definitions.
 
-## Shipping Gateway Interfaces
+---
 
-These interfaces define the contract that your shipping gateway integrations will need to fulfill to interact with the Moqui Framework and provide shipping functionality:
-Ref: https://github.com/moqui/mantle-usl/blob/master/service/mantle/shipment/CarrierServices.xml
+## 4. Authentication and Authorization
 
-1.  **`get#OrderShippingRate`:**
-    *   **Purpose:** Calculates the shipping rate for an entire order, potentially consisting of multiple items and packages.
-    *   **Key Inputs:** `orderId`, `orderPartSeqId`, `shippingGatewayConfigId`, package information, etc.
-    *   **Key Outputs:** `shippingTotal`, `orderItemSeqId` (if an order item is created for the shipping charge).
+- All API requests require an Authorization header with a JWT token.
+- The JWT must include at minimum:
+  - `tenantPartyId`
+  - `shippingGatewayConfigId`
+- Token validation and tenant identification are mandatory for every request.
 
-2.  **`get#ShippingRatesBulk`:**
-    *   **Purpose:** Retrieves shipping rates in bulk for multiple carrier services and packages.
-    *   **Key Inputs:** `shippingGatewayConfigId`, list of carrier shipment methods, origin and destination details, package information.
-    *   **Key Outputs:** List of `shippingRateInfoList` (containing rate details for each carrier/method combination), potentially updated origin/destination addresses.
+---
 
-3.  **`get#AutoPackageInfo`:**
-    *   **Purpose:** Automatically determines package information (e.g., box type, weight) based on the items in the order.
-    *   **Key Inputs:** List of `itemInfoList` (containing product IDs and quantities).
-    *   **Key Outputs:** List of `packageInfoList` (containing package details).
+## 5. API Service Contracts
 
-4.  **`get#ShippingRate`:**
-    *   **Purpose:** Calculates the shipping rate for a single shipment package and route segment.
-    *   **Key Inputs:** `shipmentId`, `shipmentRouteSegmentSeqId`, `shipmentPackageSeqId`, `shippingGatewayConfigId`.
+| API Name                   | Purpose                                      |
+|:---------------------------|:---------------------------------------------|
+| `get#OrderShippingRate`     | Get shipping rate for an entire order.       |
+| `get#ShippingRatesBulk`     | Get bulk shipping rates for multiple methods.|
+| `get#AutoPackageInfo`       | Automatically calculate packaging details.  |
+| `get#ShippingRate`          | Get shipping rate for a single package.      |
+| `request#ShippingLabels`    | Request generation of shipping labels.       |
+| `refund#ShippingLabels`     | Request refund/cancellation of labels.       |
+| `track#ShippingLabels`      | Track shipment status.                      |
+| `validate#ShippingPostalAddress` | Validate a shipping address.             |
 
-5.  **`request#ShippingLabels`:**
-    *   **Purpose:** Requests shipping labels from the carrier for a shipment (single package or all packages).
-    *   **Key Inputs:** `shipmentId`, `shipmentRouteSegmentSeqId`, `shipmentPackageSeqId` (optional), `shippingGatewayConfigId`.
+---
 
-6.  **`refund#ShippingLabels`:**
-    *   **Purpose:** Initiates a refund for shipping labels.
-    *   **Key Inputs:** `shipmentId`, `shipmentRouteSegmentSeqId`, `shipmentPackageSeqId` (optional), `shippingGatewayConfigId`.
+## 6. API Request and Response Structures
 
-7.  **`track#ShippingLabels`:**
-    *   **Purpose:** Tracks the status of shipments.
-    *   **Key Inputs:** `shipmentId`, `shipmentRouteSegmentSeqId`, `shipmentPackageSeqId` (optional), `shippingGatewayConfigId`.
+### Example: `request#ShippingLabels`
 
-8.  **`validate#ShippingPostalAddress`:**
-    *   **Purpose:** Validates a shipping address using the specified gateway configuration.
-    *   **Key Inputs:** `contactMechId`, `partyId`, `facilityId`, `shippingGatewayConfigId`.
-    *   **Key Outputs:** Potentially updated `contactMechId` if the address is corrected.
+**Request JSON:**
+```json
+{
+  // Sample request JSON will be added later
+}
+```
 
-### Useful links
+**Response JSON:**
+```json
+{
+  // Sample response JSON will be added later
+}
+```
 
-*   https://github.com/moqui/mantle-shippo/tree/master
-*   https://github.com/hotwax/mantle-fedex
-*   https://github.com/hotwax/mantle-shipstation
-*   https://github.com/hotwax/mantle-shipengine
+_(Other APIs will follow a similar clean request/response structure.)_
 
+---
+
+## 7. Error Handling and Standard Response Format
+
+All errors return JSON responses with an appropriate HTTP status code.
+
+**Example Error Response:**
+```json
+{
+  "errorCode": "AUTH_FAILED",
+  "errorMessage": "Authorization token missing or invalid."
+}
+```
+
+| HTTP Status | Typical Causes                  |
+|:------------|:---------------------------------|
+| 400         | Invalid input parameters.        |
+| 401         | Missing or invalid authorization.|
+| 403         | Tenant not authorized for resource.|
+| 500         | Internal server error.           |
+
+---
+
+## 8. Multi-Tenant Behavior
+
+- `tenantPartyId` is extracted from JWT and used to lookup tenant-specific configurations.
+- `shippingGatewayConfigId` is used to select the shipping gateway settings.
+- All API calls are scoped and isolated per tenant.
+
+---
+
+## 9. Notes and Assumptions
+
+- Shipping Gateway Microservice does **not persist** shipment data.
+- All APIs are synchronous.
+- OMS client is responsible for retry logic if transient failures occur.
+- Rate limiting and throttling may be introduced in future versions.
+
+---
+
+# End of Specification
