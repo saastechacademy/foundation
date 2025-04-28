@@ -131,5 +131,3 @@ All errors return JSON responses with an appropriate HTTP status code.
 - Rate limiting and throttling may be introduced in future versions.
 
 ---
-
-# End of Specification
