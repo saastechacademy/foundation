@@ -123,7 +123,22 @@ All errors return JSON responses with an appropriate HTTP status code.
 
 ---
 
-## 9. Notes and Assumptions
+## 9. Quick Design Principles for API Request Structure
+
+- API request must be **self-contained**.
+- Shipping Gateway should **never need to look up** data like ContactMechId.
+- API request must include:
+  - Origin Address
+  - Destination Address
+  - Package List
+  - (Optionally) Shipment Items inside Packages
+  - Carrier Method if available.
+- Units (UOMs) for dimensions and weight must be **explicit** inside the request.
+- Assume one route segment per shipment request.
+- Origin Facility Name and Address must be resolved and included.
+- Shipment status information is not needed and should not be sent.
+
+## 10. Notes and Assumptions
 
 - Shipping Gateway Microservice does **not persist** shipment data.
 - All APIs are synchronous.
