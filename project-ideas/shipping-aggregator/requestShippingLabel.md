@@ -14,84 +14,104 @@ This document outlines the architecture and control flow for handling `requestSh
 
 ---
 
-### 📦 OMS Request Payload (Simplified)
-```json
-{
-  "carrierPartyId": "FEDEX",
-  "carrierAccountId": "123456",
-  "shipmentPackages": [ ... ],
-  "shipFromAddress": { "name": "Warehouse A", ... },
-  "shipToAddress": { "name": "Customer B", ... },
-  "imageType": "PDF",
-  "pickupType": "DROPOFF_AT_FEDEX_LOCATION"
-}
-```
+### JSON Payload for requestShippingLabel
 
-### Full JSON Payload for requestShippingLabel
 ```json
 {
+  "shipmentMethodTypeId": "STANDARD",
   "carrierPartyId": "FEDEX",
-  "carrierAccountId": "123456",
-  "imageType": "PDF",
-  "pickupType": "DROPOFF_AT_FEDEX_LOCATION",
-  "shipFromAddress": {
-    "name": "Warehouse A",
-    "address1": "123 Main St",
-    "city": "Austin",
-    "stateProvinceGeoId": "TX",
-    "postalCode": "73301",
-    "countryGeoId": "USA",
-    "telecomNumber": "+1-512-555-1234"
+  "serviceLevel": "FEDEX_GROUND",
+  "estimatedShipDate": "2025-03-26",
+
+  // --- Optional shipment-level fields ---
+  "referenceNumber": "ORDER-45678",               // Optional: Client's internal shipment reference
+  "handlingInstructions": "Leave at side door.",   // Optional: Special carrier instructions
+  "insuranceAmountUsd": 200.00,                    // Optional: Declared insurance value
+  "currencyCode": "USD",                            // Optional: Currency for declared values
+  "pickupRequired": false,                         // Optional: True if requesting pickup
+  "estimatedDeliveryDate": "2025-03-30",            // Optional: Requested delivery date
+
+  // --- Optional COD fields ---
+  "codAmount": 150.00,                              // Optional: Amount to collect on delivery
+  "codCurrencyCode": "USD",                         // Optional: Currency for COD amount
+  "codPaymentMethod": "CASH",                       // Optional: Payment type accepted (CASH, CHECK, MONEY_ORDER)
+
+  // --- Optional payment and label specification fields ---
+  "shippingChargesPayment": {
+    "paymentType": "SENDER",                       // Common case: Sender pays shipping charges
+    "accountNumber": "789456123"                   // Optional: Sender's FedEx/Carrier account number
   },
-  "shipToAddress": {
-    "name": "Customer B",
-    "address1": "456 Elm St",
-    "city": "Dallas",
-    "stateProvinceGeoId": "TX",
-    "postalCode": "75001",
-    "countryGeoId": "USA",
-    "telecomNumber": "+1-214-555-9876"
+  "labelSpecification": {
+    "labelFormat": "PDF",                          // Label output format (PDF, ZPLII, EPL2, PNG)
+    "labelStockType": "PAPER_4X6"                  // Label size (PAPER_4X6, etc.)
   },
-  "shipmentPackages": [
+  // ---------------------------------------
+
+  "shipFrom": {
+    "facilityId": "BROADWAY",
+    "facilityName": "Broadway Warehouse",
+    "address": {
+      "name": "Broadway Fulfillment Center",
+      "company": "Company Inc",
+      "phone": "123-456-7890",
+      "email": "warehouse@company.com",
+      "addressLine1": "123 Broadway St",
+      "addressLine2": "Suite 200",
+      "city": "New York",
+      "stateProvince": "NY",
+      "postalCode": "10001",
+      "countryCode": "US"
+    }
+  },
+
+  "shipTo": {
+    "address": {
+      "name": "John Doe",
+      "company": "Doe Enterprises",
+      "phone": "987-654-3210",
+      "email": "john.doe@example.com",
+      "addressLine1": "789 Market St",
+      "addressLine2": null,
+      "city": "San Francisco",
+      "stateProvince": "CA",
+      "postalCode": "94103",
+      "countryCode": "US"
+    }
+  },
+
+  "packages": [
     {
-      "shipmentPackageSeqId": "001",
-      "length": 10,
-      "width": 5,
-      "height": 4,
-      "weight": 2,
-      "weightUnit": "LB",
-      "description": "Shoes",
-      "shipmentPackageContents": [
+      "packageCode": "PKG-001",
+      "shipmentBoxTypeId": "YOUR_PACKAGING",
+      "weight": 0.6614,
+      "weightUomId": "WT_lb",
+      "boxLength": 15,
+      "boxWidth": 10,
+      "boxHeight": 5,
+      "dimensionUomId": "LEN_in",
+      "items": [
         {
-          "orderId": "OR123",
-          "orderItemSeqId": "0001",
-          "shipmentItemSeqId": "0001",
-          "productSKU": "SKU-001",
-          "quantity": 1
-        }
-      ]
-    },
-    {
-      "shipmentPackageSeqId": "002",
-      "length": 8,
-      "width": 4,
-      "height": 3,
-      "weight": 1.5,
-      "weightUnit": "LB",
-      "description": "T-shirt",
-      "shipmentPackageContents": [
+          "productId": "10003",
+          "quantity": 1,
+          "description": "Blue T-shirt",
+          "unitWeight": 0.5,
+          "unitWeightUomId": "WT_lb",
+          "unitValue": 25.00,
+          "unitValueCurrency": "USD"
+        },
         {
-          "orderId": "OR123",
-          "orderItemSeqId": "0002",
-          "shipmentItemSeqId": "0002",
-          "productSKU": "SKU-002",
-          "quantity": 2
+          "productId": "10004",
+          "quantity": 1,
+          "description": "Red Hat",
+          "unitWeight": 0.3,
+          "unitWeightUomId": "WT_lb",
+          "unitValue": 20.00,
+          "unitValueCurrency": "USD"
         }
       ]
     }
   ]
 }
-
 ```
 
 
