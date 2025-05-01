@@ -19,6 +19,8 @@ This training program requires a solid foundation in software development princi
 * **Programming Language [Java](https://www.scaler.com/topics/java/):**  Proficiency in [Java](https://docs.oracle.com/javase/tutorial/) is required.
 * **Optional but Recommended:** Basic Web Development (HTML, CSS, JavaScript), REST APIs, and the Moqui Framework.
 
+## [CS fundamentals](cs-fundamentals) for Engineers
+
 ## Training program outline
 * You are assigned project to develop software for **[NotNaked](ubpl/NotNaked/Introduction.md)**. NotNaked is a D2C fashion brand.
 * During the training program, you will
