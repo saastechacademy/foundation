@@ -21,6 +21,7 @@ This document outlines the architecture and control flow for handling `requestSh
   "shipmentMethodTypeId": "STANDARD",
   "carrierPartyId": "FEDEX",
   "serviceLevel": "FEDEX_GROUND",
+  "orderName": "SP2342",
   "estimatedShipDate": "2025-03-26",
 
   // --- Optional shipment-level fields ---
@@ -166,6 +167,7 @@ Return label + tracking info to OMS
         <parameter name="shipmentId" type="String" required="true"/>
         <parameter name="carrierPartyId" type="String" required="true"/>
         <parameter name="shipmentMethodTypeId" type="String" required="true"/>
+        <parameter name="orderName" type="String" required="false"/>
 
         <parameter name="shipFrom" type="Map" required="true">
             <parameter name="address" type="Map" required="true">
