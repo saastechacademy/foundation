@@ -24,7 +24,6 @@ This document outlines the architecture and control flow for handling `requestSh
   "estimatedShipDate": "2025-03-26",
 
   // --- Optional shipment-level fields ---
-  "referenceNumber": "ORDER-45678",               // Optional: Client's internal shipment reference
   "handlingInstructions": "Leave at side door.",   // Optional: Special carrier instructions
   "insuranceAmountUsd": 200.00,                    // Optional: Declared insurance value
   "currencyCode": "USD",                            // Optional: Currency for declared values
@@ -166,7 +165,6 @@ Return label + tracking info to OMS
         <parameter name="shipmentId" type="String" required="true"/>
         <parameter name="carrierPartyId" type="String" required="true"/>
         <parameter name="shipmentMethodTypeId" type="String" required="true"/>
-        <parameter name="referenceNumber" type="String" required="false"/>
 
         <parameter name="shipFrom" type="Map" required="true">
             <parameter name="address" type="Map" required="true">
