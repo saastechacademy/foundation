@@ -159,97 +159,74 @@ Return label + tracking info to OMS
 
 ### 🔧 Moqui Service Outline
 ```xml
-<service name="request#ShippingLabels" location="component://shipping-gateway/service/shipping/ShippingServices.xml" auth="true">
-    <description>Request shipping labels from carrier gateway</description>
+    <service verb="request" noun="ShippingLabels">
+    <description>Request a shipping label from the configured carrier</description>
 
     <in-parameters>
-        <parameter name="shipmentMethodTypeId" type="String" required="true"/>
+        <parameter name="shipmentId" type="String" required="true"/>
         <parameter name="carrierPartyId" type="String" required="true"/>
-        <parameter name="serviceLevel" type="String" required="true"/>
-        <parameter name="estimatedShipDate" type="Timestamp" required="true"/>
-
-        <parameter name="referenceNumber" type="String" optional="true"/>
-        <parameter name="handlingInstructions" type="String" optional="true"/>
-        <parameter name="insuranceAmountUsd" type="BigDecimal" optional="true"/>
-        <parameter name="currencyCode" type="String" optional="true"/>
-        <parameter name="pickupRequired" type="Boolean" optional="true"/>
-        <parameter name="estimatedDeliveryDate" type="Timestamp" optional="true"/>
-
-        <parameter name="codAmount" type="BigDecimal" optional="true"/>
-        <parameter name="codCurrencyCode" type="String" optional="true"/>
-        <parameter name="codPaymentMethod" type="String" optional="true"/>
-
-        <parameter name="shippingChargesPayment" type="Map" optional="true">
-            <parameter name="paymentType" type="String" required="true"/>
-            <parameter name="accountNumber" type="String" optional="true"/>
-        </parameter>
-
-        <parameter name="labelSpecification" type="Map" optional="true">
-            <parameter name="labelFormat" type="String" required="true"/>
-            <parameter name="labelStockType" type="String" required="true"/>
-        </parameter>
+        <parameter name="shipmentMethodTypeId" type="String" required="true"/>
 
         <parameter name="shipFrom" type="Map" required="true">
-            <parameter name="facilityId" type="String" optional="true"/>
-            <parameter name="facilityName" type="String" optional="true"/>
             <parameter name="address" type="Map" required="true">
                 <parameter name="name" type="String" required="true"/>
-                <parameter name="company" type="String" optional="true"/>
+                <parameter name="company" type="String" required="false"/>
                 <parameter name="phone" type="String" required="true"/>
-                <parameter name="email" type="String" optional="true"/>
+                <parameter name="email" type="String" required="false"/>
                 <parameter name="addressLine1" type="String" required="true"/>
-                <parameter name="addressLine2" type="String" optional="true"/>
+                <parameter name="addressLine2" type="String" required="false"/>
                 <parameter name="city" type="String" required="true"/>
                 <parameter name="stateProvince" type="String" required="true"/>
                 <parameter name="postalCode" type="String" required="true"/>
                 <parameter name="countryCode" type="String" required="true"/>
+                <parameter name="isResidential" type="Boolean" required="false"/>
             </parameter>
         </parameter>
 
         <parameter name="shipTo" type="Map" required="true">
             <parameter name="address" type="Map" required="true">
                 <parameter name="name" type="String" required="true"/>
-                <parameter name="company" type="String" optional="true"/>
+                <parameter name="company" type="String" required="false"/>
                 <parameter name="phone" type="String" required="true"/>
-                <parameter name="email" type="String" optional="true"/>
+                <parameter name="email" type="String" required="false"/>
                 <parameter name="addressLine1" type="String" required="true"/>
-                <parameter name="addressLine2" type="String" optional="true"/>
+                <parameter name="addressLine2" type="String" required="false"/>
                 <parameter name="city" type="String" required="true"/>
                 <parameter name="stateProvince" type="String" required="true"/>
                 <parameter name="postalCode" type="String" required="true"/>
                 <parameter name="countryCode" type="String" required="true"/>
+                <parameter name="isResidential" type="Boolean" required="false"/>
             </parameter>
         </parameter>
 
         <parameter name="packages" type="List" required="true">
-            <parameter name="packageMap" type="Map">
-                <parameter name="packageCode" type="String" required="true"/>
-                <parameter name="shipmentBoxTypeId" type="String" required="true"/>
+            <parameter name="entry" type="Map">
+                <parameter name="trackingNumber" type="String" required="false"/>
+                <parameter name="shipmentPackageSeqId" type="String" required="true"/>
                 <parameter name="weight" type="BigDecimal" required="true"/>
                 <parameter name="weightUomId" type="String" required="true"/>
                 <parameter name="boxLength" type="BigDecimal" required="true"/>
                 <parameter name="boxWidth" type="BigDecimal" required="true"/>
                 <parameter name="boxHeight" type="BigDecimal" required="true"/>
                 <parameter name="dimensionUomId" type="String" required="true"/>
-
-                <parameter name="items" type="List" optional="true">
-                    <parameter name="itemMap" type="Map">
-                        <parameter name="productId" type="String" required="true"/>
-                        <parameter name="quantity" type="BigDecimal" required="true"/>
-                        <parameter name="description" type="String" optional="true"/>
-                        <parameter name="unitWeight" type="BigDecimal" optional="true"/>
-                        <parameter name="unitWeightUomId" type="String" optional="true"/>
-                        <parameter name="unitValue" type="BigDecimal" optional="true"/>
-                        <parameter name="unitValueCurrency" type="String" optional="true"/>
-                    </parameter>
-                </parameter>
             </parameter>
+        </parameter>
+
+        <parameter name="referenceNumbers" type="List" required="false">
+            <parameter name="entry" type="Map">
+                <parameter name="type" type="String" required="true"/>
+                <parameter name="value" type="String" required="true"/>
+            </parameter>
+        </parameter>
+
+        <parameter name="labelSpec" type="Map" required="false">
+            <parameter name="format" type="String" required="false"/>
+            <parameter name="size" type="String" required="false"/>
         </parameter>
     </in-parameters>
 
     <out-parameters>
-        <parameter name="shippingLabelList" type="List" optional="true"/>
-        <parameter name="trackingNumberList" type="List" optional="true"/>
+        <parameter name="shippingLabels" type="List" required="false"/>
     </out-parameters>
 
     <actions>
@@ -258,18 +235,16 @@ Return label + tracking info to OMS
             <return error="true" message="Shipping Gateway configuration not found."/>
         </if>
 
-        <log message="Received shipment request: ${parameters}" level="info"/>
+        <service-call name="transform#toGatewayLabelRequest"
+                      in-map="parameters" out-map="gatewayRequest"/>
 
-        <script>
-            // Optional validation: check essential fields
-            // Example: if (!parameters.shipFrom || !parameters.shipTo || !parameters.packages) return error
-        </script>
+        <service-call name="${shippingGatewayConfig.getLabelServiceName}"
+                      in-map="gatewayRequest" out-map="gatewayResponse"/>
 
-        <service-call name="yourCarrierAdapterService#transformAndSendShipmentRequest"
-                      in-map="parameters" out-map="carrierResponse"/>
+        <service-call name="transform#fromGatewayLabelResponse"
+                      in-map="gatewayResponse" out-map="responseMap"/>
 
-        <set field="shippingLabelList" from="carrierResponse.shippingLabelList"/>
-        <set field="trackingNumberList" from="carrierResponse.trackingNumberList"/>
+        <set field="shippingLabels" from="responseMap.shippingLabels"/>
     </actions>
 </service>
 ```

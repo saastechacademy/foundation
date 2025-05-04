@@ -122,114 +122,124 @@ The OMS will call this service with a fully resolved shipment payload. The micro
 ## Service Definition
 
 ```xml
-<service name="get#OrderShippingRate"
-         location="component://shipping-gateway/service/shipping/ShippingServices.xml"
-         auth="true">
-    <description>Calculate shipping rate for a complete order</description>
+<?xml version="1.0" encoding="UTF-8"?>
+<services xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:noNamespaceSchemaLocation="https://moqui.org/xsd/service-definition-3.xsd">
 
-    <in-parameters>
-        <parameter name="shipmentMethodTypeId" type="String" required="true"/>
-        <parameter name="serviceLevel" type="String" required="true"/>
+    <service verb="get" noun="OrderShippingRate">
+        <description>Calculate shipping rate for a complete order</description>
 
-        <parameter name="shipFrom" type="Map" required="true">
-            <parameter name="facilityId" type="String" optional="true"/>
-            <parameter name="facilityName" type="String" optional="true"/>
-            <parameter name="address" type="Map" required="true">
-                <parameter name="name" type="String" required="true"/>
-                <parameter name="company" type="String" optional="true"/>
-                <parameter name="phone" type="String" required="true"/>
-                <parameter name="email" type="String" optional="true"/>
-                <parameter name="addressLine1" type="String" required="true"/>
-                <parameter name="addressLine2" type="String" optional="true"/>
-                <parameter name="city" type="String" required="true"/>
-                <parameter name="stateProvince" type="String" required="true"/>
-                <parameter name="postalCode" type="String" required="true"/>
-                <parameter name="countryCode" type="String" required="true"/>
-                <parameter name="isResidential" type="Boolean" optional="true"/>
-                <parameter name="isPoBox" type="Boolean" optional="true"/>
+        <in-parameters>
+            <parameter name="shipmentMethodTypeId" type="String" required="true"/>
+            <parameter name="serviceLevel" type="String" required="true"/>
+
+            <parameter name="shipFrom" type="Map" required="true">
+                <parameter name="facilityId" type="String" required="false"/>
+                <parameter name="facilityName" type="String" required="false"/>
+                <parameter name="address" type="Map" required="true">
+                    <parameter name="name" type="String" required="true"/>
+                    <parameter name="company" type="String" required="false"/>
+                    <parameter name="phone" type="String" required="true"/>
+                    <parameter name="email" type="String" required="false"/>
+                    <parameter name="addressLine1" type="String" required="true"/>
+                    <parameter name="addressLine2" type="String" required="false"/>
+                    <parameter name="city" type="String" required="true"/>
+                    <parameter name="stateProvince" type="String" required="true"/>
+                    <parameter name="postalCode" type="String" required="true"/>
+                    <parameter name="countryCode" type="String" required="true"/>
+                    <parameter name="isResidential" type="Boolean" required="false"/>
+                    <parameter name="isPoBox" type="Boolean" required="false"/>
+                </parameter>
             </parameter>
-        </parameter>
 
-        <parameter name="shipTo" type="Map" required="true">
-            <parameter name="address" type="Map" required="true">
-                <parameter name="name" type="String" required="true"/>
-                <parameter name="company" type="String" optional="true"/>
-                <parameter name="phone" type="String" required="true"/>
-                <parameter name="email" type="String" optional="true"/>
-                <parameter name="addressLine1" type="String" required="true"/>
-                <parameter name="addressLine2" type="String" optional="true"/>
-                <parameter name="city" type="String" required="true"/>
-                <parameter name="stateProvince" type="String" required="true"/>
-                <parameter name="postalCode" type="String" required="true"/>
-                <parameter name="countryCode" type="String" required="true"/>
-                <parameter name="isResidential" type="Boolean" optional="true"/>
-                <parameter name="isPoBox" type="Boolean" optional="true"/>
+            <parameter name="shipTo" type="Map" required="true">
+                <parameter name="address" type="Map" required="true">
+                    <parameter name="name" type="String" required="true"/>
+                    <parameter name="company" type="String" required="false"/>
+                    <parameter name="phone" type="String" required="true"/>
+                    <parameter name="email" type="String" required="false"/>
+                    <parameter name="addressLine1" type="String" required="true"/>
+                    <parameter name="addressLine2" type="String" required="false"/>
+                    <parameter name="city" type="String" required="true"/>
+                    <parameter name="stateProvince" type="String" required="true"/>
+                    <parameter name="postalCode" type="String" required="true"/>
+                    <parameter name="countryCode" type="String" required="true"/>
+                    <parameter name="isResidential" type="Boolean" required="false"/>
+                    <parameter name="isPoBox" type="Boolean" required="false"/>
+                </parameter>
             </parameter>
-        </parameter>
 
-        <parameter name="packages" type="List" required="true">
-            <parameter name="packageMap" type="Map">
-                <parameter name="shipmentBoxTypeId" type="String" required="true"/>
-                <parameter name="weight" type="BigDecimal" required="true"/>
-                <parameter name="weightUomId" type="String" required="true"/>
-                <parameter name="boxLength" type="BigDecimal" required="true"/>
-                <parameter name="boxWidth" type="BigDecimal" required="true"/>
-                <parameter name="boxHeight" type="BigDecimal" required="true"/>
-                <parameter name="dimensionUomId" type="String" required="true"/>
-                <parameter name="items" type="List" optional="true">
-                    <parameter name="itemMap" type="Map">
-                        <parameter name="productId" type="String" required="true"/>
-                        <parameter name="quantity" type="BigDecimal" required="true"/>
-                        <parameter name="description" type="String" optional="true"/>
-                        <parameter name="unitWeight" type="BigDecimal" optional="true"/>
-                        <parameter name="unitWeightUomId" type="String" optional="true"/>
-                        <parameter name="unitValue" type="BigDecimal" optional="true"/>
-                        <parameter name="unitValueCurrency" type="String" optional="true"/>
+            <parameter name="packages" type="List" required="true">
+                <parameter name="entry" type="Map">
+                    <parameter name="shipmentBoxTypeId" type="String" required="true"/>
+                    <parameter name="weight" type="BigDecimal" required="true"/>
+                    <parameter name="weightUomId" type="String" required="true"/>
+                    <parameter name="boxLength" type="BigDecimal" required="true"/>
+                    <parameter name="boxWidth" type="BigDecimal" required="true"/>
+                    <parameter name="boxHeight" type="BigDecimal" required="true"/>
+                    <parameter name="dimensionUomId" type="String" required="true"/>
+                    <parameter name="items" type="List" required="false">
+                        <parameter name="entry" type="Map">
+                            <parameter name="productId" type="String" required="true"/>
+                            <parameter name="quantity" type="BigDecimal" required="true"/>
+                            <parameter name="description" type="String" required="false"/>
+                            <parameter name="unitWeight" type="BigDecimal" required="false"/>
+                            <parameter name="unitWeightUomId" type="String" required="false"/>
+                            <parameter name="unitValue" type="BigDecimal" required="false"/>
+                            <parameter name="unitValueCurrency" type="String" required="false"/>
+                        </parameter>
                     </parameter>
                 </parameter>
             </parameter>
-        </parameter>
 
-        <parameter name="referenceNumbers" type="List" optional="true">
-            <parameter name="referenceNumber" type="Map">
-                <parameter name="type" type="String" required="true"/>
-                <parameter name="value" type="String" required="true"/>
+            <parameter name="referenceNumbers" type="List" required="false">
+                <parameter name="entry" type="Map">
+                    <parameter name="type" type="String" required="true"/>
+                    <parameter name="value" type="String" required="true"/>
+                </parameter>
             </parameter>
-        </parameter>
 
-        <parameter name="accessorials" type="List" optional="true">
-            <parameter name="accessorial" type="Map">
-                <parameter name="type" type="String" required="true"/>
-                <parameter name="value" type="String" required="true"/>
-                <parameter name="optionValue" type="String" optional="true"/>
+            <parameter name="accessorials" type="List" required="false">
+                <parameter name="entry" type="Map">
+                    <parameter name="type" type="String" required="true"/>
+                    <parameter name="value" type="String" required="true"/>
+                    <parameter name="optionValue" type="String" required="false"/>
+                </parameter>
             </parameter>
-        </parameter>
 
-        <parameter name="pickupWindow" type="Map" optional="true">
-            <parameter name="startTime" type="Timestamp" required="true"/>
-            <parameter name="endTime" type="Timestamp" required="true"/>
-        </parameter>
+            <parameter name="pickupWindow" type="Map" required="false">
+                <parameter name="startTime" type="Timestamp" required="true" format="yyyy-MM-dd'T'HH:mm:ssX"/>
+                <parameter name="endTime" type="Timestamp" required="true" format="yyyy-MM-dd'T'HH:mm:ssX"/>
+            </parameter>
 
-        <parameter name="applyPolicies" type="Boolean" optional="true"/>
-    </in-parameters>
+            <parameter name="applyPolicies" type="Boolean" required="false"/>
+        </in-parameters>
 
-    <out-parameters>
-        <parameter name="rateInfoList" type="List" optional="true"/>
-    </out-parameters>
+        <out-parameters>
+            <parameter name="rateInfoList" type="List" required="false"/>
+        </out-parameters>
 
-    <actions>
-        <set field="shippingGatewayConfig" from="ec.context.shippingGatewayConfig"/>
-        <if condition="!shippingGatewayConfig">
-            <return error="true" message="Shipping Gateway configuration not found."/>
-        </if>
+        <actions>
+            <set field="shippingGatewayConfig" from="ec.context.shippingGatewayConfig"/>
+            <if condition="!shippingGatewayConfig">
+                <return error="true" message="Shipping Gateway configuration not found."/>
+            </if>
 
-        <service-call name="transform#toGatewayRateRequest" in-map="parameters" out-map="gatewayRequest"/>
-        <service-call name="${shippingGatewayConfig.getRateServiceName}" in-map="gatewayRequest" out-map="gatewayResponse"/>
-        <service-call name="transform#fromGatewayRateResponse" in-map="gatewayResponse" out-map="responseMap"/>
+            <service-call name="transform#toGatewayRateRequest"
+                          in-map="parameters" out-map="gatewayRequest"/>
 
-        <set field="rateInfoList" from="responseMap.rateInfoList"/>
-    </actions>
-</service>
+            <service-call name="${shippingGatewayConfig.getRateServiceName}"
+                          in-map="gatewayRequest" out-map="gatewayResponse"/>
+
+            <service-call name="transform#fromGatewayRateResponse"
+                          in-map="gatewayResponse" out-map="responseMap"/>
+
+            <set field="rateInfoList" from="responseMap.rateInfoList"/>
+        </actions>
+    </service>
+
+</services>
+
 ```
 
 ## Carrier Support Matrix

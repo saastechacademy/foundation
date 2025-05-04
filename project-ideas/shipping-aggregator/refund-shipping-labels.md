@@ -56,24 +56,42 @@ Based on the official refund/cancellation API documentation of each integrated s
 ## Service Definition
 
 ```xml
-<service name="refund#ShippingLabels"
-         location="component://uniship/service/co/hotwax/uniship/ShippingServices.xml"
-         auth="true">
-    <description>Cancel or refund a shipping label</description>
+    <service verb="refund" noun="ShippingLabels">
+   <description>Cancel or refund a shipping label</description>
 
-    <in-parameters>
-        <parameter name="shipmentId" type="String" optional="true"/>
-        <parameter name="labelId" type="String" optional="true"/>
-        <parameter name="trackingNumber" type="String" optional="true"/>
-        <parameter name="carrier" type="String" required="true"/>
-        <parameter name="reason" type="String" optional="true"/>
-    </in-parameters>
+   <in-parameters>
+      <parameter name="shipmentId" type="String" required="false"/>
+      <parameter name="labelId" type="String" required="false"/>
+      <parameter name="trackingNumber" type="String" required="false"/>
+      <parameter name="carrier" type="String" required="true"/>
+      <parameter name="reason" type="String" required="false"/>
+   </in-parameters>
 
-    <out-parameters>
-        <parameter name="status" type="String"/>
-        <parameter name="message" type="String" optional="true"/>
-        <parameter name="carrierResponse" type="Map" optional="true"/>
-    </out-parameters>
+   <out-parameters>
+      <parameter name="status" type="String" required="false"/>
+      <parameter name="message" type="String" required="false"/>
+      <parameter name="carrierResponse" type="Map" required="false"/>
+   </out-parameters>
+
+   <actions>
+      <set field="shippingGatewayConfig" from="ec.context.shippingGatewayConfig"/>
+      <if condition="!shippingGatewayConfig">
+         <return error="true" message="Shipping Gateway configuration not found."/>
+      </if>
+
+      <service-call name="transform#toGatewayLabelRefundRequest"
+                    in-map="parameters" out-map="gatewayRequest"/>
+
+      <service-call name="${shippingGatewayConfig.getRefundServiceName}"
+                    in-map="gatewayRequest" out-map="gatewayResponse"/>
+
+      <service-call name="transform#fromGatewayLabelRefundResponse"
+                    in-map="gatewayResponse" out-map="responseMap"/>
+
+      <set field="status" from="responseMap.status"/>
+      <set field="message" from="responseMap.message"/>
+      <set field="carrierResponse" from="responseMap.carrierResponse"/>
+   </actions>
 </service>
 ```
 
