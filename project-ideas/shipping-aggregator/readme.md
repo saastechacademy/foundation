@@ -43,7 +43,7 @@ Key entities:
 - **ShippingGatewayConfig** — Defines the configuration for each shipping gateway (e.g., FedEx, UPS).
 - **SystemMessageRemote** — Stores tenant-specific API credentials securely.
 
-👉 Refer to the full [Entity Model Design](entity-model.md) document for detailed definitions.
+👉 Refer to the full [Entity Model Design](entity/entity-model.md) document for detailed definitions.
 
 ---
 
