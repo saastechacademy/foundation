@@ -1,6 +1,6 @@
 # FedEx Gateway Integration
 
-This folder contains documents related to integrating FedEx shipping services into the Shipping Gateway Microservice.
+This folder contains documents related to integrating FedEx shipping services into the UniShip Microservice.
 
 ## Documents
 

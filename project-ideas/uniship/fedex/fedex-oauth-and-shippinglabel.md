@@ -16,8 +16,8 @@ import org.moqui.util.RestClient;
 import org.moqui.context.ExecutionContext;
 
 ExecutionContext ec = ...; // Obtain the ExecutionContext
-SystemMessageRemote smr = ...; // Obtain the SystemMessageRemote
-// Using SystemMessageRemote for managing client_id and client_secret
+ShippingGatewayAuthConfig smr = ...; // Obtain the ShippingGatewayAuthConfig
+// Using ShippingGatewayAuthConfig for managing client_id and client_secret
 String clientId = smr.remoteId;
 String clientSecret = smr.sharedSecret;
 
@@ -34,12 +34,12 @@ def oauthUriBuilder = restClient.uri()
 String accessToken = oauthUriBuilder.build().call().jsonObject().access_token;
 ```
 
-### Using SystemMessageRemote for FedEx API Credentials
+### Using ShippingGatewayAuthConfig for FedEx API Credentials
 
-To manage the `client_id` and `client_secret` for each retailer's account with FedEx, we will utilize the `SystemMessageRemote` entity. The following fields will be used:
+To manage the `client_id` and `client_secret` for each retailer's account with FedEx, we will utilize the `ShippingGatewayAuthConfig` entity. The following fields will be used:
 
-- **SystemMessageRemote.remoteId**: This field will store the `client_id` for the retailer's FedEx account.
-- **SystemMessageRemote.sharedSecret**: This field will store the `client_secret` associated with the retailer's FedEx account.
+- **ShippingGatewayAuthConfig.remoteId**: This field will store the `client_id` for the retailer's FedEx account.
+- **ShippingGatewayAuthConfig.sharedSecret**: This field will store the `client_secret` associated with the retailer's FedEx account.
 
 ### 2. Use the Token to Create a Shipping Label
 ```java
@@ -66,7 +66,7 @@ System.out.println(responseMap);
 ```java
 public class FedExExample {
     public static void main(String[] args) throws Exception {
-        SystemMessageRemote smr = ...; // Obtain the SystemMessageRemote
+        ShippingGatewayAuthConfig smr = ...; // Obtain the SystemMessageRemote
         // Using SystemMessageRemote for managing client_id and client_secret
         String clientId = smr.remoteId;
         String clientSecret = smr.sharedSecret;
