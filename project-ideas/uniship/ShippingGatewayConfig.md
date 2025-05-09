@@ -1,6 +1,4 @@
-### Shipping Gateway Configuration in Moqui
-
-Moqui provides a robust and flexible framework for managing shipping operations, including the ability to integrate with various shipping carriers and gateways. The entities defined in the `mantle.shipment.carrier` package play a key role in streamlining this integration process.
+### Shipping Gateway Configuration
 
 ### Core Entities
 
@@ -9,8 +7,7 @@ Moqui provides a robust and flexible framework for managing shipping operations,
     *   Purpose: This entity serves as the central hub for configuring each shipping gateway you integrate with. This could be a third-party service like Shippo or EasyPost, or even a direct integration with a carrier's API (like FedEx or UPS). It stores the main settings and links to other entities for more detailed configurations.
     *   Key Fields:
         *   `shippingGatewayConfigId` (Primary Key): A unique identifier for this configuration.
-        *   `shippingGatewayTypeEnumId`: Specifies the type of gateway being configured. This is an enumeration value, and you would typically define a new value for each supported gateway.
-        *   `description`: A human-readable description of the gateway configuration.
+        *   `shippingGatewayTypeEnumId`: Specifies the type of gateway being configured. 
         *   Service Names (e.g., `getOrderRateServiceName`, `requestLabelsServiceName`): These fields store the names of Moqui services responsible for handling specific shipping operations with this gateway. These services would contain the logic to interact with the gateway's API (e.g., request shipping rates, generate labels, track shipments).
 
         Example (JSON):
@@ -18,7 +15,7 @@ Moqui provides a robust and flexible framework for managing shipping operations,
     ```json
     {
       "shippingGatewayConfigId": "SHIPPO_DEMO",
-      "shippingGatewayTypeEnumId": "ShGtwyShippo",
+      "shippingGatewayTypeEnumId": "ShGtwyRemote",
       "description": "Shippo API Demo",
       "getOrderRateServiceName": "mantle.shippo.ShippoServices.get#OrderShippingRate",
       "requestLabelsServiceName": "mantle.shippo.ShippoServices.request#ShippingLabels",

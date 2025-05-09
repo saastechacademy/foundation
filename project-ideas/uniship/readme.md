@@ -13,14 +13,11 @@ This system supports multi-tenant operations, using a userLoginKey and tenantId 
 
 ## 2. Key Requirements
 
-- **Customer/User Management:**  
-  Securely manage tenant retailers and their API access.
-
 - **Unified Shipping API Abstraction:**  
   Integrate with multiple carriers while exposing a single clean API interface to OMS clients.
 
 - **Stateless Shipment Handling:**  
-  The Shipping Gateway does not store or persist any shipment data. All data is passed through temporarily.
+  Uniship does not store or persist any shipment data. All data is passed through temporarily.
 
 - **Multi-Tenant Isolation:**  
   Each API call is isolated to a specific retailer(tenant).
@@ -40,7 +37,7 @@ The Shipping Gateway Microservice uses a lightweight multi-tenant data model.
 Key entities:
 
 - **Party** — Represents both tenants (retailers) and shipping carriers.
-- **PartyRole** — Distinguishes between Tenant and Carrier parties.
+- **PartyRole** — Distinguishes between Tenant and Application user parties.
 - **ShippingGatewayConfig** — Defines the configuration for each shipping gateway (e.g., FedEx, UPS).
 - **ShippingGatewayAuthConfig** — Stores tenant-specific API credentials securely.
 
@@ -58,7 +55,7 @@ Key entities:
 
 ---
 
-## 5. API Service Contracts
+## 5. API Interfaces
 
 | API Name                   | Purpose                                      |
 |:---------------------------|:---------------------------------------------|
@@ -118,7 +115,7 @@ All errors return JSON responses with an appropriate HTTP status code.
 
 ## 8. Multi-Tenant Behavior
 
-- `tenantPartyId` is extracted from JWT and used to lookup tenant-specific configurations.
+- `tenantPartyId` is used to lookup tenant-specific configurations.
 - `shippingGatewayConfigId` is used to select the shipping gateway settings.
 - All API calls are scoped and isolated per tenant.
 

@@ -1,4 +1,4 @@
-## 📘 Entity Model for Multitenant Shipping Gateway Microservice
+## 📘 Entity Model UniShip Microservice
 
 This document outlines the minimal set of entities required to support a multitenant shipping gateway microservice, using the Moqui framework without adopting the full Mantle UDM.
 
