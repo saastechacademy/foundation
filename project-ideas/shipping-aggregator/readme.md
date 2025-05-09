@@ -1,19 +1,20 @@
-# Shipping Gateway API Specification
+# UniShip
+**Uniform API for Shipping Integration — Built as a Moqui Component**
 
 ---
 
 ## 1. Introduction
 
-The Shipping Gateway Microservice provides a unified API interface for integrating with multiple shipping providers (e.g., FedEx, UPS, Shippo, DHL). It acts as a stateless pass-through system, processing shipment rate, label, and tracking requests without persisting shipment data.
+The UniShip microservice provides a unified API interface for integrating with multiple shipping providers (e.g., FedEx, UPS, Shippo, DHL). It acts as a stateless pass-through system, processing shipment rate, label, and tracking requests without persisting shipment data.
 
-This system supports multi-tenant operations, using a JWT token to identify the tenant and the associated shipping gateway configuration.
+This system supports multi-tenant operations, using a userLoginKey and tenantId to authenticate and authorize use of the associated shipping gateway.
 
 ---
 
 ## 2. Key Requirements
 
 - **Customer/User Management:**  
-  Securely manage tenant retailers and their API access through JWT tokens.
+  Securely manage tenant retailers and their API access.
 
 - **Unified Shipping API Abstraction:**  
   Integrate with multiple carriers while exposing a single clean API interface to OMS clients.
@@ -22,7 +23,7 @@ This system supports multi-tenant operations, using a JWT token to identify the 
   The Shipping Gateway does not store or persist any shipment data. All data is passed through temporarily.
 
 - **Multi-Tenant Isolation:**  
-  Each API call is isolated to a specific retailer tenant based on the JWT token.
+  Each API call is isolated to a specific retailer(tenant).
 
 - **Reliable Error Management:**  
   Standardized error responses and graceful error handling for communication with carrier APIs.
@@ -41,7 +42,7 @@ Key entities:
 - **Party** — Represents both tenants (retailers) and shipping carriers.
 - **PartyRole** — Distinguishes between Tenant and Carrier parties.
 - **ShippingGatewayConfig** — Defines the configuration for each shipping gateway (e.g., FedEx, UPS).
-- **SystemMessageRemote** — Stores tenant-specific API credentials securely.
+- **ShippingGatewayAuthConfig** — Stores tenant-specific API credentials securely.
 
 👉 Refer to the full [Entity Model Design](entity/entity-model.md) document for detailed definitions.
 
@@ -49,11 +50,11 @@ Key entities:
 
 ## 4. Authentication and Authorization
 
-- All API requests require an Authorization header with a JWT token.
-- The JWT must include at minimum:
+- All API requests require an Authorization header with a key token.
+- The request must include at minimum:
   - `tenantPartyId`
   - `shippingGatewayConfigId`
-- Token validation and tenant identification are mandatory for every request.
+- Key validation and tenant identification are mandatory for every request.
 
 ---
 

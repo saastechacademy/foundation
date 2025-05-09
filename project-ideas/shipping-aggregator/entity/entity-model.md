@@ -135,35 +135,8 @@ Below are the XML definitions for the three core entities, modeled in alignment 
 
 ### 📄 SystemMessageRemote Entity
 
-The `SystemMessageRemote` entity is designed to store tenant-specific authentication tokens and endpoint information for a given shipping gateway. 
+The `ShippingGatewayAuthConfig` entity is designed to store tenant-specific authentication tokens information for a given shipping gateway. 
 
-#### Key Fields:
-- **remoteId**: This field will be used to store the `client_id` for each retailer's FedEx account.
-- **sharedSecret**: This field will be used to store the `client_secret` associated with the retailer's FedEx account.
-
-
-#### 🗂 `SystemMessageRemote`
-```xml
-<entity entity-name="SystemMessageRemote" package="shipping.gateway">
-    <field name="systemMessageRemoteId" type="id" is-pk="true"/>
-    <field name="tenantPartyId" type="id"/>
-    <field name="shippingGatewayConfigId" type="id"/>
-    <field name="authToken" type="text-long"/>
-    <field name="endpointBaseUrl" type="text-long"/>
-    <field name="remoteUser" type="text-short"/>
-    <field name="remotePassword" type="text-short"/>
-    <field name="remoteId" type="text-short"/>
-    <field name="sharedSecret" type="text-short"/>
-
-    <relationship type="one" related="mantle.party.Party">
-        <key-map field-name="tenantPartyId"/>
-    </relationship>
-    <relationship type="one" related="shipping.gateway.ShippingGatewayConfig">
-        <key-map field-name="shippingGatewayConfigId"/>
-    </relationship>
-</entity>
-```
 ### 🧩 Notes on Tenant Entity Setup
 - These three entities are sufficient to define and classify each tenant (retailer) in the system.
 - You may define additional `RoleType` entries (e.g., `Tenant`, `Carrier`) as needed.
-- This model supports scalable onboarding, multi-tenancy, and future extensibility (e.g., billing, limits, user assignments).

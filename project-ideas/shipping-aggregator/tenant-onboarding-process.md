@@ -21,9 +21,9 @@
 
 ### 🔐 Step 3: Store Retailer's API Token in SystemMessageRemote
 ```xml
-<SystemMessageRemote
-    systemMessageRemoteId="SHIPPO_RETAILER_123"
-    systemMessageRemoteTypeEnumId="SmrShippo"
+<ShippingGatewayAuthConfig
+        ShippingGatewayAuthConfigId="SHIPPO_RETAILER_123"
+        shippingGatewayConfigId="SmrShippo"
     tenantPartyId="RETAILER_123"
     authToken="shippo_live_token_xyz"
     serviceUrl="https://api.goshippo.com"
@@ -32,20 +32,13 @@
 
 ---
 
-### 🎟️ Step 4: Generate JWT Token for Retailer
-- Embed the following in the JWT:
-```json
-{
-  "tenantPartyId": "RETAILER_123",
-  "shippingGatewayConfigId": "SHIPPO_CONFIG"
-}
-```
+### 🎟️ Step 4: Generate Key for Retailer
 - This token is required in the Authorization header of API requests.
 
 ---
 
 ### 📡 Step 6: Retailer Uses the Gateway API
-- Retailer’s OMS uses the JWT token to:
+- Retailer’s OMS uses the key token to:
     - Identify tenant
 
 ---
