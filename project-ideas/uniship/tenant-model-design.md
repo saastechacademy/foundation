@@ -1,77 +1,57 @@
-## Shipping Gateway Microservice Design
+# Tenant Model Design — UniShip Shipping Gateway Microservice
 
-This document outlines the design approach for implementing a **Shipping Gateway Microservice** using the **Moqui Framework**, considering a multi-tenant use case where retailers configure and interact with shipping gateways like **Shippo**, **FedEx**, or **ShipStation**.
+## Overview
 
----
-
-### ✅ Core Goals
-1. **Centralized configuration** of shipping gateway integrations.
-2. Clean separation of shared gateway logic and per-retailer data.
+This document outlines the entity design and onboarding flow for a **multi-tenant shipping gateway microservice** built using the **Moqui Framework**. The system enables tenants (retailers) to interact with remote shipping carriers (e.g., Shippo, FedEx, ShipHawk) via a uniform API interface provided by UniShip.
 
 ---
 
-### 🧱 Core Entities in Use (in Setup Order)
+## 🎯 Goals
 
-| Entity | Purpose |
-|--------|---------|
-| `Party` + `PartyRole` | Used to define carriers and retailers (tenants) before referencing them elsewhere. |
-| `ShippingGatewayConfig` | Defines shared service behavior of a shipping gateway (label generation, tracking). |
-| `ShippingGatewayAuthConfig` | Stores **retailer-specific connection details** like API token and service URL (with `tenantPartyId`). |
+1. Multi-tenant configuration for gateway authentication.
+2. Clear separation between shared gateway logic and tenant-specific credentials.
+3. Full auditability via immutable configuration records.
 
 ---
 
-### 🧭 Configuration Flow
+## 🔧 Core Entities Referenced in Tenant Setup
+
+| Entity                      | Purpose                                                                            |                                                                                    |
+| --------------------------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `Party`, `PartyRole`        | Defines tenants.                                                                   |                                                                                    |
+| `ShippingGatewayAuthConfig` | Stores **tenant-specific credentials** and endpoint config. Supports immutability. | Stores **tenant-specific credentials** and endpoint config. Supports immutability. |
 
 ---
 
-### 🏗️ Application Provider Setup (Performed Once)
+---
 
-#### Step 1: Define supported shipping carriers
+## 🚀 Tenant Onboarding Flow
+
+### Step 1: Retailer Signs Up (via `create#Tenant` service)
+
+* Creates a Party of type `PtyOrganization`.
+* Returns `tenantPartyId` and a secure `loginKey`.
+
+### Step 2: Admin Configures Shipping Credentials
+
+* Tenant admin selects from a predefined list of available shipping gateways (configured by the platform admin in `ShippingGatewayConfig`) and creates one or more immutable records in `ShippingGatewayAuthConfig` scoped to `tenantPartyId`.
+
+---
+
+## 🔐 Entity Definition: `ShippingGatewayAuthConfig`
+
+> This entity is **immutable**. Any change to credentials or endpoint must result in a **new record**. The previous record should be expired using `thruDate`.
+
 ```xml
-<Party partyId="FEDEX" partyTypeEnumId="PtyOrganization">
-    <organization organizationName="FedEx"/>
-    <roles roleTypeId="Carrier"/>
-</Party>
-```
-
-#### Step 2: Preconfigure available shipping gateways
-```xml
-<ShippingGatewayConfig
-    shippingGatewayConfigId="SHIPPO_CONFIG"
-    shippingGatewayTypeEnumId="ShGtwyRemote"
-    requestLabelsServiceName="..."
-    refundLabelsServiceName="...">
-</ShippingGatewayConfig>
-```
-
----
-
-### 🧾 Retailer (Tenant) Onboarding
-
-#### Step 3: Retailer signs up for the aggregator service
-- Retailer registers and provides shipping gateway preferences and credentials.
-
-#### Step 4: Create a Party record for the retailer
-```xml
-<Party partyId="RETAILER_123" partyTypeEnumId="PtyOrganization">
-    <organization organizationName="Retailer 123"/>
-    <roles roleTypeId="Tenant"/>
-</Party>
-```
-
-#### Step 5: Record retailer's gateway credentials using `ShippingGatewayAuthConfig`
-```xml
-    <entity entity-name="ShippingGatewayAuthConfig" package="co.hotwax.uniship"
-            use="configuration" cache="true">
-    <description>Defines tenant-specific authentication and endpoint details for shipping gateway integrations.</description>
+<entity entity-name="ShippingGatewayAuthConfig" package="co.hotwax.uniship"
+        use="configuration" cache="true">
+    <description>Stores per-tenant authentication and endpoint info for shipping gateways.</description>
 
     <field name="shippingGatewayAuthConfigId" type="id" is-pk="true"/>
     <field name="tenantPartyId" type="id" not-null="true"/>
     <field name="shippingGatewayConfigId" type="id" not-null="true"/>
 
-    <field name="modeEnumId" type="id">
-        <description>Sandbox or Production mode</description>
-    </field>
+    <field name="modeEnumId" type="id"/>
     <field name="authTypeEnumId" type="id" not-null="true"/>
     <field name="baseUrl" type="text-medium" not-null="true"/>
 
@@ -81,16 +61,17 @@ This document outlines the design approach for implementing a **Shipping Gateway
     <field name="password" type="text-medium" encrypt="true"/>
     <field name="sharedSecret" type="text-medium" encrypt="true"/>
 
-    <!-- OAuth-specific fields -->
+    <!-- OAuth2 Fields -->
     <field name="oauthTokenUrl" type="text-medium"/>
     <field name="clientId" type="text-medium"/>
     <field name="clientSecret" type="text-medium" encrypt="true"/>
 
-    <!-- Runtime configuration -->
-    <field name="sendTimeoutSeconds" type="number-integer"/>
-    <field name="retryLimit" type="number-integer"/>
-    <field name="isActive" type="text-indicator"/>
+    <!-- Validity Window -->
+    <field name="fromDate" type="date-time" not-null="true"/>
+    <field name="thruDate" type="date-time"/>
+    <field name="description" type="text-medium"/>
 
+    <!-- Relationships -->
     <relationship type="one" related="co.hotwax.uniship.Party" short-alias="tenant">
         <key-map field-name="tenantPartyId"/>
     </relationship>
@@ -103,39 +84,56 @@ This document outlines the design approach for implementing a **Shipping Gateway
     <relationship type="one" related="co.hotwax.uniship.ShippingGatewayConfig" short-alias="gatewayConfig">
         <key-map field-name="shippingGatewayConfigId"/>
     </relationship>
-    <seed-data>
-        <moqui.basic.EnumerationType enumTypeId="ShippingGatewayAuthType" description="Shipping Gateway Auth Type"/>
-        <moqui.basic.Enumeration enumId="SgatApiKey" description="API Key" enumTypeId="ShippingGatewayAuthType"/>
-
-        <moqui.basic.EnumerationType enumTypeId="ShippingGatewayMode" description="Shipping Gateway Mode"/>
-        <moqui.basic.Enumeration enumId="SgmSandbox" description="Sandbox" enumTypeId="ShippingGatewayMode"/>
-        <moqui.basic.Enumeration enumId="SgmProduction" description="Production" enumTypeId="ShippingGatewayMode"/>
-
-    </seed-data>
 </entity>
 ```
 
 ---
 
-### 🔍 Key Design Considerations
+## 🧩 Operational Logic
 
-#### ✅ Use `ShippingGatewayAuthConfig` with `tenantPartyId`
-- Designed to manage external system connections.
-- Multi-tenant friendly and scalable.
-- Lets you store API token, service URL, and other credentials per retailer.
-
----
-
-### 🧩 How it All Comes Together
-
-| Concern | Solution                                                                                        |
-|--------|-------------------------------------------------------------------------------------------------|
-| Retailer wants to use Shippo | Choose `ShippingGatewayConfig`, setup `ShippingGatewayAuthConfig` with `tenantPartyId` for token. |
-| Shipments must use correct gateway | Lookup `ShippingGatewayAuthConfig` by `tenantPartyId + shippingGatewayConfigId`.                |
+| Concern                                     | Resolution                                                         |
+| ------------------------------------------- | ------------------------------------------------------------------ |
+| Retailer signs up with FedEx                | Use `create#Tenant`, then `create#ShippingGatewayAuthConfig`       |
+| Update required for auth or endpoint config | Create new record, set `fromDate`, expire previous with `thruDate` |
+| Querying active config                      | Use `conditionDate("fromDate", "thruDate", now)` in entity-find    |
 
 ---
 
-### ✅ Summary
-Use Moqui's existing model with:
-- **One gateway config per service provider** (Shippo, FedEx, etc.)
-- **ShippingGatewayAuthConfig (with tenantPartyId)** for per-retailer token + endpoint
+## 📚 Enum & Seed Data
+
+```xml
+<moqui.basic.EnumerationType enumTypeId="ShippingGatewayAuthType" description="Shipping Gateway Auth Type"/>
+<moqui.basic.Enumeration enumId="SgatApiKey" description="API Key" enumTypeId="ShippingGatewayAuthType"/>
+
+<moqui.basic.EnumerationType enumTypeId="ShippingGatewayMode" description="Shipping Gateway Mode"/>
+<moqui.basic.Enumeration enumId="SgmSandbox" description="Sandbox" enumTypeId="ShippingGatewayMode"/>
+<moqui.basic.Enumeration enumId="SgmProduction" description="Production" enumTypeId="ShippingGatewayMode"/>
+```
+
+---
+
+## 🧠 Best Practices
+
+* Only one active `ShippingGatewayAuthConfig` should exist at any time for a given `(tenantPartyId + shippingGatewayConfigId)` pair.
+
+* Validate `fromDate`/`thruDate` to prevent overlapping validity windows.
+
+* Never overwrite credentials — expire old records using `thruDate`.
+
+* Use only `fromDate`/`thruDate` and `conditionDate` — the entity does not include an `isActive` field.
+
+* Secure sensitive fields with encryption.
+
+* Filter all entity queries to return only current/valid configurations.
+
+---
+
+## ✅ Summary
+
+| Layer      | Model                                               |
+| ---------- | --------------------------------------------------- |
+| Party      | Retailers (tenants) and carriers                    |
+| Gateway    | `ShippingGatewayConfig`                             |
+| Credential | `ShippingGatewayAuthConfig` (immutable, per-tenant) |
+
+All components are connected via `tenantPartyId`, ensuring clean separation and secure access for multi-tenant integration workflows.
