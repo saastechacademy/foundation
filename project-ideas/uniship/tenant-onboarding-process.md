@@ -3,10 +3,9 @@
 ---
 
 ### 📝 Step 1: Retailer Registration
-- Retailer submits:
-    - Preferred shipping gateway (e.g., Shippo)
-    - API token/credentials
+- The UniShip tenants administrator creates Tenant in UniShip by passing the Tenant name. The system reponds with the tenantPartyId and the api access Token. 
 
+- The 
 ---
 
 ### 🧱 Step 2: Create Retailer as a Tenant Party
