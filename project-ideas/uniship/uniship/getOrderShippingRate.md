@@ -2,127 +2,128 @@
 
 ---
 
-## Overview
+## Service Purpose
 
-This document defines the request structure for the `get#OrderShippingRate` service in the Shipping Gateway Microservice. It calculates shipping rates for a complete order based on provided address and package details using nested JSON structures.
+The `get#OrderShippingRate` service is a front-facing gateway microservice API that calculates shipping rates for a fully specified shipment. It supports multi-tenant architecture and allows each tenant to route requests to their configured shipping gateway implementation (e.g., FedEx, UPS, Shippo).
 
-The OMS will call this service with a fully resolved shipment payload. The microservice will:
-
-1. Verify JWT for tenant and gateway config.
-2. Retrieve injected `ShippingGatewayConfig`.
-3. Validate and transform the request into carrier-specific rate query format.
-4. Call the carrier/gateway rate API.
-5. Normalize and return `rateInfoList` to the OMS.
+This service **does not** perform the transformation or direct integration with the external shipping API. That responsibility is delegated to the **gateway-specific implementation service**, which must also implement the same service interface defined in `ApiInterfaceServices.xml`.
 
 ---
 
-## JSON Input Structure
+## Key Responsibilities
 
-```json
-{
-  "shipmentMethodTypeId": "STANDARD",
-  "serviceLevel": "GROUND",
-  "shipFrom": {
-    "facilityId": "BROADWAY",
-    "facilityName": "Broadway Warehouse",
-    "address": {
-      "name": "Broadway Fulfillment Center",
-      "company": "Company Inc",
-      "phone": "123-456-7890",
-      "email": "warehouse@company.com",
-      "addressLine1": "123 Broadway St",
-      "addressLine2": "Suite 200",
-      "city": "New York",
-      "stateProvince": "NY",
-      "postalCode": "10001",
-      "countryCode": "US",
-      "isResidential": false,
-      "isPoBox": false
-    }
-  },
-  "shipTo": {
-    "address": {
-      "name": "John Doe",
-      "company": "Doe Enterprises",
-      "phone": "987-654-3210",
-      "email": "john.doe@example.com",
-      "addressLine1": "789 Market St",
-      "addressLine2": null,
-      "city": "San Francisco",
-      "stateProvince": "CA",
-      "postalCode": "94103",
-      "countryCode": "US",
-      "isResidential": true,
-      "isPoBox": false
-    }
-  },
-  "packages": [
-    {
-      "shipmentBoxTypeId": "YOUR_PACKAGING",
-      "weight": 2.5,
-      "weightUomId": "WT_lb",
-      "boxLength": 10,
-      "boxWidth": 5,
-      "boxHeight": 8,
-      "dimensionUomId": "LEN_in",
-      "items": [
-        {
-          "productId": "10003",
-          "quantity": 2,
-          "description": "Blue T-shirt",
-          "unitWeight": 0.5,
-          "unitWeightUomId": "WT_lb",
-          "unitValue": 25.00,
-          "unitValueCurrency": "USD"
-        }
-      ]
-    }
-  ],
-  "referenceNumbers": [
-    { "type": "ORDER", "value": "ORD-45678" }
-  ],
-  "accessorials": [
-    { "type": "LIFT_GATE", "value": "true", "optionValue": "" }
-  ],
-  "pickupWindow": {
-    "startTime": "2025-05-01T09:00:00Z",
-    "endTime": "2025-05-01T17:00:00Z"
-  },
-  "applyPolicies": true
-}
-```
+* Validate presence of required parameters: `tenantPartyId`, `shippingGatewayConfigId`, `shipFrom`, `shipTo`, `packages`.
+* Ensure that the provided gateway config (`shippingGatewayConfigId`) is authorized for the given tenant (`tenantPartyId`) via a valid `ShippingGatewayAuthConfig`.
+* Resolve the `ShippingGatewayConfig` entity to find the gateway-specific implementation service name.
+* Pass the full input to the resolved service for carrier-specific rate calculation.
+* Return normalized `rateInfoList` response to the caller.
 
 ---
 
-## Field Value Guidelines
+## Input Parameters
 
-| Field                | Allowed Values                              | Default When Omitted |
-| -------------------- | ------------------------------------------- | -------------------- |
-| shipmentMethodTypeId | STANDARD, EXPRESS, OVERNIGHT                | STANDARD             |
-| serviceLevel         | Carrier-specific codes (e.g., GROUND, 2DAY) | Carrier default      |
-| isResidential        | true, false                                 | false                |
-| isPoBox              | true, false                                 | false                |
-| accessorials[].type  | LIFT\_GATE, INSIDE\_DELIVERY, etc.          | none                 |
-| includePolicies      | true, false                                 | false                |
+The service accepts a deeply nested JSON object containing:
+
+* **Cross-cutting**:
+
+  * `tenantPartyId` (String, required)
+  * `shippingGatewayConfigId` (String, required)
+* **Shipment configuration**:
+
+  * `shipmentMethodTypeId` (String)
+  * `serviceLevel` (String)
+  * `shipFrom` (Map: includes `facilityId`, `facilityName`, `address`)
+  * `shipTo` (Map: includes `address`)
+  * `packages` (List: includes box info and items)
+  * `referenceNumbers`, `accessorials`, `pickupWindow`, `applyPolicies`
+
+---
+
+## Output
+
+* `rateInfoList` (List of available rates for the shipment)
+* Possible `error` response with descriptive `message`
+
+---
+
+## Security and Validation
+
+1. **Tenant Validation**
+
+   * Entity: `co.hotwax.uniship.ShippingGatewayAuthConfig`
+   * Lookup using:
+
+     * `tenantId = tenantPartyId`
+     * `shippingGatewayConfigId`
+   * Must find at least one valid record (validity check via `fromDate`/`thruDate`).
+
+2. **Gateway Resolution**
+
+   * Entity: `co.hotwax.uniship.ShippingGatewayConfig`
+   * Used to retrieve implementation-specific service name:
+
+     * `getRateServiceName` (e.g. co.hotwax.fedex.FedexServices.get#ShippingRate)
 
 ---
 
 ## Control Flow
 
-1. Decode and verify JWT (extract `tenantPartyId`, `shippingGatewayConfigId`).
-2. Access `ShippingGatewayConfig` from `ec.context`.
-3. Validate required fields (`shipFrom`, `shipTo`, `packages`).
-4. Call `transform#toGatewayRateRequest` to build carrier payload.
-5. Invoke carrier rate service via `${shippingGatewayConfig.getRateServiceName}`.
-6. Call `transform#fromGatewayRateResponse` to normalize rates.
-7. Return `rateInfoList` array to the OMS.
+```plaintext
+→ Receive request with shipment + tenant/gateway context
+→ Validate required fields (tenantPartyId, shippingGatewayConfigId, shipFrom, shipTo, packages)
+→ Lookup auth config (ShippingGatewayAuthConfig)
+→ Lookup gateway config (ShippingGatewayConfig)
+→ Resolve target service name from getRateServiceName
+→ Call gateway-specific implementation with same input
+→ Receive and return normalized rateInfoList
+```
+
+---
+
+## Interface Contract
+
+This service **implements** the interface defined in `ApiInterfaceServices.xml`:
+
+```xml
+<service verb="get" noun="ShippingRate" type="interface">
+```
+
+All gateway-specific services must also implement this interface to ensure input/output compatibility.
+
+---
+
+## Service Implementation Responsibilities
+
+| Concern                | Front-facing service      | Gateway-specific service      |
+| ---------------------- | ------------------------- | ----------------------------- |
+| Parameter validation   | ✅ Basic structure present | ✅ Carrier-specific validation |
+| Auth + config lookup   | ✅ Required                | ❌ Already done                |
+| Request transformation | ❌                         | ✅                             |
+| Carrier API call       | ❌                         | ✅                             |
+| Response normalization | ❌                         | ✅                             |
+
+---
+
+## Dependencies
+
+* `co.hotwax.uniship.ShippingGatewayAuthConfig`
+* `co.hotwax.uniship.ShippingGatewayConfig`
+* All gateway-specific services returned by `getRateServiceName`
+
+---
+
+## Error Conditions
+
+* ❌ Missing `tenantPartyId` or `shippingGatewayConfigId`
+* ❌ No `ShippingGatewayAuthConfig` found for tenant
+* ❌ No `ShippingGatewayConfig` found for config ID
+* ❌ Downstream service error (propagated from implementation)
 
 ---
 
 ## Service Definition
 
 ```xml
-<?xml version="1.0" encoding="UTF-8"?>
 <services xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:noNamespaceSchemaLocation="https://moqui.org/xsd/service-definition-3.xsd">
 
@@ -130,6 +131,8 @@ The OMS will call this service with a fully resolved shipment payload. The micro
         <description>Calculate shipping rate for a complete order</description>
 
         <in-parameters>
+            <parameter name="tenantPartyId" type="String" required="true"/>
+            <parameter name="shippingGatewayConfigId" type="String" required="true"/>
             <parameter name="shipmentMethodTypeId" type="String" required="true"/>
             <parameter name="serviceLevel" type="String" required="true"/>
 
@@ -220,60 +223,122 @@ The OMS will call this service with a fully resolved shipment payload. The micro
         </out-parameters>
 
         <actions>
-            <set field="shippingGatewayConfig" from="ec.context.shippingGatewayConfig"/>
+            <entity-find entity-name="co.hotwax.uniship.ShippingGatewayAuthConfig" value-field="authConfig">
+                <econdition field="tenantId" from="tenantPartyId"/>
+                <econdition field="shippingGatewayConfigId" from="shippingGatewayConfigId"/>
+                <order-by field="fromDate"/>
+            </entity-find>
+
+            <if condition="!authConfig">
+                <return error="true" message="Unauthorized: No auth configuration found for tenant and gateway config."/>
+            </if>
+
+            <entity-find entity-name="co.hotwax.uniship.ShippingGatewayConfig" value-field="shippingGatewayConfig">
+                <econdition field="shippingGatewayConfigId" from="shippingGatewayConfigId"/>
+            </entity-find>
+
             <if condition="!shippingGatewayConfig">
                 <return error="true" message="Shipping Gateway configuration not found."/>
             </if>
 
-            <service-call name="transform#toGatewayRateRequest"
-                          in-map="parameters" out-map="gatewayRequest"/>
-
             <service-call name="${shippingGatewayConfig.getRateServiceName}"
-                          in-map="gatewayRequest" out-map="gatewayResponse"/>
-
-            <service-call name="transform#fromGatewayRateResponse"
-                          in-map="gatewayResponse" out-map="responseMap"/>
+                          in-map="parameters" out-map="responseMap"/>
 
             <set field="rateInfoList" from="responseMap.rateInfoList"/>
         </actions>
     </service>
 
 </services>
+```
+
+---
+
+## Example Usage
+
+```bash
+POST /rest/s1/uniship/shipment/rate
+```
+
+### Sample JSON Input
+
+```json
+{
+  "tenantPartyId": "HOTWAX_RETAILER",
+  "shippingGatewayConfigId": "SHIPPO_GATEWAY_CONFIG",
+  "shipmentMethodTypeId": "STANDARD",
+  "serviceLevel": "GROUND",
+  "shipFrom": {
+    "facilityId": "BROADWAY",
+    "facilityName": "Broadway Warehouse",
+    "address": {
+      "name": "Broadway Fulfillment Center",
+      "company": "Company Inc",
+      "phone": "123-456-7890",
+      "email": "warehouse@company.com",
+      "addressLine1": "123 Broadway St",
+      "addressLine2": "Suite 200",
+      "city": "New York",
+      "stateProvince": "NY",
+      "postalCode": "10001",
+      "countryCode": "US",
+      "isResidential": false,
+      "isPoBox": false
+    }
+  },
+  "shipTo": {
+    "address": {
+      "name": "John Doe",
+      "company": "Doe Enterprises",
+      "phone": "987-654-3210",
+      "email": "john.doe@example.com",
+      "addressLine1": "789 Market St",
+      "addressLine2": null,
+      "city": "San Francisco",
+      "stateProvince": "CA",
+      "postalCode": "94103",
+      "countryCode": "US",
+      "isResidential": true,
+      "isPoBox": false
+    }
+  },
+  "packages": [
+    {
+      "shipmentBoxTypeId": "YOUR_PACKAGING",
+      "weight": 2.5,
+      "weightUomId": "WT_lb",
+      "boxLength": 10,
+      "boxWidth": 5,
+      "boxHeight": 8,
+      "dimensionUomId": "LEN_in",
+      "items": [
+        {
+          "productId": "10003",
+          "quantity": 2,
+          "description": "Blue T-shirt",
+          "unitWeight": 0.5,
+          "unitWeightUomId": "WT_lb",
+          "unitValue": 25.00,
+          "unitValueCurrency": "USD"
+        }
+      ]
+    }
+  ],
+  "referenceNumbers": [
+    { "type": "ORDER", "value": "ORD-45678" }
+  ],
+  "accessorials": [
+    { "type": "LIFT_GATE", "value": "true", "optionValue": "" }
+  ],
+  "pickupWindow": {
+    "startTime": "2025-05-01T09:00:00Z",
+    "endTime": "2025-05-01T17:00:00Z"
+  },
+  "applyPolicies": true
+}
+```
 
 ```
 
-## Carrier Support Matrix
-
-This table shows which request fields are required or supported by major carriers and aggregators:
-
-| Field                | FedEx | UPS | Shippo | EasyPost | ShipHawk | Notes |
-|----------------------|:-----:|:---:|:------:|:--------:|:--------:|:-----|
-| shipFrom.address     |   ✓   |  ✓  |   ✓    |    ✓     |    ✓     | Residential/PO flags supported |
-| shipTo.address       |   ✓   |  ✓  |   ✓    |    ✓     |    ✓     |     |
-| packages.weight      |   ✓   |  ✓  |   ✓    |    ✓     |    ✓     |     |
-| packages.dimensions  |   ✓   |  ✓  |   ✓    |    ✓     |    ✓     |     |
-| referenceNumbers     |   ✓   |  ✓  |   ✓    |    ✓     |    ✓     | Mapped to metadata or refs |
-| accessorials         |   ✓   |  ✓  |   ✓    |    ✓     |    ✓     | Liftgate, inside delivery, etc. |
-| pickupWindow         |   ✓   |  ✓  |   ✗    |    ✗     |    ✓     | Scheduled pickups |
-| applyPolicies        |   ✓   |  ✓  |   ✗    |    ✗     |    ✓     | Carrier rules/policies |
-
-> Fields marked ✗ are not directly supported by that carrier’s API but can be handled via custom logic or defaults.
-
 ---
 
-## Carrier Dry-Run Validation
-
-We’ve validated the `get#OrderShippingRate` request structure against live sandbox/test APIs of each carrier and aggregator to ensure complete coverage and correct mapping:
-
-| Carrier     | Endpoint Tested             | Key Observations                                                                                      |
-|-------------|-----------------------------|-------------------------------------------------------------------------------------------------------|
-| **FedEx**   | `/rate/v1/rates/quotes`     | Requires `shipFrom.address`, `shipTo.address`, `packages` with weight/dims, supports residential flags.           |
-| **UPS**     | `/rest/Rate`                | Requires origin/destination, supports `referenceNumbers`, accessorial codes.                              |
-| **Shippo**  | `/shipments/rates/`         | Maps `referenceNumbers` to shipment metadata, supports insurance via `insurance_amount`.                 |
-| **EasyPost**| `/rates`                    | Supports weight/dimension arrays, `insurance`, `delivery_confirm` options.                              |
-| **ShipHawk**| `/rate_requests`            | Fully aligns with our schema, supports all fields including `pickupWindow` and `applyPolicies`.          |
-
-All required fields are accepted by each API; unsupported optional fields (`✗`) can be handled via defaults.
-
----
 ```
