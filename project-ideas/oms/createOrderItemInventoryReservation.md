@@ -1,12 +1,14 @@
 # createOrderItemInventoryReservation
 
 *   **Purpose:** This service reserves inventory for a specific order item within a shipment group at a designated facility in HotWax Commerce (HC).
-*   **Scope:** The service handles finished goods and non-serialized inventory items.
+      The brokering logic or pre-allocation location should be assigned before calling the reservation service. This service works only if a facility has already been assigned to the order item.
+*   **Scope:** The service handles finished goods, bundle product and non-serialized inventory items.
   * Finished Goods
   * Non serialized Inventory
   * One InventoryItem per Facility per Product
   * statusId is not used
   * Do negative reservation if not enough in stock.
+  * Do reservation for bundle product components
 
 ## Service Definition
 
@@ -14,10 +16,7 @@
 *   **Input Parameters:**
     *   `orderId` (required): The ID of the order.
     *   `orderItemSeqId` (required): The sequence ID of the order item.
-    *   `productId` (required): The ID of the product to reserve.
     *   `quantity` (required): The quantity to reserve.
-    *   `facilityId` (required): The ID of the facility where the inventory is located.
-    *   `locationSeqId` (optional): The sequence ID of the specific location within the facility.
 
 ## Data Model
 
@@ -37,6 +36,9 @@
     3. **Reservation Creation:**
         *   Creating an `OrderItemShipGrpInvRes` record to link the reservation to the order item, shipment group, and inventory item.
         *   Create an `InventoryItemDetail` record for the reservation to track the change in inventory. ECA on `InventoryItemDetail` updates `InventoryItem` on `availableToPromise`.
+    4. **Bundle product reservation**
+        * Creating an `OrderItemShipGrpInvRes` record to link the reservation to the bundle prdouct, shipment group, and inventory item. 
+        * Creating an `OrderItemShipGrpInvRes` record for all bundle product components, the shipment group, and the inventory item. The `orderItemSeqId` will be the same as the bundle product's order item, and the inventory item ID will be from the component product.
 
 *   **HC-Specific Considerations:**
   *   The `OrderItem` entity in HC includes the `shipGroupSeqId` field, resulting in a one-to-one relationship between `OrderItem` and `OrderItemShipGroup`.
