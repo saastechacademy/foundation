@@ -5,7 +5,7 @@ The process to approve transfer orders.
 For Transfer Order approval, 2 types of approval flows could be set up in OMS.
 
 ## 1. Bulk Approve Store Fulfilled Transfer Orders
-Approve Transfer Orders to be fulfilled from Warehouse/third party eg. Warehouse to Store TOs
+Approve Transfer Orders to be fulfilled from stores in OMS eg. Store to Warehouse/Store TOs
 
 ### bulkApprove#StoreFulfillTransferOrders service
 1. Input Parameters
@@ -29,7 +29,7 @@ Approve Transfer Orders to be fulfilled from Warehouse/third party eg. Warehouse
    3. NOTE Here the reservations are not required in OMS since transfer order fulfillment is done by third party.
 
 ## 2. Bulk Approve Warehouse Fulfilled Transfer Orders
-Approve Transfer Orders to be fulfilled from stores in OMS eg. Store to Warehouse/Store TOs
+Approve Transfer Orders to be fulfilled from Warehouse/third party eg. Warehouse to Store TOs
  
 ### bulkApprove#WhFulfillTransferOrders service
 1. Input Parameters
