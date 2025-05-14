@@ -16,8 +16,10 @@ This training program requires a solid foundation in software development princi
 
 * **[Revision Control (Git)](https://www.scaler.com/topics/git/):**  A working understanding of Git is essential.
 * **Databases [SQL](https://www.scaler.com/topics/sql/) and [MySQL](https://www.scaler.com/topics/course/sql-using-mysql-course/):**  Familiarity with SQL and MySQL is crucial.
-* **Programming Language [Java](https://www.scaler.com/topics/java/):**  Proficiency in Java is required.
+* **Programming Language [Java](https://www.scaler.com/topics/java/):**  Proficiency in [Java](https://docs.oracle.com/javase/tutorial/) is required.
 * **Optional but Recommended:** Basic Web Development (HTML, CSS, JavaScript), REST APIs, and the Moqui Framework.
+
+## [CS fundamentals](cs-fundamentals) for Engineers
 
 ## Training program outline
 * You are assigned project to develop software for **[NotNaked](ubpl/NotNaked/Introduction.md)**. NotNaked is a D2C fashion brand.
@@ -84,11 +86,14 @@ This training program requires a solid foundation in software development princi
 
 ## Resources:
 
-1. https://github.com/saastechacademy/foundation/tree/main/moqui-framework/beginner
-2. https://cwiki.apache.org/confluence/display/OFBIZ/OFBiz+Tutorial+-+A+Beginners+Development+Guide+for+Release+18.12+and+Release+22.01
-3. https://www.moqui.org/m/docs/framework/Framework+Features
-4. https://www.moqui.org/m/docs/framework/IDE+Setup/IntelliJ+IDEA+Setup
-5. https://www.youtube.com/watch?v=mxToh2rX7NY
-6. https://cwiki.apache.org/confluence/display/OFBIZ/Data+Model+Diagrams
-7. https://cwiki.apache.org/confluence/download/attachments/13271792/OFBizDatamodelBook_Combined_20171001.pdf
-8. https://www.amazon.com/Data-Model-Resource-Book-Vol/dp/0471380237
+1. https://docs.oracle.com/javase/tutorial/
+2. https://dev.java/learn/
+3. https://www.oracle.com/java/technologies/jee-tutorials.html
+4. https://github.com/saastechacademy/foundation/tree/main/moqui-framework/beginner
+5. https://cwiki.apache.org/confluence/display/OFBIZ/OFBiz+Tutorial+-+A+Beginners+Development+Guide+for+Release+18.12+and+Release+22.01
+6. https://www.moqui.org/m/docs/framework/Framework+Features
+7. https://www.moqui.org/m/docs/framework/IDE+Setup/IntelliJ+IDEA+Setup
+8. https://www.youtube.com/watch?v=mxToh2rX7NY
+9. https://cwiki.apache.org/confluence/display/OFBIZ/Data+Model+Diagrams
+10. https://cwiki.apache.org/confluence/download/attachments/13271792/OFBizDatamodelBook_Combined_20171001.pdf
+11. https://www.amazon.com/Data-Model-Resource-Book-Vol/dp/0471380237
