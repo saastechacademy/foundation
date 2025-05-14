@@ -5,131 +5,182 @@ Transfer Order is created and processed for moving inventory within the Organiza
 A Transfer order could be created in third party system e.g NetSuite. 
 A Transfer order could be processed in third party WMS / Fulfillment application. 
 
-1. A TO might be imported in the OMS system for a Shipment shipped from third party system to be received in fulfillment location managed by OMS.
-2. A TO might be imported in the OMS system for a Shipment to be shipped from fulfillment location managed by OMS and received in location managed by third party.
-3. A TO might be imported in the OMS system for a Shipment to be shipped and received from fulfillment locations both managed by OMS.
+A Transfer Order could be created for one or more of the below scenarios:
+1. Warehouse to Store - A TO might be imported in the OMS system for a Shipment shipped from third party system to be received in fulfillment location managed by OMS.
+2. Store to Warehouse - A TO might be imported in the OMS system for a Shipment to be shipped from fulfillment location managed by OMS and received in location managed by third party.
+3. Store to Store - A TO might be imported in the OMS system for a Shipment to be shipped and received from fulfillment locations both managed by OMS.
 
 ## API Spec
 
-The API for managing TO builds on the [createOrder](../oms/createOrder.md)
+- The API for managing TO builds on the [createOrder](../oms/createOrder.md)
+- The statusFlowId field will be used as the indicator to identify the Transfer Orders for different facility types, on the basis of which the TOs will be fulfilled and/or received in OMS.
+- The service corresponding to this API is create#TransferOrder in oms component which is the application layer service to create TOs.
+- The API will perform certain validations and call the ootb create#org.apache.ofbiz.order.order.OrderHeader to create TO in OMS.
+- If TOs are being synced from external system like NetSuite, below payloads need to used as per the type of TO. 
 
+### Sample payloads
+
+1. Warehouse to Store
 ```json
 {
    "payload": {
-      "externalId": "43321190",
-      "orderName": "TO0034444",
-      "statusFlowId": "TO_PendingFulfill",
+      "externalId": "TO0000001",
+      "orderName": "TO0000001",
       "productStoreId": "STORE",
-      "originFacilityId": "150",
-      "orderDate": "2025-01-29",
+      "statusId": "ORDER_CREATED",
+      "orderTypeId": "TRANSFER_ORDER",
+      "orderDate": "2025-04-05",
+      "statusFlowId": "TO_Receive_Only",
+      "grandTotal": 0,
       "shipGroups": [
          {
             "shipmentMethodTypeId": "STANDARD",
             "carrierPartyId": "_NA_",
-            "destinationFacilityId": "94",
+            "facilityId": "CENTRAL_WAREHOUSE",
             "items": [
                {
-                  "productId": "164013",
                   "externalId": "1",
-                  "quantity": 2
+                  "orderItemTypeId": "PRODUCT_ORDER_ITEM",
+                  "quantity": 2,
+                  "statusId": "ITEM_CREATED",
+                  "unitListPrice": 0,
+                  "unitPrice": 0,
+                  "productId": "41192"
                },
                {
-                  "productId": "164367",
                   "externalId": "2",
-                  "quantity": 2
+                  "orderItemTypeId": "PRODUCT_ORDER_ITEM",
+                  "quantity": 5,
+                  "statusId": "ITEM_CREATED",
+                  "unitListPrice": 0,
+                  "unitPrice": 0,
+                  "productId": "40920"
                },
                {
-                  "productId": "164368",
                   "externalId": "3",
-                  "quantity": 4
+                  "orderItemTypeId": "PRODUCT_ORDER_ITEM",
+                  "quantity": 3,
+                  "statusId": "ITEM_CREATED",
+                  "unitListPrice": 0,
+                  "unitPrice": 0,
+                  "productId": "40812"
                }
-            ]
+            ],
+            "orderFacilityId": "BROADWAY"
          }
-      ]
+      ],
+      "entryDate": "2025-05-08T22:44:35-07:00",
+      "originFacilityId": "CENTRAL_WAREHOUSE"
    }
 }
 ```
 
-## Mapping with OOTB create#org.apache.ofbiz.order.order.OrderHeader
-
-| Create TO API payload field              | OMS create Order OOTB                        | 
-|------------------------------------------|----------------------------------------------|
-| externalId                               | externalId                                   |
-| orderName                                | orderName                                    |
-| statusFlowId                             | statusFlowId                                 |
-| productStoreId                           | productStoreId                               |
-| originFacilityId                         | shipGroups.facilityId <br/> originFacilityId |
-| orderDate                                | orderDate                                    |
-| shipGroups.destinationFacilityId         | shipGroups.orderFacilityId                   |
-| shipGroups.shipmentMethodTypeId          | shipGroups.shipmentMethodTypeId              |
-| shipGroups.carrierPartyId                | shipGroups.carrierPartyId                    |
-| shipGroups.items.productId               | shipGroups.items.productId                   |
-| shipGroups.items.externalId              | shipGroups.items.externalId                  |
-| shipGroups.items.quantity                | shipGroups.items.quantity                    |
-
-## create#TransferOrder Service
-
-1. Input Parameters
-   1. payload  - This will be the order JSON Map.
-
-2. Service Actions
-   1. Set payload.orderTypeId = "TRANSFER_ORDER"
-   2. Set payload.statusId = "ORDER_CREATED"
-   3. Set entryDate as ec.user.nowTimestamp and set in payload.entryDate
-   4. Set createdBy as ec.user.getUsername()?:ec.user.getUserId()
-   5. Get ProductStore using payload.productStoreId, required for the TO creation
-   6. Set salesChannelEumId as productStore.defaultSalesChannelEnumId if not in the payload
-   7. Set currencyUom as productStore.defaultCurrencyUomId if not in the payload
-   8. Iterate on payload.shipGroups - shipGroup
-      1. Remove and set destinationFacilityId from shipGroup as orderFacilityId in shipGroup
-      2. Set orderItemTypeId for all items in shipGroup as "PRODUCT_ORDER_ITEM" 
-      3. Set statusId for all items in shipGroup as "ITEM_CREATED"
-   9. Call create#org.apache.ofbiz.order.order.OrderHeader in-map="payload" 
-   10. Call oms service call#CreateOrderIndex with orderId async="true" ignore-error="true"
-
-### Payload prepared for OOTB create#org.apache.ofbiz.order.order.OrderHeader
-
+2. Store to Warehouse
 ```json
 {
-   "externalId": "43321190",
-   "orderName": "TO0034444",
-   "statusFlowId": "TO_PendingFulfill",
-   "productStoreId": "STORE",
-   "statusId": "ORDER_CREATED",
-   "orderTypeId": "TRANSFER_ORDER",
-   "orderDate": "2025-01-29",
-   "entryDate": "2025-01-29 18:00:00",
-   "originFacilityId": "150",
-   "shipGroups": [
-      {
-         "shipmentMethodTypeId": "STANDARD",
-         "carrierPartyId": "_NA_",
-         "facilityId": "150",
-         "orderFacilityId": "94",
-         "items": [
+    "payload": {
+        "externalId": "TO0000002",
+        "orderName": "TO0000002",
+        "productStoreId": "STORE",
+        "statusId": "ORDER_CREATED",
+        "orderTypeId": "TRANSFER_ORDER",
+        "orderDate": "2025-04-05",
+        "statusFlowId": "TO_Fulfill_Only",
+        "grandTotal": 0,
+        "shipGroups": [
             {
-               "orderItemTypeId": "PRODUCT_ORDER_ITEM",
-               "statusId": "ITEM_CREATED",
-               "externalId": "1",
-               "quantity": 2,
-               "productId": "58160"
-            },
-            {
-               "orderItemTypeId": "PRODUCT_ORDER_ITEM",
-               "statusId": "ITEM_CREATED",
-               "externalId": "2",
-               "quantity": 2,
-               "productId": "58163"
-            },
-            {
-               "orderItemTypeId": "PRODUCT_ORDER_ITEM",
-               "statusId": "ITEM_CREATED",
-               "externalId": "3",
-               "quantity": 4,
-               "productId": "58162"
+                "shipmentMethodTypeId": "STANDARD",
+                "carrierPartyId": "_NA_",
+                "facilityId": "BROADWAY",
+               "items": [
+                  {
+                     "externalId": "1",
+                     "orderItemTypeId": "PRODUCT_ORDER_ITEM",
+                     "quantity": 2,
+                     "statusId": "ITEM_CREATED",
+                     "unitListPrice": 0,
+                     "unitPrice": 0,
+                     "productId": "41192"
+                  },
+                  {
+                     "externalId": "2",
+                     "orderItemTypeId": "PRODUCT_ORDER_ITEM",
+                     "quantity": 5,
+                     "statusId": "ITEM_CREATED",
+                     "unitListPrice": 0,
+                     "unitPrice": 0,
+                     "productId": "40920"
+                  },
+                  {
+                     "externalId": "3",
+                     "orderItemTypeId": "PRODUCT_ORDER_ITEM",
+                     "quantity": 3,
+                     "statusId": "ITEM_CREATED",
+                     "unitListPrice": 0,
+                     "unitPrice": 0,
+                     "productId": "40812"
+                  }
+               ],
+                "orderFacilityId": "CENTRAL_WAREHOUSE"
             }
-         ]
-      }
-   ]
+        ],
+        "entryDate": "2025-05-08T22:44:35-07:00",
+        "originFacilityId": "BROADWAY"
+    }
+}
+```
+
+3. Store to Store
+```json
+{
+    "payload": {
+        "externalId": "TO0000003",
+        "orderName": "TO0000003",
+        "productStoreId": "STORE",
+        "statusId": "ORDER_CREATED",
+        "orderTypeId": "TRANSFER_ORDER",
+        "orderDate": "2025-04-05",
+        "statusFlowId": "TO_Fulfill_And_Receive",
+        "grandTotal": 0,
+        "shipGroups": [
+            {
+                "shipmentMethodTypeId": "STANDARD",
+                "carrierPartyId": "_NA_",
+                "facilityId": "BROADWAY",
+                "items": [
+                    {
+                        "externalId": "1",
+                        "orderItemTypeId": "PRODUCT_ORDER_ITEM",
+                        "quantity": 2,
+                        "statusId": "ITEM_CREATED",
+                        "unitListPrice": 0,
+                        "unitPrice": 0,
+                        "productId": "41192"
+                    },
+                    {
+                        "externalId": "2",
+                        "orderItemTypeId": "PRODUCT_ORDER_ITEM",
+                        "quantity": 5,
+                        "statusId": "ITEM_CREATED",
+                        "unitListPrice": 0,
+                        "unitPrice": 0,
+                        "productId": "40920"
+                    },
+                    {
+                        "externalId": "3",
+                        "orderItemTypeId": "PRODUCT_ORDER_ITEM",
+                        "quantity": 3,
+                        "statusId": "ITEM_CREATED",
+                        "unitListPrice": 0,
+                        "unitPrice": 0,
+                        "productId": "40812"
+                    }
+                ],
+                "orderFacilityId": "WEST_JORDAN"
+            }
+        ],
+        "entryDate": "2025-05-08T22:44:35-07:00",
+        "originFacilityId": "BROADWAY"
+    }
 }
 ```
