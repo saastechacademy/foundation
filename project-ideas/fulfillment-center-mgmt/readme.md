@@ -140,8 +140,6 @@ Why does the shipment have to be moved out of "approved" status to edit it's con
 
 The advice for moving inventory from one storage facility to other. It helps manage the workflow. 
 The TO is an OrderType like SalesOrder and PurchaseOrder. 
-The API for to [createTransferOrder](createTransferOrder.md) builds on the [createOrder](../oms/createOrder.md)
-An inventory storage location may receive [InTransferShipment](createInTransferShipment.md) or ship [OutTransferShipment](createOutTransferShipment.md) for a transfer order. 
 
 ### Scenarios
 The Transfer Orders will facilitate movement of inventory between locations, the scenarios being:
@@ -159,7 +157,7 @@ of Transfer Order.
 
 #### Valid Status for Transfer Orders
 
-Three new Order Item Status will be introduced to manage the lifecycle of Transfer Orders - ITEM_PENDING_FULFILL, ITEM_PENDING_RECEIPT and ITEM_PENDING_FULFILL_RECEIPT.
+Two new Order Item Status will be introduced to manage the lifecycle of Transfer Orders - ITEM_PENDING_FULFILL and ITEM_PENDING_RECEIPT.
 
 1. Order Header - Transfer Order
    1. ORDER_CREATED
@@ -177,13 +175,13 @@ Three new Order Item Status will be introduced to manage the lifecycle of Transf
 **NOTE** Here the item will not transition to ITEM_APPROVED status since in the Approve TO process, the next possible status could be either
 ITEM_PENDING_FULFILL or ITEM_PENDING_RECEIPT for Store Fulfill and Warehouse Fulfill TOs respectively.
 
-##### New Status Items 
+#### New Status Items 
 ```
 <moqui.basic.StatusItem statusId="ITEM_PENDING_FULFILLMENT" statusTypeId="ORDER_ITEM_STATUS" statusCode="PENDING_FULFILLMENT" description="Pending Fulfillment"/>
 <moqui.basic.StatusItem statusId="ITEM_PENDING_RECEIPT" statusTypeId="ORDER_ITEM_STATUS" statusCode="PENDING_RECEIPT" description="Pending Receipt"/>
 ```
 
-##### New Status Flow transitions for TO Items
+#### New Status Flow transitions for TO Items
 1. **Transfer Orders to be only Fulfilled in OMS**
    1. statusFlowId = TO_Fulfill_Only
    2. Status Changes
@@ -203,81 +201,54 @@ ITEM_PENDING_FULFILL or ITEM_PENDING_RECEIPT for Store Fulfill and Warehouse Ful
       2. ITEM_PENDING_FULFILL to ITEM_PENDING_RECEIPT when all quantity is shipped for the item
       3. ITEM_PENDING_RECEIPT to ITEM_COMPLETED when all quantity is received for the item
 
-#### Transfer Order Life cycle
+### Create Transfer Order
 
-1. **TOs where Fulfillment location is managed by OMS and Receiving location is managed by third party e.g. Store to Warehouse**
-   1. statusFlowId="TO_Fulfill_Only"
-   2. Flow
-      1. TO Created in OMS
-         1. TO in ORDER_CREATED and TO Items in ITEM_CREATED status
-      2. TO Approval
-         1. TO updated from status ORDER_CREATED to ORDER_APPROVED
-         2. TO Item updated to statusId="ITEM_PENDING_FULFILLMENT"
-         3. Here item reservations should happen in approval since fulfillment in OMS
-      3. TO Fulfillment
-         1. The [Shipments](createTransferOrderShipment.md) are created for orders
-         2. Update the Order Item Status
-            - Here a helper service will be used to compare the shippedQty and orderedQty
-            - If shippedQty >= orderedQty, OI status is updated to ITEM_COMPLETED, else it remains in ITEM_PENDING_FULFILLMENT
-            - This is done on the basis of statusFlowId = TO_Fulfill_Only
-
-
-2. **TOs where Fulfillment location is managed by third party and Receiving location is managed by OMS e.g. Warehouse to Store**
-   1. statusFlowId="TO_Receive_Only"
-   2. Flow
-      1. TO Created in OMS
-         1. TO in ORDER_CREATED and TO Items in ITEM_CREATED status
-      2. TO Approval
-         1. TO updated from status ORDER_CREATED to ORDER_APPROVED
-         2. TO Item updated to statusId="ITEM_PENDING_RECEIPT"
-         3. Here No item reservations should happen in approval since only receiving in OMS
-      3. TO Receiving
-         1. Receive (Partial Receiving) or Receive & Close
-            1. The [ShipmentReceipts](receiveTransferOrder.md) are created for order items
-            2. Update Order Item Status to ITEM_COMPLETED in case of Receive & Close
-
-
-3. **TOs where both Fulfillment and Receiving locations are managed by OMS e.g. Store to Store**
-   1. statusFlowId="TO_Fulfill_And_Receive"
-   2. Flow 
-      1. TO Created in OMS
-         1. TO in ORDER_CREATED and TO Items in ITEM_CREATED status
-      2. TO Approval
-         1. TO updated from status ORDER_CREATED to ORDER_APPROVED
-         2. TO Item updated to statusId="ITEM_PENDING_FULFILLMENT"
-         3. Here item reservations should happen in approval since fulfillment in OMS
-      3. TO Fulfillment
-         1. The [Shipments](createTransferOrderShipment.md) are created for orders
-         2. Update the Order Item Status
-           - Here a helper service will be used to compare the shippedQty and orderedQty
-           - If shippedQty >= orderedQty, OI status is updated to ITEM_PENDING_RECEIPT, else it should be updated to ITEM_PENDING_FULFILL_RECEIPT
-           - This is done on the basis of statusFlowId = TO_Fulfill_And_Receive
-      4. TO Receiving
-         1. Receive (Partial Receiving) or Receive & Close
-            1. The [ShipmentReceipts](receiveTransferOrder.md) are created for order items
-            2. Update Order Item Status to ITEM_COMPLETED in case of Receive & Close 
-
-
-**NOTE**
-1. The Fulfillment App will list all TOs where Order is in ORDER_APPROVED status and Items are in ITEM_PENDING_FULFILL status so that they are eligible to be shipped in OMS.
-2. The Receiving App will list all TOs where Order is in ORDER_APPROVED status and Items are either in ITEM_PENDING_FULFILL_RECEIPT or ITEM_PENDING_RECEIPT so that they are eligible to be received in OMS.
-3. When all the TO items will be COMPLETED, the TO should be marked as COMPLETED, check to use checkCancelCompleteOrder field in change#OrderItemStatus oms service.
-
-#### Receiving unexpected items in a TO
-
-- While receiving a TO, if a new unexpected item is received, the system allows the addition of new item to the TO while receiving.
-- The new item will not be added to the order. Shipment, ShipmentItem and ShipmentReceipt will be created. 
-- This wil help reconcile the actual and received TO items. 
-- The new items received will be identified by fetching the Shipment Receipt Items that do not have order shipment entries.
+The API to [createTransferOrder](../oms/createTransferOrder.md) builds on the [createOrder](../oms/createOrder.md)
 
 ### Approve Transfer Order
 
 1. Once the TOs are imported in OMS in Created Status, the approval flow for TOs should run.
 2. The [approveTransferOrder](../oms/approveTransferOrder.md) service will handle approval of Created TOs in the system.
 
-### Cancel Transfer Order
-**TODO** 
-1. scenarios of TO cancellation
+### Fulfil Transfer Order
+
+1. An inventory storage location will create the [OutTransferShipment](createOutTransferShipment.md) for a transfer order.
+2. The Transfer Shipment created will be [shipped](shipOutTransferShipment.md) by adding tracking details.
+
+**NOTE**
+1. The Fulfillment App will list all TOs where Order is in ORDER_APPROVED status and Items are in ITEM_PENDING_FULFILL status so that they are eligible to be fulfilled in OMS.
+
+### Receive Transfer Order
+
+1. An inventory storage location will receive the [ShipmentReceipt](receiveTransferOrder.md) for a transfer order.
+2. Receiving of Transfer will be be done against the TO items in the Receiving app, and not the Shipments.
+3. This is because Shipments can only be received once, but items can be received multiple times.
+4. Receivers do not need to worry about how many fulfillments were created or how items were split, they just check how many units of each item have arrived at the location and receive.
+5. So as part of this implementation, we do not create incoming shipments and related entities as we can directly create ShipmentReceipt for the Transfer Order Items.
+6. For items received against the TO and which are included in the TO, we will populate the fields like orderId, orderItemSeqId, productId. 
+7. For items received against the TO but which are not included in the TO, we will populate the fields like orderId, productId but no orderItemSeqId since that product does not exist in TO.
+8. **IMP** The ShipmentReceipts in OMS will be saved against the Shipment IDs if available.
+   1. When receipts are created from Receiving App or using this API, we will not get shipment IDs, so internally before saving the receipt, we will split the receipt if quantity received is shipped as part of multiple fulfillments. 
+   2. Eg, TO has 2 fulfillments for an item with quantity 10 and 15 each.
+   3. While receiving, both shipments are being received together as part of 1 API call with quantity received as 25, but 2 ShipmentReceipt records will be created in OMS instead of 1.
+   4. The Receipt 1 will be linked to Shipment 1 with quantity 10 and Receipt 2 will be linked to Shipment 2 with quantity 15.
+   5. If over-receiving is being done, the excess quantity not part of any shipment will be recorded directly against the TO Order Item.
+   6. This will be default behavior of the receive API in OMS and that it will help reconcile the receiving against the shipments, so this is part of poorti component.
+   7. This also helps to sync receipts to NetSuite which requires the fulfillment ID to be sent against the receipt records.
+
+**NOTE**
+1. The Receiving App will list all TOs assigned to the facility in in ORDER_APPROVED status.
+
+### Close Transfer Order Fulfillment
+
+1. Here, the requirement is to give an option in the Fulfillment app to complete the fulfillment of the item. 
+2. This could happen if the end-user wants to close the fulfillment after partially fulfilling the order items.
+3. The spec is added in [CloseTOFulfillment](closeTransferOrderItemFulfillment.md).
+
+### Reject Transfer Order
+
+1. According to current behavior, [rejectTransferOrder](rejectTransferOrder.md) if fulfilment has not been started i.e. no shipped shipments for the TO exists.
+2. The complete TO will be rejected, no partial rejection handled as of now.
 
 ## Receive Shipment
 
