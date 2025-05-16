@@ -150,7 +150,7 @@ The Transfer Orders will facilitate movement of inventory between locations, the
 3. TOs where both Fulfillment and Receiving locations are managed by OMS e.g. Store to Store
 
 ### Design
-1. The Create Transfer Orders request to OMS will include an indicator like a **statusFlowId** on the basis of which OMS can decide whether the Transfer Order
+1. The Create Transfer Orders request to OMS will include the value for **statusFlowId** which is a field on OrderHeader entity on the basis of which OMS can decide whether the Transfer Order
 should be only fulfilled in OMS or only received in OMS or should be both fulfilled and received in OMS.
 2. This statusFlowId indicator will help in correctly transitioning the Transfer Order Item status and hence facilitate the transfer order 
 fulfillment and receiving as required in the system.
@@ -170,47 +170,38 @@ Three new Order Item Status will be introduced to manage the lifecycle of Transf
 2. Order Item - Transfer Order Item
    1. ITEM_CREATED
    2. **ITEM_PENDING_FULFILL** - newly introduced
-   3. **ITEM_PENDING_RECEIPT** - newly introduced*
-   4. **ITEM_PENDING_FULFILL_RECEIPT** - newly introduced*
-   5. ITEM_COMPLETED
-   6. ITEM_CANCELLED
+   3. **ITEM_PENDING_RECEIPT** - newly introduced
+   4. ITEM_COMPLETED
+   5. ITEM_CANCELLED
 
 **NOTE** Here the item will not transition to ITEM_APPROVED status since in the Approve TO process, the next possible status could be either
-ITEM_PENDING_FULFILL or ITEM_PENDING_RECEIPT based on the statusFlowId.
+ITEM_PENDING_FULFILL or ITEM_PENDING_RECEIPT for Store Fulfill and Warehouse Fulfill TOs respectively.
 
 ##### New Status Items 
 ```
 <moqui.basic.StatusItem statusId="ITEM_PENDING_FULFILLMENT" statusTypeId="ORDER_ITEM_STATUS" statusCode="PENDING_FULFILLMENT" description="Pending Fulfillment"/>
 <moqui.basic.StatusItem statusId="ITEM_PENDING_RECEIPT" statusTypeId="ORDER_ITEM_STATUS" statusCode="PENDING_RECEIPT" description="Pending Receipt"/>
-<moqui.basic.StatusItem statusId="ITEM_PENDING_FULFILL_RECEIPT" statusTypeId="ORDER_ITEM_STATUS" statusCode="PENDING_FULFILL_RECEIPT" description="Pending Fulfillment and Receipt"/>
 ```
 
-##### New Status Flow and transitions
+##### New Status Flow transitions for TO Items
 1. **Transfer Orders to be only Fulfilled in OMS**
-```
-<!-- Status Flow for Transfer Orders Store to Warehouse -->
-<moqui.basic.StatusFlow statusFlowId="TO_Fulfill_Only" statusTypeId="ORDER_ITEM_STATUS" description="Status Flow for Transfer Orders to be fulfilled in OMS and receiving by third party e.g. Store to Warehouse"/>
-<moqui.basic.StatusFlowTransition statusFlowId="TO_Fulfill_Only" statusId="ITEM_CREATED" toStatusId="ITEM_PENDING_FULFILL" transitionSequence="1" transitionName="Approve Item"/>
-<moqui.basic.StatusFlowTransition statusFlowId="TO_Fulfill_Only" statusId="ITEM_PENDING_FULFILL" toStatusId="ITEM_COMPLETED" transitionSequence="2" transitionName="Fulfill Item"/>
-```
+   1. statusFlowId = TO_Fulfill_Only
+   2. Status Changes
+      1. ITEM_CREATED to ITEM_PENDING_FULFILL when approving the TO 
+      2. ITEM_PENDING_FULFILL to ITEM_COMPLETED when all quantity is shipped for the item
 
 2. **Transfer Orders to be only Received in OMS**
-```
-<!-- Status Flow for Transfer Orders Warehouse to Store -->
-<moqui.basic.StatusFlow statusFlowId="TO_Receive_Only" statusTypeId="ORDER_ITEM_STATUS"  description="Status Flow for Transfer Orders fulfilled by third party and receiving in OMS e.g. Warehouse to Store"/>
-<moqui.basic.StatusFlowTransition statusFlowId="TO_Receive_Only" statusId="ITEM_CREATED" toStatusId="ITEM_PENDING_RECEIPT" transitionSequence="1" transitionName="Approve Item"/>
-<moqui.basic.StatusFlowTransition statusFlowId="TO_Receive_Only" statusId="ITEM_PENDING_RECEIPT" toStatusId="ITEM_COMPLETED" transitionSequence="2" transitionName="Receive Item"/>
-```
+   1. statusFlowId = TO_Receive_Only
+   2. Status Changes
+      1. ITEM_CREATED to ITEM_PENDING_RECEIPT when approving the TO
+      2. ITEM_PENDING_RECEIPT to ITEM_COMPLETED when all quantity is received for the item
 
 3. **Transfer Orders to be both Fulfilled & Received in OMS**
-```
-<!-- Status Flow for Transfer Orders Store to Store -->
-<moqui.basic.StatusFlow statusFlowId="TO_Fulfill_And_Receive" statusTypeId="ORDER_ITEM_STATUS"  description="Status Flow for Orders to be both fulfilled and received in OMS e.g. Store to Store"/>
-<moqui.basic.StatusFlowTransition statusFlowId="TO_Fulfill_And_Receive" statusId="ITEM_CREATED" toStatusId="ITEM_PENDING_FULFILL" transitionSequence="1" transitionName="Approve Item"/>
-<moqui.basic.StatusFlowTransition statusFlowId="TO_Fulfill_And_Receive" statusId="ITEM_PENDING_FULFILL" toStatusId="ITEM_PENDING_FULFILL_RECEIPT" transitionSequence="2" transitionName="Partial Fulfill Item"/>
-<moqui.basic.StatusFlowTransition statusFlowId="TO_Fulfill_And_Receive" statusId="ITEM_PENDING_FULFILL" toStatusId="ITEM_PENDING_RECEIPT" transitionSequence="2" transitionName="Fulfill Item"/>
-<moqui.basic.StatusFlowTransition statusFlowId="TO_Fulfill_And_Receive" statusId="ITEM_PENDING_RECEIPT" toStatusId="ITEM_COMPLETED" transitionSequence="3" transitionName="Receive Item"/>
-```
+   1. statusFlowId = TO_Fulfill_And_Receive
+   2. Status Changes
+      1. ITEM_CREATED to ITEM_PENDING_FULFILL when approving the TO
+      2. ITEM_PENDING_FULFILL to ITEM_PENDING_RECEIPT when all quantity is shipped for the item
+      3. ITEM_PENDING_RECEIPT to ITEM_COMPLETED when all quantity is received for the item
 
 #### Transfer Order Life cycle
 
