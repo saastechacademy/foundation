@@ -63,6 +63,11 @@ Optional claims like `aud`, `nbf`, and `iss` are **left out deliberately** for c
 
 ---
 
+### 6. **The userLoginId in jwt.getSubject() exists in OMS**
+
+* The authenticated user is then set in execution context for managing API call authorization.
+
+---
 ## 🔒 Security Properties Achieved
 
 | Security Goal                    | How It’s Achieved                               |
@@ -74,3 +79,10 @@ Optional claims like `aud`, `nbf`, and `iss` are **left out deliberately** for c
 | **Replay prevention**            | Short token TTL (\~1 minute)                    |
 
 ---
+
+### 7. Filter or Extend JWT Manager to support HS256
+
+* The API call can be authenticated in few ways. 
+  * Add servlet Filter, validate the JWT token and set the userLogin.
+  * Alternatively  the co.hotwax.auth.JWTManager.validateToken method should check the "alg" attribute in header and use appropriate algorithm to validate the token.
+    * If we go this route, the process to set userlogin object in execution context will be smooth, and we should be able to developing shopify-app-bridge component. 
