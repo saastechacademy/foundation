@@ -221,14 +221,14 @@ The API to [createTransferOrder](../oms/createTransferOrder.md) builds on the [c
 ### Receive Transfer Order
 
 1. An inventory storage location will receive the [ShipmentReceipt](receiveTransferOrder.md) for a transfer order.
-2. Receiving of Transfer will be be done against the TO items in the Receiving app, and not the Shipments.
+2. Receiving of Transfer will be done against the TO items and not the Shipments in the Receiving app.
 3. This is because Shipments can only be received once, but items can be received multiple times.
 4. Receivers do not need to worry about how many fulfillments were created or how items were split, they just check how many units of each item have arrived at the location and receive.
-5. So as part of this implementation, we do not create incoming shipments and related entities as we can directly create ShipmentReceipt for the Transfer Order Items.
+5. So as part of this implementation, we do not create incoming shipments and related entities as we will directly create ShipmentReceipt records for the Transfer Order Items.
 6. For items received against the TO and which are included in the TO, we will populate the fields like orderId, orderItemSeqId, productId. 
-7. For items received against the TO but which are not included in the TO, we will populate the fields like orderId, productId but no orderItemSeqId since that product does not exist in TO.
+7. For new items received against the TO which are not included in the TO, we will populate the fields like orderId, productId but no orderItemSeqId since that product does not exist in TO.
 8. **IMP** The ShipmentReceipts in OMS will be saved against the Shipment IDs if available.
-   1. When receipts are created from Receiving App or using this API, we will not get shipment IDs, so internally before saving the receipt, we will split the receipt if quantity received is shipped as part of multiple fulfillments. 
+   1. When receipts are created from Receiving App or using this API, we will not get shipment IDs in the request to record the receipt, so internally before saving the receipt, we will split the receipt if quantity received is shipped as part of multiple fulfillments. 
    2. Eg, TO has 2 fulfillments for an item with quantity 10 and 15 each.
    3. While receiving, both shipments are being received together as part of 1 API call with quantity received as 25, but 2 ShipmentReceipt records will be created in OMS instead of 1.
    4. The Receipt 1 will be linked to Shipment 1 with quantity 10 and Receipt 2 will be linked to Shipment 2 with quantity 15.
@@ -237,18 +237,18 @@ The API to [createTransferOrder](../oms/createTransferOrder.md) builds on the [c
    7. This also helps to sync receipts to NetSuite which requires the fulfillment ID to be sent against the receipt records.
 
 **NOTE**
-1. The Receiving App will list all TOs assigned to the facility in in ORDER_APPROVED status.
+1. The Receiving App will list all TOs assigned to the facility in ORDER_APPROVED status.
 
 ### Close Transfer Order Fulfillment
 
-1. Here, the requirement is to give an option in the Fulfillment app to complete the fulfillment of the item. 
+1. Here, the requirement is to give an option in the Fulfillment app to close the fulfillment of the item. 
 2. This could happen if the end-user wants to close the fulfillment after partially fulfilling the order items.
 3. The spec is added in [CloseTOFulfillment](closeTransferOrderItemFulfillment.md).
 
 ### Reject Transfer Order
 
-1. According to current behavior, [rejectTransferOrder](rejectTransferOrder.md) if fulfilment has not been started i.e. no shipped shipments for the TO exists.
-2. The complete TO will be rejected, no partial rejection handled as of now.
+1. According to current behavior, [rejectTransferOrder](rejectTransferOrder.md) if fulfilment has not been started i.e. no shipped or packed shipments exists for the TO.
+2. The complete TO will be rejected, no partial rejection will be handled as of now.
 
 ## Receive Shipment
 
