@@ -1,3 +1,8 @@
+# Note: We did not implement ShopifySessionTokenAuthFilter. Instead decided to add code in JWTManager for authenticating Shopify sessionToken. 
+
+***Keeping the document for fun purposes.*** 
+
+
 # ShopifySessionTokenAuthFilter - Design Document
 
 ## 📌 Purpose

@@ -86,3 +86,8 @@ Optional claims like `aud`, `nbf`, and `iss` are **left out deliberately** for c
   * Add servlet Filter, validate the JWT token and set the userLogin.
   * Alternatively  the co.hotwax.auth.JWTManager.validateToken method should check the "alg" attribute in header and use appropriate algorithm to validate the token.
     * If we go this route, the process to set userlogin object in execution context will be smooth, and we should be able to developing shopify-app-bridge component. 
+
+# Final 
+We decided to add support for validating Shopify sessionToken in JWTManager. 
+No Servlet filters. 
+
