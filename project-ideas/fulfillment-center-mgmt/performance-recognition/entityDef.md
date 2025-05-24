@@ -47,7 +47,7 @@ PerformanceReviewItemType defines the different kinds of metrics that can be tra
 * MIN_TIME_TO_SHIP: Minimum time taken to ship an order.
  
 Below is an example of how these types might be represented as XML data for an enumeration entity:  
-```
+``` xml
 <entity-engine-xml>  
     <Enumeration enumId="ORDERS_PICKED" enumTypeId="PERF_REVIEW_ITEM" description="Number of orders picked" sequenceNum="1"/>  
     <Enumeration enumId="ORDERS_REJECTED" enumTypeId="PERF_REVIEW_ITEM" description="Number of orders rejected" sequenceNum="2"/>  
