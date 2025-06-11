@@ -9,7 +9,7 @@ This guide shows how all key Composition API features work together in a realist
 ### 1. ✅ Reactive State with [`reactive()`](Vue3_Reactive_API_Guide.md)
 
 ```ts
-const product = reactive({
+const product = reactive
   name: '',
   price: 0,
   quantity: 1
