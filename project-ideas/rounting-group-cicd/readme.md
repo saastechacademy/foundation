@@ -1,8 +1,10 @@
-# OrderRoutingGroup Promotion via Git-Compatible XML
+# Port Order Routing Group Between Environments
 
-## Summary
+---
 
-This document outlines the rationale, structure, and best practices for exporting `OrderRoutingGroup` configurations in XML format for safe promotion from UAT to Production. The XML is designed to work seamlessly with Git for version control, enabling clear diffs, audit history, and rollback. It also adheres to Moqui’s `entity-facade-xml` structure for direct importability and follows templating practices to ensure deterministic, noise-free output — making the promotion of business-critical routing logic reliable, reviewable, and reversible.
+## 📄 **Description**
+
+Port a configured `OrderRoutingGroup` from one OMS environment to another — such as from UAT to Production for deployment, or from Production to UAT for debugging. This workflow uses export and import operations to ensure consistent, validated routing configurations across environments.
 
 ---
 
