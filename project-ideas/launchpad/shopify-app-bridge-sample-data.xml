@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<seed-data>
+  <ShopifyShop shopId="SHOP" externalId="41965584548" shopName="hc-sandbox" email="deepak.dixit@hotwax.co" phone="9826754548" shopOwner="HotWax Commerce Shopify" timezone="America/New_York" planName="partner_test" domain="hc-sandbox.myshopify.com" myshopifyDomain="hc-sandbox.myshopify.com" weightUnit="lb" currency="USD" countryCode="US" createdDate="2025-03-04 07:58:26.684"/>
+  <ShopifyApp appId="embedded-app" appTypeId="SHOP_APP_CUSTOM" statusId="SHOPIFY_APP_ACTIVE" appName="Embedded App" appVersion="1" clientId="a0327c878c111f0bbcdd8932c99838f0" clientSecret="cf547df6d76d007f8019c0ab195c" createdDate="2025-06-12T12:00:00"/>
+  <HotwaxInstance instanceId="dev" hostAddress="https://dev-oms.hotwax.io"/>
+  <ShopifyShopApp shopId="SHOP" appId="embedded-app" fromDate="2025-06-01T00:00:00" installedAppVersion="1" shopAccessToken="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" hotwaxAccessToken="hwxtkn_abc1234567890def98765fedcba43210" hotwaxInstanceId="dev" comments="Initial install for testing."/>
+</seed-data>
