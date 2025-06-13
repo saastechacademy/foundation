@@ -121,3 +121,52 @@ In most PWA apps:
 * Routes the user to `Login.vue` if not authenticated
 * Otherwise proceeds to home/dashboard
 
+---
+
+### 🔍 Breakdown of Your `App.vue` Template:
+
+```vue
+<template>
+  <ion-app>
+    <ion-router-outlet />
+  </ion-app>
+</template>
+```
+
+| Component             | Purpose                                                                                                                               |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `<ion-app>`           | Root container for Ionic applications. Required for styling/layout.                                                                   |
+| `<ion-router-outlet>` | Acts like a `<router-view>` but is Ionic-aware — it handles page transitions, history stack, and animations in a mobile-friendly way. |
+
+---
+
+### ✅ Result:
+
+This setup means:
+
+* You are **not** using plain Vue router view (`<router-view>`)
+* You are using Ionic-specific navigation behaviors (slide transitions, mobile back-button behavior, etc.)
+* You **can use Ionic page lifecycle events** like:
+
+    * `onIonViewWillEnter`
+    * `onIonViewDidEnter`
+    * `onIonViewWillLeave`
+    * `onIonViewDidLeave`
+
+These hooks are only available when routing is done via `ion-router-outlet`.
+
+---
+
+### 🧠 Tip for Vue + Ionic Development:
+
+In each page component (e.g., `Home.vue`, `Login.vue`), you can now safely use:
+
+```ts
+import { onIonViewDidEnter } from '@ionic/vue'
+
+onIonViewDidEnter(() => {
+  console.log('This page just became active')
+})
+```
+
+This hook is **Ionic’s alternative to Vue’s `onMounted`** and is more appropriate for use in apps that use `ion-router-outlet`.
