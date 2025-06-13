@@ -91,3 +91,34 @@ Optional claims like `aud`, `nbf`, and `iss` are **left out deliberately** for c
 We decided to add support for validating Shopify sessionToken in JWTManager. 
 No Servlet filters. 
 
+
+
+
+app-bridge/
+├── component.xml
+├── build.gradle
+├── MoquiConf.xml
+├── README.md
+│
+├── data/
+│   └── AppBridgeData.xml
+│
+├── service/
+│   └── co/
+│       └── hotwax/
+│           └── appbridge/
+│               └── AppBridgeServices.xml
+│
+├── src/
+│   └── main/
+│       └── groovy/
+│           └── co/
+│               └── hotwax/
+│                   └── appbridge/
+│                       └── ShopifyHmacFilter.groovy
+│
+└── docker/
+├── Dockerfile
+├── docker-compose.yml
+└── entrypoint.sh
+
