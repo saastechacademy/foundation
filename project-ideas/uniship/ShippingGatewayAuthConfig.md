@@ -1,4 +1,4 @@
-# Configure `ShippingGatewayAuthConfig`
+# Detailed Design Document — Step 2: Configure `ShippingGatewayAuthConfig`
 
 ## 1. Overview
 
