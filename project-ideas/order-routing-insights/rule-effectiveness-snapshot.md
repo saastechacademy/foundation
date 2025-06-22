@@ -99,11 +99,3 @@ slaMissRate = lateShipments / totalRoutedOrders
 | “Are we oversplitting orders after rule changes?” | Watch `splitRate` across runs |
 
 ---
-
-## 🧠 Next Step
-
-Once this structure is finalized, the next design milestone will be:
-
-✅ **Designing the snapshot generation service**  
-→ Input: `routingRunId`  
-→ Output: Fully populated `RuleEffectivenessSnapshot` record
