@@ -25,10 +25,10 @@ This snapshot is purely observational and is never used to route orders directly
 | `attemptedItemCount`          | Integer   | Total number of order items evaluated during the routing run |
 | `brokeredItemCount`           | Integer   | Number of order items that were successfully routed |
 | `brokeredRate`                | Decimal % | Ratio of brokered items to attempted items |
-| `splitRate`                   | Decimal % | % of routed orders that were split across multiple facilities |
+| `splitRate`                   | Decimal % | % of routed orders that were split across multiple facilities. Splitting leads to higher shipping costs and more fragmented delivery experience for customers. |
 | `actualShippingCost`          | Decimal   | Average fulfillment cost per order (`ShipmentRouteSegment.actualCost`) |
 | `chargedShippingAmount`       | Decimal   | Average shipping charge per order (`OrderAdjustment.amount`) |
-| `netShippingMargin`           | Decimal   | `chargedShippingAmount - actualShippingCost` (optional derived field) |
+| `netShippingMargin`           | Decimal   | `chargedShippingAmount - actualShippingCost` |
 | `slaMissRate`                 | Decimal % | % of routed orders where SLA was missed |
 | `firstRuleSuccessRate`        | Decimal % | % of brokered items fulfilled by the first-sequence rule |
 | `rulesSkippedBeforeSuccessAvg`| Decimal   | Average number of rules skipped before success |
@@ -50,7 +50,13 @@ brokeredRate = brokeredItemCount / attemptedItemCount
 ```
 
 ### 3. `splitRate`
-- Count of orders with multiple `facilityId`s assigned in `OrderFacilityChange`
+- Group `OrderFacilityChange` by `orderId`
+- If an `orderId` has more than one distinct `facilityId`, it is considered a split order
+- Final computation:
+```
+splitRate = splitOrderCount / brokeredOrderCount
+```
+- Split orders result in increased operational cost and reduced delivery satisfaction.
 
 ### 4. `actualShippingCost`
 - Average of `ShipmentRouteSegment.actualCost` per `orderId`
@@ -99,6 +105,6 @@ netShippingMargin = chargedShippingAmount - actualShippingCost
 
 To avoid duplicating this, `RuleEffectivenessSnapshot` links to `routingBatchId` and supplements it with:
 - `ruleConfigHash`  
-- Additional KPIs like shipping cost, margin, SLA, and fallback attempts
+- Additional KPIs like shipping cost, margin, SLA, splits, and fallback attempts
 
 ---
