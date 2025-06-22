@@ -19,6 +19,7 @@ This snapshot is purely observational and is never used to route orders directly
 |--------------------------|-----------|-------------|
 | `snapshotId`             | ID (PK)   | Unique identifier for the snapshot |
 | `routingRunId`           | FK        | Foreign key to `OrderRoutingRun` that triggered this snapshot |
+| `routingBatchId`         | FK        | Foreign key to `OrderRoutingBatch`, grouping related routing runs |
 | `routingGroupId`         | FK        | Foreign key to `OrderRoutingGroup` |
 | `ruleConfigHash`         | String    | Deterministic hash of the routing rule + inventory configuration |
 | `attemptedItemCount`     | Integer   | Total number of order items evaluated during the routing run |
@@ -38,54 +39,33 @@ This snapshot is purely observational and is never used to route orders directly
 ## 🧮 Field Computation Logic
 
 ### 1. `attemptedItemCount` & `brokeredItemCount`
-- **Source**: `OrderRoutingRun`
-- These are already recorded by the routing engine during the run.
-- Can be optionally recomputed from `OrderFacilityChange` + `OrderItem`
+- **Source**: `OrderRoutingRun` and `OrderRoutingBatch`
+- These are recorded during execution and referenced in both entities
 
 ### 2. `brokeredRate`
 ```
 brokeredRate = brokeredItemCount / attemptedItemCount
 ```
-- Measures overall success rate of the routing logic
-- If rules are too strict, brokered rate will drop even if inventory exists
 
 ### 3. `splitRate`
-- **Source**: `OrderFacilityChange`
-- Detect if `COUNT(DISTINCT facilityId)` > 1 per `orderId`
-```
-splitRate = orders_with_splits / total_routed_orders
-```
+- Count of orders with multiple `facilityId`s assigned in `OrderFacilityChange`
 
 ### 4. `actualShippingCost`
-- **Source**: `ShipmentRouteSegment.actualCost`
-- Join by `orderId`, `shipmentId`, and/or `orderItemShipGroup`
+- Average of `ShipmentRouteSegment.actualCost` per `orderId`
 
 ### 5. `chargedShippingAmount`
-- **Source**: `OrderAdjustment.amount` where `orderAdjustmentTypeId = SHIPPING_CHARGES`
-- Aggregate by `orderId`, then compute average
+- Average of `OrderAdjustment.amount` with `orderAdjustmentTypeId = SHIPPING_CHARGES`
 
 ### 6. `netShippingMargin`
 ```
 netShippingMargin = chargedShippingAmount - actualShippingCost
 ```
-- Reveals financial effectiveness of routing decisions
-- Enables comparison between free and paid shipping strategies
 
 ### 7. `slaMissRate`
-- **Source**:
-  - Target SLA: `OrderItemShipGroup.estimatedShipDate` or derived from configuration
-  - Actual ship date: `Shipment.actualShipDate` or `ShipmentRouteSegment.actualShipDate`
-```
-slaMissRate = lateShipments / totalRoutedOrders
-```
+- Ratio of orders where `actualShipDate > estimatedShipDate`
 
 ### 8. `ruleConfigHash`
-- Deterministic hash of the full routing + inventory rule setup
-- Input JSON includes:
-  - All `OrderRoutingRule`s and `OrderFilterCondition`s
-  - `OrderRoutingRuleInvCond`s
-  - `OrderRoutingRuleAction`s
-- Normalize, sort, and serialize this config → apply SHA-256 hash
+- SHA-256 hash of sorted, normalized JSON config of routing rules
 
 ---
 
@@ -99,3 +79,26 @@ slaMissRate = lateShipments / totalRoutedOrders
 | “Are we oversplitting orders after rule changes?” | Watch `splitRate` across runs |
 
 ---
+
+## 🔗 Relationship to Existing Model: `OrderRoutingBatch`
+
+`OrderRoutingBatch` already tracks:
+- `routingGroupId`
+- `attemptedItemCount` and `brokeredItemCount`
+- `startDate` and `endDate`
+- `createdByUserId`
+
+To avoid duplicating this, `RuleEffectivenessSnapshot` should link to `routingBatchId` and supplement it with:
+- `ruleConfigHash`
+- Additional KPIs like shipping cost, margin, and SLA
+- Diagnostic and comparative insight not tracked by the batch
+
+---
+
+## 🧠 Next Step
+
+Once this structure is finalized, the next design milestone will be:
+
+✅ **Designing the snapshot generation service**  
+→ Input: `routingRunId`  
+→ Output: Fully populated `RuleEffectivenessSnapshot` record
