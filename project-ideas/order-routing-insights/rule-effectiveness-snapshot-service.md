@@ -119,6 +119,73 @@ Aggregate:
 
 ---
 
+
+### splitRate
+
+- Group `OrderFacilityChange` records by `orderId`.
+- For each group, count distinct `facilityId`s.
+- An order is considered split if it was fulfilled from more than one facility.
+- Final computation:
+
+```plaintext
+splitRate = splitOrderCount / brokeredOrderCount
+```
+
+Split orders result in higher shipping cost and reduce customer satisfaction due to multi-package deliveries.
+
+
+### Fallback Rule Metrics
+
+To assess how well high-priority rules are working, compute:
+
+| Metric | Formula |
+|--------|---------|
+| `firstRuleSuccessRate` | fulfilledByFirst / totalBrokered |
+| `rulesSkippedBeforeSuccessAvg` | sum(rulesSkipped) / totalBrokered |
+| `rulesSkippedBeforeSuccessMax` | max(rulesSkipped) |
+
+#### Computation Approach:
+
+1. Fetch all routing rules for the run's `routingGroupId`, ordered by `sequenceNum`
+2. Build a list of `routingRuleId`s in order
+3. For each `OrderFacilityChange`, find the index of the used `routingRuleId` in that list
+4. That index = number of rules skipped before success
+5. Aggregate metrics:
+   - Count how many times the first rule was used (`index == 0`)
+   - Track total and max `rulesSkipped`
+
+#### Pseudocode Snippet:
+
+```xml
+<entity-find entity-name="OrderRoutingRule" list="ruleList">
+  <econdition field-name="routingGroupId" from="routingGroupId"/>
+  <order-by field-name="sequenceNum"/>
+</entity-find>
+<set field="orderedRuleIds" from="ruleList.routingRuleId"/>
+
+<entity-find entity-name="OrderFacilityChange" list="ofcList">
+  <econdition field-name="routingRunId" from="routingRunId"/>
+</entity-find>
+
+<iterate list="ofcList" entry="ofc">
+  <index-of list="orderedRuleIds" value="ofc.routingRuleId" to="ruleIndex"/>
+  <set field="rulesSkipped" from="ruleIndex"/>
+  <if condition="rulesSkipped == 0">
+    <set field="fulfilledByFirst" from="fulfilledByFirst + 1"/>
+  </if>
+  <set field="totalBrokered" from="totalBrokered + 1"/>
+  <set field="totalRulesSkipped" from="totalRulesSkipped + rulesSkipped"/>
+  <if condition="rulesSkipped > maxRulesSkipped">
+    <set field="maxRulesSkipped" from="rulesSkipped"/>
+  </if>
+</iterate>
+
+<set field="firstRuleSuccessRate" from="fulfilledByFirst * 1.0 / totalBrokered"/>
+<set field="rulesSkippedBeforeSuccessAvg" from="totalRulesSkipped * 1.0 / totalBrokered"/>
+<set field="rulesSkippedBeforeSuccessMax" from="maxRulesSkipped"/>
+```
+
+
 ## 🛠 Moqui Service Template
 
 ```xml
