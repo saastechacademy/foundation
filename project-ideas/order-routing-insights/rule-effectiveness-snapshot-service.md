@@ -1,10 +1,10 @@
-# Design: RuleEffectivenessSnapshot Generation Service (Updated)
+# Design: RuleEffectivenessSnapshot Generation Service
 
 ## 🎯 Purpose
 
 This service computes and stores a `RuleEffectivenessSnapshot` for a given `routingRunId`, using data from routing logs, shipment, inventory, and financials. It will run as a scheduled job once daily after business hours.
 
-This updated version also captures **fallback behavior**, i.e. how often the engine had to skip rules before successfully fulfilling inventory.
+The snapshot captures both fulfillment performance and rule prioritization behavior, helping the Fulfillment Advisor Agent evaluate and optimize routing strategies.
 
 ---
 
@@ -33,28 +33,93 @@ create#RuleEffectivenessSnapshot
 
 ---
 
-## 📦 Computation Overview
+## 📦 Entity Structure
 
-- Fetch the related `OrderRoutingRun`, `OrderRoutingBatch`, and `OrderRoutingGroup`
-- Pull `OrderFacilityChange` to determine what was routed
-- Join with:
-  - `OrderItem`, `OrderItemShipGrpInvRes` — to count reserved items
-  - `ShipmentRouteSegment` — to compute `actualShippingCost`
-  - `OrderAdjustment` — to compute `chargedShippingAmount`
-- Calculate:
-  - `brokeredRate`
-  - `splitRate`
-  - `slaMissRate`
-  - `netShippingMargin`
-  - **`rulesSkippedBeforeSuccessAvg`**
-  - **`rulesSkippedBeforeSuccessMax`**
-  - **`firstRuleSuccessRate`**
-- Serialize rule configuration (filters + actions) and generate `ruleConfigHash`
-- Store the computed values in a new `RuleEffectivenessSnapshot`
+| Field Name                    | Type      | Description |
+|-------------------------------|-----------|-------------|
+| `snapshotId`                  | ID (PK)   | Unique identifier for the snapshot |
+| `routingRunId`                | FK        | Foreign key to `OrderRoutingRun` that triggered this snapshot |
+| `routingBatchId`              | FK        | Foreign key to `OrderRoutingBatch`, grouping related routing runs |
+| `routingGroupId`              | FK        | Foreign key to `OrderRoutingGroup` |
+| `ruleConfigHash`              | String    | Deterministic hash of the routing rule + inventory configuration |
+| `attemptedItemCount`          | Integer   | Total number of order items evaluated during the routing run |
+| `brokeredItemCount`           | Integer   | Number of order items that were successfully routed |
+| `brokeredRate`                | Decimal % | Ratio of brokered items to attempted items |
+| `splitRate`                   | Decimal % | % of routed orders that were split across multiple facilities |
+| `actualShippingCost`          | Decimal   | Average fulfillment cost per order (`ShipmentRouteSegment.actualCost`) |
+| `chargedShippingAmount`       | Decimal   | Average shipping charge per order (`OrderAdjustment.amount`) |
+| `netShippingMargin`           | Decimal   | `chargedShippingAmount - actualShippingCost` |
+| `slaMissRate`                 | Decimal % | % of routed orders where SLA was missed |
+| `firstRuleSuccessRate`        | Decimal % | % of brokered items fulfilled by the first-sequence rule |
+| `rulesSkippedBeforeSuccessAvg`| Decimal   | Average number of rules skipped before success |
+| `rulesSkippedBeforeSuccessMax`| Integer   | Maximum number of rules skipped in any single order item |
+| `snapshotTimestamp`           | DateTime  | Timestamp of when the snapshot was generated |
+| `createdByAgent`              | Boolean   | Whether the snapshot was created by the Fulfillment Advisor |
+| `notes`                       | Text      | Optional human-readable comments or diagnostics |
 
 ---
 
-## 📄 Moqui Service Definition (Template)
+## 🧮 Computation Logic
+
+### Fulfillment Metrics
+
+- **`brokeredRate`** = `brokeredItemCount / attemptedItemCount`
+- **`splitRate`** = % of orders with more than one `facilityId` in `OrderFacilityChange`
+- **`actualShippingCost`** = Avg of `ShipmentRouteSegment.actualCost` per order
+- **`chargedShippingAmount`** = Avg of `OrderAdjustment.amount` with `orderAdjustmentTypeId = SHIPPING_CHARGES`
+- **`netShippingMargin`** = `chargedShippingAmount - actualShippingCost`
+- **`slaMissRate`** = % of orders where `actualShipDate > estimatedShipDate`
+
+### Fallback Behavior Metrics
+### Determining Rules Skipped Before Success
+
+For each order item routed:
+
+1. **Retrieve the ordered list of rule IDs** from `OrderRoutingRule` using `routingGroupId`, sorted by `sequenceNum`.
+2. **Find the index** of the `routingRuleId` used (from `OrderFacilityChange`) in that list.
+3. **Compute `rulesSkipped`** as the index value:
+   - Index `0` means success by first rule → `rulesSkipped = 0`
+   - Index `n` means the first `n` rules were skipped
+4. Repeat for all successfully routed order items.
+
+### Example
+
+Given routing group rules:
+
+```
+orderedRuleIds = [R1, R2, R3, R4]
+```
+
+And actual routing results:
+
+| OrderItem | routingRuleId | rulesSkipped |
+|-----------|----------------|--------------|
+| OI-001    | R1             | 0            |
+| OI-002    | R3             | 2            |
+| OI-003    | R4             | 3            |
+
+Aggregate:
+
+- `firstRuleSuccessRate = 1 / 3`
+- `rulesSkippedBeforeSuccessAvg = (0+2+3)/3 = 1.67`
+- `rulesSkippedBeforeSuccessMax = 3`
+
+
+1. Load all `OrderRoutingRule`s for the routing group, sorted by `sequenceNum`
+2. For each `OrderFacilityChange`:
+   - Identify the `routingRuleId` used
+   - Determine how many rules were skipped before it (based on sequence)
+3. Aggregate across all items to compute:
+
+| Metric | Formula |
+|--------|---------|
+| `firstRuleSuccessRate` | `fulfilledByFirst / totalBrokered` |
+| `rulesSkippedBeforeSuccessAvg` | `SUM(rulesSkipped) / totalBrokered` |
+| `rulesSkippedBeforeSuccessMax` | `MAX(rulesSkipped)` |
+
+---
+
+## 🛠 Moqui Service Template
 
 ```xml
 <service verb="create" noun="RuleEffectivenessSnapshot" authenticate="true" require-new-transaction="true">
@@ -67,51 +132,18 @@ create#RuleEffectivenessSnapshot
     <parameter name="responseMessage"/>
   </out-parameters>
   <actions>
-    <!-- Step 1: Load RoutingRun and Related Entities -->
-    <entity-find-one entity-name="co.hotwax.order.routing.OrderRoutingRun" value-field="routingRun"/>
-    <if condition="!routingRun">
-      <return error="true" message="No routing run found for ID ${routingRunId}"/>
-    </if>
+    <!-- Load RoutingRun, OrderRoutingBatch, and RoutingGroup -->
+    <!-- Load RoutingRules by sequenceNum into orderedRuleIds -->
+    <!-- Load OrderFacilityChange by routingRunId -->
 
-    <!-- Placeholder: Load and analyze OrderFacilityChange and Rule sequence -->
-    <!-- Compute skipped rules and first rule match rate -->
+    <!-- Iterate: compute skipped rules per item -->
+    <!-- Aggregate: count, sum, max for fallback metrics -->
 
-    <!-- Step N: Create Snapshot Record -->
-    <make-value entity-name="co.hotwax.order.analytics.RuleEffectivenessSnapshot" value-field="snapshot"/>
-    <set field="snapshot.routingRunId" from="routingRunId"/>
-    <set field="snapshot.routingGroupId" from="routingRun.routingGroupId"/>
-    <set field="snapshot.routingBatchId" from="routingRun.routingBatchId"/>
-    <set field="snapshot.snapshotTimestamp" from="ec.user.nowTimestamp"/>
-    <set field="snapshot.createdByAgent" value="false"/>
-    <!-- Add calculated fields: brokeredRate, splitRate, netShippingMargin, slaMissRate -->
-    <!-- Add new fields: rulesSkippedBeforeSuccessAvg, rulesSkippedBeforeSuccessMax, firstRuleSuccessRate -->
+    <!-- Compute other KPIs (shipping, SLA, etc.) -->
 
-    <create value-field="snapshot"/>
-
-    <set field="snapshotId" from="snapshot.snapshotId"/>
-    <set field="responseMessage" value="Snapshot created successfully"/>
+    <!-- Create RuleEffectivenessSnapshot record -->
   </actions>
 </service>
 ```
 
 ---
-
-## ➕ Additional Fields to Add in `RuleEffectivenessSnapshot` Entity
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `firstRuleSuccessRate` | Decimal % | % of successful routes fulfilled by the first-sequence rule |
-| `rulesSkippedBeforeSuccessAvg` | Decimal | Average number of rules skipped before a successful rule |
-| `rulesSkippedBeforeSuccessMax` | Integer | Max number of rules skipped for any single item |
-
----
-
-## 🕐 Scheduling
-
-This service will be invoked **once daily**, after business hours (e.g., 11:00 PM local time), using a scheduled job (ServiceJob + cron expression). It can process:
-- All `OrderRoutingRun` records from the current day
-- Or any `routingRunId` passed explicitly for reprocessing
-
----
-
-Let me know when you're ready to implement logic for evaluating rule sequences from the demo data.
