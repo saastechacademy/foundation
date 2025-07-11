@@ -3,7 +3,7 @@
 ---
 
 ## 📝 Retailer Registration
-- The UniShip tenants administrator creates tenant in UniShip by passing the tenant name. The system responds with the tenantPartyId and the api access token. 
+- The UniShip tenants administrator [creates tenant](createTenant.md) in UniShip by passing the tenant name. The system responds with the tenantPartyId and the api access token. 
 
 ---
 
@@ -23,7 +23,7 @@
 
 ## Configure ShippingGateway
 
-### 🔐 Step 3: Store Retailer's API Token in SystemMessageRemote
+### 🔐 Step 3: Store Retailer's API Token in ShippingGatewayAuthConfig
 ```xml
 <ShippingGatewayAuthConfig
         ShippingGatewayAuthConfigId="SHIPPO_RETAILER_123"
@@ -34,7 +34,7 @@
     enabledFlag="Y"/>
 ```
 
-## Start using Uniship services
+## Start using UniShip services
 
 ---
 
