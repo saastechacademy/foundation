@@ -32,7 +32,7 @@ This system supports multi-tenant operations, using a userLoginKey and tenantId 
 
 ## 3. Entity Model Reference
 
-The Shipping Gateway Microservice uses a lightweight multi-tenant data model.
+The Shipping Gateway Microservice uses a lightweight multi-tenant [data model](entity/tenant-model-design.md).
 
 Key entities:
 
@@ -52,6 +52,7 @@ Key entities:
   - `tenantPartyId`
   - `shippingGatewayConfigId`
 - Key validation and tenant identification are mandatory for every request.
+- Refer [TenantAuthFilter](TenantAuthFilter.md) for detail design.
 
 ---
 
