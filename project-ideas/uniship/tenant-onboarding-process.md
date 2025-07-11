@@ -1,22 +1,27 @@
-## Retailer (Tenant) Onboarding Process
+# Retailer (Tenant) Onboarding Process
 
 ---
 
-### 📝 Step 1: Retailer Registration
-- The UniShip tenants administrator creates Tenant in UniShip by passing the Tenant name. The system reponds with the tenantPartyId and the api access Token. 
+## 📝 Retailer Registration
+- The UniShip tenants administrator creates tenant in UniShip by passing the tenant name. The system responds with the tenantPartyId and the api access token. 
 
-- The 
 ---
 
-### 🧱 Step 2: Create Retailer as a Tenant Party
+### 🧱 Step 1: Create Retailer as a Tenant Party
 ```xml
 <Party partyId="RETAILER_123" partyTypeEnumId="PtyOrganization">
     <organization organizationName="Retailer 123"/>
     <roles roleTypeId="Tenant"/>
 </Party>
 ```
+---
+
+### 🎟️ Step 2: Generate Key for Retailer
+- This token is required in the Authorization header of API requests.
 
 ---
+
+## Configure ShippingGateway
 
 ### 🔐 Step 3: Store Retailer's API Token in SystemMessageRemote
 ```xml
@@ -29,15 +34,11 @@
     enabledFlag="Y"/>
 ```
 
----
-
-### 🎟️ Step 4: Generate Key for Retailer
-- This token is required in the Authorization header of API requests.
+## Start using Uniship services
 
 ---
 
-### 📡 Step 6: Retailer Uses the Gateway API
-- Retailer’s OMS uses the key token to:
-    - Identify tenant
+### 📡 Step 5: Retailer Uses the Gateway API
+- Retailer’s OMS uses the tenantId ('X-Tenant-Id') token (`X-Login-Key`) to make API calls.  
 
 ---
