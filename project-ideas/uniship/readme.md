@@ -7,7 +7,7 @@
 
 The UniShip microservice provides a unified API interface for integrating with multiple shipping providers (e.g., FedEx, UPS, Shippo, DHL). It acts as a stateless pass-through system, processing shipment rate, label, and tracking requests without persisting shipment data.
 
-This system supports multi-tenant operations, using a userLoginKey and tenantId to authenticate and authorize use of the associated shipping gateway.
+This system supports multi-tenant operations, using a userLoginKey and tenantId to [authenticate and authorize](TenantAuthFilter.md) use of the associated shipping gateway.
 
 ---
 
@@ -20,7 +20,7 @@ This system supports multi-tenant operations, using a userLoginKey and tenantId 
   Uniship does not store or persist any shipment data. All data is passed through temporarily.
 
 - **Multi-Tenant Isolation:**  
-  Each API call is isolated to a specific retailer(tenant).
+  Each API call is isolated to a specific retailer (tenant).
 
 - **Reliable Error Management:**  
   Standardized error responses and graceful error handling for communication with carrier APIs.
@@ -71,50 +71,7 @@ Key entities:
 
 ---
 
-## 6. API Request and Response Structures
-
-### Example: `request#ShippingLabels`
-
-**Request JSON:**
-```json
-{
-  // Sample request JSON will be added later
-}
-```
-
-**Response JSON:**
-```json
-{
-  // Sample response JSON will be added later
-}
-```
-
-_(Other APIs will follow a similar clean request/response structure.)_
-
----
-
-## 7. Error Handling and Standard Response Format
-
-All errors return JSON responses with an appropriate HTTP status code.
-
-**Example Error Response:**
-```json
-{
-  "errorCode": "AUTH_FAILED",
-  "errorMessage": "Authorization token missing or invalid."
-}
-```
-
-| HTTP Status | Typical Causes                  |
-|:------------|:---------------------------------|
-| 400         | Invalid input parameters.        |
-| 401         | Missing or invalid authorization.|
-| 403         | Tenant not authorized for resource.|
-| 500         | Internal server error.           |
-
----
-
-## 8. Multi-Tenant Behavior
+## 6. Multi-Tenant Behavior
 
 - `tenantPartyId` is used to lookup tenant-specific configurations.
 - `shippingGatewayConfigId` is used to select the shipping gateway settings.
@@ -122,7 +79,7 @@ All errors return JSON responses with an appropriate HTTP status code.
 
 ---
 
-## 9. Quick Design Principles for API Request Structure
+## 7. Quick Design Principles for API Request Structure
 
 - API request must be **self-contained**.
 - Shipping Gateway should **never need to look up** data like ContactMechId.
@@ -137,7 +94,7 @@ All errors return JSON responses with an appropriate HTTP status code.
 - Origin Facility Name and Address must be resolved and included.
 - Shipment status information is not needed and should not be sent.
 
-## 10. Notes and Assumptions
+## 8. Notes and Assumptions
 
 - Shipping Gateway Microservice does **not persist** shipment data.
 - All APIs are synchronous.
