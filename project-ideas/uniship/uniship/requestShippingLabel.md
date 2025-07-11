@@ -1,6 +1,6 @@
-## 🚀 Architecture: requestShippingLabel API in Multitenant Shipping Gateway Microservice
+# requestShippingLabel service design
 
-This document outlines the architecture and control flow for handling `requestShippingLabel` API requests in the multitenant shipping gateway microservice built on the Moqui framework.
+This document outlines the architecture and control flow for handling `requestShippingLabel` API requests.
 
 ---
 

@@ -1,4 +1,4 @@
-# Get Order Shipping Rate
+# get#OrderShippingRate service design
 
 ---
 
@@ -335,10 +335,4 @@ POST /rest/s1/uniship/shipment/rate
   },
   "applyPolicies": true
 }
-```
-
-```
-
----
-
 ```

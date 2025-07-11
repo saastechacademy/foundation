@@ -1,5 +1,5 @@
 
-# refund#ShippingLabels Service Design
+# refund#ShippingLabels service design
 
 ---
 
@@ -23,7 +23,7 @@ Based on the official refund/cancellation API documentation of each integrated s
 | **EasyPost**| ✅ Yes               | `shipmentId`                 | ✅ Yes                   | [EasyPost Refund API](https://docs.easypost.com/docs/shipments/shipping-refund) - requires shipment ID |
 | **ShipHawk**| ✅ Yes (via cancel)  | `shipmentId`                 | ✅ Yes                   | [ShipHawk Cancel API](https://apidocs.shiphawk.com/#cancel-a-shipment) - no direct refund API, uses cancel shipment instead |
 
-➡️ At least one of the fields — `shipmentId`, `labelId`, or `trackingNumber` — is required depending on the gateway. Your API is designed to provide all three as optional inputs.
+➡️ At least one of the fields — `shipmentId`, `labelId`, or `trackingNumber` — is required depending on the gateway. The API is designed to provide all three as optional inputs.
 
 ### 🔍 Parameter Support Across Gateways
 

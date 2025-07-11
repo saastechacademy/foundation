@@ -59,7 +59,7 @@ Key entities:
 ## 5. API Interfaces
 - [get#OrderShippingRate](uniship/getOrderShippingRate.md)
 - [request#ShippingLabels](uniship/requestShippingLabel.md)
-- [refund#ShippingLabels](uniship/refund-shipping-labels.md)
+- [refund#ShippingLabels](uniship/refundShippingLabels.md)
 
 | API Name                         | Purpose                                      |
 |:---------------------------------|:---------------------------------------------|
