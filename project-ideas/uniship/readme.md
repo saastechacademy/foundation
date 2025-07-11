@@ -57,16 +57,16 @@ Key entities:
 ---
 
 ## 5. API Interfaces
+- [get#OrderShippingRate](uniship/getOrderShippingRate.md)
+- [request#ShippingLabels](uniship/requestShippingLabel.md)
+- [refund#ShippingLabels](uniship/refund-shipping-labels.md)
 
-| API Name                   | Purpose                                      |
-|:---------------------------|:---------------------------------------------|
-| `get#OrderShippingRate`     | Get shipping rate for an entire order.       |
-| `get#ShippingRatesBulk`     | Get bulk shipping rates for multiple methods.|
-| `get#AutoPackageInfo`       | Automatically calculate packaging details.  |
-| `get#ShippingRate`          | Get shipping rate for a single package.      |
-| `request#ShippingLabels`    | Request generation of shipping labels.       |
-| `refund#ShippingLabels`     | Request refund/cancellation of labels.       |
-| `track#ShippingLabels`      | Track shipment status.                      |
+| API Name                         | Purpose                                      |
+|:---------------------------------|:---------------------------------------------|
+| `get#ShippingRatesBulk`          | Get bulk shipping rates for multiple methods.|
+| `get#AutoPackageInfo`            | Automatically calculate packaging details.  |
+| `get#ShippingRate`               | Get shipping rate for a single package.      |
+| `track#ShippingLabels`           | Track shipment status.                      |
 | `validate#ShippingPostalAddress` | Validate a shipping address.             |
 
 ---
