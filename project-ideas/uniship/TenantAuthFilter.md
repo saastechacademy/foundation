@@ -2,7 +2,7 @@
 
 ### Overview
 
-`TenantAuthFilter.groovy` is a servlet filter designed to secure selected UniShip REST API endpoints by enforcing multi-tenant authentication using login keys and tenant identifiers. It is registered in `MoquiConf.xml` and protects endpoints defined in `uniship.rest.xml`.
+`TenantAuthFilter.groovy` is a [servlet filter](https://www.oracle.com/java/technologies/filters.html) designed to secure selected UniShip REST API endpoints by enforcing multi-tenant authentication using login keys and tenant identifiers. It is registered in `MoquiConf.xml` and protects endpoints defined in `uniship.rest.xml`.
 
 ---
 
