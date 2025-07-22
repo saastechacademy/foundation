@@ -1,8 +1,8 @@
-# `create#Tenant` Service
+# `create#UnishipTenant` Service
 
 ## 1. Overview
 
-The `create#Tenant` service provisions a new Tenant for the UniShip application.
+The `create#UnishipTenant` service provisions a new Tenant for the UniShip application.
 
 A **Tenant** is:
 - An Organization-type `Party`
@@ -12,7 +12,6 @@ A **Tenant** is:
 This service creates the following:
 - A Party (with `partyTypeEnumId` = `PtyOrganization`)
 - An associated `UserAccount` for API authentication
-- A `UserLoginKey` (hashed) to be used as an API access token
 
 ---
 
@@ -29,7 +28,6 @@ This service creates the following:
 | Name            | Type    | Description                                                                     |
 |-----------------|---------|---------------------------------------------------------------------------------|
 | tenantPartyId   | String  | The `partyId` created for the tenant organization, returned as `tenantPartyId`. |
-| loginKey        | String  | The **plaintext login key**. Must be stored securely by the tenant.            |
 
 ---
 
@@ -61,7 +59,7 @@ This service creates the following:
 
 - The value of `partyId` from above is mapped to `tenantPartyId` in the final output.
 
-#### ✅ Step 3: Generate and Store Login Key
+#### ✅ create#UserLoginKey service to Generate and Store Login Key
 - A secure 40-character random string is generated
 - It is hashed using Moqui’s configured login key hash algorithm
 - A `UserLoginKey` record is inserted with current timestamp
@@ -113,6 +111,6 @@ X-Login-Key: {loginKey}
 
 ## 7. Notes for Developer and Support Teams
 
-- If a tenant loses the `loginKey`, a support utility may be needed to regenerate it.
+- If a tenant loses the `loginKey`, a create#UserLoginKey service is used regenerate it.
 - You may want to add expiry (`thruDate`) handling in future releases.
 - Ensure this service is **authz-disabled** if exposed externally, and guarded behind an admin layer or internal provisioning portal.
