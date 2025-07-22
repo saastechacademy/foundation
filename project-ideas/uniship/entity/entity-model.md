@@ -4,10 +4,10 @@ This document outlines the minimal set of entities required to support a multite
 
 ---
 
-### ✅ Entities for Tenant Management
+### ✅ Entities for Uniship Tenant Management
 
 #### 1. `Party`
-Represents any participant — in this context, your tenant (retailer).
+Represents any participant — in this context, your uniship tenant (retailer).
 - `partyId` (PK)
 - `partyTypeEnumId` (set to `PtyOrganization` for tenants)
 
@@ -19,7 +19,7 @@ Extends `Party` when `partyTypeEnumId = 'PtyOrganization'`.
 #### 3. `PartyRole`
 Assigns a role to a party for classification and access control.
 - `partyId` (PK, FK to Party)
-- `roleTypeId` (e.g., `Tenant`)
+- `roleTypeId` (e.g., `UnishipTenant`)
 - `fromDate` (PK)
 - `thruDate`
 
@@ -31,7 +31,7 @@ Below are the XML definitions for the three core entities, modeled in alignment 
 
 #### 🗂 `Party`
 ```xml
-<entity entity-name="Party" package="mantle.party">
+<entity entity-name="Party" package="co.hotwax.uniship">
     <field name="partyId" type="id" is-pk="true"/>
     <field name="partyTypeEnumId" type="id"/>
     <field name="statusId" type="id"/>
@@ -41,8 +41,8 @@ Below are the XML definitions for the three core entities, modeled in alignment 
     <relationship type="one" title="PartyType" related="moqui.basic.Enumeration" short-alias="type">
         <key-map field-name="partyTypeEnumId"/>
     </relationship>
-    <relationship type="one-nofk" related="mantle.party.Organization" short-alias="organization"/>
-    <relationship type="many" related="mantle.party.PartyRole" short-alias="roles">
+    <relationship type="one-nofk" related="co.hotwax.uniship.Organization" short-alias="organization"/>
+    <relationship type="many" related="co.hotwax.uniship.PartyRole" short-alias="roles">
         <key-map field-name="partyId"/>
     </relationship>
 
@@ -62,11 +62,11 @@ Below are the XML definitions for the three core entities, modeled in alignment 
 
 #### 🗂 `Organization`
 ```xml
-<entity entity-name="Organization" package="mantle.party">
+<entity entity-name="Organization" package="co.hotwax.uniship">
     <field name="partyId" type="id" is-pk="true"/>
     <field name="organizationName" type="name"/>
 
-    <relationship type="one" related="mantle.party.Party">
+    <relationship type="one" related="co.hotwax.uniship.Party">
         <key-map field-name="partyId"/>
     </relationship>
 </entity>
@@ -74,20 +74,20 @@ Below are the XML definitions for the three core entities, modeled in alignment 
 
 #### 🗂 `PartyRole`
 ```xml
-<entity entity-name="PartyRole" package="mantle.party">
+<entity entity-name="PartyRole" package="co.hotwax.uniship">
     <field name="partyId" type="id" is-pk="true"/>
     <field name="roleTypeId" type="id" is-pk="true"/>
     <field name="fromDate" type="date-time" is-pk="true"/>
     <field name="thruDate" type="date-time"/>
 
-    <relationship type="one" related="mantle.party.Party"/>
+    <relationship type="one" related="co.hotwax.uniship.Party"/>
     <relationship type="one" related="moqui.basic.Enumeration">
         <key-map field-name="roleTypeId"/>
     </relationship>
 
     <seed-data>
         <moqui.basic.EnumerationType enumTypeId="RoleType" description="Party Role Type"/>
-        <moqui.basic.Enumeration enumId="Tenant" enumTypeId="RoleType" description="Retailer Tenant"/>
+        <moqui.basic.Enumeration enumId="UnishipTenant" enumTypeId="RoleType" description="Retailer Tenant"/>
     </seed-data>
 </entity>
 ```
@@ -97,7 +97,7 @@ Below are the XML definitions for the three core entities, modeled in alignment 
 #### 🗂 `ShippingGatewayConfig`
 > Defines core service configuration for each shipping gateway per tenant.
 ```xml
-<entity entity-name="ShippingGatewayConfig" package="shipping.gateway">
+<entity entity-name="ShippingGatewayConfig" package="co.hotwax.uniship">
     <field name="shippingGatewayConfigId" type="id" is-pk="true"/>
     <field name="tenantPartyId" type="id"/>
     <field name="description" type="text-short"/>
@@ -105,7 +105,7 @@ Below are the XML definitions for the three core entities, modeled in alignment 
     <field name="requestLabelsServiceName" type="text-long"/>
     <field name="refundLabelsServiceName" type="text-long"/>
 
-    <relationship type="one" related="mantle.party.Party">
+    <relationship type="one" related="co.hotwax.uniship.Party">
         <key-map field-name="tenantPartyId"/>
     </relationship>
 </entity>
@@ -114,12 +114,12 @@ Below are the XML definitions for the three core entities, modeled in alignment 
 #### 🗂 `ShippingGatewayOption`
 > Stores additional configuration options as key-value pairs for each gateway config.
 ```xml
-<entity entity-name="ShippingGatewayOption" package="mantle.shipment.carrier">
+<entity entity-name="ShippingGatewayOption" package="co.hotwax.uniship">
     <field name="shippingGatewayConfigId" type="id" is-pk="true"/>
     <field name="optionEnumId" type="id" is-pk="true"/>
     <field name="optionValue" type="text-long"/>
 
-    <relationship type="one" related="shipping.gateway.ShippingGatewayConfig">
+    <relationship type="one" related="co.hotwax.uniship.ShippingGatewayConfig">
         <key-map field-name="shippingGatewayConfigId"/>
     </relationship>
     <relationship type="one" related="moqui.basic.Enumeration">
@@ -137,6 +137,6 @@ Below are the XML definitions for the three core entities, modeled in alignment 
 
 The `ShippingGatewayAuthConfig` entity is designed to store tenant-specific authentication tokens information for a given shipping gateway. 
 
-### 🧩 Notes on Tenant Entity Setup
+### 🧩 Notes on Uniship Tenant Entity Setup
 - These three entities are sufficient to define and classify each tenant (retailer) in the system.
-- You may define additional `RoleType` entries (e.g., `Tenant`, `Carrier`) as needed.
+- You may define additional `RoleType` entries (e.g., `UnishipTenant`, `Carrier`) as needed.
