@@ -18,6 +18,9 @@
 
 ### 🎟️ Step 2: Generate Key for Retailer
 - This token is required in the Authorization header of API requests.
+- create#UserLoginKey service is used to generate a secure key for the tenant.
+
+```xml
 
 ---
 
