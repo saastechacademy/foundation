@@ -27,10 +27,10 @@ This document outlines the entity design and onboarding flow for a **multi-tenan
 
 ## 🚀 Tenant Onboarding Flow
 
-### Step 1: Retailer Signs Up (via `create#Tenant` service)
+### Step 1: Retailer Signs Up (via `create#UnishipTenant` service)
 
 * Creates a Party of type `PtyOrganization`.
-* Returns `tenantPartyId` and a secure `loginKey`.
+* Returns `tenantPartyId`.
 
 ### Step 2: Admin Configures Shipping Credentials
 
@@ -91,11 +91,11 @@ This document outlines the entity design and onboarding flow for a **multi-tenan
 
 ## 🧩 Operational Logic
 
-| Concern                                     | Resolution                                                         |
-| ------------------------------------------- | ------------------------------------------------------------------ |
-| Retailer signs up with FedEx                | Use `create#Tenant`, then `create#ShippingGatewayAuthConfig`       |
-| Update required for auth or endpoint config | Create new record, set `fromDate`, expire previous with `thruDate` |
-| Querying active config                      | Use `conditionDate("fromDate", "thruDate", now)` in entity-find    |
+| Concern                                     | Resolution                                                                                                                          |
+| ------------------------------------------- |-------------------------------------------------------------------------------------------------------------------------------------|
+| Retailer signs up with FedEx                | Use `create#UnishipTenant`, then `create#ShippingGatewayAuthConfig` and create#UserLoginKey for tenant to securely call uniship API |
+| Update required for auth or endpoint config | Create new record, set `fromDate`, expire previous with `thruDate`                                                                  |
+| Querying active config                      | Use `conditionDate("fromDate", "thruDate", now)` in entity-find                                                                     |
 
 ---
 
