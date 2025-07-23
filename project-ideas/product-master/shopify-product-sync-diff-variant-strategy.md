@@ -9,12 +9,12 @@ Build a resource‑friendly batch job that reads the ~100 k‑line Shopify pro
 1. **Stream read JSONL** → one line at a time (Jackson `ObjectReader`).
 2. **Group by parent product** (Shopify `product.id`).
 3. After each parent boundary or at EOF:
-   - Compute **variantSetHash** (SHA‑1 of sorted variant IDs).
+   - Compute **variantSetHash** (SHA‑256 of sorted variant IDs).
    - Quick‑skip if hash unchanged since last run.
    - Otherwise build `added` / `removed` sets and field‑level diffs.
    - Persist one row in `ProductUpdateHistory`.
    - Upsert baseline row in `ProductUpdateHistory`.
-4. Commit every **250 parents**, optionally sleep 20 ms when `SystemProperty.sync.lowPriority=Y`.
+4. Commit every **250 parents**, optionally sleep 20 ms when `SystemProperty.sync.lowPriority=Y` (Not yet implemented).
 
 ---
 
@@ -23,44 +23,81 @@ Build a resource‑friendly batch job that reads the ~100 k‑line Shopify pro
 
 > **Purpose:** Stores the latest snapshot **and** any detected diff for each Shopify product *or* variant.
 
-| Column | Purpose |
-|--------|---------|
-| **productId** (PK) | Shopify product **or variant** GID (tracks both parent and child) |
-| snapshotTs | Timestamp when this snapshot was processed |
-| coreHash | SHA‑1 of core parent fields (`title`, `handle`, `productTypeId`, `vendor`, `category`, `detailImageUrl`) |
-| tagHash | SHA‑1 of sorted tag list |
-| featureHash | SHA‑1 of flattened option→value pairs |
-| variantSetHash | SHA‑1 of sorted variant IDs (roster) |
-| variantIdsCsv | Comma‑separated list of **current** variant GIDs (only present on **parent** rows) |
-| tagsCsv | Comma‑separated tag strings for **parent** rows |
-| featuresJson | JSON array of option/value pairs for **parent** rows |
-| parentProductId | Virtual‑product GID for **variant** rows; `null` for parents |
-| price | Numeric price captured for variant rows (Shopify `variants[].price`) |
-| detailJson | JSON blob with added / removed sets and field‑level diffs |
+| Column                  | Purpose                                                                                                          |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| **productId** (PK)      | Shopify product **or variant** GID (tracks both parent and child)                                                |
+| **systemMessageId**     | System message that triggered the update                                                                         |
+| **assocs**              | Comma-separated variant product IDs (only for virtual products)                                                  |
+| **assocsHash**          | SHA-256 hash of `assocs`                                                                                         |
+| **price**               | Numeric price captured for variant rows (Shopify `variants[].price`)                                             |
+| **parentProductId**     | Virtual‑product GID for **variant** rows; empty for virtual products                                             |
+| **features**            | Flattened option selections (e.g., `1/Size/S`)                                                                   |
+| **featuresHash**        | SHA-256 hash of `features`                                                                                       |
+| **identifications**     | Map of identifiers such as id, sku, barcode                                                                      |
+| **identificationsHash** | SHA-256 hash of `identifications`                                                                                |
+| **metafields**          | Flattened metafield entries (`key/namespace/value`)                                                              |
+| **metafieldsHash**      | SHA-256 hash of `metafields`                                                                                     |
+| **productHash**         | SHA-256 hash of core product fields (title, handle, image, gift card etc.)                                       |
+| **tags**                | Flattened tags as key/value strings                                                                              |
+| **tagsHash**            | SHA-256 hash of `tags`                                                                                           |
+| **differenceMap**       | Full diff JSON for changed fields, tags, features, metafields, assocs, identifications, and nested variant diffs |
 
 #### Moqui Entity XML
 ```xml
-<entity entity-name="ProductUpdateHistory"
-        package-name="co.hotwax.shopifysync"
-        table-name="SHOPIFY_PRODUCT_UPDATE_HST"
-        pk-field-name="productId"
-        datasource-name="localmysql">
-    <field name="productId"         type="id"           description="Shopify product or variant GID"/>
-    <field name="snapshotTs"        type="date-time"    description="Timestamp of processed snapshot"/>
-    <field name="coreHash"          type="indicator"    length="40"/>
-    <field name="tagHash"           type="indicator"    length="40"/>
-    <field name="featureHash"       type="indicator"    length="40"/>
-    <field name="variantSetHash"    type="indicator"    length="40"/>
-    <field name="variantIdsCsv"     type="text-long"    description="CSV of current variant GIDs (for parents)"/>
-    <field name="tagsCsv"           type="text-long"    description="CSV of tags (parent only)"/>
-    <field name="featuresJson"      type="text-long"    description="JSON array of option/value pairs (parent only)"/>
-    <field name="parentProductId"   type="id"           description="Parent virtual product GID for variants"/>
-    <field name="price"             type="currency-precise" description="Variant price"/>
-    <field name="detailJson"        type="text-long"    description="JSON diff payload"/>
-
-    <index name="PuhSnapshotTs" unique="false">
-        <index-field name="snapshotTs"/>
-    </index>
+<entity entity-name="ProductUpdateHistory" package="co.hotwax.product">
+    <field name="productId" type="id" is-pk="true">
+        <description>Shopify Product ID (used for both virtual and variant products)</description>
+    </field>
+    <field name="systemMessageId" type="id" not-null="true"/>
+    <field name="assocs" type="text-long">
+        <description>
+            For virtual products, a comma-separated list of associated variant product Shopify IDs.
+            For variant products, it will be empty.
+        </description>
+    </field>
+    <field name="assocsHash" type="text-intermediate"/>
+    <field name="price" type="currency-precise"/>
+    <field name="parentProductId" type="id">
+        <description>
+            The Shopify Product ID of the parent product for variant products. For virtual products, it will be empty.
+            It's kept separate from assocs to store the virtual product id as a String.
+        </description>
+    </field>
+    <field name="features" type="text-very-long">
+        <description>
+            A List of selected options or features of the product (e.g., 1/Size/S, 1/Size/M, 1/Color/Red).
+        </description>
+    </field>
+    <field name="featuresHash" type="text-intermediate"/>
+    <field name="identifications" type="text-long">
+        <description>
+            A map of identifying attributes such as 'id', 'sku', and 'barcode'.
+        </description>
+    </field>
+    <field name="identificationsHash" type="text-intermediate"/>
+    <field name="metafields" type="text-very-long">
+        <description>
+            Flattened metafield entries in the format "key/namespace/value", stored as a list.
+        </description>
+    </field>
+    <field name="metafieldsHash" type="text-intermediate"/>
+    <field name="productHash" type="text-intermediate">
+        <description>
+            SHA256 Hash representing the product’s core details (title, handle, image, gift card, etc.).
+        </description>
+    </field>
+    <field name="tags" type="text-very-long">
+        <description>
+            Categorization or label tags of the product, flattened as key/value strings.
+        </description>
+    </field>
+    <field name="tagsHash" type="text-intermediate"/>
+    <field name="differenceMap" type="text-very-long">
+        <description>
+            A complete diff of the product’s changed fields including tags, features, metafields, assocs, identifications,
+            and nested differences in associated variants. Stored as JSON.
+        </description>
+    </field>
 </entity>
 ```
 
