@@ -165,7 +165,12 @@ Two new Order Item Status will be introduced to manage the lifecycle of Transfer
    3. ORDER_COMPLETED
    4. ORDER_CANCELLED
    
-2. Order Item - Transfer Order Item
+2. Order Header - Status Flow
+   1. **TO_Fulfill_Only** - Transfer Orders to be only Fulfilled in OMS
+   2. **TO_Receive_Only** - Transfer Orders to be only Received in OMS
+   3. **TO_Fulfill_And_Receive** - Transfer Orders to be both Fulfilled & Received in OMS
+   
+3. Order Item - Transfer Order Item
    1. ITEM_CREATED
    2. **ITEM_PENDING_FULFILL** - newly introduced
    3. **ITEM_PENDING_RECEIPT** - newly introduced
@@ -181,7 +186,7 @@ ITEM_PENDING_FULFILL or ITEM_PENDING_RECEIPT for Store Fulfill and Warehouse Ful
 <moqui.basic.StatusItem statusId="ITEM_PENDING_RECEIPT" statusTypeId="ORDER_ITEM_STATUS" statusCode="PENDING_RECEIPT" description="Pending Receipt"/>
 ```
 
-#### New Status Flow transitions for TO Items
+#### Status Flow transitions for TO Items
 1. **Transfer Orders to be only Fulfilled in OMS**
    1. statusFlowId = TO_Fulfill_Only
    2. Status Changes
