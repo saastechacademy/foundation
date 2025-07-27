@@ -216,6 +216,7 @@ The API to [createTransferOrder](../oms/createTransferOrder.md) builds on the [c
 2. The [approveTransferOrder](../oms/approveTransferOrder.md) service will handle approval of Created TOs in the system.
 
 ### Fulfil Transfer Order
+**statusFlowId = TO_Fulfill_Only or TO_Fulfill_And_Receive**
 
 1. An inventory storage location will create the [OutTransferShipment](createOutTransferShipment.md) for a transfer order.
 2. The Transfer Shipment created will be [shipped](shipOutTransferShipment.md) by adding tracking details.
@@ -224,6 +225,7 @@ The API to [createTransferOrder](../oms/createTransferOrder.md) builds on the [c
 1. The Fulfillment App will list all TOs where Order is in ORDER_APPROVED status and Items are in ITEM_PENDING_FULFILL status so that they are eligible to be fulfilled in OMS.
 
 ### Receive Transfer Order
+**statusFlowId = TO_Receive_Only or TO_Fulfill_And_Receive**
 
 1. An inventory storage location will receive the [ShipmentReceipt](receiveTransferOrder.md) for a transfer order.
 2. Receiving of Transfer will be done against the TO items and not the Shipments in the Receiving app.
