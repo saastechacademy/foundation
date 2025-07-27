@@ -92,3 +92,9 @@ public class FedExExample {
     }
 }
 ```
+Reference:
+
+* https://developer.fedex.com/api/en-us/Api-recipes/us-domestic-e-commerce.html
+* https://developer.fedex.com/api/en-us/catalog/rate/v1/docs.html
+* https://developer.fedex.com/api/en-us/catalog/ship/v1/docs.html
+
