@@ -107,3 +107,7 @@ Provide sales engineers and onboarding teams a reliable mock for demoing shippin
 | UI Preview               | Embed static label PDF/image in response payload         |
 
 ---
+
+Reference:
+
+https://developer.fedex.com/api/en-us/guides/sandboxvirtualization.html
