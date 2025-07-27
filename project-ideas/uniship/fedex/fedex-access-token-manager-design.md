@@ -125,3 +125,6 @@ This ensures that tokens are refreshed accurately and that no expired token is u
 # Conclusion
 
 The `FedexAccessTokenManager` ensures efficient, safe, and scalable FedEx token management for a multi-tenant shipping gateway microservice. It follows Moqui caching practices and ensures token validity using internal expiration checks rather than relying solely on cache eviction policies.
+
+References:
+https://developer.fedex.com/api/en-us/catalog/authorization/v1/docs.html
