@@ -82,6 +82,22 @@ The POST transferOrders/{orderId}/receive API is used to receive the items in th
 4. The service will create the records in ShipmentReceipt entity.
 5. The corresponding InventoryItemDetail records will get created with the reference of ShipmentReceipt in the receiptId field.
 
+## **API Spec:**
+
+### API parameters
+
+**Input**
+1. orderId* - The ID of the Transfer Order in OMS.
+2. facilityId* - The ID of the facility in OMS where Transfer Order is being received.
+3. items* - The list of order items to be received.
+    1. orderItemSeqId - The Seq ID of the Transfer Order Item in OMS.
+    2. productId - The ID of the product in OMS for the Transfer Order Item.
+    3. quantityAccepted - The quantity of the item to be received.
+    4. quantityRejected - The quantity of the item to be rejected.
+    5. reasonEnumId - The ID of the reason enum in OMS for receiving the order items.
+
+### Sample Payloads
+
 **Scenario 1 - Receive quantity & Close**
 
 Here, receive the quantity and set the statusId as ITEM_COMPLETED since item is being requested for closing its receiving.
@@ -104,7 +120,7 @@ Here, receive the quantity and set the statusId as ITEM_COMPLETED since item is 
 }
  ```
 
-**Scenario 3 - Close TO Item for Receipt**
+**Scenario 2 - Close TO Item for Receipt**
 
 Here, no quantity is being received but only the statusId will be set as ITEM_COMPLETED, since item is being requested for closing its receiving.
 
