@@ -225,26 +225,91 @@ The API to [createTransferOrder](../oms/createTransferOrder.md) builds on the [c
 1. The Fulfillment App will list all TOs where Order is in ORDER_APPROVED status and Items are in ITEM_PENDING_FULFILL status so that they are eligible to be fulfilled in OMS.
 
 ### Receive Transfer Order
-**statusFlowId = TO_Receive_Only or TO_Fulfill_And_Receive**
+When a Transfer Order (TO) is shipped from one facility to another, the receiving facility must accurately receive the items against the original order. 
+This process ensures stock accuracy, triggers inventory updates, and closes the internal fulfillment loop.
 
-1. An inventory storage location will receive the [ShipmentReceipt](receiveTransferOrder.md) for a transfer order.
-2. Receiving of Transfer will be done against the TO items and not the Shipments in the Receiving app.
-3. This is because Shipments can only be received once, but items can be received multiple times.
-4. Receivers do not need to worry about how many fulfillments were created or how items were split, they just check how many units of each item have arrived at the location and receive.
-5. So as part of this implementation, we do not create incoming shipments and related entities as we will directly create ShipmentReceipt records for the Transfer Order Items.
-6. For items received against the TO and which are included in the TO, we will populate the fields like orderId, orderItemSeqId, productId. 
-7. For new items received against the TO which are not included in the TO, we will populate the fields like orderId, productId but no orderItemSeqId since that product does not exist in TO.
-8. **IMP** The ShipmentReceipts in OMS will be saved against the Shipment IDs if available.
-   1. When receipts are created from Receiving App or using this API, we will not get shipment IDs in the request to record the receipt, so internally before saving the receipt, we will split the receipt if quantity received is shipped as part of multiple fulfillments. 
-   2. Eg, TO has 2 fulfillments for an item with quantity 10 and 15 each.
-   3. While receiving, both shipments are being received together as part of 1 API call with quantity received as 25, but 2 ShipmentReceipt records will be created in OMS instead of 1.
-   4. The Receipt 1 will be linked to Shipment 1 with quantity 10 and Receipt 2 will be linked to Shipment 2 with quantity 15.
-   5. If over-receiving is being done, the excess quantity not part of any shipment will be recorded directly against the TO Order Item.
-   6. This will be default behavior of the receive API in OMS and that it will help reconcile the receiving against the shipments, so this is part of poorti component.
-   7. This also helps to sync receipts to NetSuite which requires the fulfillment ID to be sent against the receipt records.
+This section describes the steps followed by receiving personnel to process an incoming Transfer Order and record item receipts.
 
-**NOTE**
-1. The Receiving App will list all TOs assigned to the facility in ORDER_APPROVED status.
+#### Process Overview
+1. **Shipment Arrival**  
+   An inventory location receives a physical shipment against a previously dispatched Transfer Order (TO).
+
+2. **Accessing the Transfer Order**
+   - Navigate to the **“Transfer Orders”** section in the **Receiving App**.
+   - A list of TOs in ORDER_APPROVED status assigned to the facility  will be visible.
+   - To search for a specific TO, enter the TO **Order Name** in the search bar.
+
+3. **Viewing Order Details**
+   - Once a TO is selected, the **Order Detail** screen displays all items included in the order.
+   - Each item shows its ordered quantity and current received quantity (if any).
+
+4. **Recording Receipts**
+   - Users can enter the **received quantity** against each individual item.
+   - [Receipts are recorded **against TO Items**](#receiving-against-to-items-not-shipments), not individual shipments. This is done since:
+      - Shipments can only be received once, but items can be received multiple times.
+        - So if any item is missed or mistakenly left out during shipment, the system does not allow that same shipment to be reopened or partially received again.
+          Receiving against TO items avoids this issue, as we can update item level receipts progressively, regardless of how they were fulfilled.
+        - Receivers do not need to worry about how many fulfillments were created or how items were split, they just check how many units of each item have arrived at the location and receive.
+
+#### Supported Receiving Scenarios
+The system supports a variety of real-world receiving conditions, ensuring flexibility and accurate inventory tracking:
+
+1. **Partial Receipt**
+   - Only a portion of the TO Item quantity is received.
+   - The remaining quantity stays open for future receipts.
+
+2. **Multiple Shipments for Same Item**
+   - An item is shipped in multiple fulfillments.
+   - The full quantity can be received at once, even if it was split across shipments.
+
+3. **Receiving New Product (Not in TO)**
+   - A product not listed in the original TO arrives with the shipment.
+   - The system allows its receipt, marking it as an **unexpected item** without an `orderItemSeqId`.
+
+4. **Receive TO Item and Close**
+   - Item is fully received, and the system marks it as closed.
+   - No further receipts will be accepted for that item.
+
+5. **Close Received TO Item (Even if Partial)**
+   - The receiver can choose to close a TO Item manually, even if the full quantity hasn’t been received.
+   - This is useful when excess items will not be shipped or are considered lost.
+
+6. The required quantity can be added for each item and hence [receiving against the Transfer Order Items]() is done, not the individual shipments.
+
+#### Implementation Details
+
+[ShipmentReceipt](receiveTransferOrder.md) records are created for the receipts recorded against the TO Items.
+
+##### Receiving Against TO Items, Not Shipments
+`ShipmentReceipt` records will be internally linked to `Shipment` IDs **if available**, to support:
+- Better reconciliation across fulfillments
+- Integration with external systems like NetSuite
+
+When a receipt is submitted **without shipment references** (e.g., via API or Receiving App), OMS will:
+1. Internally resolve and split the received quantity across matching shipments
+2. Create multiple `ShipmentReceipt` records if required
+
+###### Example Scenario:
+- A TO has two fulfillments for the same item:
+   - Shipment 1: 10 units
+   - Shipment 2: 15 units
+
+- The receiving facility receives all **25 units** at once and submits a single receipt.
+
+- OMS will automatically:
+   - Create `ShipmentReceipt 1` for **10 units** linked to **Shipment 1**
+   - Create `ShipmentReceipt 2` for **15 units** linked to **Shipment 2**
+
+##### Handling Over-Receipts
+
+If the **quantity received exceeds** the sum of all known shipments:
+- The extra quantity is recorded directly **against the TO Item**
+- This receipt is **not linked to any Shipment**
+
+This is the **default behavior** of the receive API and helps:
+- Reconcile shipment quantities
+- Maintain inventory accuracy
+- Support NetSuite integration (which requires fulfillment linkage)
 
 ### Close Transfer Order Fulfillment
 
