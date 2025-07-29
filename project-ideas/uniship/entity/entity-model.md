@@ -133,7 +133,7 @@ Below are the XML definitions for the three core entities, modeled in alignment 
 ```
 ### 🔐 Tenant Credential Storage
 
-### 📄 SystemMessageRemote Entity
+### 📄 ShippingGatewayAuthConfig Entity
 
 The `ShippingGatewayAuthConfig` entity is designed to store tenant-specific authentication tokens information for a given shipping gateway. 
 
