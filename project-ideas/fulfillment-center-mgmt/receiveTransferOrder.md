@@ -3,7 +3,7 @@
 ## 1. Receive TO
 
 ### **Purpose:**
-The POST transferOrders/{orderId}/receive API is used to receive the items in the transfer order.
+The **POST transferOrders/{orderId}/receive API** is used to receive the items in the transfer order.
 
 1. The API receives the quantity for the TO items.
 2. The quantity to be received for an item will be split across one or more shipments as per the required quantity available to receive in each Shipment.
@@ -74,7 +74,7 @@ Here, no orderItemSeqId is being passed, the item will be received in the TO usi
 ## 2. Receive And Close TO
 
 ### **Purpose:**
-The POST transferOrders/{orderId}/receive API is used to receive the items in the transfer order.
+The **POST transferOrders/{orderId}/receiveAndClose API** is used to receive the items in the transfer order.
 
 1. The API receives the quantity for the TO items if quantity is also sent, else only updates the TO Item status to ITEM_COMPLETED.
 2. The quantity to be received for an item will be split across one or more shipments as per the required quantity available to receive in each Shipment.
