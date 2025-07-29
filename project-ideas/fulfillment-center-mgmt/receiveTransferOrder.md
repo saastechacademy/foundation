@@ -1,8 +1,8 @@
 # Receive Transfer Order Items	
 
-1. Receive TO
+## 1. Receive TO
 
-## **Purpose:**
+### **Purpose:**
 The POST transferOrders/{orderId}/receive API is used to receive the items in the transfer order.
 
 1. The API receives the quantity for the TO items.
@@ -11,9 +11,9 @@ The POST transferOrders/{orderId}/receive API is used to receive the items in th
 4. The service will create the records in ShipmentReceipt entity.
 5. The corresponding InventoryItemDetail records will get created with the reference of ShipmentReceipt in the receiptId field. 
 
-## **API Spec:**
+### **API Spec:**
 
-### API parameters
+#### API parameters
 
 **Input**
 1. orderId* - The ID of the Transfer Order in OMS.
@@ -25,7 +25,7 @@ The POST transferOrders/{orderId}/receive API is used to receive the items in th
    4. quantityRejected - The quantity of the item to be rejected.
    5. reasonEnumId - The ID of the reason enum in OMS for receiving the order items.
   
-### Sample Payloads
+#### Sample Payloads
 
 **Scenario 1 - Receive Items**
 
@@ -71,9 +71,9 @@ Here, no orderItemSeqId is being passed, the item will be received in the TO usi
 }
  ```
 
-2. Receive And Close TO
+## 2. Receive And Close TO
 
-## **Purpose:**
+### **Purpose:**
 The POST transferOrders/{orderId}/receive API is used to receive the items in the transfer order.
 
 1. The API receives the quantity for the TO items if quantity is also sent, else only updates the TO Item status to ITEM_COMPLETED.
@@ -82,9 +82,9 @@ The POST transferOrders/{orderId}/receive API is used to receive the items in th
 4. The service will create the records in ShipmentReceipt entity.
 5. The corresponding InventoryItemDetail records will get created with the reference of ShipmentReceipt in the receiptId field.
 
-## **API Spec:**
+### **API Spec:**
 
-### API parameters
+#### API parameters
 
 **Input**
 1. orderId* - The ID of the Transfer Order in OMS.
@@ -96,7 +96,7 @@ The POST transferOrders/{orderId}/receive API is used to receive the items in th
     4. quantityRejected - The quantity of the item to be rejected.
     5. reasonEnumId - The ID of the reason enum in OMS for receiving the order items.
 
-### Sample Payloads
+#### Sample Payloads
 
 **Scenario 1 - Receive quantity & Close**
 
