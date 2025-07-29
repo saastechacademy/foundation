@@ -274,7 +274,7 @@ The system supports a variety of real-world receiving conditions, ensuring flexi
    - The receiver can choose to close a TO Item manually, even if the full quantity hasn’t been received.
    - This is useful when excess items will not be shipped or are considered lost.
 
-6. The required quantity can be added for each item and hence [receiving against the Transfer Order Items]() is done, not the individual shipments.
+6. The required quantity can be added for each item and hence [receiving against the Transfer Order Items](#receiving-against-to-items-not-shipments) is done, not the individual shipments.
 
 #### Implementation Details
 
