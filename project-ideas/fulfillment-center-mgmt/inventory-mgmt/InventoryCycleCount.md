@@ -73,23 +73,21 @@ A retail organization with multiple stores conducts an **annual hard inventory c
 
 ---
 
-### `FacilityProductCountVariance`
+### `FacilityProductCount`
 
-* **Purpose**: Records consolidated variance per product per facility.
+* **Purpose**: Records consolidated QOH per product per facility.
 * **Key Fields**:
 
   * Composite PK: (`workEffortId`, `facilityId`, `productId`)
-  * `consolidatedQuantity`: Total counted quantity
-  * `systemQuantityOnHand`: Expected from system
-  * `varianceQuantityOnHand`: Difference
-  * `countDate`, `totalValue`, `valueVariance`
+  * `quantityOnHand`: Total counted quantity
+  * `countDate`
 * **Relation**:
 
   * `workEffortId` (FK → `WorkEffort`)
 
 ---
 
-### `FacilityProductCountVarianceImport`
+### `FacilityProductCountImport`
 
 * **Purpose**: Tracks which count sessions contributed to each variance.
 * **Key Fields**:
