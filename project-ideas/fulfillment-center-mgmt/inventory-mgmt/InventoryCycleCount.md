@@ -1,6 +1,6 @@
 **Inventory Cycle Count – Design and Data Model Overview**
 
-This document defines the business story and supporting entity model for implementing year-end hard inventory counts in a retail environment using OFBiz.
+This document defines the business story and supporting entity model for implementing year-end hard inventory counts in a retail environment.
 
 ---
 
