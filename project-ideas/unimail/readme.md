@@ -117,6 +117,95 @@ Track a behavioral event for a user, such as cart abandonment or order viewed. T
 
 Entity defintion 
 
+### ✅ Entities for Unimail Tenant Management
+
+#### 1. `Party`
+Represents any participant — in this context, your unimail tenant (retailer).
+- `partyId` (PK)
+- `partyTypeEnumId` (set to `PtyOrganization` for tenants)
+
+#### 2. `Organization`
+Extends `Party` when `partyTypeEnumId = 'PtyOrganization'`.
+- `partyId` (PK, FK to Party)
+- `organizationName`
+
+#### 3. `PartyRole`
+Assigns a role to a party for classification and access control.
+- `partyId` (PK, FK to Party)
+- `roleTypeId` (e.g., `UnimailTenant`)
+- `fromDate` (PK)
+- `thruDate`
+
+---
+
+### 📄 XML Definitions for Tenant Entities
+
+Below are the XML definitions for the three core entities, modeled in alignment with Moqui’s UDM structure.
+
+#### 🗂 `Party`
+```xml
+<entity entity-name="Party" package="co.hotwax.unimail">
+    <field name="partyId" type="id" is-pk="true"/>
+    <field name="partyTypeEnumId" type="id"/>
+    <field name="statusId" type="id"/>
+    <field name="description" type="text-short"/>
+    <field name="createdDate" type="date-time"/>
+
+    <relationship type="one" title="PartyType" related="moqui.basic.Enumeration" short-alias="type">
+        <key-map field-name="partyTypeEnumId"/>
+    </relationship>
+    <relationship type="one-nofk" related="co.hotwax.unimail.Organization" short-alias="organization"/>
+    <relationship type="many" related="co.hotwax.unimail.PartyRole" short-alias="roles">
+        <key-map field-name="partyId"/>
+    </relationship>
+
+    <seed-data>
+        <moqui.basic.EnumerationType enumTypeId="PartyType" description="Party Type"/>
+        <moqui.basic.Enumeration enumId="PtyOrganization" enumTypeId="PartyType" description="Organization"/>
+        <moqui.basic.Enumeration enumId="PtyPerson" enumTypeId="PartyType" description="Person"/>
+    </seed-data>
+
+    <master name="default">
+        <detail relationship="type"/>
+        <detail relationship="organization"/>
+        <detail relationship="roles"/>
+    </master>
+</entity>
+```
+
+#### 🗂 `Organization`
+```xml
+<entity entity-name="Organization" package="co.hotwax.unimail">
+    <field name="partyId" type="id" is-pk="true"/>
+    <field name="organizationName" type="name"/>
+
+    <relationship type="one" related="co.hotwax.unimail.Party">
+        <key-map field-name="partyId"/>
+    </relationship>
+</entity>
+```
+
+#### 🗂 `PartyRole`
+```xml
+<entity entity-name="PartyRole" package="co.hotwax.unimail">
+    <field name="partyId" type="id" is-pk="true"/>
+    <field name="roleTypeId" type="id" is-pk="true"/>
+    <field name="fromDate" type="date-time" is-pk="true"/>
+    <field name="thruDate" type="date-time"/>
+
+    <relationship type="one" related="co.hotwax.unimail.Party"/>
+    <relationship type="one" related="moqui.basic.Enumeration">
+        <key-map field-name="roleTypeId"/>
+    </relationship>
+
+    <seed-data>
+        <moqui.basic.EnumerationType enumTypeId="RoleType" description="Party Role Type"/>
+        <moqui.basic.Enumeration enumId="UnimailTenant" enumTypeId="RoleType" description="Retailer Tenant"/>
+    </seed-data>
+</entity>
+```
+
+
 ```xml
 <entity entity-name="EmailGatewayConfig" package="co.hotwax.unimail" use="configuration" cache="true">
     <field name="emailGatewayConfigId" type="id" is-pk="true"/>
