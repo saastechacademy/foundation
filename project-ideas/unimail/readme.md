@@ -115,7 +115,49 @@ Track a behavioral event for a user, such as cart abandonment or order viewed. T
 
 ---
 
+Entity defintion 
+
+```xml
+<entity entity-name="EmailGatewayConfig" package="co.hotwax.unimail" use="configuration" cache="true">
+    <field name="emailGatewayConfigId" type="id" is-pk="true"/>
+    <field name="description" type="text-medium"/>
+    <field name="sendServiceName" type="text-medium"/>
+    <field name="eventServiceName" type="text-medium"/>
+    
+    <relationship type="one" related="moqui.basic.Enumeration">
+        <key-map field-name="emailGatewayTypeEnumId"/>
+    </relationship>
+
+</entity>
+<entity entity-name="EmailGatewayAuthConfig" package="co.hotwax.unimail" use="configuration" cache="true">
+    <field name="emailGatewayAuthConfigId" type="id" is-pk="true"/>
+    <field name="tenantPartyId" type="id" not-null="true"/>
+    <field name="emailGatewayConfigId" type="id" not-null="true"/>
+    
+    <field name="modeEnumId" type="id"/> <!-- Eg: Sandbox / Production -->
+    <field name="authTypeEnumId" type="id" not-null="true"/>
+    <field name="baseUrl" type="text-medium" not-null="true"/>
+    
+    <field name="apiKey" type="text-medium" encrypt="true"/>
+    <field name="username" type="text-medium"/>
+    <field name="password" type="text-medium" encrypt="true"/>
+    <field name="clientId" type="text-medium"/>
+    <field name="clientSecret" type="text-medium" encrypt="true"/>
+    <field name="extraConfigJson" type="text-very-long"/>
+    
+    <field name="fromDate" type="date-time"/>
+    <field name="thruDate" type="date-time"/>
+    
+    <relationship type="one" related="co.hotwax.unimail.EmailGatewayConfig"/>
+    <relationship type="one" related="co.hotwax.unimail.Party" short-alias="tenant">
+        <key-map field-name="tenantPartyId"/>
+    </relationship>
+</entity>
+
+```
+
 ## Summary
 UniMail offers a unified and provider-agnostic API surface for sending email and tracking user behavior. While the backend behavior varies depending on the configured email gateway (Klaviyo, Iterable, SMTP), the OMS interacts with UniMail through a stable and predictable contract.
 
 This enables the business to switch providers, test new integrations, or send messages from its own SMTP infrastructure without impacting the calling systems.
+
