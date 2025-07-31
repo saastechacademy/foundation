@@ -212,11 +212,6 @@ Below are the XML definitions for the three core entities, modeled in alignment 
     <field name="description" type="text-medium"/>
     <field name="sendServiceName" type="text-medium"/>
     <field name="eventServiceName" type="text-medium"/>
-    
-    <relationship type="one" related="moqui.basic.Enumeration">
-        <key-map field-name="emailGatewayTypeEnumId"/>
-    </relationship>
-
 </entity>
 <entity entity-name="EmailGatewayAuthConfig" package="co.hotwax.unimail" use="configuration" cache="true">
     <field name="emailGatewayAuthConfigId" type="id" is-pk="true"/>
