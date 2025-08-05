@@ -26,11 +26,41 @@ Test complete order life cycle for an existing order imported from Shopify. To t
 
 #### Broken UI
 
+The UI broke when the [BILL_TO_CUSTOMER] role type ID was removed from the order_role entity for an order.
+The issue occurred due to a check in the following file:
+
+File Path: applications/hwmapps/template/commerce/orderdashboard/OrderInfo.ftl
+Line Number: 13
+
+![image](https://github.com/user-attachments/assets/56a8cec8-08b7-4e4e-ac2e-36904ddc1716)
+
 ### Use OrderHeader > ProductStore.payToPartyId and deprecate OrderRole records [BILL_FROM_VENDOR, SHIP_FROM_VENDOR]
 
 #### Broken Business Processes
 
+- Created an e-commerce order.  
+- Successfully imported the order into HC.  
+- Removed the `BILL_FROM_VENDOR` record from the `order_role` entity.  
+- The order was successfully brokered to a store.  
+- Picked and packed the order successfully through the Fulfillment app.  
+- Attempted to ship the order but encountered a "Failed to ship order" error in the Fulfillment app. 
+ 
+Error on server - 
+the rollbackOnly was caused by: Service [completeSalesOrder] threw an unexpected exception/errororg.apache.ofbiz.service.GenericServiceException: Service [completeSalesOrder] target threw an unexpected exception (null) (Service [completeSalesOrder] target threw an unexpected exception (null))
+File Path: src/main/java/co/hotwax/customerservice/fulfillment/FulfillmentServices.java
+
+Line Number: 240
+
 #### Broken UI
+
+The UI broke when the [BILL_FROM_VENDOR] role type ID was removed from the order_role entity for an order.
+The issue occurred due to a check in the following file:
+
+File Path: applications/hwmapps/template/commerce/orderdashboard/OrderInfo.ftl
+Line Number: 46
+
+![image](https://github.com/user-attachments/assets/f87c9e48-9ca8-48fe-842a-ee4666ab8a75)
+
 
 ### Deprecate OrderContactMech records [PHONE_SHIPPING, SHIPPING_LOCATION] and use OrderItemShipGroup.contactMechId and OrderItemShipGroup.telecomContactMechId
 
