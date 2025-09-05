@@ -52,3 +52,42 @@ This document captures the **two primary business stories** that motivate and sh
 
 Both stories complement each other: the hard count establishes a baseline, while directed counts maintain accuracy throughout the year.
 
+---
+
+# Non-Functional Requirements for Cycle Count PWA (Store Associate Scanning)
+
+### 1. **Offline-First**
+
+* The application must function reliably without network connectivity.
+* All scans must be captured and stored locally on the device until connectivity is available.
+* Data persistence must guarantee zero data loss across app crashes, reloads, or device restarts.
+
+### 2. **Scan Reliability**
+
+* Every barcode scan must be recorded immediately and without delay.
+* The system must guarantee **no missed scans**, even when scanning at maximum practical speed with a wireless barcode scanner.
+* Each scan event should be atomic: once captured, it is safely persisted before any other processing occurs.
+
+### 3. **Performance Priority**
+
+* The highest priority is **capturing scan events**.
+* Secondary operations (e.g., aggregating scans by SKU, background synchronization with server) must never degrade scanning performance.
+* The scan input must always remain in focus to minimize associate interruptions.
+
+### 4. **Background Processing**
+
+* Tasks such as aggregating counts and syncing data to the backend (Moqui services) are **low-priority**.
+* These tasks must execute in the background and defer automatically if they risk impacting scan capture.
+* Background retries must ensure eventual consistency with the server once connectivity is available.
+
+### 5. **Data Integrity**
+
+* Scans must be persisted with timestamp, product identifier, and device/session metadata.
+* Counts are based on raw scan events; aggregations are computed later for display or reporting.
+
+### 6. **Usability**
+
+* The scan field should always be ready to accept input (no manual refocus required).
+* The interface must be optimized for **fast repetitive scanning** with minimal interaction from the associate.
+
+---
