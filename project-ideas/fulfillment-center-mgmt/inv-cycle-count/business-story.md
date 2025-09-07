@@ -54,6 +54,35 @@ Both stories complement each other: the hard count establishes a baseline, while
 
 ---
 
+## 3. **Executing Cycle Count**
+
+### A. Single session, single device (happy path)
+
+1. User starts a counting **import session** on Device A.
+2. Scans items; app records scan events.
+3. Background process periodically pushes updates to server.
+4. User completes the count; final push succeeds.
+   **Expectations:** Instant scans, no duplicates, server matches local totals.
+
+### B. Session paused, then resumed on the **same device**
+
+1. User pauses (closes app/locks device) mid-session.
+2. Later resumes on same Device.
+3. App does a quick **inbound refresh** from the server and reconciles local data.
+4. Background push resumes; user continues counting.
+   **Expectations:** Local and server re-align before pushing.
+
+### C. Session paused, resumed on a **different device**
+
+1. User starts on Device A, pauses.
+2. Later resumes on Device B.
+3. On Device B: app performs **inbound refresh first**, rebuilding local state avoid collisions.
+4. Counting continues; background push handles updates.
+   **Expectations:** No duplicate creates; updates on Device B use the correct server PKs created earlier on Device A.
+
+---
+
+
 # Non-Functional Requirements for Cycle Count PWA (Store Associate Scanning)
 
 ### 1. **Offline-First**
