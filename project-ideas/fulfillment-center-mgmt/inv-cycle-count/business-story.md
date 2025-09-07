@@ -80,6 +80,10 @@ Both stories complement each other: the hard count establishes a baseline, while
 4. Counting continues; background push handles updates.
    **Expectations:** No duplicate creates; updates on Device B use the correct server PKs created earlier on Device A.
 
+### D. Single Active Counting Session per User
+
+For cycle counts, each **InventoryCountImportId** (counting session) is assigned to exactly **one user at a time**, and each user may have **only one active session** at any moment—regardless of which device they use. Starting another session requires the current one to be finished, paused, or explicitly closed. While a session is active, **all scanning, aggregation, and sync** must target **only that session**, and batch uploads must contain items for **one session only**. This constraint prevents duplicate or conflicting work, preserves PK/idempotency guarantees, and simplifies reconciliation and audit/auditability.
+
 ---
 
 ## Explainability and Auditability for Inventory Adjustments

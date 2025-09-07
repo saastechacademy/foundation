@@ -72,13 +72,13 @@ These tables together support high-frequency scanning, safe background updates, 
 
 | Field               | Description                                          |
 | ------------------- | ---------------------------------------------------- |
-| `oms`               | Tenant OMS                                           |
-| `importId`          | Count session ID                                     |
+| `inventoryCountImportId` | Count session ID                                |
+| `importItemSeqId`        | per-item sequence within the session            |
 | `sku`               | Product ID (scanned identifier)                      |
 | `productId`         | HotWax OMS internal productId                        |
 | `productIdentifier` | Stores the original scanned SKU                      |
 | `locationSeqId`     | Shelf/zone (optional if not needed per-item)         |
-| `qty`               | Total count from all scans                           |
+| `quantity`          | Total count from all scans                           |
 | `lastScanAt`        | Timestamp of latest scan for this SKU                |
 | `syncedQty`         | Quantity that has been successfully synced to server |
 | `lastSyncedAt`      | Timestamp of last successful sync                    |
@@ -93,7 +93,7 @@ These tables together support high-frequency scanning, safe background updates, 
 
 | Field        | Description                               |
 | ------------ | ----------------------------------------- |
-| `importId`   | ID for InventoryCountImport session       |
+| `inventoryCountImportId` | ID for InventoryCountImport session |
 | `createdAt`  | Session start time                        |
 | `status`     | Local session state (e.g., active/closed) |
 | `facilityId` | Store/warehouse being counted             |
@@ -128,25 +128,21 @@ This flow uses two key tables:
 
             * Use `useProductMaster().resolveSku(sku)` to retrieve the `productId`
             * Insert new `InventoryCountImportItem` with `productIdentifier = sku` and `productId = resolved productId`
-        * If already present, update qty.
+        * If already present, update quantity.
         * Set `aggApplied = true` on the scan event
 * Uses composable-level flag `syncStatus === 'pushing'` to avoid race condition with sync.
 
 ---
 
-### 🔹 `pushPendingItems()` Sync to Server Flow
+### 🔹 `pushPendingItems()` [Sync to Server Flow](./background-sync.md)
 
-1. Background process looks for items with `qty > syncedQty`.
+1. [Background process](./background-sync.md) looks for items with `quantity != syncedQty`.
 2. Forms a **snapshot** of the current count (per SKU):
 
-   ```ts
-   batchBaseQty[sku] = qty;
-   ```
 3. Constructs batch payload:
 
-    * Option A: `{ sku, importId, targetQty, idempotencyKey }`
-    * Option B: `{ sku, importId, deltaQty, idempotencyKey }`
-4. On success:
+    * : `{ inventoryCountImportId, importItemSeqId, productId, sku, quantity, lastSyncedAt }`
+4. With ServiceWorker, post updates to server. On success:
 
     * Updates `syncedQty = batchBaseQty[sku]`
     * Updates `lastSyncedAt`, `lastSyncedBatchId`
@@ -184,5 +180,5 @@ This flow uses two key tables:
 * `productId` resolution via `useProductMaster()` ensures server compatibility.
 * Clear snapshot boundaries ensure consistency.
 * Server reflects accurate count per import session.
-* Composable `useInventoryCountImport()` manages full lifecycle and batching.
+* Composable `useInventoryCountImport()` manages full lifecycle and batching and call to push to server using ServiceWorker.
 
