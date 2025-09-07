@@ -46,6 +46,15 @@ This document captures the **two primary business stories** that motivate and sh
 
 ---
 
+### Explainability and Auditability for Inventory Adjustments
+
+To ensure compliance, transparency, and operational trust, every inventory adjustment resulting from a cycle count is accompanied by a structured explanation. For each variance between counted and system inventory, the system requires a documented reason and outcome (e.g., adjustment applied, skipped, or overridden). This creates a complete audit trail, allowing management and auditors to trace every inventory change back to its business context, decision rationale, and responsible user.
+
+This approach supports:
+- Regulatory and financial audit requirements
+- Operational transparency and accountability
+- Easier investigation and correction of discrepancies
+
 ## **Summary**
 - **Annual Hard Counts**: Broad, mandatory, finance-driven events ensuring end-of-year accuracy.
 - **Directed Cycle Counts**: Targeted, operationally driven checks that improve accuracy continuously.
