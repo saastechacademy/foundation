@@ -10,3 +10,4 @@
 * [InventoryCountImport composable](./inventory-count-composable.md)
 * [Sync count items](./sync-inventory-count-import-item.md)
 * [PK Generation for — Strategy for InventoryCountImportItem](./pk-generation-strategy.md)
+* [Web Workers, Comlink, Vite](https://johnnyreilly.com/web-workers-comlink-vite-tanstack-query)
