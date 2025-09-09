@@ -14,6 +14,12 @@
 * [PK Generation for — Strategy for InventoryCountImportItem](./pk-generation-strategy.md)
 * [Web Workers, Comlink, Vite](https://johnnyreilly.com/web-workers-comlink-vite-tanstack-query)
 
+### Additional References
+* [Inventory Data Model ](../../oms/Inventory.md)
+* [Inventory Management proess](../inventoryManagementProcess.md)
+* [Physical Inventory](../../oms/createPhysicalInventory.md)
+
+
 ### Workflows
 
 #### Cycle Count Workflow
