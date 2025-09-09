@@ -4,6 +4,7 @@
 * [Entities and Workflows](./entities-and-workflows.md)
 * [Apply count to Inventory](./apply-count-to-inventory.md)
 * [Directed Cycle Count](./directed-cycle-count-story.md)
+* [Manager Needs for Directed Cycle Count](./manager-needs-directed-cycle-count.md)
 
 ### PWA Design notes
 
