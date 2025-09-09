@@ -3,6 +3,7 @@
 * [Business story](./business-story.md)
 * [Entities and Workflows](./entities-and-workflows.md)
 * [Apply count to Inventory](./apply-count-to-inventory.md)
+* [Directed Cycle Count](./directed-cycle-count-story.md)
 
 ### PWA Design notes
 
@@ -11,3 +12,14 @@
 * [Sync count items](./sync-inventory-count-import-item.md)
 * [PK Generation for — Strategy for InventoryCountImportItem](./pk-generation-strategy.md)
 * [Web Workers, Comlink, Vite](https://johnnyreilly.com/web-workers-comlink-vite-tanstack-query)
+
+### Workflows
+
+#### Cycle Count Workflow
+Cycle count session is assigned to a user. User scans items, app records scan events. Background process periodically pushes updates to server. User completes the count; final push succeeds.
+
+
+#### Create InventoryCountImport
+The planned cycle count task is assigned to Store Manager user. The store manager creates an `InventoryCountImport` record to start a new inventory count session. This record includes metadata such as the store location, assigned user, and start time.
+The manager may create one or more `InventoryCountImport` records for the same `WorkEffort` if multiple users will be performing the count in parallel.
+
