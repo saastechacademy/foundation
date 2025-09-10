@@ -30,8 +30,8 @@ This training program requires a solid foundation in software development princi
     * Integrate with [Shopify](https://shopify.dev/docs/api/) eCommerce store.
 
 ### Module 0: Know your business domain
-* [What is Order Fulfillment?](https://docs.hotwax.co/documents/store-operations/orders/fulfillment)
-* [Experience Order Fulfillment](https://launchpad.hotwax.io/login?redirectUrl=https://fulfillment-dev.hotwax.io/login)
+* [How HotWax's OMS solve bussiness requirments of NotNaked](https://www.hotwax.co/product/omnichannel-order-management-system/)
+* [Experience OMS flow](ubpl/NotNaked/ExperienceOmsFlow.md)
 * [Getting Started](https://ofbiz.apache.org/developers.html)
 * [Party Activity](udm/beginner/activity.md#party-data-model)
 * [Setup Company Product Store and Catalog](udm/beginner/activity.md#setup-up-company-product-store-and-catalog)
