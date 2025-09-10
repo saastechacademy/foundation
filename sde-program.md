@@ -30,6 +30,7 @@ This training program requires a solid foundation in software development princi
     * Integrate with [Shopify](https://shopify.dev/docs/api/) eCommerce store.
 
 ### Module 0: Know your business domain
+* [How HotWax's OMS solve bussiness requirments](https://www.hotwax.co/product/omnichannel-order-management-system/)
 * [Experience OMS flow](ubpl/NotNaked/ExperienceOmsFlow.md)
 * [Getting Started](https://ofbiz.apache.org/developers.html)
 * [Party Activity](udm/beginner/activity.md#party-data-model)
