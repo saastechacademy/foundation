@@ -72,4 +72,12 @@ NotNaked’s advanced operations are powered by an integrated technology stack:
 * **ShipHawk:** A shipping software solution that automates shipping processes, integrates with carriers, and provides real-time shipping rates and tracking.  
 * **Loop Returns:** A returns management platform that simplifies the returns and exchanges process, enhancing customer experience.
 
+## **Requirements**
+
+- They need all their systems like ERP, POS, OMS, and e-commerce to connect and talk to each other smoothly, so that data stays consistent everywhere without duplication or errors.  
+- They require real-time and accurate inventory visibility to avoid situations where stock shows available but is not, or where excess inventory piles up unnecessarily.  
+- They need a streamlined process for transferring inventory between warehouses or stores, with proper tracking of items, timelines, and related costs.  
+- They require strong support for BOPIS (Buy Online, Pick up In Store) and BORIS (Buy Online, Return In Store), so customers can pick up or return items easily without facing issues in stock availability or order routing.  
+
+
 For managing unified orders, inventory, and fulfillment across all channels, NotNaked requires an [Enterprise-Level Application](https://www.ibm.com/think/topics/enterprise-applications). They selected [**HotWax Commerce**](https://www.hotwax.co/) — an **omnichannel Order Management System (OMS)** — as the backbone of their retail operations, enabling seamless integration across e-commerce, stores, warehouses, and logistics.
