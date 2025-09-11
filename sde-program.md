@@ -22,9 +22,9 @@ This training program uses a learn-by-doing approach. You'll gain practical expe
  
  ## Software Development Program Structure
 
-- [**Pre-requisites**](https://github.com/parnikarangnekar/foundation/new/main/roles-responsibilities#pre-requisites):
+- [**Pre-requisites**](roles-responsibilities/technical-training-program-structure.md#pre-requisites):
 These are the foundational concepts you should be comfortable with before starting the training program.
-- [**Training Modules**](https://github.com/parnikarangnekar/foundation/new/main/roles-responsibilities#pre-requisites):
+- [**Training Modules**](roles-responsibilities/technical-training-program-structure.md#training-modules):
 Once the prerequisites are clear, the following modules will be covered in depth.
      
 
