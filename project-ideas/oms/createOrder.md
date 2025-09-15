@@ -22,160 +22,160 @@ This service creates data in following entities:
 
 ```json
 {
-  "currencyUom": "USD",
-  "customerClassificationId": null,
-  "entryDate": "2024-07-30T15:23:47+0000",
-  "externalId": "444455555",
-  "orderDate": "2024-07-25T04:07:49.956",
-  "orderName": "#499999",
-  "orderTypeId": "SALES_ORDER",
-  "statusId": "ORDER_CREATED",
-  "originFacilityId": "",
-  "presentmentCurrencyCode": "USD",
-  "priority": "2",
-  "productStoreId": "STORE",
-  "salesChannelEnumId": "UNKNWN_SALES_CHANNEL",
-  "webSiteId": "WEBSTORE",
-  "adjustments": [
-    {
-      "orderAdjustmentTypeId": "SHIPPING_CHARGES",
-      "amount": "500",
-      "exemptAmount": "2.5",
-      "comments": "",
-      "sourcePercentage": "5",
-      "adjustmentAttributes": [
-        {
-          "attrName": "taxAuthority",
-          "attrValue": "State of California",
-          "attrDescription": "state tax"
-        }
-      ]
-    }
-  ],
-  "attributes": [
-    {
-      "attrName": "item",
-      "attrValue": "testing attribute",
-      "attrDescription": ""
-    }
-  ],
-  "contactMechs": [
-    {
-      "contactMechId": "100489",
-      "contactMechPurposeTypeId": "SHIPPING_LOCATION"
-    },
-    {
-      "contactMechId": "100490",
-      "contactMechPurposeTypeId": "PHONE_SHIPPING"
-    },
-    {
-      "contactMechId": "100491",
-      "contactMechPurposeTypeId": "SHIPPING_EMAIL"
-    },
-    {
-      "contactMechId": "100495",
-      "contactMechPurposeTypeId": "ORDER_EMAIL"
-    }
-  ],
-  "identifications": [
-    {
-      "idType": "SHOPIFY_ORD_NAME",
-      "idValue": "2345678876545"
-    },
-    {
-      "idType": "SHOPIFY_ORD_ID",
-      "idValue": "4444992255"
-    }
-  ],
-  "paymentPreferences": [
-    {
-      "paymentMethodTypeId": "EXT_SHOP_OTHR_GTWAY",
-      "maxAmount": "25000",
-      "statusId": "PAYMENT_AUTHORIZED",
-      "paymentMode": "",
-      "cardName": "",
-      "manualAuthCode": null,
-      "manualRefNum": "45545454545454",
-      "createdByUserLogin": "nishtha.jain",
-      "orderId": "100783"
-    }
-  ],
-  "roles": [
-    {
-      "partyId": "100395",
-      "roleTypeId": "PLACING_CUSTOMER"
-    },
-    {
-      "partyId": "100395",
-      "roleTypeId": "END_USER_CUSTOMER"
-    },
-    {
-      "partyId": "100395",
-      "roleTypeId": "SHIP_TO_CUSTOMER"
-    },
-    {
-      "partyId": "100395",
-      "roleTypeId": "BILL_TO_CUSTOMER"
-    }
-  ],
-  "shipGroups": [
-    {
-      "facilityId": "NEW_ERA_HARAJUKU",
-      "maySplit": "Y",
-      "shipmentMethodTypeId": "STOREPICKUP",
-      "carrierPartyId": "_NA_",
-      "shipAfterDate": "",
-      "shipByDate": "",
-      "trackingNumber": "8888888888",
-      "contactMechId": "100489",
-      "telecomContactMechId": "100490",
-      "items": [
-        {
-          "externalId": "100097001712202",
-          "productId": "10022",
-          "sku": "BLACK_BELL_BOTTOM_S",
-          "quantity": 1,
-          "statusId": "ITEM_CREATED",
-          "itemDescription": "",
-          "unitPrice": 500,
-          "unitListPrice": 1370,
-          "statuses": {
-            "statusId": "ITEM_CREATED",
-            "statusDatetime": "2024-07-30T15:23:47+0000",
-            "statusUserLogin": "nishtha.jain"
-          },
-          "adjustments": [
-            {
-              "orderAdjustmentTypeId": "EXT_PROMO_ADJUSTMENT",
-              "amount": "200",
-              "exemptAmount": "2.5",
-              "comments": "IDK",
-              "sourcePercentage": "5",
-              "adjustmentAttributes": [
-                {
-                  "attrName": "description",
-                  "attrValue": "Early bird discount"
-                }
-              ]
-            }
-          ],
-          "itemAttributes": [
-            {
-              "attrName": "_pickupstore",
-              "attrValue": "NEW_ERA_HARAJUKU",
-              "attrDescription": ""
-            }
-          ]
-        }
-      ],
-      "orderFacilityId": ""
-    }
-  ],
-  "statuses": {
+    "currencyUom": "USD",
+    "customerClassificationId": null,
+    "entryDate": "2024-07-30T15:23:47+0000",
+    "externalId": "444455555",
+    "orderDate": "2024-07-25T04:07:49.956",
+    "orderName": "#499999",
+    "orderTypeId": "SALES_ORDER",
     "statusId": "ORDER_CREATED",
-    "statusUserLogin": "nishtha.jain",
-    "statusDatetime": "2024-07-30T15:23:47+0000"
-  }
+    "originFacilityId": "",
+    "presentmentCurrencyCode": "USD",
+    "priority": "2",
+    "productStoreId": "STORE",
+    "salesChannelEnumId": "UNKNWN_SALES_CHANNEL",
+    "webSiteId": "WEBSTORE",
+    "adjustments": [
+        {
+            "orderAdjustmentTypeId": "SHIPPING_CHARGES",
+            "amount": "500",
+            "exemptAmount": "2.5",
+            "comments": "",
+            "sourcePercentage": "5",
+            "adjustmentAttributes": [
+                {
+                    "attrName": "taxAuthority",
+                    "attrValue": "State of California",
+                    "attrDescription": "state tax"
+                }
+            ]
+        }
+    ],
+    "attributes": [
+        {
+            "attrName": "item",
+            "attrValue": "testing attribute",
+            "attrDescription": ""
+        }
+    ],
+    "contactMechs": [
+        {
+            "contactMechId": "100489",
+            "contactMechPurposeTypeId": "SHIPPING_LOCATION"
+        },
+        {
+            "contactMechId": "100490",
+            "contactMechPurposeTypeId": "PHONE_SHIPPING"
+        },
+        {
+            "contactMechId": "100491",
+            "contactMechPurposeTypeId": "SHIPPING_EMAIL"
+        },
+        {
+            "contactMechId": "100495",
+            "contactMechPurposeTypeId": "ORDER_EMAIL"
+        }
+    ],
+    "identifications": [
+        {
+            "idType": "SHOPIFY_ORD_NAME",
+            "idValue": "2345678876545"
+        },
+        {
+            "idType": "SHOPIFY_ORD_ID",
+            "idValue": "4444992255"
+        }  
+    ],
+    "paymentPreferences": [
+        {
+            "paymentMethodTypeId": "EXT_SHOP_OTHR_GTWAY",
+            "maxAmount": "25000",
+            "statusId": "PAYMENT_AUTHORIZED",
+            "paymentMode": "",
+            "cardName": "",
+            "manualAuthCode": null,
+            "manualRefNum": "45545454545454",
+            "createdByUserLogin": "nishtha.jain",
+            "orderId": "100783"
+        }
+    ],
+    "roles": [
+        {
+            "partyId": "100395",
+            "roleTypeId": "PLACING_CUSTOMER"   
+        },
+        {
+            "partyId": "100395",
+            "roleTypeId": "END_USER_CUSTOMER"
+        },
+        {
+            "partyId": "100395",
+            "roleTypeId": "SHIP_TO_CUSTOMER"
+        },
+        {
+            "partyId": "100395",
+            "roleTypeId": "BILL_TO_CUSTOMER"
+        }
+    ],
+    "shipGroups": [
+        {
+            "facilityId": "NEW_ERA_HARAJUKU",
+            "maySplit": "Y",
+            "shipmentMethodTypeId": "STOREPICKUP",
+            "carrierPartyId": "_NA_",
+            "shipAfterDate": "",
+            "shipByDate": "",
+            "trackingNumber": "8888888888",
+            "contactMechId": "100489",
+            "telecomContactMechId": "100490",
+            "items": [
+                {
+                    "externalId": "100097001712202",
+                    "productId": "10022",
+                    "sku": "BLACK_BELL_BOTTOM_S",
+                    "quantity": 1,
+                    "statusId": "ITEM_CREATED",
+                    "itemDescription": "",
+                    "unitPrice": 500,
+                    "unitListPrice": 1370,
+                    "statuses": {
+                        "statusId": "ITEM_CREATED",
+                        "statusDatetime": "2024-07-30T15:23:47+0000",
+                        "statusUserLogin": "nishtha.jain"
+                    },
+                    "adjustments": [
+                        {
+                            "orderAdjustmentTypeId": "EXT_PROMO_ADJUSTMENT",
+                            "amount": "200",
+                            "exemptAmount": "2.5",
+                            "comments": "IDK",
+                            "sourcePercentage": "5",
+                            "adjustmentAttributes": [
+                                {
+                                    "attrName": "description",
+                                    "attrValue": "Early bird discount"
+                                }
+                            ]
+                        }
+                    ],
+                    "itemAttributes": [
+                        {
+                            "attrName": "_pickupstore",
+                            "attrValue": "NEW_ERA_HARAJUKU",
+                            "attrDescription": ""
+                        }
+                    ]
+                }
+            ],
+            "orderFacilityId": ""
+        }
+    ],
+    "statuses": {
+        "statusId": "ORDER_CREATED",
+        "statusUserLogin": "nishtha.jain",
+        "statusDatetime": "2024-07-30T15:23:47+0000"
+    }    
 }
 ```
 
