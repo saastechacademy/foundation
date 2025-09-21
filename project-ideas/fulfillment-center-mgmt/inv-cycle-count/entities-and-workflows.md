@@ -48,6 +48,8 @@
 - **Add**: `workEffortId` (link each session to the count run).
 - **Add**: `facilityAreaId` (**optional, nullable, no FK**) – loose area tag for human comprehension and filtering.
 - **Add**: `approvedDate` (**optional**) – timestamp when the session was approved (useful for audit and reporting).
+- **Add**: `deviceId` - Id of the device used to capture the session.
+- **Remove**: `statusId` (no session workflow in Phase 1).
 - **Keep**: `statusId` with lifecycle and transitions noted above.
 
 ### InventoryCountImportItem (Line)
