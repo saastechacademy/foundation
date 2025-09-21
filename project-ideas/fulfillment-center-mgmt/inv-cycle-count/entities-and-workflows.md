@@ -37,6 +37,8 @@
 - **Role**: Provides controlled status codes and count type enums.
 - **Key ideas**: Enables a clean, lightweight session workflow and optional count-type tagging.
 
+### E. [FacilityProdInvVarDcsnRsn]([facility-prod-inv-var-dcsn-rsn.md])
+- **Role**: Captures structured reasons for variance decisions when applying counts to inventory.
 ---
 
 ## 2) Suggested Changes
