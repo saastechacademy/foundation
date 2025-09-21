@@ -6,6 +6,7 @@
 
 ### A. WorkEffort (context container)
 - **Role**: Represents a store-wide count run (e.g., Annual Hard Count).
+- **WorkEffortPurposeType**: HARD_COUNT, DIRECTED_COUNT
 - **Why it matters**: Gives every session a shared context for planning, reporting, and audit.
 - **Status Lifecycle** (for type `INVENTORY_COUNT_RUN`):
   - `PLANNED → IN_PROGRESS → COMPLETED → CLOSED` (with `CANCELLED` as an exit path).
