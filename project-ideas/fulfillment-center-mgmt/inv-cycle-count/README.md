@@ -9,6 +9,7 @@
 ### PWA Design notes
 
 * [Product Master](./product-master.md)
+* [InventoryCountRun](useInventoryCountRun-composable.md)
 * [InventoryCountImport composable](./inventory-count-composable.md)
 * [Sync count items](./sync-inventory-count-import-item.md)
 * [PK Generation for — Strategy for InventoryCountImportItem](./pk-generation-strategy.md)
