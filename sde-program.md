@@ -1,4 +1,4 @@
-# What?
+## What?
 Learn building business automation software.
 
 Build skills in following categories
@@ -11,15 +11,6 @@ Build skills in following categories
 ## How?
 This training program uses a learn-by-doing approach. You'll gain practical experience by developing a software solution for **[NotNaked](ubpl/NotNaked/Introduction.md)**, a direct-to-consumer fashion brand.
 
-## Prerequisites: Software Development Fundamentals
-This training program requires a solid foundation in software development principles. Please review the following refresher resources to ensure you're adequately prepared:
-
-* **[Revision Control (Git)](https://www.scaler.com/topics/git/):**  A working understanding of Git is essential.
-* **Databases [SQL](https://www.scaler.com/topics/sql/) and [MySQL](https://www.scaler.com/topics/course/sql-using-mysql-course/):**  Familiarity with SQL and MySQL is crucial.
-* **Programming Language [Java](https://www.scaler.com/topics/java/):**  Proficiency in [Java](https://docs.oracle.com/javase/tutorial/) is required.
-* **Optional but Recommended:** Basic Web Development (HTML, CSS, JavaScript), REST APIs, and the Moqui Framework.
-
-## [CS fundamentals](cs-fundamentals) for Engineers
 
 ## Training program outline
 * You are assigned project to develop software for **[NotNaked](ubpl/NotNaked/Introduction.md)**. NotNaked is a D2C fashion brand.
@@ -28,6 +19,14 @@ This training program requires a solid foundation in software development princi
     * build server side **[Moqui](https://www.moqui.org)** application as per the SOA design principles.
     * publish REST API
     * Integrate with [Shopify](https://shopify.dev/docs/api/) eCommerce store.
+ 
+ ## Software Development Program Structure
+
+- [**Pre-requisites**](roles-responsibilities/technical-training-program-structure.md#pre-requisites):
+These are the foundational concepts you should be comfortable with before starting the training program.
+- [**Training Modules**](roles-responsibilities/technical-training-program-structure.md#training-modules):
+Once the prerequisites are clear, the following modules will be covered in depth.
+     
 
 ### Module 0: Know your business domain
 * [How HotWax's OMS solve bussiness requirments of NotNaked](https://www.hotwax.co/product/omnichannel-order-management-system/)
