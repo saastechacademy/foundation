@@ -57,6 +57,7 @@
 - **Keep**: `locationSeqId` as **optional** (stores may not have formal locations).
 - **Keep**: dual identity (`productId` and/or a scannable identifier field) to support flexible capture.
 - **Clarify**: `quantity` semantics—non-negative integers; allow zero to indicate “counted none”.
+- **Add**: `isRequested` (Y/N) marks whether the item was pre-seeded by the manager (`Y`) or discovered during scanning (`N`).
 
 ### WorkEffort
 - **Use**: an existing type to represent a count run (e.g., `INVENTORY_COUNT_RUN`).
