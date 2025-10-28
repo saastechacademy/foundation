@@ -10,10 +10,7 @@ This document defines the design for executing inventory counts in the PWA, with
 
 * **Offline-First**: Scans are captured locally first; network is optional.
 * **Scan Reliability**: Each scan is atomic, persisted immediately; no scans are lost.
-* **Immutability**: Once created, records (`InventoryCountImportItem`) are never mutated.
-* **Idempotency**: All sync operations can be retried safely without duplication.
-* **Natural Keying**: Records are uniquely identified by `(inventoryCountImportId, importItemSeqId)`.
-* **High-Water Mark PK Generation**: Next `importItemSeqId` is always `max(existing) + 1`. Gaps are allowed; no re-sequencing.
+* **Natural Keying**: Records are uniquely identified by `uuid`.
 * **Absolute Counts**: App pushes absolute counts per scan, not deltas.
 
 ---
@@ -23,7 +20,7 @@ This document defines the design for executing inventory counts in the PWA, with
 ### 3.1 Single Device, Online or Offline
 
 * Staff scans items using the iPad + wireless scanner.
-* Each scan instantly creates a local `InventoryCountImportItem` row.
+* Each scan instantly creates a local `ScanEvent` row.
 * Background task aggregates counts by SKU and pushes to server.
 
 ### 3.2 Resuming a Session

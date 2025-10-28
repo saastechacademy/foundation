@@ -38,7 +38,7 @@
 - **Role**: Provides controlled status codes and count type enums.
 - **Key ideas**: Enables a clean, lightweight session workflow and optional count-type tagging.
 
-### E. [FacilityProdInvVarDcsnRsn](./apply-count-to-inventory.md) 
+### E. [InventoryVarDcsnRsn](./apply-count-to-inventory.md) 
 - **Role**: Captures structured reasons for variance decisions when applying counts to inventory.
 ---
 
@@ -115,4 +115,3 @@
 **Value**: Simple, forgiving process—stores can fix mistakes quickly.
 
 ---
-
