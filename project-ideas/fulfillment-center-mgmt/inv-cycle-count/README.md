@@ -17,7 +17,7 @@
 
 ### Additional References
 * [Inventory Data Model ](../../oms/Inventory.md)
-* [Inventory Management proess](../inventoryManagementProcess.md)
+* [Inventory Management proess](../inventory-mgmt/inventoryManagementProcess.md)
 * [Physical Inventory](../../oms/createPhysicalInventory.md)
 
 
