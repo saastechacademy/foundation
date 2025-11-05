@@ -1,10 +1,10 @@
 ### Requirements
 
 * [Business story](./business-story.md)
+* [Manager Needs for Directed Cycle Count](./manager-needs-directed-cycle-count.md)
 * [Entities and Workflows](./entities-and-workflows.md)
 * [Apply count to Inventory](./apply-count-to-inventory.md)
 * [Directed Cycle Count](./directed-cycle-count-story.md)
-* [Manager Needs for Directed Cycle Count](./manager-needs-directed-cycle-count.md)
 * [Session Locking](inventory_count_locking_design.md)
 
 ### PWA Design notes

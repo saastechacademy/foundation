@@ -39,14 +39,14 @@ AND now() < (fromDate + leaseSeconds seconds)
 
 ## 4. Session Lifecycle Integration
 
-| Session Status | Transition Rule | Lock Requirement |
-|----------------|-----------------|------------------|
-| `CREATED → IN_PROGRESS` | Allowed only when a valid active lock exists for this session, owned by the acting user/device. | ✅ Required |
-| `IN_PROGRESS → SUBMITTED` | Allowed only by current lock holder. Optionally auto-release lock on submit. | ✅ Required |
-| `SUBMITTED → APPROVED` | Store manager approval; lock not required. | ❌ Not required |
-| `VOID` | Allowed from CREATED, IN_PROGRESS, or SUBMITTED, but not APPROVED. | ❌ Not required |
+| Session Status            | Transition Rule | Lock Requirement |
+|---------------------------|-----------------|------------------|
+| `CREATED → ASSIGNED`      | Allowed only when a valid active lock exists for this session, owned by the acting user/device. | ✅ Required |
+| `ASSIGNED → SUBMITTED` | Allowed only by current lock holder. Optionally auto-release lock on submit. | ✅ Required |
+| `SUBMITTED → APPROVED`    | Store manager approval; lock not required. | ❌ Not required |
+| `VOID`                    | Allowed from CREATED, ASSIGNED, or SUBMITTED, but not APPROVED. | ❌ Not required |
 
-**Counting operations** (adding scan events) are allowed only while the session is `IN_PROGRESS` **and** an active lock is held or within grace.
+**Counting operations** (adding scan events) are allowed only while the session is `ASSIGNED` **and** an active lock is held or within grace.
 
 ---
 
@@ -110,7 +110,7 @@ AND now() < (fromDate + leaseSeconds seconds)
 ### 7.1 Before Counting
 1. Ensure online connectivity.
 2. Call `createSessionLock`.
-3. On success → transition session to `IN_PROGRESS`.
+3. On success → transition session to `ASSIGNED`.
 4. Enable scan UI.
 
 ### 7.2 During Counting
