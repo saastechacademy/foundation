@@ -42,12 +42,12 @@ This document builds on **Foundational Cycle Count** by enabling the application
 ## 3) Workflows Enabled
 
 ### Workflow A: Variance Computation
-1. Approved count data is consolidated to calculate physical QOH per product.
+1. Approved count data is consolidated to calculate [Physical Inventory](../../oms/createPhysicalInventory.md) per product.
 2. System compares counted QOH with system QOH → prepares Variance Preview.
 
 ### Workflow B: Variance Posting with Explainability
 1. Manager reviews Variance Preview.
-2. For each product, manager selects whether to post variance or skip.
+2. For each product, manager selects whether to [post variance or skip](../../oms/createPhysicalInventory.md).
 3. System creates:
    - `InventoryItemVariance` (when applied).
    - `InventoryVarDcsnRsn` capturing decision reason, outcome, and linkage.
