@@ -22,10 +22,10 @@
 - **Role**: One record per staff session (one person counting a portion of the store during the run).
 - **Key ideas**: Basic lifecycle, session approval controls inclusion.
 - **Status Lifecycle**:
-  - `ASSIGNED → IN_PROGRESS → SUBMITTED → APPROVED` (with `VOID` as an exit path).
+  - `CREATED' → ASSIGNED → SUBMITTED → APPROVED` (with `VOID` as an exit path).
 - **Allowed Transitions**:
-  - `ASSIGNED → IN_PROGRESS`
-  - `IN_PROGRESS → SUBMITTED`
+  - `CREATED → ASSIGNED`
+  - `ASSIGNED → SUBMITTED`
   - `SUBMITTED → APPROVED` or `SUBMITTED → VOID`
   - `APPROVED → VOID` (only by store manager for corrections)
   - **Not allowed**: moving from `APPROVED` back to `SUBMITTED`.
