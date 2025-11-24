@@ -100,8 +100,9 @@
 
 ### Workflow 4: Consolidated Count View (for HQ & Store)
 1. The system aggregates **approved** sessions within a **WorkEffort** to show counted quantity **per product per facility**.
-2. This is a **computed view** (no persistent roll-up in Phase 1).
-3. Reports can highlight potential overlaps (informational only) without blocking approval.
+2. **Not-Found With On-Hand** Aggregate to a per-product counted QOH and compare to system QOH; anything with system > 0 & counted = 0 should be highlighted in the variance preview.
+3. This is a **computed view** (no persistent roll-up in Phase 1).
+4. Reports can highlight potential overlaps (informational only) without blocking approval.
 
 **Value**: Fast visibility into counted quantities without extra storage or complexity.
 

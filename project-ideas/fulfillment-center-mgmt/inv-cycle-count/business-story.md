@@ -15,6 +15,7 @@ This document captures the **two primary business stories** that motivate and sh
 2. The **Store Manager** organizes the team to perform the count within a limited time window (e.g., Dec 31–Jan 2).
 3. Each staff member is assigned a physical area (sales floor, backroom, etc.) to ensure coverage and avoid double counting.
 4. Staff perform a full count of their assigned area, logging counts in `InventoryCountImport` and `InventoryCountImportItem`.
+5. “Not-Found With On-Hand” during a Hard Count: the system shows QOH > 0 for a SKU at the store, but during the hard count nothing is physically found (counted = 0). This can be caused by mis-slots, shrinkage, damaged/held items, in-flight/unposted moves, or simple data drift.
 5. The Store Manager reviews all sessions, confirms accuracy, and submits results to HQ.
 
 ### Outcome
