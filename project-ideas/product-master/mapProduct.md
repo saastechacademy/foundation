@@ -14,7 +14,7 @@
     * return
 5. Prepare product map
     * product.internalName = "V" + shopifyProduct.handle
-    * product.productType
+    * product.productTypeId
         * default to FINISHED_GOOD
         * if shopifyProduct.variants.inventoryItem.requiresShipping=false, set as DIGITAL_GOOD
         * if shopifyProduct.hasVariantsThatRequiresComponents=true, set as MARKETING_PKG_PICK
@@ -23,12 +23,8 @@
     * product.primaryCategoryId = browse root category of the ProductStore associated with shopId (write helper method/service as needed)
     * product.isVirtual = Y
     * product.isVariant = N
-    * product.features = iterate through product.options and create a list of maps with following key/value(s)
-        * productFeatureId = set if exists
-        * productFeatureApplTypeId = "SELECTABLE_FEATURE"
-        * productFeatureTypeId = shopifyProduct.options.name
-        * description = shopifyProduct.options.optionValues.name
-        * sequenceNum = shopifyProduct.options.position
+    * product.features = iterate through shopifyProduct.options and shopifyProduct.optionValues and add [productFeatureTypeDesc:shopifyProduct.options.name, featureDesc:shopifyProduct.options.optionValues.name, productFeatureApplTypeId:'SELECTABLE_FEATURE', sequenceNum:shopifyProduct.options.position]
+    * product.keywords = iterate through shopifyProduct.tags and add [keywordTypeId:"KWT_TAG", statusId:"KW_APPROVED", keyword:shopifyProduct.tags.entry]
     * product.variants = for each shopifyProduct.variants call map#ProductVariant with forCreate=true and add the result to this list
     * product.shopifyShopProduct = [shopId:shopId, shopifyProductId:shopifyProduct.id]
 

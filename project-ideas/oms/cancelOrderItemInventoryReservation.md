@@ -6,9 +6,12 @@ Adjust inventory reservations and release reserved inventory back into the avail
 
 ### Workflow
 
-5.  **Release Inventory (If Applicable):**
+ **Release Inventory (If Applicable):**
        * create InventoryItemDetail record for cancel qty.  
        * The `deleteOrderItemShipGrpInvRes` service to remove the inventory reservation record (`OrderItemShipGrpInvRes`) associated with the order item. This effectively releases the reserved inventory back into the available pool.
+
+6. ### **Handling Bundle Product OrderItems**
+If the `OrderItem` refers to a bundle product, its component items are reserved together. The service also ensures that the reservations for the bundle product's components are canceled.
 
 
 ### Key Points

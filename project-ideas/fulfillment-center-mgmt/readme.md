@@ -3,7 +3,7 @@
 1. Fulfillment of sales orders (including basic picking and packing) and receiving of purchase orders
 2. Inventory management including issuance and receipt, and inventory reservation for sales orders
 
-## [Store Fulfillment Lifecycle](https://docs.hotwax.co/documents/v/learn-hotwax-oms/business-process-models/store.fulfillment)
+## [Store Fulfillment Lifecycle](https://docs.hotwax.co/documents/v/learn-hotwax-oms/business-process-models/store-fulfillment-lifecycle)
 
 
 Order fulfillment is 3 step process,
@@ -20,7 +20,7 @@ The staff gets the list of Outstanding orders
 
 Alternativley the user can choose to not proceed with picking and instead choose the following actions:
 
-  *  The user can choose to [rejectOrderItem](rejectOrderItem.md) if for some reason orderItem cannot be fulfilled.
+  *  The user can choose to [rejectOrderItems](rejectOrderItems.md) if for some reason orderItem cannot be fulfilled.
   *  The user can choose to [cancelOrderItem](cancelOrderItem.md) on request of the customer or Customer Service Rep (CSR).
 
 ### Step 2: 
@@ -61,12 +61,11 @@ Shipment is created in SHIPMENT_INPUT, then SHIPMENT_APPROVED to SHIPMENT_PACKED
 Why does the shipment have to be moved out of "approved" status to edit it's contents? For example fulfillment team may want to reject an item after begining pack pick process, in which case shipment will already be packed.
 
 -   To pack a Shipment, we need shipping label. To give shipping label, shipping carrier need to know the package dimensions and weight.
--   Approving the shipment means communicates that the shipment is now ready for packing, and package type and weight are not final.
+-   Approving the shipment means communicates that the shipment is now ready for packing, and package type and weight are now final.
 
 
 1. If the Approved shipment should be edited, The Shipment is first [reinitializeShipment](reinitializeShipment.md).To avoid error, the reinitialize process calls [voidShipmentLabel](voidShipmentLabel.md).
-2. In case the Packed shipment should be edited, it is first [Unpacked](unpackOrderItems.md). The Unpacking process moves the shipment to Approved status and then moves it to SHIPMENT_INPUT by calling [reinitializeShipment](reinitializeShipment.md).
-   1. Shipment package contents are modified i.e a Shipment was moved from SHIPMENT_APPROVED status to SHIPMENT_INPUT, ensure to [voidShipmentPackageLabel](voidShipmentPackageLabel.md). Recompute the [ShipmentPackageWeight](calcShipmentPackageTotalWeight.md).
+2. In case the Packed shipment should be edited, first [reinitializeShipment](reinitializeShipment.md). It moves shipment from SHIPMENT_PACKED status to SHIPMENT_INPUT, ensure to [voidShipmentPackageLabel](voidShipmentPackageLabel.md). Recompute the [ShipmentPackageWeight](calcShipmentPackageTotalWeight.md).
 
 ```
     <!-- ShipmentRouteSegment CarrierService status -->
@@ -87,7 +86,7 @@ Why does the shipment have to be moved out of "approved" status to edit it's con
 ### [Setting up a New Shipping Carrier](https://github.com/saastechacademy/foundation/blob/main/ofbiz-framework/intermediate/setupShippingCarrier.md)
 
 ### Pre-Requisits, NOT included in Fulfillment App. 
-1) Setup Faciity with Locations
+1) Setup Facility with Locations
 2) Setup Product and Inventory configurations
 3) Import product inventory
 4) Import Orders 
@@ -135,14 +134,200 @@ Why does the shipment have to be moved out of "approved" status to edit it's con
 3.  What if during Shipment processing, we may have to get ShippingLabel. In this case we can skip the rate shopping step, Read carrrier Party and shipmentMethodTypeId from the ShipmentRouteSegment entity.
 4.  Are we honoring the shipmentMethodType suggested by brokering engine? Brokering engine evaluates distance between fulfillment location and deliver location, if the distance is within the range of ZONE 2, Brokering engine suggests ShipmentMethodType. The Rate shopping process should include the suggested shipmentMethodType.
 
+## [Inventory Management](inventory-mgmt/inventoryManagementProcess.md)
 
-https://git.hotwax.co/commerce/oms/blob/371fe6c4251c11438e590bf21e98290f8e64a235/applications/product/minilang/shipment/issuance/IssuanceServices.xml#L134
+## Transfer Order
+
+The advice for moving inventory from one storage facility to other. It helps manage the workflow. 
+The TO is an OrderType like SalesOrder and PurchaseOrder. 
+
+### Scenarios
+The Transfer Orders will facilitate movement of inventory between locations, the scenarios being:
+1. TOs where Fulfillment location is managed by OMS and Receiving location is managed by third party e.g. Store to Warehouse
+2. TOs where Fulfillment location is managed by third party and Receiving location is managed by OMS e.g. Warehouse to Store
+3. TOs where both Fulfillment and Receiving locations are managed by OMS e.g. Store to Store
+
+### Design
+1. The Create Transfer Orders request to OMS will include the value for **statusFlowId** which is a field on OrderHeader entity on the basis of which OMS can decide whether the Transfer Order
+should be only fulfilled in OMS or only received in OMS or should be both fulfilled and received in OMS.
+2. This statusFlowId indicator will help in correctly transitioning the Transfer Order Item status and hence facilitate the transfer order 
+fulfillment and receiving as required in the system.
+3. The statusFlowId will be managed at OrderHeader level and new Order Item status and Status Flow Transitions will be added to manage the life cycle 
+of Transfer Order.
+
+#### Valid Status for Transfer Orders
+
+Two new Order Item Status will be introduced to manage the lifecycle of Transfer Orders - ITEM_PENDING_FULFILL and ITEM_PENDING_RECEIPT.
+
+1. Order Header - Transfer Order
+   1. ORDER_CREATED
+   2. ORDER_APPROVED
+   3. ORDER_COMPLETED
+   4. ORDER_CANCELLED
+   
+2. Order Header - Status Flow
+   1. **TO_Fulfill_Only** - Transfer Orders to be only Fulfilled in OMS
+   2. **TO_Receive_Only** - Transfer Orders to be only Received in OMS
+   3. **TO_Fulfill_And_Receive** - Transfer Orders to be both Fulfilled & Received in OMS
+   
+3. Order Item - Transfer Order Item
+   1. ITEM_CREATED
+   2. **ITEM_PENDING_FULFILL** - newly introduced
+   3. **ITEM_PENDING_RECEIPT** - newly introduced
+   4. ITEM_COMPLETED
+   5. ITEM_CANCELLED
+
+**NOTE** Here the item will not transition to ITEM_APPROVED status since in the Approve TO process, the next possible status could be either
+ITEM_PENDING_FULFILL or ITEM_PENDING_RECEIPT for Store Fulfill and Warehouse Fulfill TOs respectively.
+
+#### New Status Items 
+```
+<moqui.basic.StatusItem statusId="ITEM_PENDING_FULFILLMENT" statusTypeId="ORDER_ITEM_STATUS" statusCode="PENDING_FULFILLMENT" description="Pending Fulfillment"/>
+<moqui.basic.StatusItem statusId="ITEM_PENDING_RECEIPT" statusTypeId="ORDER_ITEM_STATUS" statusCode="PENDING_RECEIPT" description="Pending Receipt"/>
+```
+
+#### Status Flow transitions for TO Items
+1. **Transfer Orders to be only Fulfilled in OMS**
+   1. statusFlowId = TO_Fulfill_Only
+   2. Status Changes
+      1. ITEM_CREATED to ITEM_PENDING_FULFILL when approving the TO 
+      2. ITEM_PENDING_FULFILL to ITEM_COMPLETED when all quantity is shipped for the item
+
+2. **Transfer Orders to be only Received in OMS**
+   1. statusFlowId = TO_Receive_Only
+   2. Status Changes
+      1. ITEM_CREATED to ITEM_PENDING_RECEIPT when approving the TO
+      2. ITEM_PENDING_RECEIPT to ITEM_COMPLETED when all quantity is received for the item
+
+3. **Transfer Orders to be both Fulfilled & Received in OMS**
+   1. statusFlowId = TO_Fulfill_And_Receive
+   2. Status Changes
+      1. ITEM_CREATED to ITEM_PENDING_FULFILL when approving the TO
+      2. ITEM_PENDING_FULFILL to ITEM_PENDING_RECEIPT when all quantity is shipped for the item
+      3. ITEM_PENDING_RECEIPT to ITEM_COMPLETED when all quantity is received for the item
+
+### Create Transfer Order
+
+The API to [createTransferOrder](../oms/createTransferOrder.md) builds on the [createOrder](../oms/createOrder.md)
+
+### Approve Transfer Order
+
+1. Once the TOs are imported in OMS in Created Status, the approval flow for TOs should run.
+2. The [approveTransferOrder](../oms/approveTransferOrder.md) service will handle approval of Created TOs in the system.
+
+### Fulfil Transfer Order
+**statusFlowId = TO_Fulfill_Only or TO_Fulfill_And_Receive**
+
+1. An inventory storage location will create the [OutTransferShipment](createOutTransferShipment.md) for a transfer order.
+2. The Transfer Shipment created will be [shipped](shipOutTransferShipment.md) by adding tracking details.
+
+**NOTE**
+1. The Fulfillment App will list all TOs where Order is in ORDER_APPROVED status and Items are in ITEM_PENDING_FULFILL status so that they are eligible to be fulfilled in OMS.
+
+### Receive Transfer Order
+When a Transfer Order (TO) is shipped from one facility to another, the receiving facility must accurately receive the items against the original order. 
+This process ensures stock accuracy, triggers inventory updates, and closes the internal fulfillment loop.
+
+This section describes the steps followed by receiving personnel to process an incoming Transfer Order and record item receipts.
+
+#### Process Overview
+1. **Shipment Arrival**  
+   An inventory location receives a physical shipment against a previously dispatched Transfer Order (TO).
+
+2. **Accessing the Transfer Order**
+   - Navigate to the **“Transfer Orders”** section in the **Receiving App**.
+   - A list of TOs in ORDER_APPROVED status assigned to the facility  will be visible.
+   - To search for a specific TO, enter the TO **Order Name** in the search bar.
+
+3. **Viewing Order Details**
+   - Once a TO is selected, the **Order Detail** screen displays all items included in the order.
+   - Each item shows its ordered quantity and current received quantity (if any).
+
+4. **Recording Receipts**
+   - Users can enter the **received quantity** against each individual item.
+   - [Receipts are recorded **against TO Items**](#receiving-against-to-items-not-shipments), not individual shipments. This is done since:
+      - Shipments can only be received once, but items can be received multiple times.
+        - So if any item is missed or mistakenly left out during shipment, the system does not allow that same shipment to be reopened or partially received again.
+          Receiving against TO items avoids this issue, as we can update item level receipts progressively, regardless of how they were fulfilled.
+        - Receivers do not need to worry about how many fulfillments were created or how items were split, they just check how many units of each item have arrived at the location and receive.
+
+#### Supported Receiving Scenarios
+The system supports a variety of real-world receiving conditions, ensuring flexibility and accurate inventory tracking:
+
+1. **Partial Receipt**
+   - Only a portion of the TO Item quantity is received.
+   - The remaining quantity stays open for future receipts.
+
+2. **Multiple Shipments for Same Item**
+   - An item is shipped in multiple fulfillments.
+   - The full quantity can be received at once, even if it was split across shipments.
+
+3. **Receiving New Product (Not in TO)**
+   - A product not listed in the original TO arrives with the shipment.
+   - The system allows its receipt, marking it as an **unexpected item** without an `orderItemSeqId`.
+
+4. **Receive TO Item and Close**
+   - Item is fully received, and the system marks it as closed.
+   - No further receipts will be accepted for that item.
+
+5. **Close Received TO Item (Even if Partial)**
+   - The receiver can choose to close a TO Item manually, even if the full quantity hasn’t been received.
+   - This is useful when excess items will not be shipped or are considered lost.
+
+6. The required quantity can be added for each item and hence [receiving against the Transfer Order Items](#receiving-against-to-items-not-shipments) is done, not the individual shipments.
+
+#### Implementation Details
+
+[ShipmentReceipt](receiveTransferOrder.md) records are created for the receipts recorded against the TO Items.
+
+##### Receiving Against TO Items, Not Shipments
+`ShipmentReceipt` records will be internally linked to `Shipment` IDs **if available**, to support:
+- Better reconciliation across fulfillments
+- Integration with external systems like NetSuite
+
+When a receipt is submitted **without shipment references** (e.g., via API or Receiving App), OMS will:
+1. Internally resolve and split the received quantity across matching shipments
+2. Create multiple `ShipmentReceipt` records if required
+
+###### Example Scenario:
+- A TO has two fulfillments for the same item:
+   - Shipment 1: 10 units
+   - Shipment 2: 15 units
+
+- The receiving facility receives all **25 units** at once and submits a single receipt.
+
+- OMS will automatically:
+   - Create `ShipmentReceipt 1` for **10 units** linked to **Shipment 1**
+   - Create `ShipmentReceipt 2` for **15 units** linked to **Shipment 2**
+
+##### Handling Over-Receipts
+
+If the **quantity received exceeds** the sum of all known shipments:
+- The extra quantity is recorded directly **against the TO Item**
+- This receipt is **not linked to any Shipment**
+
+This is the **default behavior** of the receive API and helps:
+- Reconcile shipment quantities
+- Maintain inventory accuracy
+- Support NetSuite integration (which requires fulfillment linkage)
+
+### Close Transfer Order Fulfillment
+
+1. Here, the requirement is to give an option in the Fulfillment app to close the fulfillment of the item. 
+2. This could happen if the end-user wants to close the fulfillment after partially fulfilling the order items.
+3. The spec is added in [CloseTOFulfillment](closeTransferOrderItemFulfillment.md).
+
+### Reject Transfer Order
+
+1. According to current behavior, [rejectTransferOrder](rejectTransferOrder.md) if fulfilment has not been started i.e. no shipped or packed shipments exists for the TO.
+2. The complete TO will be rejected, no partial rejection will be handled as of now.
 
 ## Receive Shipment
 
 **Shipment Receiver briefly reviews incoming shipment.**
 * If shipment received is a return (has RMA# or Return ID), 
 * If shipment received is for a purchase order (has PO#), Shipment Receiver finds the PO corresponding to the items received and records PO receipt (inventory) quantity.
+* If shipment received is for a ASN, shipment receiver finds the Shipment.
 
 **Shipment Receiver reviews incoming items. and Shipment Receiver will receive the shipment even if**
 * Shipment Receiver records a higher quantity received than was ordered, inventory reconciliation will report it.

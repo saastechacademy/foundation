@@ -1,81 +1,87 @@
-# Assignment: Create custom Moqui component
+# Getting Started with Moqui
 
-### This assignment tests your ability to:
+## Prerequisites
 
-* Prepare your work plan and discuss your strategy and execution plan.
-* Read documentation and follow instructions.
-* Read Moqui official documentation. 
-* Create a new custom Moqui component.
-* Add a new entity definition in the component.
-* Working knowledge of git and ability to use Github for managing sourcecode.
+Before diving into Moqui development, ensure you have the following tools and resources set up:
 
-### Tasks
-Learn Moqui and related technologies to complete following tasks.
-1. Prepare step-by-step work plan tasks listed below.
-2. Configure the Moqui Framework on your local machine.
-2. Verify that the application is up and running.
-3. Configure the `xsd` files for Entity Definition, Service Definition, and Service REST API XML schema locations in your IDE.
-4. Clone the "moqui-training" repository into the `component` folder under `runtime` in `moqui-framework`.
-5. Add the configuration files (`component.xml`, `MoquiConf.xml`) with a basic template to identify your repository as a Moqui component.
-6. Add a new entity definition named `MoquiTraining` with the following attributes and data types:
-   * `trainingId` (Primary Key)
-   * `trainingName` (String)
-   * `trainingDate` (Date)
-   * `trainingPrice` (Decimal)
-   * `trainingDuration` (Integer - number of hours)
-7. Run Moqui.
-8. Verify that the new `MoquiTraining` entity is visible in the Entity Tools list in the Moqui UI.
-9. Push the `moqui-training` component code to the `moqui-training` repository.
+### Moqui Framework
+- [Introduction to Moqui Framework](https://www.moqui.org/m/docs/framework/Introduction)
 
+### Git Installation
+- [Git Installation Guide](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
 
-## Getting started with Moqui
+### Java Development Kit (JDK 11)
+Install JDK 11:
+- [JDK 11](https://jdk.java.net/java-se-ri/11-MR3)
+- [OpenJDK](https://adoptium.net/temurin/archive/?version=11)
 
-### Prerequisites
+Verify Java installation by running:
+```bash
+java -version
+```
 
-* [Introduction to Moqui Framework](https://www.moqui.org/m/docs/framework/Introduction)
-* [GIT](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
-* [JDK 11](https://jdk.java.net/java-se-ri/11-MR3) or [OpenJDK](https://adoptium.net/temurin/archive/?version=11) or any other compatible JDK distribution.  
-* To check your Java version use following command:
-  ```bash
-  java -version
-  ```
-* Ability to navigate file directories on your machine using the terminal window (Linux/Mac).
-* Active GitHub account. Create a new repository named "moqui-training." This will be used for Moqui assignment submissions.
+### IDE Installation
+Install IntelliJ IDEA:
+- [Download IntelliJ IDEA](https://www.jetbrains.com/idea/download/?section=mac)
 
-### Tutorial
-* [Introduction to Moqui](https://www.youtube.com/watch?v=Q2ZM4BcVoCg)
+Set up IntelliJ IDEA for Moqui development:
+- [IDE Setup Guide](https://www.moqui.org/m/docs/framework/IDE+Setup/IntelliJ+IDEA+Setup)
 
-### Setup Moqui for application development
+### GitHub Account
+Ensure you have an active GitHub account to create repositories for your Moqui components.
 
-1. Open a terminal window.
-2. Create folder on your computer, name is "sandbox".
-3. Navigate to `~/sandbox`.
-3. Clone the Moqui framework repository:
+### Familiarity with Command Line
+Be comfortable navigating file directories using the terminal (Linux/Mac) or command prompt (Windows).
+
+## Setting Up Moqui for Development
+
+### Step 1: Clone the Moqui Framework
+1. Open a terminal.
+2. Create a sandbox folder for your Moqui projects:
+3. Clone the Moqui Framework repository:
    ```bash
    git clone -b master https://github.com/moqui/moqui-framework.git
    ```
-4. Navigate to the `moqui-framework` directory and add the runtime component:
-   ```bash
-   cd moqui-framework
-   ./gradlew getRuntime
-   ```
-5. Run the application:
-   ```bash
-   ./gradlew run
-   ```
-   **Note:** Ignore ElasticSearch connection warnings/errors for now.
 
-[Official documentation](https://www.moqui.org/m/docs/framework/Run+and+Deploy).
+### Step 2: Initialize the Runtime Component
+1. Navigate to the `moqui-framework` directory:
+2. Set up the default runtime directory
 
-### IDE Setup
+### Step 3: Run the Moqui Application
+1. Load data and run the Moqui application:
 
-[Set up the moqui in IntelliJ IDE](https://www.moqui.org/m/docs/framework/IDE+Setup/IntelliJ+IDEA+Setup)
+2. Open a browser and navigate to your local Moqui.
 
+3. Log in with the default admin credentials.
+   - Username: `john.doe`
+   - Password: `moqui`
 
-### Additional Resources 
-1. https://www.youtube.com/watch?v=d_ZiTjzZ-Qs&list=PL6JSOz3-TrFSMiuGounNRnje-JQDi8l8g&index=2&t=3s
-2. https://www.youtube.com/watch?v=rvi9_ELXDHc&list=PL6JSOz3-TrFSMiuGounNRnje-JQDi8l8g&index=10&t=3s
-3. https://www.youtube.com/watch?v=BEhQH0lVW08&list=PL6JSOz3-TrFSMiuGounNRnje-JQDi8l8g&index=15&t=1s
+**Note:** Ignore any ElasticSearch connection warnings/errors.
 
-### The Playlist
-1. https://www.youtube.com/playlist?list=PL6JSOz3-TrFSBQFDVSyjuZ49BUENd4bH6
+### Step 4: Create your `moqui-training` Component
+1. Create the `moqui-training` component within the runtime/component folder.
+2. Within your component folder create the standard directories.
+3. Create the component.xml file with the appropriate name. [Reference](https://github.com/moqui/moqui-runtime/blob/master/base-component/webroot/component.xml)
+
+## Deliverables
+
+- Moqui Framework installed and running on your local machine.
+- IntelliJ IDEA configured for Moqui development.
+
+---
+
+## Additional Resources
+
+- [Moqui Introduction](https://www.youtube.com/watch?v=Q2ZM4BcVoCg)
+- Video Tutorials:
+  - [Video 1](https://www.youtube.com/watch?v=d_ZiTjzZ-Qs&list=PL6JSOz3-TrFSMiuGounNRnje-JQDi8l8g&index=2&t=3s)
+  - [Video 2](https://www.youtube.com/watch?v=rvi9_ELXDHc&list=PL6JSOz3-TrFSMiuGounNRnje-JQDi8l8g&index=10&t=3s)
+  - [Video 3](https://www.youtube.com/watch?v=BEhQH0lVW08&list=PL6JSOz3-TrFSMiuGounNRnje-JQDi8l8g&index=15&t=1s)
+  - [Complete Playlist](https://www.youtube.com/playlist?list=PL6JSOz3-TrFSBQFDVSyjuZ49BUENd4bH6)
+- [Making Apps with Moqui - Book](https://www.moqui.org/MakingAppsWithMoqui-1.0.pdf)
+
+### Useful Documentation
+- [Quick Tutorial](https://www.moqui.org/m/docs/framework/Quick+Tutorial)
+- [Creating an Entity](https://www.moqui.org/m/docs/framework/Quick+Tutorial#MyFirstEntity)
+- [Adding Data](https://www.moqui.org/m/docs/framework/Quick+Tutorial#AddSomeData)
+

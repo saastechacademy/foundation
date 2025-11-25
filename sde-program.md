@@ -1,8 +1,8 @@
 # What?
-Learn building business automation sofware.
+Learn building business automation software.
 
 Build skills in following categories
-*  Sotware Development
+*  Software Development
 *  System Design
 *  Business processes
 *  Data Modeling
@@ -16,29 +16,40 @@ This training program requires a solid foundation in software development princi
 
 * **[Revision Control (Git)](https://www.scaler.com/topics/git/):**  A working understanding of Git is essential.
 * **Databases [SQL](https://www.scaler.com/topics/sql/) and [MySQL](https://www.scaler.com/topics/course/sql-using-mysql-course/):**  Familiarity with SQL and MySQL is crucial.
-* **Programming Language [Java](https://www.scaler.com/topics/java/):**  Proficiency in Java is required.
+* **Programming Language [Java](https://www.scaler.com/topics/java/):**  Proficiency in [Java](https://docs.oracle.com/javase/tutorial/) is required.
 * **Optional but Recommended:** Basic Web Development (HTML, CSS, JavaScript), REST APIs, and the Moqui Framework.
+
+## [CS fundamentals](cs-fundamentals) for Engineers
 
 ## Training program outline
 * You are assigned project to develop software for **[NotNaked](ubpl/NotNaked/Introduction.md)**. NotNaked is a D2C fashion brand.
 * During the training program, you will
-    * design application data model as per Universal Data Model design princepals, deploy it on [MySQL](https://www.mysql.com/).
-    * build server side **[Moqui](https://www.moqui.org)** application as per the SOA design princepals.
+    * design application data model as per Universal Data Model design principles, deploy it on [MySQL](https://www.mysql.com/).
+    * build server side **[Moqui](https://www.moqui.org)** application as per the SOA design principles.
     * publish REST API
     * Integrate with [Shopify](https://shopify.dev/docs/api/) eCommerce store.
+
+### Module 0: Know your business domain
+* [How HotWax's OMS solve bussiness requirments of NotNaked](https://www.hotwax.co/product/omnichannel-order-management-system/)
+* [Experience OMS flow](ubpl/NotNaked/ExperienceOmsFlow.md)
+* [Getting Started](https://ofbiz.apache.org/developers.html)
+* [Party Activity](udm/beginner/activity.md#party-data-model)
+* [Setup Company Product Store and Catalog](udm/beginner/activity.md#setup-up-company-product-store-and-catalog)
+* [Order Activity](udm/beginner/activity.md#order)
 
 ### Module 1: Data Modeling basics
 *  [What is data modeling?](https://www.ibm.com/topics/data-modeling)
 *  Universal Data Model, Read **[First three chapters](udm/readme.md)** of the book: The Data Model Resource Book, Vol. 1
 
-### Module 2: Detailed Design
-1. [Design CDP](udm/beginner/activity-design-cdp.md)
-2. [Design PIM](udm/beginner/activity-design-pim.md)
+### Module 2: Developing application with [Apache OFBiz](https://ofbiz.apache.org)
+* [Developing Application](https://cwiki.apache.org/confluence/display/OFBIZ/OFBiz+Tutorial+-+A+Beginners+Development+Guide+for+Release+18.12+and+Release+22.01) with Apache OFBiz
+* [Develop Product Management](ofbiz-framework/intermediate/developing_find_product.md) application
+* [Develop Customer Management](ofbiz-framework/intermediate/developing_find_customer.md) application
 
 ### Module 3: Order and Shipment Data Modeling
-* Universal Data Model, Read **[Chapter 3 and Chapter 4](udm/readme.md)** of the book: The Data Model Resource Book, Vol. 1
-* [Design OMS](udm/intermediate/data-model-assignment/activity-design-order.md)
-* [Order Fulfillment System](udm/intermediate/data-model-assignment/activity-design-fulfillment.md)
+* Universal Data Model, Read **[Chapter 4 and Chapter 5](udm/readme.md#chapter-4-ordering-products)** of the book: The Data Model Resource Book, Vol. 1
+* [Develop Order Management](ofbiz-framework/intermediate/developing_find_order.md) application
+* [GetOrder](ofbiz-framework/intermediate/activity-get-order-json.md) API 
 
 ### Module 4: SQL Assignment
 * Get read only access OMS test database.
@@ -46,41 +57,47 @@ This training program requires a solid foundation in software development princi
 * [SQL Assignment 2](udm/intermediate/sql-assignment/sql-assignment-2.md)
 * [SQL Assignment 3](udm/intermediate/sql-assignment/sql-assignment-3.md)
 
-### Module 5: Official Documentation and Application Usage
+### Module 5: Detailed Design
+1. [Design CDP](udm/beginner/activity-design-cdp.md)
+2. [Design PIM](udm/beginner/activity-design-pim.md)
+3. [Design OMS](udm/intermediate/data-model-assignment/activity-design-order.md)
+4. [Order Fulfillment System](udm/intermediate/data-model-assignment/activity-design-fulfillment.md)
+
+
+### Module 6: Official Documentation and Application Usage
 * https://docs.hotwax.co/documents/v/documents-1
 * [Internal Usage Guidelines](https://docs.hotwax.co/everything#shopify)
-* [Launchpad Login](https://launchpad.hotwax.io/home)
-* [User Management App Login](https://launchpad.hotwax.io/login?redirectUrl=https://users-dev.hotwax.io/login)
-* [Job Manager App (Job Management+Job Workflows) Login](https://docs.hotwax.co/documents/v/retail-operations/workflow/job-manager)
-* [Facility Management App Login](https://facilities.hotwax.io/tabs/find-facilities)
-* [ATP App Login](https://launchpad.hotwax.io/login?isLoggedOut=true&redirectUrl=https://atp.hotwax.io/login)
-* [Routing App Login](https://launchpad.hotwax.io/login?isLoggedOut=true&redirectUrl=https://order-routing.hotwax.io/login)
-* [Fulfillment App Login](https://launchpad.hotwax.io/login?redirectUrl=https://fulfillment-dev.hotwax.io/login)
-* [Picking App Login](https://picking-dev.hotwax.io/)
-* [BOPIS Fulfillment App Login](https://bopis-dev.hotwax.io/)
-* [Receiving App Login](https://launchpad.hotwax.io/login?redirectUrl=https://receiving-dev.hotwax.io/login)
-* [Cycle Counting App Login](https://inventorycount-dev.hotwax.io/login)
-* [Import App Login](https://import.hotwax.io/purchase-order)
-* [Pre-Order Management App Login](https://launchpad.hotwax.io/login?redirectUrl=https://preorder-dev.hotwax.io/login)
+* [Launchpad](https://launchpad.hotwax.io/home)
+* [User Management](https://launchpad.hotwax.io/login?redirectUrl=https://users-dev.hotwax.io/login)
+* [Job Manager App (Job Management+Job Workflows)](https://docs.hotwax.co/documents/v/retail-operations/workflow/job-manager)
+* [Facility Management](https://facilities.hotwax.io/tabs/find-facilities)
+* [ATP](https://launchpad.hotwax.io/login?isLoggedOut=true&redirectUrl=https://atp.hotwax.io/login)
+* [Routing](https://launchpad.hotwax.io/login?isLoggedOut=true&redirectUrl=https://order-routing.hotwax.io/login)
+* [Fulfillment](https://launchpad.hotwax.io/login?redirectUrl=https://fulfillment-dev.hotwax.io/login)
+* [Picking](https://picking-dev.hotwax.io/)
+* [BOPIS Fulfillment](https://bopis-dev.hotwax.io/)
+* [Receiving](https://launchpad.hotwax.io/login?redirectUrl=https://receiving-dev.hotwax.io/login)
+* [Cycle Counting](https://inventorycount-dev.hotwax.io/login)
+* [Import](https://import.hotwax.io/purchase-order)
+* [Pre-Order Management](https://launchpad.hotwax.io/login?redirectUrl=https://preorder-dev.hotwax.io/login)
 * [Apply Safety Stock](https://docs.hotwax.co/documents/v/retail-operations/inventory/safety-stock)
 * [Create Draft Orders](https://docs.google.com/document/d/1ucpl4w0bt_EPL8jS1KCENKwS2FuPvMlGbMBrZmCNg40/edit?usp=sharing)
 * [Product Store Configurations](https://docs.hotwax.co/documents/v/system-admins/product-store/product-store)
 * [Training activity](https://docs.google.com/document/d/1ceDBoj3MeHvJFoCOK3WvZFBxNCc7T_xS1iZaMZxqaF8/edit?tab=t.0#heading=h.y8japeeqpuci)
-* [OMS Login](https://dev-oms.hotwax.io/commerce/control/main,https://dev-oms.hotwax.io/commerce/control/main)
-* [Shopify Backend Login](https://admin.shopify.com/store/hc-sandbox/orders,https://admin.shopify.com/store/hc-sandbox/orders)
-* [eCommerce](https://hc-sandbox.myshopify.com/,https://hc-sandbox.myshopify.com/)
+* [OMS](https://dev-oms.hotwax.io/commerce/control/main)
+* [Shopify Backend Login](https://admin.shopify.com/store/hc-sandbox/orders)
+* [eCommerce](https://hc-sandbox.myshopify.com/)
 
-### Early Traction
-1. https://github.com/saastechacademy/foundation/tree/main/moqui-framework/beginner
-2. https://cwiki.apache.org/confluence/display/OFBIZ/OFBiz+Tutorial+-+A+Beginners+Development+Guide+for+Release+18.12+and+Release+22.01
-3. https://www.moqui.org/m/docs/framework/Framework+Features
-4. https://www.moqui.org/m/docs/framework/IDE+Setup/IntelliJ+IDEA+Setup
-5. https://www.youtube.com/watch?v=mxToh2rX7NY
+## Resources:
 
-
-
-## References:
-
-1. https://cwiki.apache.org/confluence/display/OFBIZ/Data+Model+Diagrams
-2. https://cwiki.apache.org/confluence/download/attachments/13271792/OFBizDatamodelBook_Combined_20171001.pdf
-3. https://www.amazon.com/Data-Model-Resource-Book-Vol/dp/0471380237
+1. https://docs.oracle.com/javase/tutorial/
+2. https://dev.java/learn/
+3. https://www.oracle.com/java/technologies/jee-tutorials.html
+4. https://github.com/saastechacademy/foundation/tree/main/moqui-framework/beginner
+5. https://cwiki.apache.org/confluence/display/OFBIZ/OFBiz+Tutorial+-+A+Beginners+Development+Guide+for+Release+18.12+and+Release+22.01
+6. https://www.moqui.org/m/docs/framework/Framework+Features
+7. https://www.moqui.org/m/docs/framework/IDE+Setup/IntelliJ+IDEA+Setup
+8. https://www.youtube.com/watch?v=mxToh2rX7NY
+9. https://cwiki.apache.org/confluence/display/OFBIZ/Data+Model+Diagrams
+10. https://cwiki.apache.org/confluence/download/attachments/13271792/OFBizDatamodelBook_Combined_20171001.pdf
+11. https://www.amazon.com/Data-Model-Resource-Book-Vol/dp/0471380237

@@ -1,7 +1,7 @@
 # **NotNaked: Revolutionizing Fashion Retail with Omnichannel Excellence**
 
 ## **Introduction**
-NotNaked is a dynamic fashion brand catering to Generation Z and Generation Alpha in America. As a digital-first company, NotNaked blends cutting-edge technology with physical retail experiences to meet the evolving needs of its tech-savvy customer base. With strategically located retail stores and a robust online presence, the brand offers a seamless omnichannel shopping experience that prioritizes speed, convenience, and customer satisfaction.
+NotNaked is a dynamic fashion brand catering to Generation Z and Generation Alpha in America. As a digital-first company, NotNaked blends cutting-edge technology with physical retail experiences to meet the evolving needs of its tech-savvy customer base. With strategically located retail stores and a robust online presence, the brand offers a seamless [omnichannel](https://www.hotwax.co/blog/what-is-omnichannel-order-management-and-why-does-it-exist) shopping experience that prioritizes speed, convenience, and customer satisfaction.
 
 ## **Retail Presence**
 NotNaked operates retail locations in prominent outdoor shopping areas across several key cities. These stores function not only as shopping destinations but also as fulfillment centers for online orders, enhancing the brand’s omnichannel capabilities.
@@ -33,7 +33,6 @@ NotNaked operates retail locations in prominent outdoor shopping areas across se
    * *NotNaked Pioneer Place*  
    * **Address:** 700 SW 5th Avenue, Portland, OR 97204
 
-
 ## **Warehousing and Fulfillment Centers**
 To ensure fast and efficient delivery nationwide, NotNaked maintains warehouses at strategic locations. These facilities optimize shipping times and logistics costs, ensuring prompt order fulfillment.
 1. **Memphis, Tennessee**
@@ -56,45 +55,29 @@ NotNaked’s curated product catalog is designed to meet the diverse needs of it
 * **Digital Products:** Digital Gift Cards.
 
 ## **Omnichannel Capabilities**
-NotNaked’s omnichannel strategy is centered around providing a unified and flexible shopping experience. Key capabilities include:
-1. **Diverse Fulfillment Options**
-   * **Standard Ship to Home Orders:** Customers can shop online and have items delivered to their doorstep using standard shipping methods.  
-   * **Express Ship to Home Orders:** For expedited delivery, express shipping options are available.  
-   * **Buy Online, Pick Up In Store (BOPIS):** Customers can purchase products online and pick them up at a preferred store location.  
-2. **Flexible Order Management**
-   * **Order Cancellations:** Customers can cancel ship-to-home orders as long as they have not been shipped. The cancellation process can be managed by Customer Service Representatives (CSRs).  
-   * **Returns and Exchanges:** Options to return or exchange items either online or in-store, even for individual items within a multi-item order.  
-   * **Pre-Orders and Back-Orders:** Ability to purchase upcoming products (pre-orders) or items temporarily out of stock (back-orders).  
-3. **Inventory Transparency**
-   * **Real-Time Inventory Updates:** Online platforms reflect real-time stock levels across warehouses and retail stores.  
-   * **Store Inventory Online Sales:** Store inventories are available for online purchase, maximizing product availability.
+NotNaked’s omnichannel strategy is centered around providing a unified and flexible shopping experience. This strategy is rooted in the principles of modern **Omnichannel Order Management**, which consolidates inventory, orders, and fulfillment across every channel into a seamless customer journey.
+
+[Capabilities of OMS](https://www.hotwax.co/blog/15-critical-capabilities-of-omnichannel-order-management-solution)
 
 ## **Technology Stack**
+The following sections detail the key retail systems that enable omnichannel retailing.
+
+https://www.hotwax.co/blog/top-10-retail-systems-for-omnichannel-retailers
+
 NotNaked’s advanced operations are powered by an integrated technology stack:
-* **Shopify:** The primary e-commerce platform facilitating online sales and customer interactions.  
+* **Shopify:** The primary e-commerce platform facilitating online sales and customer interactions.
+* **Shopify POS**: A point-of-sale system used in NotNaked’s physical retail stores to process in-store transactions, manage inventory, and unify customer data across online and offline touchpoints.
 * **HotWax Commerce (OMS):** The Order Management System that orchestrates order processing, inventory management, and fulfillment across all channels.  
 * **NetSuite:** An ERP solution that handles financials, supply chain management, and back-office operations.  
 * **ShipHawk:** A shipping software solution that automates shipping processes, integrates with carriers, and provides real-time shipping rates and tracking.  
 * **Loop Returns:** A returns management platform that simplifies the returns and exchanges process, enhancing customer experience.
 
-## **The Role of the Order Management System (OMS)**
+## **Requirements**
 
-The OMS is the backbone of NotNaked’s omnichannel capabilities, serving multiple critical functions:
-1. **Order Aggregation and Processing**
-   * **Centralized Order Management:** Consolidates orders from all sales channels (online, in-store, mobile) into a single system.  
-   * **Order Routing:** Determines the optimal fulfillment location based on proximity, inventory levels, and predefined business rules.  
-   * **Inventory Reservation:** Reserves stock at the appropriate location to prevent overselling.  
-2. **Inventory Management**
-   * **Real-Time Inventory Tracking:** Monitors stock levels across warehouses and stores, ensuring accurate availability.  
-   * **Inventory Synchronization:** Updates inventory data between Shopify, HotWax Commerce, and NetSuite to maintain consistency.  
-3. **Fulfillment Coordination**
-   * **BOPIS Fulfillment:** Manages in-store pickup orders, notifying store associates and updating order statuses.  
-   * **Ship-from-Store:** Enables stores to fulfill online orders, optimizing delivery times and reducing shipping costs.  
-   * **Warehouse Fulfillment:** Coordinates standard and express shipping orders from warehouse locations.  
-4. **Integration with Other Systems**
-   * **Shipping Management (ShipHawk):** Integrates with ShipHawk to automate shipping label generation, rate shopping, and carrier selection for both warehouse and store shipments.  
-   * **Returns Management (Loop Returns):** Works with Loop Returns to handle returns and exchanges efficiently, updating inventory and processing refunds or exchanges.  
-5. **Customer Experience Enhancement**
-   * **Notifications and Alerts:** Automates communication with customers regarding order confirmations, shipment tracking, and pickup readiness.  
-   * **Returns and Exchanges Processing:** Simplifies the handling of returns and exchanges through integration with Loop Returns.  
-   * **Order Modifications:** Allows for cancellations and adjustments within allowable time frames, managed by CSRs if necessary.
+- They need all their systems like ERP, POS, OMS, and e-commerce to connect and talk to each other smoothly, so that data stays consistent everywhere without duplication or errors.  
+- They require real-time and accurate inventory visibility to avoid situations where stock shows available but is not, or where excess inventory piles up unnecessarily.  
+- They need a streamlined process for transferring inventory between warehouses or stores, with proper tracking of items, timelines, and related costs.  
+- They require strong support for BOPIS (Buy Online, Pick up In Store) and BORIS (Buy Online, Return In Store), so customers can pick up or return items easily without facing issues in stock availability or order routing.  
+
+
+For managing unified orders, inventory, and fulfillment across all channels, NotNaked requires an [Enterprise-Level Application](https://www.ibm.com/think/topics/enterprise-applications). They selected [**HotWax Commerce**](https://www.hotwax.co/) — an **omnichannel Order Management System (OMS)** — as the backbone of their retail operations, enabling seamless integration across e-commerce, stores, warehouses, and logistics.

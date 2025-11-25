@@ -99,3 +99,15 @@ Following are the implementation details,
 ### [prepare#ProductCreate](prepareProductCreate.md)
 
 ### [consume#OMSFeedSystemMessage](../order-ledger/consumeOMSFeedSystemMessage.md)
+
+## Design changes to consider during testing
+1. We no longer create "SHOPIFY_PROD_ID" GoodIdentification as we are maintaining unique product sku (internalName), ShopifyShopProduct entity defines relationship between duplicate shopifyProductId and unique OMS productId.
+2. We no longer support product.vendor field in Shopify, not skipping products and not storing brandName.
+3. Removed usage of Website.siteName for virtualProduct.salesChannel.
+4. We are no longer supporting Shopify product.productType field
+   * We are not creating any category against it, we are associating the product directly to BROWSE_ROOT category
+   * We are not using it to determine productTypeId in OMS, productTypeId is now determined through various indicators available in GraphQL api response.
+5. We were wrongly setting variantProduct.chargeShipping from shopify productVariant.require_shipping field, not setting it any more.
+6. Not setting variantProduct.taxable field as it's of no use for us.
+7. Shopify productVariant.inventoryItemId is now stored in ShopifyShopProduct instead of ProductAttribute.
+8. Product image url is now stored in Product.detailImageUrl instead of ProductContent.

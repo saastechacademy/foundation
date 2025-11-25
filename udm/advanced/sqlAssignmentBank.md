@@ -1,6 +1,6 @@
 # SQL Assignment Bank
 
-These are SQL prompts that can be used as assingmnets or evaluation questions for someone learning SQL. Answering these will require a deep understanding of the OFBiz datamodel (UDM?) as well as how business processes connect to that model because every prompt will not specify which tables need to be quiered.
+These are SQL prompts that can be used as assignments or evaluation questions for someone learning SQL. Answering these will require a deep understanding of the OFBiz datamodel (UDM?) as well as how business processes connect to that model because every prompt will not specify which tables need to be quiered.
 
 **Non Return Refunds**
 
@@ -34,7 +34,7 @@ Fields to include in results:
 
 **Kit Return Inventory Update**
 
-A return was received and completed for a kit product (marketing package). Write an SQL to calculate how much QoH was increased for its copmonents.
+A return was received and completed for a kit product (marketing package). Write an SQL to calculate how much QoH was increased for its components.
 
 Fields:
 1. Return ID
@@ -57,7 +57,7 @@ Fields:
 
 **Net Transfers**
 
-At the end of every month, a retailer wants to see effectivley how much inventory was moved between facilitieis. Compute the net amount of transfers between all facilities. If two facilities transfered a product back and forth with quantity 3 and 2 respectively, the net transfer is 1.
+At the end of every month, a retailer wants to see effectivley how much inventory was moved between facilities. Compute the net amount of transfers between all facilities. If two facilities transfered a product back and forth with quantity 3 and 2 respectively, the net transfer is 1.
 
 Fields:
 1. Facility 1
@@ -77,4 +77,28 @@ Fields:
 
 **Order Import Taking Too Long**
 
-There is a suspicion that orders are taking too long to be imported from Shopify. Trace how long each step of the order import is taking to find where lag is being introduced.
+There is a suspicion that orders are taking too long to be imported from Shopify and shown on the fulfillment app. Trace how long each step of the order import is taking to find where lag is being introduced.
+For each order, identify the job that downloaded the order from Shopify, the job that processed the downloaded file and created the order, and how long it took for the order to get approved.
+
+Prerequisite: Understanding of the Shopify order import process and its data flows is required to correctly copmlete this assignment.
+
+Fields:
+1. Order Name
+2. Shopify Created Time
+3. OMS Approved Time
+4. Downloaded from Shopify Time
+5. File Process Start Time
+6. File Process End Time
+7. OMS Approved Time Delta (min)
+
+**Facility Operating Hours**
+
+A retailer wants to keep track of what the current operating hours for their stores is. Create a report that shows the opening and close times for all retail locations in the current week.
+
+1. Facility Name
+2. Week Start Date (Monday)
+3. Monday Open
+4. Monday Close
+5. Tuesday Open
+6. Tuesday Close
+7. ...For each day of week
