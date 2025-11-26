@@ -55,7 +55,7 @@ Both stories complement each other: the hard count establishes a baseline, while
 
 ---
 
-## 3. **Executing Cycle Count**
+## **Executing Cycle Count**
 
 ### A. Single session, single device (happy path)
 
