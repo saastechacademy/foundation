@@ -112,6 +112,7 @@ Entities in play: InventoryVarDcsnRsn (decision), PhysicalInventory (posting hea
 WorkEffort scoped:
 
 **WorkEffort → InventoryVarDcsnRsn → InventoryItemVariance → PhysicalInventory**
+
 Since PhysicalInventory has no workEffortId, all WorkEffort-scoped reporting must drive off InventoryVarDcsnRsn and (when applied) join to InventoryItemVariance via (inventoryItemId, physicalInventoryId), then to PhysicalInventory.
 
 Decision Report (complete story): drive off InventoryVarDcsnRsn filtered by workEffortId → join to InventoryItemVariance to PhysicalInventory where present.
@@ -120,6 +121,7 @@ Posted Variance Report (what hit the books): drive off InventoryVarDcsnRsn with 
 
 ### G. **Export Applied Variances to ERP (WorkEffort Scope)**
 Selection Logic
+
 **WorkEffort → InventoryVarDcsnRsn (outcome = APPLIED) → InventoryItemVariance → PhysicalInventory**
 - Start from `InventoryVarDcsnRsn.workEffortId`.
 - Join to the variance line by **composite key** (`inventoryItemId`,`physicalInventoryId`).
