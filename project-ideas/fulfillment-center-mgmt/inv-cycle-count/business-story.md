@@ -109,8 +109,9 @@ Entities in play: InventoryVarDcsnRsn (decision), PhysicalInventory (posting hea
 
 ### F. **Reporting**
 
-WorkEffort scoped: 
+WorkEffort scoped:
 
+**WorkEffort → InventoryVarDcsnRsn → InventoryItemVariance → PhysicalInventory**
 Since PhysicalInventory has no workEffortId, all WorkEffort-scoped reporting must drive off InventoryVarDcsnRsn and (when applied) join to InventoryItemVariance via (inventoryItemId, physicalInventoryId), then to PhysicalInventory.
 
 Decision Report (complete story): drive off InventoryVarDcsnRsn filtered by workEffortId → join to InventoryItemVariance to PhysicalInventory where present.
