@@ -107,9 +107,7 @@ When the manager clicks Post Variances for the selected set, System creates a Ph
 
 Entities in play: InventoryVarDcsnRsn (decision), PhysicalInventory (posting header), InventoryItemVariance (line delta), InventoryItemDetail (ledger diff), InventoryItem (book balance).
 
-### F. **Reporting**
-
-WorkEffort scoped:
+### F. **Reporting (WorkEffort Scope)**
 
 **WorkEffort → InventoryVarDcsnRsn → InventoryItemVariance → PhysicalInventory**
 
@@ -120,7 +118,6 @@ Decision Report (complete story): drive off InventoryVarDcsnRsn filtered by work
 Posted Variance Report (what hit the books): drive off InventoryVarDcsnRsn with outcome='APPLIED' → join to InventoryItemVariance to PhysicalInventory where present.
 
 ### G. **Export Applied Variances to ERP (WorkEffort Scope)**
-Selection Logic
 
 **WorkEffort → InventoryVarDcsnRsn (outcome = APPLIED) → InventoryItemVariance → PhysicalInventory**
 - Start from `InventoryVarDcsnRsn.workEffortId`.
