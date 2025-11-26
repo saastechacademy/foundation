@@ -98,6 +98,29 @@ This approach supports:
 
 ---
 
+### E. **Inventory Adjustment Explanation**
+
+A cycle-count/hard-count WorkEffort has approved sessions and a computed variance preview (counted vs. system). Manager has the decision UI with for-each-SKU options: Apply, Skip + Reason (required). The Store Manager reviews cycle-count discrepancies and decides per SKU and posts approved adjustments into inventory.
+Post Batch (one click)
+When the manager clicks Post Variances for the selected set, System creates a PhysicalInventory header (posting batch for facility/date). For each APPLIED SKU, the system creates one InventoryItemVariance line and references to PhysicalInventory and the InventoryVarDcsnRsn record.
+
+Entities in play: InventoryVarDcsnRsn (decision), PhysicalInventory (posting header), InventoryItemVariance (line delta), InventoryItemDetail (ledger diff), InventoryItem (book balance).
+
+### F. **Reporting**
+
+Decision Report (complete story): drive off InventoryVarDcsnRsn filtered by workEffortId → join to InventoryItemVariance to PhysicalInventory where present.
+Posted Variance Report (what hit the books): drive off InventoryVarDcsnRsn with outcome='APPLIED' → join to InventoryItemVariance to PhysicalInventory where present.
+
+WorkEffort scoping
+Since PhysicalInventory has no workEffortId, all WorkEffort-scoped reporting must drive off InventoryVarDcsnRsn and (when applied) join to InventoryItemVariance via (inventoryItemId, physicalInventoryId), then to PhysicalInventory.
+
+### G. **Export Applied Variances to ERP (WorkEffort Scope)**
+Selection Logic
+**WorkEffort → InventoryVarDcsnRsn (outcome = APPLIED) → InventoryItemVariance → PhysicalInventory**
+- Start from `InventoryVarDcsnRsn.workEffortId`.
+- Join to the variance line by **composite key** (`inventoryItemId`,`physicalInventoryId`).
+- Join to `PhysicalInventory` for header fields (date, party, comments).
+
 # Non-Functional Requirements for Cycle Count PWA (Store Associate Scanning)
 
 ### 1. **Offline-First**
