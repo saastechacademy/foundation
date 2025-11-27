@@ -1,4 +1,0 @@
-Review current codebase of HotWax Commerce PWA applications. HotWax Commerce itself is headless OMS and comes with collection of PWA. Launchpad is shell PWA. User journey starts with Launchpad, if user is logged in, they are presented list of all the available business process applications e.g inventory count. 
-If the user is not logged in then the launchpad first authenticates the user and then based on authorizations, presents the list of applications. 
-
-
