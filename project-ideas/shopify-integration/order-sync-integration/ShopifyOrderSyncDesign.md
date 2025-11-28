@@ -41,20 +41,29 @@ This service receives all required parameters from the master service, including
    **`ShopifyHelperServices.send#ShopifyGraphqlRequest`**  
    with the provided `queryText`(graphQl)
 2. Receive Shopify order JSON for **one page(limiting to orders mentioned in graphQl req)**
-3. For fetching the order data we did two poc's-
-        #### **poc1** - Fetch all Order data in one graphQl call
-                advantage - Less shopify hits
-                          - Less code complexity
-                disadvantage - More Query cost
-                             - Pagination is not possible for line items
-        #### **poc2** - Fetch order connections in seperate graphQl calls-
-                advantage - Pagniation for connections can be acheived.
-                          - Less query cost
-                          For each order:
-                           Call `get#OrderLevelDetails` to fetch:
-                           - line items  
-                           - shipping lines  
-                           - transactions
+3. For fetching the order data we did two POCs:
+
+#### **POC 1 – Fetch all order data in one GraphQL call**
+
+**Advantages**
+- Less Shopify API hits  
+- Less code complexity  
+
+**Disadvantages**
+- Higher query cost  
+- Pagination is not possible for line items  
+
+#### **POC 2 – Fetch order connections in separate GraphQL calls**
+
+**Advantages**
+- Pagination for connections can be achieved  
+- Lower query cost  
+
+**For each order, we call `get#OrderLevelDetails` to fetch:**
+- Line items  
+- Shipping lines  
+- Transactions
+
 5. Build the final Shopify order JSON for that page  
 6. **Upload the created JSON file to Data Manager** using:
 
