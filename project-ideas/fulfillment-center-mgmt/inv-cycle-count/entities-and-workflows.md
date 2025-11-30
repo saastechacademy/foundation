@@ -26,8 +26,9 @@
 - **Allowed Transitions**:
   - `CREATED → ASSIGNED`
   - `ASSIGNED → SUBMITTED`
-  - `SUBMITTED → APPROVED` or `SUBMITTED → VOID`
-  - `APPROVED → VOID` (only by store manager for corrections)
+  - `ASSIGNED → VOIDED` 
+  - `SUBMITTED → APPROVED` or `SUBMITTED → VOIDED`
+  - `APPROVED → VOIDED` (only by store manager for corrections)
   - **Not allowed**: moving from `APPROVED` back to `SUBMITTED`.
 
 ### C. InventoryCountImportItem (count lines)
@@ -40,6 +41,14 @@
 
 ### E. [InventoryVarDcsnRsn](./apply-count-to-inventory.md) 
 - **Role**: Captures structured reasons for variance decisions when applying counts to inventory.
+- Variance decisions are stored per-run, per-facility, per-product, not per session.
+
+### F. InventoryCountImportLock (session locking per device)
+- **Session Locking**: Stores active device lock for a session using InventoryCountImportLock with:
+    - leaseSeconds auto-expiration
+    - lastHeartbeatAt heartbeats
+    - optional override (overrideByUserId, overrideReason)
+- **PK: (inventoryCountImportId, fromDate)**
 ---
 
 ## 2) Suggested Changes
@@ -48,14 +57,12 @@
 - **Add**: `workEffortId` (link each session to the count run).
 - **Add**: `facilityAreaId` (**optional, nullable, no FK**) – loose area tag for human comprehension and filtering.
 - **Add**: `approvedDate` (**optional**) – timestamp when the session was approved (useful for audit and reporting).
-- **Add**: `deviceId` - Id of the device used to capture the session.
-- **Remove**: `statusId` (no session workflow in Phase 1).
 - **Keep**: `statusId` with lifecycle and transitions noted above.
 
 ### InventoryCountImportItem (Line)
 - **Remove**: item-level `statusId` (no item workflow in Phase 1).
 - **Keep**: `locationSeqId` as **optional** (stores may not have formal locations).
-- **Keep**: dual identity (`productId` and/or a scannable identifier field) to support flexible capture.
+- **Keep**: dual identity (`productId` and/or a scannable identifier field) to support flexible capture. `uuid` for offline-first identity.
 - **Clarify**: `quantity` semantics—non-negative integers; allow zero to indicate “counted none”.
 - **Add**: `isRequested` (Y/N) marks whether the item was pre-seeded by the manager (`Y`) or discovered during scanning (`N`).
 
