@@ -124,7 +124,7 @@ Posted Variance Report (what hit the books): drive off InventoryVarDcsnRsn with 
 - Join to the variance line by **composite key** (`inventoryItemId`,`physicalInventoryId`).
 - Join to `PhysicalInventory` for header fields (date, party, comments).
 
-### Schedule Cycle Counts Across Time Zones
+### H. **Schedule Cycle Counts Across Time Zones**
 
 Planners schedule cycle counts for multiple stores across different time zones. They think in **local store time** (e.g., “8–9am before opening”). The system must interpret, store, and display times correctly per facility.
 
