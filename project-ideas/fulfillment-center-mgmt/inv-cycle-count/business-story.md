@@ -124,6 +124,34 @@ Posted Variance Report (what hit the books): drive off InventoryVarDcsnRsn with 
 - Join to the variance line by **composite key** (`inventoryItemId`,`physicalInventoryId`).
 - Join to `PhysicalInventory` for header fields (date, party, comments).
 
+### Schedule Cycle Counts Across Time Zones
+
+Planners schedule cycle counts for multiple stores across different time zones. They think in **local store time** (e.g., “8–9am before opening”). The system must interpret, store, and display times correctly per facility.
+
+Primary Scenario (happy path)
+
+**Given** a planner schedules Daily Count 8:00–9:00 for STORE_1 (America/New_York) and STORE_2 (America/Los_Angeles), **the system**
+
+
+1. Resolves each store’s **facilityTimeZoneId**.
+2. Parses the local window (08:00–09:00) **in facility tz** for the selected date(s) or recurrence.
+3. Computes and stores **startAtUtc** and **dueAtUtc** per facility (per occurrence).
+4. Displays and notifies **in local time** for each store.
+
+**Example** (Nov 1):
+
+* STORE_1 (NY): 08:00–09:00 ET → 13:00–14:00 UTC
+* STORE_2 (LA): 08:00–09:00 PT → 16:00–17:00 UTC
+
+**User Experiences**
+
+Uploading the sample CSV above results in both stores seeing 8–9am local, with different UTC windows in the database.
+
+Changing a WorkEffort’s facility from one time zone to another triggers a recalculation of startAtUtc/dueAtUtc from the same local 8–9am intent.
+
+Planner never has to think about the server’s time zone; they only think in store‑local time.
+
+
 # Non-Functional Requirements for Cycle Count PWA (Store Associate Scanning)
 
 ### 1. **Offline-First**
