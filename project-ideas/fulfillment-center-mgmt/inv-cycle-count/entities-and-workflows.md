@@ -1,4 +1,14 @@
-# Entities, Suggested Changes, and Enabled Workflows
+# **Entities Owned by the Inventory Cycle Count Microservice**
+
+This document defines the **core entities fully owned and managed** by the **Inventory Cycle Count microservice**. These entities constitute the microservice’s private domain model and represent the state related to cycle count runs, sessions, count lines, status history, decisions, and locking.
+
+The microservice:
+- **Creates, updates, and deletes** these entities.
+- Treats them as its **source of truth** for cycle count operations.
+- References (but does not own) system-of-record data such as Product, InventoryItem, Facility, etc.
+
+The application framework is responsible for enforcing multi‑tenancy and cross‑service ownership policies at the data‑record level. Within that framework, **`WorkEffort` rows representing cycle count runs (e.g., `workEffortTypeId = CYCLE_COUNT_RUN`) are owned by this microservice.**
+
 
 ---
 
@@ -124,3 +134,20 @@
 **Value**: Simple, forgiving process—stores can fix mistakes quickly.
 
 ---
+
+# **Summary Diagram (Conceptual)**
+
+```
+WorkEffort (Run)  -- referenced -->  InventoryVarDcsnRsn (Variance Decision)
+        │                                       ▲
+        │                                       │
+        └───< owns multiple >── InventoryCountImport (Session)
+                                   │      ▲
+                                   │      │
+                < owns multiple >──┘      └──< tracks history >── InvCountImportStatus
+                                   │
+                                   └──< owns multiple >── InventoryCountImportItem (Count Line)
+
+InventoryCountImportLock applies to InventoryCountImport sessions.
+```
+
