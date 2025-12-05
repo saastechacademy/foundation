@@ -1,6 +1,7 @@
 ### Requirements
 
 * [Business story](./business-story.md)
+* [Inventory Cycle Count Microservice](./inventory_cycle_count_purpose_scope.md)
 * [Manager Needs for Directed Cycle Count](./manager-needs-directed-cycle-count.md)
 * [Entities and Workflows](./entities-and-workflows.md)
 * [Apply count to Inventory](./apply-count-to-inventory.md)

@@ -6,16 +6,17 @@
 
 ### A. WorkEffort (context container)
 - **Role**: Represents a store-wide count run (e.g., Annual Hard Count).
+- **workEffortTypeId**: CYCLE_COUNT_RUN 
 - **WorkEffortPurposeType**: HARD_COUNT, DIRECTED_COUNT
 - **Why it matters**: Gives every session a shared context for planning, reporting, and audit.
-- **Status Lifecycle** (for type `INVENTORY_COUNT_RUN`):
-  - `PLANNED → IN_PROGRESS → COMPLETED → CLOSED` (with `CANCELLED` as an exit path).
+- **Status Lifecycle** (for type `CYCLE_CNT_STATUS`):
+  - `CREATED → IN_PROGRESS → COMPLETED → CLOSED` (with `CANCELLED` as an exit path).
   - This lifecycle controls when sessions can be created, submitted, and included in reporting.
 - **Allowed Transitions**:
-  - `PLANNED → IN_PROGRESS`
+  - `CREATED → IN_PROGRESS`
   - `IN_PROGRESS → COMPLETED`
   - `COMPLETED → CLOSED`
-  - `PLANNED/IN_PROGRESS/COMPLETED → CANCELLED`
+  - `CREATED/IN_PROGRESS/COMPLETED → CANCELLED`
   - **Not allowed**: moving backward (e.g., `COMPLETED → IN_PROGRESS`).
 
 ### B. InventoryCountImport (counting session)
@@ -67,7 +68,7 @@
 - **Add**: `isRequested` (Y/N) marks whether the item was pre-seeded by the manager (`Y`) or discovered during scanning (`N`).
 
 ### WorkEffort
-- **Use**: an existing type to represent a count run (e.g., `INVENTORY_COUNT_RUN`).
+- **Use**: an existing type to represent a count run (e.g., `CYCLE_COUNT_RUN`).
 - **Add clarity**: WorkEffort status lifecycle and allowed transitions.
 - **Link**: Sessions tied to a WorkEffort ensure traceability and consolidated reporting.
 
