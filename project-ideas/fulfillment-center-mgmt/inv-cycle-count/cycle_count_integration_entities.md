@@ -61,11 +61,6 @@ In the microservice, `InventoryItem` acts as:
 - The authoritative source for **system inventory quantities**
 - The reference anchor for **snapshots**, **variances**, and **adjustments**
 
-**Referenced in:**
-- InventorySnapshot
-- InventoryVariance
-- AdjustmentProposal
-
 **Key OFBiz attributes:**
 - `inventoryItemId`
 - `productId`
@@ -90,8 +85,6 @@ Every cycle count session takes place in a specific facility.
 - CountRun
 - CountSession
 - CountLine
-- InventorySnapshot
-- Variance
 
 **Key OFBiz attributes:**
 - `facilityId`
@@ -110,8 +103,6 @@ Used to support **location-aware** cycle counts.
 
 **Referenced by:**
 - CountLine
-- InventorySnapshot
-- InventoryVariance
 
 **Key OFBiz attributes:**
 - `facilityId`
