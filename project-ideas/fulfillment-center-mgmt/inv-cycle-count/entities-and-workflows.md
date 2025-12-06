@@ -2,7 +2,7 @@
 
 This document describes the **core entities owned and managed** by the **Inventory Cycle Count microservice**. These entities represent runs, sessions, count lines, status history, variance decisions, and locking. The microservice creates/updates/deletes these and treats them as the source of truth; system-of-record data (Product, InventoryItem, Facility, etc.) is referenced, not owned.
 
-The application framework enforces multi‑tenancy and ownership. Within that, **`WorkEffort` rows for cycle counts use `workEffortTypeId = CYCLE_COUNT_RUN` and are owned by this microservice.**
+The application framework enforces multi‑tenancy and ownership. Within that, **`WorkEffort` rows for cycle counts use `workEffortTypeId = CYCLE_COUNT_RUN` and are owned by this microservice.** For entities the microservice only references (Product, Facility, etc.), see `cycle_count_integration_entities.md`.
 
 ---
 
