@@ -2,7 +2,7 @@
 
 This document defines all **integration entities** that participate in data exchange between the **Inventory Cycle Count microservice** and the **OFBiz / HotWax Commerce** platform. These entities act as the canonical identifiers and authoritative records for products, inventory, facilities, and reconciliation processes.
 
-The microservice **does not own these entities**. Instead, it references their IDs while maintaining its own operational data model for counts, sessions, lines, snapshots, and variances.
+The microservice **does not own these entities**. It only references their IDs while maintaining its own operational data model. For entities owned by the microservice, see [entities-and-workflows.md](./entities-and-workflows.md).
 
 ---
 
