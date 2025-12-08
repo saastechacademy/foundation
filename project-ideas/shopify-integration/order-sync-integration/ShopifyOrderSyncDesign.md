@@ -3,21 +3,21 @@
 This document explains the flow used to import Shopify orders into OMS, this workflow fetches orders from Shopify using GraphQL, enriches each order by fetching additional order-level details, and stores the resulting payloads into the Data Manager as JSON files. The architecture uses Moqui System Messages, GraphQL templates, and paginated service calls.
 
 
-A scheduled job is created to periodically queue a System Message of type:
+## A scheduled job is created to periodically queue a System Message of type:
 
-**SystemMessageTypeId:** `GetOrdersFromShopify`
+### **SystemMessageTypeId:** `GetOrdersFromShopify`
 The job runs on a cron expression and creates a System Message with parameters for order import process, 
 this System Message is the trigger for the entire Shopify order import pipeline.
 
-**System Message Consumption**
+### **System Message Consumption**
 
 Once the System Message of type **GetOrdersFromShopify** is created, the system automatically invokes:
 
-**Service:** `get#OrdersFromShopify`
+### **Service:** `get#OrdersFromShopify`
 
 This is the **master orchestration service** for the order import process, it is the service which acts as the controller for fetching Shopify orders page-by-page.
 
-### Responsibilities
+#### Responsibilities
 1. Read incoming System Message parameters  
 2. Prepare GraphQL query parameters  
 3. **Generate the final `queryText`(shopify graphQl ftl)** 
@@ -25,7 +25,7 @@ This is the **master orchestration service** for the order import process, it is
 **`upload#ShopifyOrdersResponse`**
 Thus the master service loops through all pages and delegates the processing of each page to the upload service.
 
-## Upload Service – `upload#ShopifyOrdersResponse`
+### Upload Service – `upload#ShopifyOrdersResponse`
 
 This service receives all required parameters from the master service, including:
 
@@ -35,7 +35,7 @@ This service receives all required parameters from the master service, including
 - `cursor`  
 - **`queryText`** (passed by master service)
 
-### Responsibilities
+#### Responsibilities
 
 1. Call Shopify using  
    **`ShopifyHelperServices.send#ShopifyGraphqlRequest`**  
@@ -51,7 +51,8 @@ This service receives all required parameters from the master service, including
 
 **Disadvantages**
 - Higher query cost  
-- Pagination is not possible for line items  
+- Pagination is not possible for connection objects  
+[GraphQl](OrderHeaderGraphQl.md)
 
 #### **POC 2 – Fetch order connections in separate GraphQL calls**
 
@@ -59,17 +60,21 @@ This service receives all required parameters from the master service, including
 - Pagination for connections can be achieved  
 - Lower query cost  
 
+**Disadvantages**  
+- More shopify hits
+- Transaction time out error
+
 **For each order, we call `get#OrderLevelDetails` to fetch:**
-- Line items  
-- Shipping lines  
+- Line items [GraphQl](OrderLineItemById.md) 
+- Shipping lines  [GraphQl](ShippingLineItemById.md)
 - Transactions
 
-5. Build the final Shopify order JSON for that page  
-6. **Upload the created JSON file to Data Manager** using:
+4. Build the final Shopify order JSON for that page  
+5. **Upload the created JSON file to Data Manager** using:
 
    **`upload#DatamanagerFeed`**
 
-7. Return:
+6. Return:
    - `hasNextPage`  
    - `endCursor`
 
