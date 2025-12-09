@@ -32,19 +32,51 @@ The service accepts raw external inventory data and the identifiers needed to re
 
 Using `(externalFacilityId, productIdentType, productIdentValue)`, the service must:
 
-- Resolve `facilityId`
-- Resolve `productId`
-- Resolve `inventoryItemId` (or create one if the system permits)
-- Retrieve:
-  - `inventoryItemQOH`
-  - `inventoryItemATP`
+* Resolve `facilityId`
+* Resolve `productId`
+* Resolve `inventoryItemId` (or create one if the system permits)
+* Retrieve:
+
+  * `inventoryItemQOH`
+  * `inventoryItemATP`
 
 If any of these cannot be resolved, the service should:
 
-- Return the context and values it was able to determine
-- **Not** call `create#ExternalInventoryReset`
+* Return the context and values it was able to determine
+* Add a plain-text message (in a `messages` list) describing the issue using Moqui log style:
 
-### 2. Compute diffs
+  `Inventory [Context] - [Outcome]`
+* **Not** call `create#ExternalInventoryReset`
+
+### Resolution Failure Response Format
+
+Example patterns:
+
+* **Unknown externalFacilityId**
+
+  ```json
+  "messages": [
+    "Inventory externalFacilityId=EXTFAC-UNKNOWN SKU=SKU-001-A - Facility resolution failed, no reset performed"
+  ]
+  ```
+
+* **Unknown SKU/Product**
+
+  ```json
+  "messages": [
+    "Inventory FacilityId=FAC1001 SKU=SKU-DOES-NOT-EXIST - Product resolution failed, no reset performed"
+  ]
+  ```
+
+* **No InventoryItem exists**
+
+  ```json
+  "messages": [
+    "Inventory FacilityId=FAC1001 ProductId=PROD56789 - InventoryItem not found, no reset performed"
+  ]
+  ```
+
+### 2. Compute diffs. Compute diffs
 
 ```text
 quantityOnHandDiff = externalQOH - inventoryItemQOH
@@ -53,8 +85,8 @@ availableToPromiseDiff = externalATP - inventoryItemATP
 
 ### 3. Decide whether a reset is required
 
-- If **both diffs = 0** → **No reset required**
-- If either diff ≠ 0 → **Reset required**
+* If **both diffs = 0** → **No reset required**
+* If either diff ≠ 0 → **Reset required**
 
 ### 4. When a reset is required
 
@@ -64,15 +96,15 @@ Call `create#ExternalInventoryReset` with all contextual fields and the computed
 
 Capture the returned:
 
-- `resetItemId`
+* `resetItemId`
 
 ### 5. Ledger posting
 
 `create#ExternalInventoryReset` will:
 
-- Create an `ExternalInventoryReset` record
-- Create an `InventoryItemDetail` entry
-- Trigger EECA to update `InventoryItem`
+* Create an `ExternalInventoryReset` record
+* Create an `InventoryItemDetail` entry
+* Trigger EECA to update `InventoryItem`
 
 `reset#InventoryItem` does **not** interact with the ledger directly.
 
@@ -119,8 +151,7 @@ The absence of `resetItemId`, combined with zero diffs, implicitly communicates:
 
 ## Design Notes
 
-- This service represents the **decision-making layer** in the inventory reconciliation process.
-- It shields external systems from OMS ledger complexity.
-- It ensures that resets are only applied when meaningful differences exist.
-- Zero diff = no-op = clean, minimal API semantics.
-
+* This service represents the **decision-making layer** in the inventory reconciliation process.
+* It shields external systems from OMS ledger complexity.
+* It ensures that resets are only applied when meaningful differences exist.
+* Zero diff = no-op = clean, minimal API semantics.
