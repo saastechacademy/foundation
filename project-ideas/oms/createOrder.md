@@ -79,11 +79,11 @@ This service creates data in following entities:
     ],
     "identifications": [
         {
-            "idType": "SHOPIFY_ORD_NAME",
+            "orderIdentificationTypeId": "SHOPIFY_ORD_NAME",
             "idValue": "2345678876545"
         },
         {
-            "idType": "SHOPIFY_ORD_ID",
+            "orderIdentificationTypeId": "SHOPIFY_ORD_ID",
             "idValue": "4444992255"
         }  
     ],
