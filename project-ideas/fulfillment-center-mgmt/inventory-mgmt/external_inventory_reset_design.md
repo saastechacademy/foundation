@@ -113,7 +113,7 @@ This section defines the OMS-side ledger service that creates an `ExternalInvent
 
 ---
 
-# create#[ExternalInventoryReset]
+# create#ExternalInventoryReset
 
 This service belongs to the OMS/Inventory Management component. It is a **simple ledger service** that assumes all context and diff values have already been computed by an upstream service (such as `reset#InventoryItem`).
 
