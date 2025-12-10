@@ -1,5 +1,7 @@
 # reset#InventoryItem Service Specification
 
+**Implemented in Poorti component**
+
 This service computes external vs internal inventory differences and decides whether an inventory reset is required. It is the **primary entry point** for external systems (WMS, ERP, NetSuite, etc.) that want to reconcile inventory with OMS.
 
 `reset#InventoryItem` performs **no ledger updates directly**. It computes diffs and, only when necessary, calls `create#ExternalInventoryReset`.
