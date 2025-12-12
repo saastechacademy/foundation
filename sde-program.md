@@ -22,8 +22,8 @@ This training program uses a learn-by-doing approach. You'll gain practical expe
 ### Module 0: Developing application with Moqui
 1. [Getting Started](moqui-framework/beginner/getting-started.md)
 2. [MySQL Database Setup](moqui-framework/beginner/database-setup.md)
-3. [Developing Screens](moqui-framework/beginner/developing-screens.md)
-4. [Developing Entities](moqui-framework/beginner/developing-entities.md)
+3. [Developing Entities](moqui-framework/beginner/developing-entities.md)
+4. [Developing Screens](moqui-framework/beginner/developing-screens.md)
 5. [Developing Forms](moqui-framework/beginner/developing-forms.md)
 6. [Developing Services](moqui-framework/beginner/developing-services.md)
 
