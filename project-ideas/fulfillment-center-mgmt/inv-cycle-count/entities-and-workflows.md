@@ -32,10 +32,30 @@ The application framework enforces multi‑tenancy and ownership. Within that, *
 - **Count purpose**: `DIRECTED_COUNT`, `HARD_COUNT` (applies to `WorkEffort.workEffortPurposeTypeId`).
 - **Variance enums**: reasons (`ANNUAL_COUNT_ADJUSTMENT`, `MANAGER_OVERRIDE`, `PARTIAL_SCOPE_POST`, `CORRECTION_AFTER_REVIEW`); outcomes (`APPLIED`, `SKIPPED`).
 
-### E. InventoryVarDcsnRsn (variance decision)
+### E. WorkEffortStatus (run-level status history)
+- **Role:**: Captures the audit trail of status changes for a cycle-count run (WorkEffort).
+- **Why it matters**: Provides immutable, chronological history of run lifecycle. Used to manage the last sync time to **sync** the variances with **external systems**.
+- **Fields present**:
+    - **workEffortId**: FK to the count run. statusId — One of the run-level statuses (CYCLE_CNT_CREATED, CYCLE_CNT_IN_PRGS, CYCLE_CNT_CMPLTD, CYCLE_CNT_CLOSED, CYCLE_CNT_CNCL).
+    - **statusDatetime** — Exact UTC timestamp of the transition (part of PK).
+    - **changeByUserLoginId** — User who performed the transition.
+
+### F. InvCountImportStatus (session-level status history)
+- **Role**: Tracks the lifecycle history of each InventoryCountImport session (CREATED → ASSIGNED → SUBMITTED → APPROVED → VOIDED).
+- **Why it matters**: Provides an immutable history of session progression. Used for reporting.
+- **Fields present**:
+    - **invCountImpStatusId** — Unique row ID.
+    - **inventoryCountImportId** — FK to the staff session.
+    - **statusId** — One of the session statuses (SESSION_CREATED, SESSION_ASSIGNED, SESSION_SUBMITTED, SESSION_APPROVED, SESSION_VOIDED).
+    - **statusDate** — When the transition occurred.
+    - **changeByUserLoginId** — Who performed the transition.
+    - **importItemSeqId** — Present for legacy compatibility but not used in this design (i.e., item level statuses are **not** managed anymore).
+**NOTE**: The aggregator and sync logic rely on uuid and timestamps, not status transitions.
+
+### G. InventoryVarDcsnRsn (variance decision)
 - **Role**: Stores per-run, per-facility, per-product variance decisions and outcomes; links to PhysicalInventory/InventoryItemVariance when applied.
 
-### F. InventoryCountImportLock (session locking per device)
+### H. InventoryCountImportLock (session locking per device)
 - **Role**: Stores active device lock for a session with lease/heartbeat/override.
 - **PK**: (`inventoryCountImportId`, `fromDate`).
 
