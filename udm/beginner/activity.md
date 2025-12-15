@@ -219,6 +219,12 @@ In this section, you will create a catalog, define categories, features, product
 4. **Observation:**  
    - Verify via the admin screens that the catalog and its associated data are correctly imported.
 
+### Activity 6 - Define Inventory Item Storage and Facility
+
+### Activity 7 - Create Inventory Item, Facility via Webtools
+
+### Activity 8 - Create Inventory Item, Facility via XML Data Load 
+
 ## Part 4: Order Processing
 
 In this final section, you will work with orders—creating orders, approving them, canceling items, and fulfilling shipments. This activity will help you understand the order lifecycle in OFBiz.

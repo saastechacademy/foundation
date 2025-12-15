@@ -52,6 +52,7 @@ This training program requires a solid foundation in software development princi
 ### Module 5: Modeling Products
 * Read Chapter 3 of the book: The Data Model Resource Book, Vol. 1
 * [Setup Company Product Store and Catalog](udm/beginner/activity.md#setup-up-company-product-store-and-catalog)
+* [Inventory Item Storage]
 
 ### Module 6: Developing application with [Apache OFBiz](https://ofbiz.apache.org)
 * [Developing Application](https://cwiki.apache.org/confluence/display/OFBIZ/OFBiz+Tutorial+-+A+Beginners+Development+Guide+for+Release+18.12+and+Release+22.01) with Apache OFBiz
