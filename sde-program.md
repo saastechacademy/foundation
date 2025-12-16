@@ -45,7 +45,12 @@ This training program requires a solid foundation in software development princi
 * [Read Chapter 1](udm/beginner/chapter_1.md) of the book: The Data Model Resource Book, Vol. 1
 * [Getting Started](https://ofbiz.apache.org/developers.html)
 
-## [Data Model Resource Book](udm/readme.md) 
+## [Data Model Resource Book](udm/readme.md)
+1. https://www.moqui.org/m/docs/framework/Data+and+Resources/Data+Model+Patterns
+2. https://cwiki.apache.org/confluence/display/OFBIZ/General+Entity+Overview
+3. https://arpitbhayani.me/blogs/taxonomy-on-sql
+4. [UDM Analysis and Design](udm/beginner/udm-analysis-and-design.md) 
+
 
 ### Module 4: Modeling People and Organization
 * Read [Chapter 2](udm/readme.md#chapter-2-people-and-organizations) of the book: The Data Model Resource Book, Vol. 1
@@ -56,6 +61,12 @@ This training program requires a solid foundation in software development princi
 ### Module 5: Modeling Products
 * Read [Chapter 3](udm/readme.md#chapter-3-products) of the book: The Data Model Resource Book, Vol. 1
 * [Product](udm/beginner/Product/product.md)
+* [Product Type](udm/beginner/Product/product-types.md)
+* [Product Feature](udm/beginner/Product/product-feature.md)
+* [Product Category Type](udm/beginner/Product/product-category-type.md)
+* [Product Category](udm/beginner/Product/product-category.md)
+* [Facility](udm/beginner/Product/facility.md)
+
 * [Setup Company Product Store and Catalog](udm/beginner/activity.md#setup-up-company-product-store-and-catalog)
 * [Inventory Item Storage]
 
@@ -66,6 +77,9 @@ This training program requires a solid foundation in software development princi
 
 ### Module 7: Order and Shipment Data Modeling
 * Universal Data Model, Read **[Chapter 4 and Chapter 5](udm/readme.md#chapter-4-ordering-products)** of the book: The Data Model Resource Book, Vol. 1
+* [Order](udm/beginner/Order/order.md)
+* [Return](udm/beginner/Order/return.md)
+* [Shipment](udm/beginner/Order/shipment.md)
 * [Order Activity](udm/beginner/activity.md#order)
 * [NotNaked Setup](udm/beginner/activity-notnaked.md) 
 * [Develop Order Management](ofbiz-framework/intermediate/developing_find_order.md) application
@@ -89,8 +103,6 @@ This training program requires a solid foundation in software development princi
 * [ATP](https://launchpad.hotwax.io/login?isLoggedOut=true&redirectUrl=https://atp.hotwax.io/login)
 * [Routing](https://launchpad.hotwax.io/login?isLoggedOut=true&redirectUrl=https://order-routing.hotwax.io/login)
 * [Fulfillment](https://launchpad.hotwax.io/login?redirectUrl=https://fulfillment-dev.hotwax.io/login)
-* [Picking](https://picking-dev.hotwax.io/)
-* [BOPIS Fulfillment](https://bopis-dev.hotwax.io/)
 * [Receiving](https://launchpad.hotwax.io/login?redirectUrl=https://receiving-dev.hotwax.io/login)
 * [Cycle Counting](https://inventorycount-dev.hotwax.io/login)
 * [Import](https://import.hotwax.io/purchase-order)
