@@ -62,6 +62,7 @@ This training program requires a solid foundation in software development princi
 ### Module 7: Order and Shipment Data Modeling
 * Universal Data Model, Read **[Chapter 4 and Chapter 5](udm/readme.md#chapter-4-ordering-products)** of the book: The Data Model Resource Book, Vol. 1
 * [Order Activity](udm/beginner/activity.md#order)
+* [NotNaked Setup](udm/beginner/activity-notnaked.md) 
 * [Develop Order Management](ofbiz-framework/intermediate/developing_find_order.md) application
 * [GetOrder](ofbiz-framework/intermediate/activity-get-order-json.md) API 
 
