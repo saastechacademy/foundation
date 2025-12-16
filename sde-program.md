@@ -45,12 +45,17 @@ This training program requires a solid foundation in software development princi
 * [Read Chapter 1](udm/beginner/chapter_1.md) of the book: The Data Model Resource Book, Vol. 1
 * [Getting Started](https://ofbiz.apache.org/developers.html)
 
+## [Data Model Resource Book](udm/readme.md) 
+
 ### Module 4: Modeling People and Organization
-* Read Chapter 2 of the book: The Data Model Resource Book, Vol. 1
+* Read [Chapter 2](udm/readme.md#chapter-2-people-and-organizations) of the book: The Data Model Resource Book, Vol. 1
+* [Party](udm/beginner/Party/party.md)
+* [Contact Mech](udm/beginner/Party/contact-mech.md)
 * [Party Activity](udm/beginner/activity.md#party-data-model)
 
 ### Module 5: Modeling Products
-* Read Chapter 3 of the book: The Data Model Resource Book, Vol. 1
+* Read [Chapter 3](udm/readme.md#chapter-3-products) of the book: The Data Model Resource Book, Vol. 1
+* [Product](udm/beginner/Product/product.md)
 * [Setup Company Product Store and Catalog](udm/beginner/activity.md#setup-up-company-product-store-and-catalog)
 * [Inventory Item Storage]
 
