@@ -110,6 +110,7 @@ Map facilities for warehouses and flagship stores; practice inventory items and 
 - Product Store: ensure `inventoryFacilityId` is set, `oneInventoryFacility` = `Y` if using a single DC, `checkInventory` = `Y`, `reserveInventory` = `Y`, and `reserveOrderEnumId` = `INVRO_FIFO_REC`.  
 - ProductFacility: leave `requireInventory/requireLot/requireSerial` blank for simple goods; set `minimumStock`, `reorderQuantity`, `daysToShip`.  
 - FacilityLocation/ProductFacilityLocation: define at least one bulk + one pick location to keep UI transactions simple.  
+- Reference docs: `project-ideas/oms/Inventory.md`, `project-ideas/oms/ProductFacility.md`, `project-ideas/oms/Facility.md`, and `project-ideas/oms/Shipment.md` for deeper data model context.
 
 ### Activity 1 – Facilities (UI)
 Create facilities for warehouses (set `defaultInventoryItemTypeId=NON_SERIAL_INV_ITEM`, and `defaultDaysToShip` per DC SLA):  
