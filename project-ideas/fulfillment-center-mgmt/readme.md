@@ -3,7 +3,7 @@
 1. Fulfillment of sales orders (including basic picking and packing) and receiving of purchase orders
 2. Inventory management including issuance and receipt, and inventory reservation for sales orders
 
-## [Store Fulfillment Lifecycle](https://docs.hotwax.co/documents/v/learn-hotwax-oms/business-process-models/store.fulfillment)
+## [Store Fulfillment Lifecycle](https://docs.hotwax.co/documents/v/learn-hotwax-oms/business-process-models/store-fulfillment-lifecycle)
 
 
 Order fulfillment is 3 step process,
@@ -134,7 +134,7 @@ Why does the shipment have to be moved out of "approved" status to edit it's con
 3.  What if during Shipment processing, we may have to get ShippingLabel. In this case we can skip the rate shopping step, Read carrrier Party and shipmentMethodTypeId from the ShipmentRouteSegment entity.
 4.  Are we honoring the shipmentMethodType suggested by brokering engine? Brokering engine evaluates distance between fulfillment location and deliver location, if the distance is within the range of ZONE 2, Brokering engine suggests ShipmentMethodType. The Rate shopping process should include the suggested shipmentMethodType.
 
-## [Inventory Management](inventoryManagementProcess.md)
+## [Inventory Management](inventory-mgmt/inventoryManagementProcess.md)
 
 ## Transfer Order
 

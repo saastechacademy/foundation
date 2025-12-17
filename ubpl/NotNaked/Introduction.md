@@ -3,6 +3,14 @@
 ## **Introduction**
 NotNaked is a dynamic fashion brand catering to Generation Z and Generation Alpha in America. As a digital-first company, NotNaked blends cutting-edge technology with physical retail experiences to meet the evolving needs of its tech-savvy customer base. With strategically located retail stores and a robust online presence, the brand offers a seamless [omnichannel](https://www.hotwax.co/blog/what-is-omnichannel-order-management-and-why-does-it-exist) shopping experience that prioritizes speed, convenience, and customer satisfaction.
 
+## **Company**
+
+* Name: NotNaked Inc
+* Head Office: 
+   Address: 123 Broadway, New York, NY 10012
+   Phone: +1(111)222-3333
+
+
 ## **Retail Presence**
 NotNaked operates retail locations in prominent outdoor shopping areas across several key cities. These stores function not only as shopping destinations but also as fulfillment centers for online orders, enhancing the brand’s omnichannel capabilities.
 1. **New York**
@@ -71,5 +79,13 @@ NotNaked’s advanced operations are powered by an integrated technology stack:
 * **NetSuite:** An ERP solution that handles financials, supply chain management, and back-office operations.  
 * **ShipHawk:** A shipping software solution that automates shipping processes, integrates with carriers, and provides real-time shipping rates and tracking.  
 * **Loop Returns:** A returns management platform that simplifies the returns and exchanges process, enhancing customer experience.
+
+## **Requirements**
+
+- They need all their systems like ERP, POS, OMS, and e-commerce to connect and talk to each other smoothly, so that data stays consistent everywhere without duplication or errors.  
+- They require real-time and accurate inventory visibility to avoid situations where stock shows available but is not, or where excess inventory piles up unnecessarily.  
+- They need a streamlined process for transferring inventory between warehouses or stores, with proper tracking of items, timelines, and related costs.  
+- They require strong support for BOPIS (Buy Online, Pick up In Store) and BORIS (Buy Online, Return In Store), so customers can pick up or return items easily without facing issues in stock availability or order routing.  
+
 
 For managing unified orders, inventory, and fulfillment across all channels, NotNaked requires an [Enterprise-Level Application](https://www.ibm.com/think/topics/enterprise-applications). They selected [**HotWax Commerce**](https://www.hotwax.co/) — an **omnichannel Order Management System (OMS)** — as the backbone of their retail operations, enabling seamless integration across e-commerce, stores, warehouses, and logistics.

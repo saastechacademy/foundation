@@ -2,8 +2,8 @@
 
 1. [Getting Started](getting-started.md)
 2. [MySQL Database Setup](database-setup.md)
-3. [Developing Screens](developing-screens.md)
-4. [Developing Entities](developing-entities.md)
+3. [Developing Entities](developing-entities.md)
+4. [Developing Screens](developing-screens.md)
 5. [Developing Forms](developing-forms.md)
 6. [Developing Services](developing-services.md)
 

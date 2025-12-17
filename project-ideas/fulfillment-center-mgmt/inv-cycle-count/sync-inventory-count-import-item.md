@@ -10,12 +10,8 @@ This document defines the design for executing inventory counts in the PWA, with
 
 * **Offline-First**: Scans are captured locally first; network is optional.
 * **Scan Reliability**: Each scan is atomic, persisted immediately; no scans are lost.
-* **Immutability**: Once created, records (`InventoryCountImportItem`) are never mutated.
-* **Idempotency**: All sync operations can be retried safely without duplication.
-* **Natural Keying**: Records are uniquely identified by `(inventoryCountImportId, importItemSeqId)`.
-* **High-Water Mark PK Generation**: Next `importItemSeqId` is always `max(existing) + 1`. Gaps are allowed; no re-sequencing.
-* **Absolute Counts**: App pushes absolute counts per scan, not deltas.
-
+* **Natural Keying**: Records are uniquely identified by `uuid`.
+* **Absolute Counts**: The final values pushed to the server are absolute quantities per item, not per-scan deltas. Individual scans stay local as ScanEvent entries.
 ---
 
 ## 3. Scenarios
@@ -23,14 +19,14 @@ This document defines the design for executing inventory counts in the PWA, with
 ### 3.1 Single Device, Online or Offline
 
 * Staff scans items using the iPad + wireless scanner.
-* Each scan instantly creates a local `InventoryCountImportItem` row.
+* Each scan instantly creates a local `ScanEvent` row.
 * Background task aggregates counts by SKU and pushes to server.
 
 ### 3.2 Resuming a Session
 
-* On resume, the app pulls the server state for the import.
-* Local state is rebuilt using high-water mark.
-* New scans continue with correct sequencing.
+* On resume, the app pulls server-side session items.
+* Local state is rebuilt via storeInventoryCountItems(), which normalizes items, upserts them into inventoryCountRecords, sets lastSyncedAt = lastUpdatedStamp so first aggregation skips already-synced rows.
+* New scans continue with correct ordering.
 
 ---
 
@@ -44,21 +40,28 @@ This document defines the design for executing inventory counts in the PWA, with
 
 ### Create / Update Logic
 
-* **Create**: Each scan → new row with `importItemSeqId = max + 1`.
+* **Create**: Every scan creates a new append-only `ScanEvent` record with timestamp, quantity, and identifier.
 * **Update**: No in-place mutation; new rows only.
 
 ### Push Logic
 
 * Background task syncs local rows to server.
-* Server upserts rows by `(inventoryCountImportId, importItemSeqId)`.
+* Server upser  ts rows by `(inventoryCountImportId, importItemSeqId)`.
 * Sync retries until success.
 
 ---
 
 ## 5. Multi-Device Handling
-
+* **Session-Level Locking**: Multi-device conflicts are prevented by explicit locks:
+    * **getSessionLock**
+    * **lockSession**
+    * **releaseSession**
+* Only one device can actively count the session.
+* **Refresh-before-write**: When a different device resumes, local state is overwritten/updated via storeInventoryCountItems before scanning begins.
+* **PK Collisions**: Avoided because:
+    * ScanEvent entries use Dexie auto-PK.
+    * Aggregated `inventoryCountRecords` use client-side uuid.
 * **Refresh-before-create** ensures local PKs don’t conflict.
-* **Collisions**: If duplicate detected, retry after pulling server max.
 
 ---
 
@@ -72,11 +75,14 @@ This document defines the design for executing inventory counts in the PWA, with
 
 ## 7. Non-Functional Requirements (NFRs)
 
-* **No Missed Scans**: Each scan persisted locally before any background processing.
+* **No Missed Scans**: Each scan persisted before any aggregation.
 * **Offline-First**: Works without connectivity; guarantees eventual sync.
 * **Performance Priority**: Scanning always takes precedence over aggregation/sync.
-* **Background Sync**: Aggregation and server push are low-priority background tasks.
-* **Data Integrity**: Records include timestamps, product identifiers, device/session metadata.
+* **Background Sync**: Aggregation and server push are low-priority background tasks and won't overlap.
+* **Data Integrity**: 
+    * **ScanEvent** keeps raw scan history (append-only).
+    * **inventoryCountRecords** include uuid, timestamps, isRequested, identifiers, facility, sync markers (lastSyncedAt, aggApplied).
+* **Session Concurrency**: Device-level lock enforced through lock APIs.
 * **Usability**: Scan field always in focus; associates can scan rapidly without extra taps.
 
 ---
@@ -85,8 +91,11 @@ This document defines the design for executing inventory counts in the PWA, with
 
 * PWA works offline; scans never lost.
 * Scans persisted instantly on device.
+* Live queries reflect counted/uncounted/undirected/unmatched buckets instantly.
 * Background sync retries until server acknowledges.
 * Multi-device collisions are resolved via refresh + retry.
+* Session-level lock prevents multi-device conflicts.
+* Reset + rebuild on resume always yields accurate local state.
 * Reports and reconciliations use only approved sessions.
 
 ---
