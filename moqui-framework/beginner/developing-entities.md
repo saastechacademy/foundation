@@ -107,7 +107,7 @@ Creates the relationship between Party and ContactMech.
 | `contactMechId`  | id        | FK to ContactMech |
 | `fromDate`       | date-time | PK part — when the contact became active |
 | `thruDate`       | date-time | Optional — when the contact stopped being active |
-| `purposeEnumId`  | id        | Optional — e.g., PRIMARY_EMAIL |
+
 
 > **Primary Key:** partyId + contactMechId + fromDate
 
@@ -137,7 +137,7 @@ Create basic sample data for:
 
 ## Deliverables
 
-1. A link to the GitHub repository containing your `moqui-training` component.
+1. A link to the GitHub repository containing your `party` component.
 
 ---
 
