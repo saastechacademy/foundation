@@ -20,7 +20,7 @@ This assignment evaluates your ability to:
    - Ensure the screen follows Moqui's schema standards.
 
 ### **Step 2: [Mount the Screen](https://moqui.org/m/docs/framework/Quick+Tutorial#MountasaSubscreen)**
-1. Update the Moqui configuration file to mount your screen at a specific URL path (e.g., `/partyscreen`).
+1. Update the Moqui configuration file to mount your screen at a specific URL path (e.g., `/partyScreen`).
 2. Ensure the path is unique and accessible through the Moqui web application.
 
 ### **Step 3: Test the Screen in Moqui UI**
@@ -38,8 +38,8 @@ This assignment evaluates your ability to:
 
 ## Evaluation Criteria
 
-- The `moqui-training` component is correctly structured.
-- The `MoquiTrainingScreen` is properly defined and accessible in the Moqui application.
+- The `party` component is correctly structured.
+- The `partyScreen` is properly defined and accessible in the Moqui application.
 - The screen displays correctly with the intended content and layout.
 - Proper usage of Git and GitHub for version control.
 - Clean and readable code adhering to Java naming conventions.

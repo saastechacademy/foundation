@@ -1,66 +1,102 @@
-# Assignment: Create a Custom Service in Moqui
+# Assignment: Create a Custom Person Creation Service in Moqui
 
-## Objectives
+## Objective
 
 This assignment evaluates your ability to:
 
-- Follow Moqui documentation and instructions effectively.
-- Define and implement a new service in a custom Moqui component.
-- Utilize Moqui’s Service Tools for testing and validation.
-- Demonstrate proficiency in Git and GitHub for source code management.
-- Follow proper JAVA naming conventions.
+- Define a service for the Person entity  
+- Handle entity relationships (Person ↔ Party)  
+- Implement validation logic using Groovy  
+- Expose the service as a REST API  
+- Test the service using Moqui UI and Postman  
 
-## Tasks
+---
 
-### **Step 1: Define a New Service**
-1. Inside the `moqui-training` component, create a directory structure to store service definitions.
-2. Define a create service for the `MoquiTraining` entity with the following:
-   - An input parameter: `trainingName` (String, **required**).
-   - Allow any other parameters to be sent optionally.
-   - A logic to generate a response string such as `"Training [trainingName] created successfully!"`.
-   - Ensure the service is defined using Moqui’s XML schema for services and marks `trainingName` as a required parameter.
+## [Step 1: Define a New Service](https://moqui.org/m/docs/framework/Quick+Tutorial#CustomCreateService)
 
-### **Step 2: Implement the Service Logic**
-1. Create a Groovy file to implement the service logic.
-2. The logic should:
-   - Validate that `trainingName` is provided and return an error if it is missing.
-   - Accept and process any additional parameters sent.
-   - Return the response string as defined above.
+Inside the **party** component, create a directory structure to store service definitions.
 
-### **Step 3: Expose the Service as a REST API**
-1. In the `services` directory of your component, configure the REST API using a `Service REST API XML` file (e.g., `MoquiTraining.rest.xml`).
-2. Define an endpoint for the create service.
+Define a **create service** for the **Person entity** with the following requirements:
 
-### **Step 4: Load Demo Data**
-1. Create a file named `TrainingDemoData.xml` in the `data` directory of your `moqui-training` component.
-2. Define sample data entries for the `MoquiTraining` entity.
-3. Use the Moqui Data Loader to import the data:
-   - Run the Moqui application and access the Data Import tool.
-   - Import the `TrainingDemoData.xml` file.
+- Input parameters:
+  - `partyId` (String, **required**)  
+  - `firstName` (String, **required**)  
+  - `lastName` (String, **required**)  
+- Optional parameter:
+  - `dateOfBirth` (Date)  
+- Allow any other parameters to be sent optionally  
+- Generate a response string such as:  
+  **"Person [firstName] [lastName] created successfully!"**
+- Ensure the service:
+  - Uses **Moqui’s XML schema for services**
+  - Marks all required parameters correctly  
 
-### **Step 5: Test the Service in Moqui UI**
-1. Run the Moqui application and access the Service Tools section.
-2. Execute the create service by providing a value for the `trainingName` parameter.
-3. Optionally, pass additional parameters and verify they are handled correctly.
-4. Verify that the response matches the expected output.
+---
 
-### **Step 6: Test the REST API**
-1. Test the REST API using Postman:
-   - Open Postman and create a new POST request.
-   - Set the base URL + the rest endpoint. Both can be found in the Swagger documentation.
-   - In the **Body** tab, select `raw` and enter a test JSON payload.
-   - Click **Send** and verify the API response matches the expected output.
+## [Step 2: Implement the Service Logic](https://moqui.org/m/docs/framework/Quick+Tutorial#GroovyService)
 
+Create a **Groovy file** to implement the service logic.
 
-## Deliverables
+The logic should:
 
-1. A link to the GitHub repository containing your `moqui-training` component.
+- Validate that `partyId`, `firstName`, and `lastName` are provided  
+- Return an error if any required parameter is missing  
+- Verify that a **Party record exists** for the given `partyId`  
+- Ensure the Person is created **only if the Party exists**  
+- Accept and process any additional parameters  
+- Return the response string defined in Step 1  
 
-## Evaluation Criteria
+---
 
-- The `moqui-training` component is correctly structured.
-- The create service is properly defined, implemented, and tested.
-- The service logic validates the required parameter `trainingName` and processes additional optional parameters.
-- Demo data is correctly loaded using `TrainingDemoData.xml` and visible in Moqui.
-- Proper usage of Git and GitHub for version control.
-- Clean and readable code adhering to Java naming conventions.
+## Step 3: Expose the Service as a REST API
+
+In the **services directory** of the party component, configure the REST API using a **Service REST API XML file** (for example, `Person.rest.xml`).
+
+Ensure that:
+
+- A REST endpoint is defined for the create Person service  
+- The endpoint accepts an HTTP **POST** request  
+
+---
+
+## Step 4: Test the Service in Moqui UI
+
+Run the Moqui application and open the **Service Tools** section.
+
+- Execute the create Person service  
+- Provide values for:
+  - `partyId`  
+  - `firstName`  
+  - `lastName`  
+- Optionally provide `dateOfBirth`  
+- Verify that:
+  - Validation errors appear when inputs are missing  
+  - The service succeeds only when a valid Party exists  
+  - The response message matches the expected output  
+
+---
+
+## Step 5: Test the REST API
+
+Test the Person REST API using **Postman**:
+
+1. Create a new **POST** request  
+2. Set the **base URL + REST endpoint**  
+   - Refer to the **Swagger documentation**  
+3. In the **Body** tab:
+   - Select **raw**  
+   - Enter a JSON payload  
+4. Send the request and verify:
+   - Correct validation behavior  
+   - Proper response message on success  
+
+---
+
+## Expected Outcome
+
+By the end of this assignment, you should have:
+
+- A create service for the **Person entity**  
+- Validation enforcing the **Person–Party relationship**  
+- A REST API exposed for Person creation  
+- Successful execution via **Moqui UI** and **Postman**
