@@ -14,7 +14,8 @@ If you're looking to get a list of all rates available for a shipment, you shoul
 2. Identify mapped UniGate shipping gateway
    1. Select carrier party id from Shipment entity
    2. Check if the carrier party id is mapped to UniGate shipping gateway in ShippingGatewayConfig entity
-   3. If not mapped, return error
+   3. If the mapped UniGate shipping gateway does not have "supportsRateRequest:True" then skip payload preperation and copy shipment carrier and method to route segment and proceed with calling get#ShippingLabel
+   4. If not mapped, return error
 
 3. Prepare request payload
     1. Fetch Entities & Configurations:
