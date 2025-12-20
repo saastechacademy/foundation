@@ -1,7 +1,25 @@
 # Fulfillment Application Design Document
 
-1. Fulfillment of sales orders (including basic picking and packing) and receiving of purchase orders
-2. Inventory management including issuance and receipt, and inventory reservation for sales orders
+Manage fulfillment center workflows, including Inventory Management, Order Fulfillment, Purchase and Return Shipment Receipts
+
+
+1. Fulfillment of orders 
+   a. Pickwaving
+   b. Picking 
+   c. Packing
+   d. Reject Order / Pullback
+
+2. Inventory management 
+   a. Issuance 
+   b. Receipt 
+   c. Inventory reservation for fulfillment orders
+   d. Inventory Cycle Count
+   e. External Inventory Reset
+
+3. Purchase Shipment receipts
+   a. Incoming Shipment
+   b. Put away 
+   
 
 ## [Store Fulfillment Lifecycle](https://docs.hotwax.co/documents/v/learn-hotwax-oms/business-process-models/store-fulfillment-lifecycle)
 
@@ -38,7 +56,7 @@ User marks Shipment shipped.
   * [voidShipmentLabel](voidShipmentLabel.md) and request it again.
 
 
-## [Shipment lifecycle](../oms/ShipmentStatusWorkflow.md)
+## [Shipment lifecycle](ShipmentStatusWorkflow.md)
 Shipment is created in SHIPMENT_INPUT, then SHIPMENT_APPROVED to SHIPMENT_PACKED and then SHIPMENT_SHIPPED
 
 ### [On SHIPMENT_APPROVED:](approveShipment.md)
