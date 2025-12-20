@@ -21,19 +21,19 @@ Manage fulfillment center workflows, including Inventory Management, Order Fulfi
    b. Put away 
    
 
-## [Store Fulfillment Lifecycle](https://docs.hotwax.co/documents/v/learn-hotwax-oms/business-process-models/store-fulfillment-lifecycle)
+## [Order Fulfillment Lifecycle](https://docs.hotwax.co/documents/v/learn-hotwax-oms/business-process-models/store-fulfillment-lifecycle)
 
 
 Order fulfillment is 3 step process,
 
 ### Step 1: 
 The staff gets the list of Outstanding orders 
-*   Search in "ORDER" solr document, look for 
+*   Find in "ORDER" solr document, look for 
   * facilityId, item approved, shipmentMethod, fulfillmentStatus is NULL
 
 
   * The user then starts the fulfillment process for set of orders by creating a [Fulfillment wave of orders](createOrderFulfillmentWave.md). A [PickList](../oms/createPickList) is returned for the user to go pick items for preparing the shipments.
-     *  Background process: [Shipments](../oms/createShipment.md) are created for orders.
+     *  [Shipments](../oms/createShipment.md) are created for orders OrderItemShiphipGroups passed in to the service.
         - If the order item is a kit product, a distinct reservation will be created with the same order item for each product in the kit. When creating a picklist and shipment, all reservations will be included to ensure a proper fulfillment lifecycle.
 
 Alternativley the user can choose to not proceed with picking and instead choose the following actions:
@@ -54,6 +54,7 @@ User completes the [Packing](packShipment.md). Alternatively user can choose to 
 User marks Shipment shipped.
   * reprint shipping label and other documents
   * [voidShipmentLabel](voidShipmentLabel.md) and request it again.
+  * [unpackShipment](unpackShipment.md)
 
 
 ## [Shipment lifecycle](ShipmentStatusWorkflow.md)
