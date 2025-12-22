@@ -1,21 +1,39 @@
 # Fulfillment Application Design Document
 
-1. Fulfillment of sales orders (including basic picking and packing) and receiving of purchase orders
-2. Inventory management including issuance and receipt, and inventory reservation for sales orders
+Manage fulfillment center workflows, including Inventory Management, Order Fulfillment, Purchase and Return Shipment Receipts
 
-## [Store Fulfillment Lifecycle](https://docs.hotwax.co/documents/v/learn-hotwax-oms/business-process-models/store-fulfillment-lifecycle)
+
+1. Fulfillment of orders 
+   a. Pickwaving
+   b. Picking 
+   c. Packing
+   d. Reject Order / Pullback
+
+2. Inventory management 
+   a. Issuance 
+   b. Receipt 
+   c. Inventory reservation for fulfillment orders
+   d. Inventory Cycle Count
+   e. External Inventory Reset
+
+3. Purchase Shipment receipts
+   a. Incoming Shipment
+   b. Put away 
+   
+
+## [Order Fulfillment Lifecycle](https://docs.hotwax.co/documents/v/learn-hotwax-oms/business-process-models/store-fulfillment-lifecycle)
 
 
 Order fulfillment is 3 step process,
 
 ### Step 1: 
 The staff gets the list of Outstanding orders 
-*   Search in "ORDER" solr document, look for 
+*   Find in "ORDER" solr document, look for 
   * facilityId, item approved, shipmentMethod, fulfillmentStatus is NULL
 
 
   * The user then starts the fulfillment process for set of orders by creating a [Fulfillment wave of orders](createOrderFulfillmentWave.md). A [PickList](../oms/createPickList) is returned for the user to go pick items for preparing the shipments.
-     *  Background process: [Shipments](../oms/createShipment.md) are created for orders.
+     *  [Shipments](../oms/createShipment.md) are created for orders OrderItemShiphipGroups passed in to the service.
         - If the order item is a kit product, a distinct reservation will be created with the same order item for each product in the kit. When creating a picklist and shipment, all reservations will be included to ensure a proper fulfillment lifecycle.
 
 Alternativley the user can choose to not proceed with picking and instead choose the following actions:
@@ -36,9 +54,10 @@ User completes the [Packing](packShipment.md). Alternatively user can choose to 
 User marks Shipment shipped.
   * reprint shipping label and other documents
   * [voidShipmentLabel](voidShipmentLabel.md) and request it again.
+  * [unpackShipment](unpackShipment.md)
 
 
-## [Shipment lifecycle](../oms/ShipmentStatusWorkflow.md)
+## [Shipment lifecycle](ShipmentStatusWorkflow.md)
 Shipment is created in SHIPMENT_INPUT, then SHIPMENT_APPROVED to SHIPMENT_PACKED and then SHIPMENT_SHIPPED
 
 ### [On SHIPMENT_APPROVED:](approveShipment.md)

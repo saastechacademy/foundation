@@ -13,6 +13,8 @@ Fields:
 * inventoryItemQOH
 * externalATP
 * externalQOH
+* quantityOnHandDiff
+* availableToPromiseDiff
 * unitCost
 
 Foreign key:

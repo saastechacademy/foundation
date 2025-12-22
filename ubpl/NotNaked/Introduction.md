@@ -3,6 +3,14 @@
 ## **Introduction**
 NotNaked is a dynamic fashion brand catering to Generation Z and Generation Alpha in America. As a digital-first company, NotNaked blends cutting-edge technology with physical retail experiences to meet the evolving needs of its tech-savvy customer base. With strategically located retail stores and a robust online presence, the brand offers a seamless [omnichannel](https://www.hotwax.co/blog/what-is-omnichannel-order-management-and-why-does-it-exist) shopping experience that prioritizes speed, convenience, and customer satisfaction.
 
+## **Company**
+
+* Name: NotNaked Inc
+* Head Office: 
+   Address: 123 Broadway, New York, NY 10012
+   Phone: +1(111)222-3333
+
+
 ## **Retail Presence**
 NotNaked operates retail locations in prominent outdoor shopping areas across several key cities. These stores function not only as shopping destinations but also as fulfillment centers for online orders, enhancing the brand’s omnichannel capabilities.
 1. **New York**

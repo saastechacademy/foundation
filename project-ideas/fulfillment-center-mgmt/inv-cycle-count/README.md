@@ -1,6 +1,6 @@
 ### Requirements
 
-* [Business story](./business-story.md)
+* [Inventory Cycle Count Overview](./inventory_cycle_count_overview.md)
 * [Manager Needs for Directed Cycle Count](./manager-needs-directed-cycle-count.md)
 * [Entities and Workflows](./entities-and-workflows.md)
 * [Apply count to Inventory](./apply-count-to-inventory.md)
@@ -31,4 +31,3 @@ Cycle count session is assigned to a user. User scans items, app records scan ev
 #### Create InventoryCountImport
 The planned cycle count task is assigned to Store Manager user. The store manager creates an `InventoryCountImport` record to start a new inventory count session. This record includes metadata such as the store location, assigned user, and start time.
 The manager may create one or more `InventoryCountImport` records for the same `WorkEffort` if multiple users will be performing the count in parallel.
-
