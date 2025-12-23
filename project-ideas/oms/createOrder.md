@@ -20,6 +20,8 @@ This service creates data in following entities:
 | PostalAddress | address       | Details of the postal address for the contact mechanism. |
 
 
+
+
 ```json
 {
     "currencyUom": "USD",
@@ -79,11 +81,11 @@ This service creates data in following entities:
     ],
     "identifications": [
         {
-            "orderIdentificationTypeId": "SHOPIFY_ORD_NAME",
+            "idType": "SHOPIFY_ORD_NAME",
             "idValue": "2345678876545"
         },
         {
-            "orderIdentificationTypeId": "SHOPIFY_ORD_ID",
+            "idType": "SHOPIFY_ORD_ID",
             "idValue": "4444992255"
         }  
     ],
@@ -139,14 +141,14 @@ This service creates data in following entities:
                     "itemDescription": "",
                     "unitPrice": 500,
                     "unitListPrice": 1370,
-                    "statuses": {
+                    "status": {
                         "statusId": "ITEM_CREATED",
                         "statusDatetime": "2024-07-30T15:23:47+0000",
                         "statusUserLogin": "nishtha.jain"
                     },
                     "adjustments": [
                         {
-                            "orderAdjustmentTypeId": "EXT_PROMO_ADJUSTMENT",
+                            "orderAdjustmentTypeId:"EXT_PROMO_ADJUSTMENT",
                             "amount": "200",
                             "exemptAmount": "2.5",
                             "comments": "IDK",
@@ -167,11 +169,10 @@ This service creates data in following entities:
                         }
                     ]
                 }
-            ],
-            "orderFacilityId": ""
+            ]
         }
     ],
-    "statuses": {
+    "status": {
         "statusId": "ORDER_CREATED",
         "statusUserLogin": "nishtha.jain",
         "statusDatetime": "2024-07-30T15:23:47+0000"
