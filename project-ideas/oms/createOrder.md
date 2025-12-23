@@ -81,11 +81,11 @@ This service creates data in following entities:
     ],
     "identifications": [
         {
-            "idType": "SHOPIFY_ORD_NAME",
+            "orderIdentificationTypeId": "SHOPIFY_ORD_NAME",
             "idValue": "2345678876545"
         },
         {
-            "idType": "SHOPIFY_ORD_ID",
+            "orderIdentificationTypeId": "SHOPIFY_ORD_ID",
             "idValue": "4444992255"
         }  
     ],
@@ -141,14 +141,14 @@ This service creates data in following entities:
                     "itemDescription": "",
                     "unitPrice": 500,
                     "unitListPrice": 1370,
-                    "status": {
+                    "statuses": {
                         "statusId": "ITEM_CREATED",
                         "statusDatetime": "2024-07-30T15:23:47+0000",
                         "statusUserLogin": "nishtha.jain"
                     },
                     "adjustments": [
                         {
-                            "orderAdjustmentTypeId:"EXT_PROMO_ADJUSTMENT",
+                            "orderAdjustmentTypeId": "EXT_PROMO_ADJUSTMENT",
                             "amount": "200",
                             "exemptAmount": "2.5",
                             "comments": "IDK",
@@ -169,10 +169,11 @@ This service creates data in following entities:
                         }
                     ]
                 }
-            ]
+            ],
+            "orderFacilityId": ""
         }
     ],
-    "status": {
+    "statuses": {
         "statusId": "ORDER_CREATED",
         "statusUserLogin": "nishtha.jain",
         "statusDatetime": "2024-07-30T15:23:47+0000"
