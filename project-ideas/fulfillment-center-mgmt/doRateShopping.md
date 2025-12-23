@@ -1,21 +1,38 @@
 # doRateShopping
 
-The doRateShopping service's main objective is to identify the most suitable shipping method for a given shipment. 
-It takes into account factors such as the shipment's origin and destination, weight, dimensions, desired delivery time, to find the most cost-effective method. 
-The service integrates with a shipping gateway to retrieve rates and then selects the optimal option.
-
-If you're looking to get a list of all rates available for a shipment, you should use the get#ShippingRates service.
+The doRateShopping service's main objective is to identify the most suitable shipping method for a given shipment. It uses [getShippingRates](getShippingRates.md) service to retrieve shipping rates for a shipment and then selects the most cost-effective shipping method.
 
 ## Detailed Implementation
 
-1. Input and Initialization
-    *   Shipment
+Parameters 
+IN
+*   ShipmentId
 
-2. Identify mapped shipping gateway
+OUT
+* ShippingMethodTypeId
+* carrierPartyId
+
+Identify Unigate Gateway config 
+
+Need productStoreId, carrierPartyId, facilityId
+Get it from OrderHeaderAndShipment view.
+https://demo-oms.hotwax.io/webtools/control/FindGeneric?entityName=OrderHeaderAndShipment
+
+For given estimatedDeliveryDate, get all rates from shipping gateway
+
+**If rate Shopping should be called or not is not the responsibility of this service.**
+If this service is called it will always return a shipping method.
+Don't call this service if gateway does not support rate request.
+
+**Not here**
+
+Identify mapped shipping gateway config from ShippingCarrierConfig entity
    1. Select carrier party id and ShipmentMethodTypeId from Shipment entity
    2. Check if the carrier party id is mapped to shipping gateway in ProductStoreShipmentMeth entity
    3. If the mapped shipping gateway does not have "supportsRateRequest:True" then do nothing. 
- 
+
+**End Not Here** 
+
 5. Rate Comparison and Selection:
     1. Filter rates based on the SLA criteria
        1. If the rates contain service days, filter results to match requested SLA
