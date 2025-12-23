@@ -1,10 +1,11 @@
 ## calcShipmentPackageTotalWeight
 
-# Note: We will do this computation in approveShipment service. I don't think we have use of this service. We will not implement in Moqui.
+# Note: We will do this computation in getShippingRates service. I think we may have use of this service.
 
 
 **Purpose:**
 
+ShipmentPackageContent has list of ShipmentItems and Qty of that ShipmentItem. To compute the weight of ShipmentPackage, write a dynamic view that gets me ShipmentPackage weight.
 The primary goal of this function is to determine the weight of a single package within a shipment. 
 
 Prepare dynamic view entity

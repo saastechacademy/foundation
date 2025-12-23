@@ -32,7 +32,7 @@ The staff gets the list of Outstanding orders
   * facilityId, item approved, shipmentMethod, fulfillmentStatus is NULL
 
 
-  * The user then starts the fulfillment process for set of orders by creating a [Fulfillment wave of orders](createOrderFulfillmentWave.md). A [PickList](../oms/createPickList) is returned for the user to go pick items for preparing the shipments.
+  * The user then starts the fulfillment process for set of orders by creating a [Fulfillment wave of orders](createOrderFulfillmentWave.md). A [PickList](createPickList.md) is returned for the user to go pick items for preparing the shipments.
      *  [Shipments](../oms/createShipment.md) are created for orders OrderItemShiphipGroups passed in to the service.
         - If the order item is a kit product, a distinct reservation will be created with the same order item for each product in the kit. When creating a picklist and shipment, all reservations will be included to ensure a proper fulfillment lifecycle.
 
@@ -61,8 +61,6 @@ User marks Shipment shipped.
 Shipment is created in SHIPMENT_INPUT, then SHIPMENT_APPROVED to SHIPMENT_PACKED and then SHIPMENT_SHIPPED
 
 ### [On SHIPMENT_APPROVED:](approveShipment.md)
-* If the facility is part of the `AUTO_SHIPPING_LABEL` facility group. The service calls [getShippingLabel](getShippingLabel.md) from the logistics company.
-  * On successful execution of shipping label RateShopping, update ShipmentRouteSegment. Set `shipmentMethodTypeId`, `carrierPartyId`, `actualCost`, `carrierServiceStatusId` (SHRSCS_CONFIRMED). 
 
 * Once we have Shipping label, Shipment can be moved to SHIPMENT_PACKED status.
   * If `isTrackingRequired` is set to **N** in the ProductStoreShipmentMeth entity for the given Shipment Method, then the user can pack the shipment without a shipping label or tracking code.
@@ -76,15 +74,12 @@ Shipment is created in SHIPMENT_INPUT, then SHIPMENT_APPROVED to SHIPMENT_PACKED
 * Order Item is marked Completed
 * Update Shopify order Fulfilled
 
-**Modify contents of the Shipment after it is already SHIPMENT_APPROVED or SHIPMENT_PACKED.**
-Why does the shipment have to be moved out of "approved" status to edit it's contents? For example fulfillment team may want to reject an item after begining pack pick process, in which case shipment will already be packed.
+**Modify contents of the Shipment after it is already SHIPMENT_PACKED.**
+Why does the shipment have to be moved to "approved" or "input" status to edit it's contents? For example fulfillment team may want to reject an item after shipment is packed status.
 
 -   To pack a Shipment, we need shipping label. To give shipping label, shipping carrier need to know the package dimensions and weight.
--   Approving the shipment means communicates that the shipment is now ready for packing, and package type and weight are now final.
-
-
-1. If the Approved shipment should be edited, The Shipment is first [reinitializeShipment](reinitializeShipment.md).To avoid error, the reinitialize process calls [voidShipmentLabel](voidShipmentLabel.md).
-2. In case the Packed shipment should be edited, first [reinitializeShipment](reinitializeShipment.md). It moves shipment from SHIPMENT_PACKED status to SHIPMENT_INPUT, ensure to [voidShipmentPackageLabel](voidShipmentPackageLabel.md). Recompute the [ShipmentPackageWeight](calcShipmentPackageTotalWeight.md).
+-   Packed shipment communicates that the shipment is now ready for shipping, and package type and weight are now final.
+-   If the packed shipment should be edited, The Shipment is [unpacked](unpackShipment.md).To avoid error, the unpack process calls [voidShipmentLabel](voidShipmentLabel.md).
 
 ```
     <!-- ShipmentRouteSegment CarrierService status -->

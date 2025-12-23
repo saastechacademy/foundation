@@ -8,6 +8,7 @@ Unlike `doRateShopping`, which selects the best rate, this service returns all a
 
 1. Input and Initialization
     *   Shipment
+    *   
 
 2. Identify mapped UniGate shipping gateway
    1. Select carrier party id from Shipment entity
