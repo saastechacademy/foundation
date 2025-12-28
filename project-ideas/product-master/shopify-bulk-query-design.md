@@ -28,17 +28,22 @@ Send a fully resolved Shopify GraphQL bulk query stored in `SystemMessage.messag
 1) Load `SystemMessageAndType` for the given `systemMessageId`.
 2) Read query string:
    - `queryText = systemMessage.messageText`
-3) Send request to Shopify:
+3) Compute `fromDate` cursor when missing (scheduled incremental sync):
+   - If `fromDate` is not present in the query/context, look up the latest confirmed message for the same `systemMessageTypeId`
+     (`statusId = SmsgConfirmed`, order by `processedDate` desc) and set `fromDate = processedDate`.
+   - If `messageText` stores **params JSON**, update params with `fromDate` and re-render the query.
+   - If `messageText` stores a **fully resolved query**, rebuild the query from the template + params before sending.
+4) Send request to Shopify:
    - `co.hotwax.shopify.common.ShopifyHelperServices.send#ShopifyGraphqlRequest`
    - in-map: `[systemMessageRemoteId: systemMessage.systemMessageRemoteId, queryText: queryText]`
-4) Validate response:
+5) Validate response:
    - If `bulkOperationRunQuery.userErrors` exists:
      - create `SystemMessageError`
      - return error (Moqui send marks `SmsgError`)
    - Else:
      - `shopifyBulkOperationId = response.bulkOperationRunQuery.bulkOperation.id`
      - set `remoteMessageId = shopifyBulkOperationId` in context
-5) Moqui OOTB send persists:
+6) Moqui OOTB send persists:
    - `remoteMessageId`
    - status transition to `SmsgSent`
    - `lastAttemptDate` / `failCount`
