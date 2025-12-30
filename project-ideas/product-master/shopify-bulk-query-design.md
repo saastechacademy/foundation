@@ -51,6 +51,7 @@ Send a fully resolved Shopify GraphQL bulk query stored in `SystemMessage.messag
 - It writes diffs to `ProductUpdateHistory`.
 - After processing, it creates a `ProductUpdatesFeed` SystemMessage to trigger OMS ingestion
   (`consume#UpdatedProductHistories`).
+- Save the `ProductUpdatesFeed` SystemMessage ID as `ackMessageId` in the `SystemMessage` record.
 
 ### Outputs
 - `shopifyBulkOperationId`
