@@ -190,3 +190,65 @@ Poll Shopify for completion of a sent bulk query SystemMessage and, when complet
 
 ### Notes
 - This poller enforces the single-threaded Shopify bulk query rule by only polling the oldest `SmsgSent` message for `SystemMessageType.parentTypeId = ShopifyBulkQuery`.
+
+---
+
+## Sample SystemMessageType Data
+
+```xml
+<!-- Bulk product and variants by ID query -->
+<moqui.service.message.SystemMessageType systemMessageTypeId="BulkProductAndVariantsByIdQuery"
+                                         description="Bulk Product and Variants By Id Query System Message"
+                                         parentTypeId="ShopifyBulkQuery"
+                                         sendServiceName="co.hotwax.shopify.system.ShopifySystemMessageServices.send#BulkQuerySystemMessage"
+                                         consumeServiceName="co.hotwax.sob.product.FeedServices.transform#JsonLToJsonForUpdatedProducts"
+                                         receivePath="${contentRoot}/shopify/BulkProductAndVariantsByIdQuery/BulkOperationResult-${systemMessageId}-${remoteMessageId}-${nowDate}.jsonl">
+    <parameters parameterName="consumeSmrId" parameterValue="" systemMessageRemoteId=""/>
+</moqui.service.message.SystemMessageType>
+
+<!-- OMS ingest after diff processing -->
+<moqui.service.message.SystemMessageType systemMessageTypeId="ProductUpdatesFeed"
+                                         description="Product Updates Feed"
+                                         consumeServiceName="co.hotwax.sob.product.FeedServices.consume#UpdatedProductHistories"/>
+<moqui.basic.Enumeration description="Products Updates Feed" enumId="ProductUpdatesFeedNew" enumTypeId="OMSMessageTypeEnum"/>
+```
+
+---
+
+## Sample SystemMessage Data (Lifecycle)
+
+```xml
+<!-- 1) Queued (Produced) -->
+<moqui.service.message.SystemMessage systemMessageId="SM_BULK_0001"
+        systemMessageTypeId="BulkProductAndVariantsByIdQuery"
+        systemMessageRemoteId="ShopifyRemote_001"
+        statusId="SmsgProduced" isOutgoing="Y"
+        messageText="query { /* resolved GraphQL */ }"
+        initDate="2025-02-01 10:00:00.000"/>
+
+<!-- 2) Sent (remoteMessageId set after Shopify accepts bulk query) -->
+<moqui.service.message.SystemMessage systemMessageId="SM_BULK_0001"
+        statusId="SmsgSent"
+        remoteMessageId="gid://shopify/BulkOperation/1234567890"
+        lastAttemptDate="2025-02-01 10:01:10.000"/>
+
+<!-- 3) Confirmed (file downloaded to receiveMovePath) -->
+<moqui.service.message.SystemMessage systemMessageId="SM_BULK_0001"
+        statusId="SmsgConfirmed"
+        processedDate="2025-02-01 10:05:00.000"/>
+
+<!-- Next SystemMessage created for OMS ingestion -->
+<moqui.service.message.SystemMessage systemMessageId="SM_OMS_0001"
+        systemMessageTypeId="ProductUpdatesFeed"
+        statusId="SmsgProduced" isOutgoing="N"
+        initDate="2025-02-01 10:06:00.000"/>
+
+<!-- Save OMS message id in ackMessageId of the bulk query SystemMessage -->
+<moqui.service.message.SystemMessage systemMessageId="SM_BULK_0001"
+        ackMessageId="SM_OMS_0001"/>
+
+<!-- ProductUpdatesFeed processing completed -->
+<moqui.service.message.SystemMessage systemMessageId="SM_OMS_0001"
+        statusId="SmsgConsumed"
+        processedDate="2025-02-01 10:12:00.000"/>
+```
