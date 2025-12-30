@@ -200,7 +200,7 @@ Poll Shopify for completion of a sent bulk query SystemMessage and, when complet
 <moqui.service.message.SystemMessageType systemMessageTypeId="BulkProductAndVariantsByIdQuery"
                                          description="Bulk Product and Variants By Id Query System Message"
                                          parentTypeId="ShopifyBulkQuery"
-                                         sendServiceName="co.hotwax.shopify.system.ShopifySystemMessageServices.send#BulkQuerySystemMessage"
+                                         sendServiceName="co.hotwax.shopify.system.ShopifySystemMessageServices.send#ShopifyBulkQueryMessage" 
                                          consumeServiceName="co.hotwax.sob.product.FeedServices.transform#JsonLToJsonForUpdatedProducts"
                                          receivePath="${contentRoot}/shopify/BulkProductAndVariantsByIdQuery/BulkOperationResult-${systemMessageId}-${remoteMessageId}-${nowDate}.jsonl">
     <parameters parameterName="consumeSmrId" parameterValue="" systemMessageRemoteId=""/>
@@ -210,7 +210,7 @@ Poll Shopify for completion of a sent bulk query SystemMessage and, when complet
 <moqui.service.message.SystemMessageType systemMessageTypeId="ProductUpdatesFeed"
                                          description="Product Updates Feed"
                                          consumeServiceName="co.hotwax.sob.product.FeedServices.consume#UpdatedProductHistories"/>
-<moqui.basic.Enumeration description="Products Updates Feed" enumId="ProductUpdatesFeedNew" enumTypeId="OMSMessageTypeEnum"/>
+<moqui.basic.Enumeration description="Products Updates Feed" enumId="ProductUpdatesFeed" enumTypeId="OMSMessageTypeEnum"/>
 ```
 
 ---
@@ -232,10 +232,12 @@ Poll Shopify for completion of a sent bulk query SystemMessage and, when complet
         remoteMessageId="gid://shopify/BulkOperation/1234567890"
         lastAttemptDate="2025-02-01 10:01:10.000"/>
 
-<!-- 3) Confirmed (file downloaded to receiveMovePath) -->
+<!-- 3) Confirmed (file downloaded to receivePath) -->
 <moqui.service.message.SystemMessage systemMessageId="SM_BULK_0001"
         statusId="SmsgConfirmed"
         processedDate="2025-02-01 10:05:00.000"/>
+
+<!-- The file is comsumed by transform#JsonLToJsonForUpdatedProducts and creates ProductUpdateHistory--> 
 
 <!-- Next SystemMessage created for OMS ingestion -->
 <moqui.service.message.SystemMessage systemMessageId="SM_OMS_0001"
