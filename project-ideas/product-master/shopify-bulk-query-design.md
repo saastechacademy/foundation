@@ -1,8 +1,11 @@
 # Shopify Bulk Query – Detail Design
 
+
+
+
 This document consolidates the detail design for:
 - `send#ShopifyBulkQueryMessage`
-- `queue#BulkQueryVariantsMetafield` (sample producer)
+- `queue#BulkQueryProductAndVariantsById` (sample producer)
 
 It assumes we **keep the existing scheduler** (`send_ProducedBulkOperationSystemMessage_ShopifyBulkQuery`) and route produced messages to the new send service.
 
@@ -43,6 +46,12 @@ Send a fully resolved Shopify GraphQL bulk query stored in `SystemMessage.messag
    - status transition to `SmsgSent`
    - `lastAttemptDate` / `failCount`
 
+### Post-Download Processing
+- The `consumeServiceName` on `BulkProductAndVariantsByIdQuery` runs `transform#JsonLToJsonForUpdatedProducts`.
+- It writes diffs to `ProductUpdateHistory`.
+- After processing, it creates a `ProductUpdatesFeed` SystemMessage to trigger OMS ingestion
+  (`consume#UpdatedProductHistories`).
+
 ### Outputs
 - `shopifyBulkOperationId`
 - `remoteMessageId`
@@ -59,10 +68,10 @@ Send a fully resolved Shopify GraphQL bulk query stored in `SystemMessage.messag
 
 ---
 
-## 2) queue#BulkQueryVariantsMetafield (sample producer)
+## 2) queue#BulkQueryProductAndVariantsById (sample producer)
 
 ### Purpose
-Prepare a fully resolved bulk variants metafield query and create a `BulkVariantsMetafieldQuery` SystemMessage for the scheduler to send.
+Prepare a fully resolved bulk product+variants-by-id query and create a `BulkProductAndVariantsByIdQuery` SystemMessage for the scheduler to send.
 
 ### Inputs
 - `systemMessageRemoteId` (String, required)
@@ -72,7 +81,7 @@ Prepare a fully resolved bulk variants metafield query and create a `BulkVariant
 - `sendNow` (Boolean, optional; default false)
 
 ### SystemMessage Created
-- `systemMessageTypeId = BulkVariantsMetafieldQuery`
+- `systemMessageTypeId = BulkProductAndVariantsByIdQuery`
 - `systemMessageRemoteId = <input>`
 - `messageText = <resolved query string>`
 - `isOutgoing = Y`
@@ -83,11 +92,11 @@ Prepare a fully resolved bulk variants metafield query and create a `BulkVariant
    - normalize `fromDate` / `thruDate` to UTC
    - include `filterQuery`, `namespaces`
 2) Render query template:
-   - `queryText = ec.resourceFacade.template("dbresource://shopify/template/graphQL/BulkVariantsMetafieldQuery.ftl", "")`
+   - `queryText = ec.resourceFacade.template("component://sob/template/graphQL/BulkProductAndVariantsByIdQuery.ftl", "")`
    - FTL reads `queryParams` from context
 3) Create SystemMessage:
    - `org.moqui.impl.SystemMessageServices.queue#SystemMessage`
-   - in-map: `[systemMessageTypeId:'BulkVariantsMetafieldQuery', systemMessageRemoteId, messageText: queryText, sendNow:false]`
+   - in-map: `[systemMessageTypeId:'BulkProductAndVariantsByIdQuery', systemMessageRemoteId, messageText: queryText, sendNow:false]`
 4) Optional immediate send:
    - If `sendNow = true`, call `send#ShopifyBulkQueryMessage` with `systemMessageId`
 
@@ -114,7 +123,7 @@ Prepare a fully resolved bulk variants metafield query and create a `BulkVariant
 ## 4) SystemMessageType Configuration (conceptual)
 
 - `ShopifyBulkQuery` remains the parent SystemMessageType and carries **deployment defaults** (send/receive services, base paths, etc.).
-- Each query subtype (e.g., `BulkVariantsMetafieldQuery`) **overrides only the fields it needs** (for example `receiveMovePath`).
+- Each query subtype (e.g., `BulkProductAndVariantsByIdQuery`) **overrides only the fields it needs** (for example `receiveMovePath`).
 - Effective values are resolved using a parent-override rule: `COALESCE(subtype.field, parent.field)`.
 - Each producer service is responsible for producing a resolved query in `messageText`.
 
@@ -171,7 +180,7 @@ Poll Shopify for completion of a sent bulk query SystemMessage and, when complet
    - `completed` with no URL → mark `SmsgConfirmed`, return warning
 
 4) Download file to OMS at `SystemMessageType.receiveMovePath`
-   - Build `fileLocation` using `receiveMovePath` for the query subtype
+   - Build `fileLocation` using `receivePath` for the query subtype
    - Call `co.hotwax.shopify.graphQL.ShopifyBulkImportServices.store#BulkOperationResultFile`
 
 5) Finalize
