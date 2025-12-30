@@ -46,13 +46,6 @@ Send a fully resolved Shopify GraphQL bulk query stored in `SystemMessage.messag
    - status transition to `SmsgSent`
    - `lastAttemptDate` / `failCount`
 
-### Post-Download Processing
-- The `consumeServiceName` on `BulkProductAndVariantsByIdQuery` runs `transform#JsonLToJsonForUpdatedProducts`.
-- It writes diffs to `ProductUpdateHistory`.
-- After processing, it creates a `ProductUpdatesFeed` SystemMessage to trigger OMS ingestion
-  (`consume#UpdatedProductHistories`).
-- Save the `ProductUpdatesFeed` SystemMessage ID as `ackMessageId` in the `SystemMessage` record.
-
 ### Outputs
 - `shopifyBulkOperationId`
 - `remoteMessageId`
@@ -124,7 +117,7 @@ Prepare a fully resolved bulk product+variants-by-id query and create a `BulkPro
 ## 4) SystemMessageType Configuration (conceptual)
 
 - `ShopifyBulkQuery` remains the parent SystemMessageType and carries **deployment defaults** (send/receive services, base paths, etc.).
-- Each query subtype (e.g., `BulkProductAndVariantsByIdQuery`) **overrides only the fields it needs** (for example `receiveMovePath`).
+- Each query subtype (e.g., `BulkProductAndVariantsByIdQuery`) **overrides only the fields it needs** (for example `receivePath`).
 - Effective values are resolved using a parent-override rule: `COALESCE(subtype.field, parent.field)`.
 - Each producer service is responsible for producing a resolved query in `messageText`.
 
@@ -181,12 +174,19 @@ Poll Shopify for completion of a sent bulk query SystemMessage and, when complet
    - `completed` with no URL → mark `SmsgConfirmed`, return warning
 
 4) Download file to OMS at `SystemMessageType.receiveMovePath`
-   - Build `fileLocation` using `receivePath` for the query subtype
+   - Build `fileLocation` using `receiveMovePath` for the query subtype
    - Call `co.hotwax.shopify.graphQL.ShopifyBulkImportServices.store#BulkOperationResultFile`
 
 5) Finalize
    - On success: update SystemMessage `SmsgConfirmed`
    - On download error: create `SystemMessageError`, mark `SmsgError`
+
+6) Post-Download Processing (consume step)
+   - The `consumeServiceName` on `BulkProductAndVariantsByIdQuery` runs `transform#JsonLToJsonForUpdatedProducts`.
+   - It writes diffs to `ProductUpdateHistory`.
+   - After processing, it creates a `ProductUpdatesFeed` SystemMessage to trigger OMS ingestion
+     (`consume#UpdatedProductHistories`).
+   - Save the `ProductUpdatesFeed` SystemMessage ID as `ackMessageId` in the `SystemMessage` record.
 
 ### Notes
 - This poller enforces the single-threaded Shopify bulk query rule by only polling the oldest `SmsgSent` message for `SystemMessageType.parentTypeId = ShopifyBulkQuery`.
