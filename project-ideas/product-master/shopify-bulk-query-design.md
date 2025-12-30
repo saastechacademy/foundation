@@ -173,8 +173,8 @@ Poll Shopify for completion of a sent bulk query SystemMessage and, when complet
    - `running` / `created` → leave `SmsgSent`, return message
    - `completed` with no URL → mark `SmsgConfirmed`, return warning
 
-4) Download file to OMS at `SystemMessageType.receiveMovePath`
-   - Build `fileLocation` using `receiveMovePath` for the query subtype
+4) Download file to OMS at `SystemMessageType.receivePath`
+   - Build `fileLocation` using `receivePath` for the query subtype
    - Call `co.hotwax.shopify.graphQL.ShopifyBulkImportServices.store#BulkOperationResultFile`
 
 5) Finalize
