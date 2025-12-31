@@ -199,6 +199,7 @@ Prepare a fully resolved bulk product+variants-by-id query and create a `BulkPro
 <moqui.service.message.SystemMessageType systemMessageTypeId="BulkProductAndVariantsByIdQuery"
                                          description="Bulk Product and Variants By Id Query System Message"
                                          parentTypeId="ShopifyBulkQuery"
+                                         produceServiceName="co.hotwax.sob.product.FeedServices.queue#BulkQueryProductAndVariantsById"
                                          sendServiceName="co.hotwax.shopify.system.ShopifySystemMessageServices.send#ShopifyBulkQueryMessage" 
                                          consumeServiceName="co.hotwax.sob.product.FeedServices.transform#JsonLToJsonForUpdatedProducts"
                                          receivePath="${contentRoot}/shopify/BulkProductAndVariantsByIdQuery/BulkOperationResult-${systemMessageId}-${remoteMessageId}-${nowDate}.jsonl">
@@ -253,3 +254,8 @@ Prepare a fully resolved bulk product+variants-by-id query and create a `BulkPro
         statusId="SmsgConsumed"
         processedDate="2025-02-01 10:12:00.000"/>
 ```
+
+### Using 
+
+Find all the SystemMessageType of type ShopifyBulkQuery configured in system. Allow user to schedule produceServiceName ServiceJob
+

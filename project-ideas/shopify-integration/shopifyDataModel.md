@@ -1,6 +1,6 @@
 # Introduction to Shopify Shop Data Model
 
-This document provides an overview of the **HotWax Commerce Shopify connector data model**, focusing on its core and extended entities. The data model is designed to facilitate the integration and synchronization of data between **Shopify** and the **HotWax Commerce OMS** (Order Management System). It includes entities for managing configuration settings, product information, order details, shipping/carrier mappings, metafield data, and logs. It also comprises several **view entities** for read-only operations that simplify data retrieval.
+**HotWax Commerce Shopify connector data model**, The data model is designed to facilitate the integration and synchronization of data between **Shopify** and the **HotWax Commerce OMS** (Order Management System). It includes entities for managing configuration settings, product information, order details, shipping/carrier mappings, metafield data, and logs. It also comprises several **view entities** for read-only operations that simplify data retrieval.
 
 ---
 
@@ -306,75 +306,6 @@ Manages **Shopify scripts** associated with a shop, storing script details, type
 
 No sample JSON provided here for brevity, but it generally captures the code or references to the script.
 
----
-
-### 10. DataManagerLog (extended)
-
-**Description**:  
-Extended entity that records **data management operations** related to the Shopify connector, including references to:
-
-- **shopifyConfigId**  
-- **filePath** / **remoteFilePath** (if reading files from Shopify or exporting to Shopify)  
-- **operationTypeEnumId** (indicating import, export, synchronization, etc.)
-
-This log helps track the data flow and debug any synchronization issues that may arise.
-
----
-
-### 11. JobSandbox (extended)
-
-**Description**:  
-Extended entity that associates **scheduled jobs** with specific **Shopify shops** or **ShopifyConfig** records. This enables:
-
-- Automatic or scheduled tasks (e.g., daily product sync).  
-- Identification of which Shopify shop a given job targets.
-
----
-
-## View Entities for Data Read Operations
-
-In addition to the **main entities**, the Shopify connector includes a variety of **view entities** to optimize data access, reporting, and complex queries. These view entities offer read-only aggregation and simplified structures for common operational needs:
-
-1. **ShopifyProductAtp**  
-   - Provides “available-to-promise” (ATP) inventory for Shopify products across different facilities.
-
-2. **ShopifyShopProductAndMetafield**  
-   - Combines Shopify shop product data with associated metafields, enabling streamlined access to extended product info.
-
-3. **ProductAndShopifyShopProduct**  
-   - Links HotWax Commerce products to their **ShopifyShopProduct** entries, simplifying product synchronization.
-
-4. **ShopifyShopProductAndConfig**  
-   - Associates **ShopifyShopProduct** records with their **ShopifyConfig**, giving context for product configuration.
-
-5. **ShopifyShopProductAndAssoc**  
-   - Retrieves product associations (e.g., bundles, upsells) for Shopify shop products.
-
-6. **ShopifyConfigAndShopLocation**  
-   - Combines **ShopifyConfig** with **ShopifyShopLocation** for location-specific settings and data.
-
-7. **ShopifyShopAndConfig**  
-   - Links **ShopifyShop** entities to their **ShopifyConfig** records, providing an integrated view of shop-level settings.
-
-8. **ShopifyShopProductView**, **ShopifyShopLocationView**  
-   - Offer simplified “views” of **ShopifyShopProduct** and **ShopifyShopLocation** data, respectively.
-
-9. **ShopifyShopLocationAndFacility**  
-   - Connects **ShopifyShopLocation** to the corresponding **Facility** in HotWax Commerce for inventory and fulfillment tracking.
-
-10. **ShopifyShopOrderAndConfig**  
-    - Associates **ShopifyShopOrder** records with their respective **ShopifyConfig**, aiding order processing tasks.
-
-11. **ShopifyOrderAndTags**  
-    - Retrieves orders along with Shopify tags/notes, enabling advanced filtering or categorization.
-
-12. **ShopifyProductFacilityView**  
-    - Provides a comprehensive view of **product-facility** relationships, inventory levels, and facility details, facilitating inventory management and fulfillment decisions.
-
-These **view entities** significantly improve **performance** and **ease of data retrieval** by flattening or combining data from multiple tables. This helps ensure that both routine operations (e.g., product sync) and advanced analytics (e.g., sales forecasting, capacity planning) can be done efficiently.
-
----
-
 ## Putting It All Together
 
 Below is a simplified JSON snippet demonstrating how these entities might coexist for **Acme Brand**, focusing on the central ones:
@@ -429,16 +360,3 @@ Below is a simplified JSON snippet demonstrating how these entities might coexis
 }
 ```
 
----
-
-## Conclusion
-
-The **HotWax Commerce Shopify connector data model** enables comprehensive, flexible integration between Shopify and the HotWax Commerce OMS. By leveraging these entities and **view entities**, you can:
-
-1. **Centrally manage** multiple Shopify configurations and shops.
-2. **Synchronize** product data, orders, inventory, and shipping details.
-3. **Extend** the integration with custom metafields, scripts, and enumerations.
-4. **Monitor** operations via extended logging and scheduling capabilities.
-
-This data model ensures a unified approach to **Shopify-OMS** integration, preparing your system to handle evolving business needs and multiple e-commerce channels under a common framework.
-```
