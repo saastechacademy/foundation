@@ -1,0 +1,346 @@
+"""Built-in scalar types"""
+scalar ID
+scalar String
+scalar Boolean
+scalar Int
+scalar Float
+scalar DateTime
+scalar URL
+
+"""
+Shopify money type used in many places.
+"""
+type MoneyV2 {
+  amount: String!
+  currencyCode: CurrencyCode!
+}
+
+"""
+Bag of money values in shop and presentment currencies.
+We only model shopMoney here for simplicity.
+"""
+type MoneyBag {
+  shopMoney: MoneyV2!
+}
+
+"""
+Pagination info for connections.
+"""
+type PageInfo {
+  hasNextPage: Boolean!
+  endCursor: String
+}
+
+"""
+Common Node interface implemented by many objects.
+"""
+interface Node {
+  id: ID!
+}
+
+"""
+Order sorting options. We only expose CREATED_AT for this subset.
+"""
+enum OrderSortKeys {
+  CREATED_AT
+}
+
+"""
+Supported currency codes (subset).
+"""
+enum CurrencyCode {
+  USD
+  CAD
+  EUR
+  GBP
+  AUD
+  # ...add more as needed
+}
+
+"""
+Mailing address used for shipping and billing.
+"""
+type MailingAddress {
+  firstName: String
+  lastName: String
+  company: String
+  phone: String
+  address1: String
+  address2: String
+  city: String
+  province: String
+  country: String
+  zip: String
+  countryCode: String
+}
+
+"""
+Customer default email address.
+"""
+type CustomerEmailAddress {
+  emailAddress: String
+}
+
+"""
+Customer default phone number.
+"""
+type CustomerPhoneNumber {
+  phoneNumber: String
+}
+
+"""
+Customer summary used on Order.
+"""
+type Customer implements Node {
+  id: ID!
+  legacyResourceId: UnsignedInt64!
+  firstName: String
+  lastName: String
+  state: String
+  defaultEmailAddress: CustomerEmailAddress
+  defaultPhoneNumber: CustomerPhoneNumber
+}
+
+/**
+Unsigned 64-bit integer, used for legacyResourceId.
+*/
+scalar UnsignedInt64
+
+"""
+Inventory item used to check if a variant is tracked or not.
+"""
+type InventoryItem implements Node {
+  id: ID!
+  tracked: Boolean!
+}
+
+"""
+Product variant on a line item.
+"""
+type ProductVariant implements Node {
+  id: ID!
+  legacyResourceId: UnsignedInt64!
+  title: String
+  inventoryItem: InventoryItem
+}
+
+"""
+Tax line associated with line items or shipping lines.
+"""
+type TaxLine {
+  title: String
+  rate: Float!
+  priceSet: MoneyBag!
+}
+
+"""
+Line item discounts.
+"""
+type DiscountAllocation {
+  allocatedAmountSet: MoneyBag!
+  # In full schema there is a discountApplication field here; we keep it minimal.
+}
+
+"""
+Line item on an order (simplified).
+"""
+type LineItem implements Node {
+  id: ID!
+  quantity: Int!
+  sku: String
+  variant: ProductVariant
+  discountAllocations: [DiscountAllocation!]!
+  taxLines: [TaxLine!]!
+}
+
+"""
+Edge type for LineItemConnection.
+"""
+type LineItemEdge {
+  cursor: String!
+  node: LineItem!
+}
+
+"""
+Connection for paginating line items on an order.
+"""
+type LineItemConnection {
+  edges: [LineItemEdge!]!
+  pageInfo: PageInfo!
+}
+
+"""
+Discount application target type (subset).
+"""
+enum DiscountApplicationTargetType {
+  LINE_ITEM
+  SHIPPING_LINE
+  ORDER
+}
+
+"""
+How a discount is allocated (subset).
+"""
+enum DiscountApplicationAllocationMethod {
+  ACROSS
+  EACH
+  ONE
+}
+
+"""
+Base interface for discount applications.
+"""
+interface DiscountApplication {
+  targetType: DiscountApplicationTargetType!
+  allocationMethod: DiscountApplicationAllocationMethod!
+}
+
+"""
+Discount application representing a discount code.
+"""
+type DiscountCodeApplication implements DiscountApplication {
+  targetType: DiscountApplicationTargetType!
+  allocationMethod: DiscountApplicationAllocationMethod!
+  code: String
+  value: PricingValue!
+}
+
+"""
+Discount value can be percentage or fixed amount.
+"""
+union PricingValue = MoneyV2 | PricingPercentageValue
+
+"""
+Percentage-based discount value.
+"""
+type PricingPercentageValue {
+  percentage: Float!
+}
+
+"""
+Connection for discount applications on an order.
+"""
+type DiscountApplicationEdge {
+  cursor: String!
+  node: DiscountApplication!
+}
+
+type DiscountApplicationConnection {
+  edges: [DiscountApplicationEdge!]!
+  pageInfo: PageInfo!
+}
+
+"""
+Shipping line on an order.
+"""
+type ShippingLine {
+  title: String
+  originalPriceSet: MoneyBag!
+  discountAllocations: [DiscountAllocation!]!
+  taxLines: [TaxLine!]!
+}
+
+"""
+Connection for shipping lines on an order.
+"""
+type ShippingLineEdge {
+  cursor: String!
+  node: ShippingLine!
+}
+
+type ShippingLineConnection {
+  edges: [ShippingLineEdge!]!
+  pageInfo: PageInfo!
+}
+
+"""
+Return object associated with an order (simplified).
+"""
+type Return implements Node {
+  id: ID!
+  createdAt: DateTime!
+}
+
+"""
+Connection for returns on an order.
+"""
+type ReturnEdge {
+  cursor: String!
+  node: Return!
+}
+
+type ReturnConnection {
+  edges: [ReturnEdge!]!
+  pageInfo: PageInfo!
+}
+
+"""
+Refund object associated with an order (simplified).
+"""
+type Refund implements Node {
+  id: ID!
+  createdAt: DateTime
+  totalRefundedSet: MoneyBag!
+}
+
+"""
+The main Order object (subset focused on OMS fields).
+"""
+type Order implements Node {
+  id: ID!
+  legacyResourceId: UnsignedInt64!
+  name: String!
+  number: Int!
+  createdAt: DateTime!
+  cancelledAt: DateTime
+  closedAt: DateTime
+
+  currencyCode: CurrencyCode!
+  customerLocale: String
+  email: String
+  phone: String
+  tags: [String!]!
+
+  customer: Customer
+  billingAddress: MailingAddress
+  shippingAddress: MailingAddress
+
+  discountCode: String
+  discountApplications(first: Int, after: String): DiscountApplicationConnection!
+
+  shippingLines(first: Int, after: String): ShippingLineConnection!
+
+  lineItems(first: Int, after: String): LineItemConnection!
+
+  totalPriceSet: MoneyBag!
+
+  returns(first: Int, after: String): ReturnConnection!
+  refunds: [Refund!]!
+}
+
+"""
+Edge and connection for Orders.
+"""
+type OrderEdge {
+  cursor: String!
+  node: Order!
+}
+
+type OrderConnection {
+  edges: [OrderEdge!]!
+  pageInfo: PageInfo!
+}
+
+"""
+Root Query type with an orders field.
+In actual Shopify schema, Query has many more fields.
+"""
+type Query {
+  orders(
+    first: Int
+    after: String
+    sortKey: OrderSortKeys
+    reverse: Boolean
+    query: String
+  ): OrderConnection!
+}
