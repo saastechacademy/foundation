@@ -3,6 +3,14 @@
 ### Goal
 Define how we will build GraphQL queries using graphql-java AST classes, starting with a simple orders query (last one hour, scalar fields only).
 
+### Scope
+- Define the query-building approach using graphql-java AST (no custom model).
+- Show concrete example queries the facade must support (orders last hour; with addresses).
+- Document variable strategy and selection-set strategy (scalars vs nested objects).
+- Outline the AST construction flow and expected outputs (Document + variables).
+- Capture helper utilities needed (e.g., scalar selection from schema).
+- Boundaries: no execution, no server, no codegen, no heavy custom DSL beyond thin syntax sugar.
+
 ---
 
 ### Query 1: Orders Created in the Last Hour (Scalars Only)
@@ -78,6 +86,99 @@ No nested objects:
 The facade returns:
 - `Document` (or serialized query string)
 - `variables` map with `search`, `first`, `after`
+
+#### Helper: Argument Builder (Moqui-style sugar)
+In Moqui, arguments are often passed via fluent chaining. We can keep that ergonomic feel by building a list of `Argument` objects and applying them in bulk.
+
+```java
+import graphql.language.Argument;
+import graphql.language.Field;
+import graphql.language.Value;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class ArgumentUtil {
+    public static Argument arg(String name, Value<?> value) {
+        return Argument.newArgument(name, value).build();
+    }
+
+    public static ArgumentBuilder builder() {
+        return new ArgumentBuilder();
+    }
+
+    public static Field applyArguments(Field.Builder fieldBuilder, List<Argument> args) {
+        for (Argument arg : args) {
+            fieldBuilder.argument(arg);
+        }
+        return fieldBuilder.build();
+    }
+}
+
+public class ArgumentBuilder {
+    private final List<Argument> args = new ArrayList<>();
+
+    public ArgumentBuilder arg(String name, Value<?> value) {
+        args.add(ArgumentUtil.arg(name, value));
+        return this;
+    }
+
+    public List<Argument> build() {
+        return List.copyOf(args);
+    }
+}
+```
+
+Example usage:
+```java
+List<Argument> orderArgs = ArgumentUtil.builder()
+    .arg("query", VariableReference.newVariableReference("search").build())
+    .arg("first", VariableReference.newVariableReference("first").build())
+    .arg("after", VariableReference.newVariableReference("after").build())
+    .arg("sortKey", EnumValue.newEnumValue("CREATED_AT").build())
+    .arg("reverse", graphql.language.BooleanValue.newBooleanValue(true).build())
+    .build();
+
+Field ordersField = ArgumentUtil.applyArguments(
+    Field.newField("orders").selectionSet(ordersSelection),
+    orderArgs
+);
+```
+
+#### Helper: condition-style Query String Builder
+To mirror Moqui’s `condition(...)` and `conditionDate(...)`, we can provide a tiny helper that builds the Shopify `query` string, then pass it as the `query` argument.
+
+```java
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+
+public class QueryStringBuilder {
+    private final List<String> clauses = new ArrayList<>();
+
+    public QueryStringBuilder condition(String field, String value) {
+        clauses.add(field + ":" + value);
+        return this;
+    }
+
+    public QueryStringBuilder conditionDate(String field, Instant greaterThan) {
+        clauses.add(field + ":>" + greaterThan.toString());
+        return this;
+    }
+
+    public String build() {
+        return String.join(" ", clauses);
+    }
+}
+```
+
+Example usage:
+```java
+String search = new QueryStringBuilder()
+    .condition("status", "ORDER_COMPLETED")
+    .conditionDate("created_at", Instant.now().minusSeconds(3600))
+    .build();
+```
 
 ---
 
@@ -160,14 +261,18 @@ SelectionSet ordersSelection = SelectionSet.newSelectionSet()
         .build())
     .build();
 
-Field ordersField = Field.newField("orders")
-    .argument(Argument.newArgument("query", VariableReference.newVariableReference("search").build()).build())
-    .argument(Argument.newArgument("first", VariableReference.newVariableReference("first").build()).build())
-    .argument(Argument.newArgument("after", VariableReference.newVariableReference("after").build()).build())
-    .argument(Argument.newArgument("sortKey", EnumValue.newEnumValue("CREATED_AT").build()).build())
-    .argument(Argument.newArgument("reverse", graphql.language.BooleanValue.newBooleanValue(true).build()).build())
-    .selectionSet(ordersSelection)
+List<Argument> orderArgs = ArgumentUtil.builder()
+    .arg("query", VariableReference.newVariableReference("search").build())
+    .arg("first", VariableReference.newVariableReference("first").build())
+    .arg("after", VariableReference.newVariableReference("after").build())
+    .arg("sortKey", EnumValue.newEnumValue("CREATED_AT").build())
+    .arg("reverse", graphql.language.BooleanValue.newBooleanValue(true).build())
     .build();
+
+Field ordersField = ArgumentUtil.applyArguments(
+    Field.newField("orders").selectionSet(ordersSelection),
+    orderArgs
+);
 
 OperationDefinition operation = OperationDefinition.newOperationDefinition()
     .name("OrdersLastHour")
@@ -263,11 +368,9 @@ import graphql.schema.GraphQLSchema;
 GraphQLSchema schema = /* loaded schema */;
 
 SelectionSet addressFields = SelectionSetUtil.scalarSelectionSet(schema, "MailingAddress");
+SelectionSet orderScalarFields = SelectionSetUtil.scalarSelectionSet(schema, "Order");
 
-SelectionSet orderFieldsWithAddresses = SelectionSet.newSelectionSet()
-    .selection(Field.newField("id").build())
-    .selection(Field.newField("name").build())
-    .selection(Field.newField("createdAt").build())
+SelectionSet orderFieldsWithAddresses = SelectionSet.newSelectionSet(orderScalarFields)
     .selection(Field.newField("shippingAddress")
         .selectionSet(addressFields)
         .build())
@@ -292,14 +395,18 @@ SelectionSet ordersSelection = SelectionSet.newSelectionSet()
         .build())
     .build();
 
-Field ordersField = Field.newField("orders")
-    .argument(Argument.newArgument("query", VariableReference.newVariableReference("search").build()).build())
-    .argument(Argument.newArgument("first", VariableReference.newVariableReference("first").build()).build())
-    .argument(Argument.newArgument("after", VariableReference.newVariableReference("after").build()).build())
-    .argument(Argument.newArgument("sortKey", EnumValue.newEnumValue("CREATED_AT").build()).build())
-    .argument(Argument.newArgument("reverse", graphql.language.BooleanValue.newBooleanValue(true).build()).build())
-    .selectionSet(ordersSelection)
+List<Argument> orderArgs = ArgumentUtil.builder()
+    .arg("query", VariableReference.newVariableReference("search").build())
+    .arg("first", VariableReference.newVariableReference("first").build())
+    .arg("after", VariableReference.newVariableReference("after").build())
+    .arg("sortKey", EnumValue.newEnumValue("CREATED_AT").build())
+    .arg("reverse", graphql.language.BooleanValue.newBooleanValue(true).build())
     .build();
+
+Field ordersField = ArgumentUtil.applyArguments(
+    Field.newField("orders").selectionSet(ordersSelection),
+    orderArgs
+);
 
 OperationDefinition operation = OperationDefinition.newOperationDefinition()
     .name("OrdersWithAddresses")

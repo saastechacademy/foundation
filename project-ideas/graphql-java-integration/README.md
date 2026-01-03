@@ -4,7 +4,7 @@
 - Learn and evaluate graphql-java for schema-backed query building (no server execution).
 - Deliver a facade class that constructs Shopify GraphQL queries safely.
 - Decide if graphql-java is a good fit for our purposes.
-- Take inspiration from Moqui Entity Engine patterns (generic value, query builder, conditions/filters) while implementing native graphql-java solutions.
+- Provide syntax sugar that feels like Moqui Entity Engine DSL, while staying true to graphql-java AST classes and validation flow.
 - Favor a David E. Jones–style approach: metadata-driven, schema-first, and pragmatic simplicity.
 
 ### Scope and Constraints
@@ -13,6 +13,11 @@
 - Validate queries against the schema before sending.
 - No GraphQL server, data fetchers, or code generation.
 - Use Java package name `co.hotwax.graphql`.
+
+### Design Principles
+- Stay close to graphql-java: use its AST (`graphql.language.*`) as the internal model, and validate with graphql-java.
+- Add Moqui-style syntax sugar for ergonomics, but keep it as a thin layer that only builds AST nodes.
+- Keep query construction structured and schema-backed; avoid raw strings except for final serialization.
 
 ### Plan (Phased)
 1) Setup and Baseline
