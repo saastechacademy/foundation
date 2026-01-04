@@ -90,7 +90,7 @@ Produce documents that developers can implement without guesswork:
 - Commitments on timelines without PM/Delivery alignment
 - Scope changes without change-control path
 
-### 4.3 How the BSA protects HotWax in calls
+### 4.3 How the BSA protects company in calls
 - Turn vague asks into **testable outcomes** (“What must be true in the system after this step?”)
 - Confirm exceptions explicitly (“What happens when it fails / partial / out-of-stock?”)
 - Anchor discussion in **workflows and data**, not UI preferences
