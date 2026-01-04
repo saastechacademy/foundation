@@ -15,7 +15,6 @@ This responsibility exists to prevent post-go-live entropy where projects become
 ## 2. What PSTO Is (and is not)
 - **PSTO is not a job title.** It is a responsibility assigned to a person on a project.
 - PSTO can be held by a **Business Systems Analyst (preferred)**, or another qualified project role as assigned by Delivery.
-- PSTO **does not write production code**.
 
 ---
 
