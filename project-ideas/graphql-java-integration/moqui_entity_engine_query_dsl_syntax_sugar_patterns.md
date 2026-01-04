@@ -6,6 +6,59 @@ Add Groovy DSL syntax sugar that only builds those AST nodes (no parallel POJO m
 
 Render using AstPrinter and validate using ParseAndValidate against a GraphQLSchema built from your local Shopify SDL.
 
+---
+
+## DSL Ideas from Moqui (Groovy)
+
+### Purpose
+Capture concrete Moqui Groovy DSL patterns and runtime enhancements that can inspire a graphql-java query builder and syntax sugar.
+
+### Script Runtime and Context Binding
+- Moqui runs Groovy scripts with an ExecutionContext-backed binding, so scripts can access context variables without explicit wiring.
+- Missing variables do not throw MissingPropertyException; they resolve via the context stack and default to null.
+- Scripts are compiled and cached by location for performance.
+
+References:
+- `framework/src/main/groovy/org/moqui/impl/context/runner/GroovyScriptRunner.groovy`
+- `framework/src/main/java/org/moqui/util/ContextBinding.java`
+
+### Entity Query DSL (Fluent, Chainable)
+- Fluent entry point: `ec.entity.find("EntityName")` returns an EntityFind chain.
+- Overloaded `condition(...)` methods support field/value, operator, map, and condition objects.
+- `conditionDate(fromField, thruField, timestamp)` encodes a common date-range pattern.
+- Projection helpers: `selectField(...)`, `selectFields(...)`.
+- Sort and pagination: `orderBy(...)`, `limit(...)`, `offset(...)`.
+- Execution intent: `.one()` for single, `.list()` for multiple, `.count()` for totals.
+- Orthogonal modifiers: `useCache(...)`, `forUpdate(...)`, `useClone(...)`, `disableAuthz()`.
+
+Reference:
+- `framework/src/main/groovy/org/moqui/impl/entity/EntityFindBase.groovy`
+
+### XML Actions -> Groovy DSL Generation
+- Moqui compiles XML actions into Groovy chains, using static utility imports and consistent fluent patterns.
+- The XML -> Groovy compilation is driven by the FreeMarker template that emits Groovy code from XML actions.
+- Minilang-style condition elements (`<econdition>`, `<econditions>`, `<date-filter>`) are compiled into chained `.condition(...)` calls in the generated Groovy.
+- Service calls become a fluent DSL: `ec.service.sync().name(...).parameters(...).call()`.
+- Entity find actions compile into chained query builders (conditions, select fields, order by, list/one).
+
+Reference:
+- `framework/template/XmlActions.groovy.ftl`
+
+### EntityList Convenience Helpers
+- EntityList supports Groovy-friendly post-query operations:
+  - `filterByDate(...)` for from/thru date validity.
+  - `filterByAnd(...)` for in-memory filtering.
+  - Closure-based `filter(...)` and `find(...)`.
+
+Reference:
+- `framework/src/main/groovy/org/moqui/impl/entity/EntityListImpl.java`
+
+### Takeaways for graphql-java DSL Design
+- Keep query building fluent and chainable.
+- Provide “semantic sugar” helpers (like `conditionDate`) for common patterns.
+- Separate query construction from execution/transport.
+- Preserve a consistent, low-ceremony developer experience.
+
 
 
 ## Moqui Entity Engine – Query DSL Syntax Sugar Patterns
@@ -176,4 +229,3 @@ Moqui’s Entity Engine DSL succeeds because:
 5. Java/Groovy collections are preferred over rigid POJOs
 
 These same principles can be applied to other domains (such as GraphQL query construction) while staying consistent with the Moqui philosophy.
-
