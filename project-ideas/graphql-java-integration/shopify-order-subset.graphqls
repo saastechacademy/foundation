@@ -101,9 +101,9 @@ type Customer implements Node {
   defaultPhoneNumber: CustomerPhoneNumber
 }
 
-/**
+"""
 Unsigned 64-bit integer, used for legacyResourceId.
-*/
+"""
 scalar UnsignedInt64
 
 """
