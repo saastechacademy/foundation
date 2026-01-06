@@ -17,7 +17,9 @@ query OrdersMinimal($first: Int!, $after: String) {
     }
     pageInfo { 
       hasNextPage 
+      hasPreviousPage
       endCursor 
+      startCursor
     }
   }
 }
@@ -69,7 +71,9 @@ query OrdersWide($first: Int!, $after: String) {
     }
     pageInfo { 
       hasNextPage 
+      hasPreviousPage
       endCursor 
+      startCursor
     }
   }
 }
@@ -101,14 +105,18 @@ query OrdersWithLineItems($first: Int!, $after: String, $lineItemsFirst: Int!) {
           }
           pageInfo { 
             hasNextPage 
+            hasPreviousPage
             endCursor 
+            startCursor
           }
         }
       }
     }
     pageInfo { 
       hasNextPage 
+      hasPreviousPage
       endCursor 
+      startCursor
     }
   }
 }
@@ -168,7 +176,9 @@ query OrdersWithShippingDiscounts($first: Int!, $after: String) {
     }
     pageInfo { 
       hasNextPage
+      hasPreviousPage
       endCursor 
+      startCursor
     }
   }
 }
@@ -197,7 +207,9 @@ query OrdersByCreatedAt($first: Int!, $after: String, $query: String!) {
     }
     pageInfo { 
       hasNextPage 
+      hasPreviousPage
       endCursor 
+      startCursor
     }
   }
 }
@@ -217,7 +229,9 @@ query OrdersSorted($first: Int!, $sortKey: OrderSortKeys!, $reverse: Boolean) {
     }
     pageInfo { 
       hasNextPage 
+      hasPreviousPage
       endCursor 
+      startCursor
     }
   }
 }
@@ -250,7 +264,9 @@ query OrdersMultiNested($first: Int!, $after: String, $liFirst: Int!, $refundFir
     }
     pageInfo { 
       hasNextPage 
+      hasPreviousPage
       endCursor 
+      startCursor
     }
   }
 }
@@ -285,7 +301,9 @@ query OrdersUsingFragments($first: Int!, $after: String) {
     }
     pageInfo { 
       hasNextPage
+      hasPreviousPage
       endCursor 
+      startCursor
     }
   }
 }
@@ -324,8 +342,8 @@ query OrdersDiscountApplications($first: Int!, $after: String) {
 ### 10) Orders with input object argument
 
 ```graphql
-query OrdersComplexFilter($first: Int!, $filter: OrderFilter) {
-  orders(first: $first, filter: $filter) {
+query OrdersComplexFilter($first: Int!, $query: String) {
+  orders(first: $first, query: $query) {
     edges { 
       node { 
         id 
