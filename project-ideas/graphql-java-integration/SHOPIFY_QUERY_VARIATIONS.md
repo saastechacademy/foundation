@@ -17,9 +17,7 @@ query OrdersMinimal($first: Int!, $after: String) {
     }
     pageInfo { 
       hasNextPage 
-      hasPreviousPage
       endCursor 
-      startCursor
     }
   }
 }
@@ -71,9 +69,7 @@ query OrdersWide($first: Int!, $after: String) {
     }
     pageInfo { 
       hasNextPage 
-      hasPreviousPage
       endCursor 
-      startCursor
     }
   }
 }
@@ -105,18 +101,14 @@ query OrdersWithLineItems($first: Int!, $after: String, $lineItemsFirst: Int!) {
           }
           pageInfo { 
             hasNextPage 
-            hasPreviousPage
             endCursor 
-            startCursor
           }
         }
       }
     }
     pageInfo { 
       hasNextPage 
-      hasPreviousPage
       endCursor 
-      startCursor
     }
   }
 }
@@ -176,9 +168,7 @@ query OrdersWithShippingDiscounts($first: Int!, $after: String) {
     }
     pageInfo { 
       hasNextPage
-      hasPreviousPage
       endCursor 
-      startCursor
     }
   }
 }
@@ -207,9 +197,7 @@ query OrdersByCreatedAt($first: Int!, $after: String, $query: String!) {
     }
     pageInfo { 
       hasNextPage 
-      hasPreviousPage
       endCursor 
-      startCursor
     }
   }
 }
@@ -229,9 +217,7 @@ query OrdersSorted($first: Int!, $sortKey: OrderSortKeys!, $reverse: Boolean) {
     }
     pageInfo { 
       hasNextPage 
-      hasPreviousPage
       endCursor 
-      startCursor
     }
   }
 }
@@ -264,9 +250,7 @@ query OrdersMultiNested($first: Int!, $after: String, $liFirst: Int!, $refundFir
     }
     pageInfo { 
       hasNextPage 
-      hasPreviousPage
       endCursor 
-      startCursor
     }
   }
 }
@@ -301,9 +285,7 @@ query OrdersUsingFragments($first: Int!, $after: String) {
     }
     pageInfo { 
       hasNextPage
-      hasPreviousPage
       endCursor 
-      startCursor
     }
   }
 }
@@ -339,17 +321,59 @@ query OrdersDiscountApplications($first: Int!, $after: String) {
 }
 ```
 
-### 10) Orders with input object argument
+### 10) Update order note (Mutation)
+Purpose: validate mutation syntax, input objects, and userErrors pattern.
+
+✅ Valid Shopify mutation
+```graphql
+mutation OrderUpdateNote($input: OrderInput!) {
+  orderUpdate(input: $input) {
+    order {
+      id
+      name
+      note
+      updatedAt
+    }
+    userErrors {
+      field
+      message
+    }
+  }
+}
+```
+
+Example variables (runtime, not part of GraphQL validation):
+```json
+{
+  "input": {
+    "id": "gid://shopify/Order/1234567890",
+    "note": "Reviewed by fraud team"
+  }
+}
+```
+
+### 11) Add tags to an order (Mutation)
+Why this one is interesting:
+- Uses a union/interface return (node)
+- Requires an inline fragment (`... on Order`)
+- Still follows payload + userErrors pattern
+
+This mutation helps you validate:
+- inline fragments in mutations
+- polymorphic payloads
 
 ```graphql
-query OrdersComplexFilter($first: Int!, $query: String) {
-  orders(first: $first, query: $query) {
-    edges { 
-      node { 
-        id 
-        name 
-        createdAt 
-      } 
+mutation OrderAddTags($id: ID!, $tags: [String!]!) {
+  tagsAdd(id: $id, tags: $tags) {
+    node {
+      ... on Order {
+        id
+        tags
+      }
+    }
+    userErrors {
+      field
+      message
     }
   }
 }
