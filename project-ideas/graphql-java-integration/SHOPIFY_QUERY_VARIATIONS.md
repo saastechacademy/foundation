@@ -406,7 +406,7 @@ Example variables (runtime, not part of GraphQL validation):
 ### 10) Update order note (Mutation)
 Purpose: validate mutation syntax, input objects, and userErrors pattern.
 
-✅ Valid Shopify mutation
+Valid Shopify mutation
 ```graphql
 mutation OrderUpdateNote($input: OrderInput!) {
   orderUpdate(input: $input) {
