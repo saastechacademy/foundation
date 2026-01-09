@@ -38,46 +38,142 @@ or “a large superset for replication/debug/export”
 Purpose: validate your schema subset completeness (you’ll discover missing types/fields fast).
 
 ```graphql
-query OrdersWide($first: Int!, $after: String) {
-  orders(first: $first, after: $after) {
+query OrdersWideSchemaExpanded($first: Int!, $after: String, $query: String, $discountApplicationsFirst: Int, $lineItemsFirst: Int, $returnsFirst: Int, $shippingLinesFirst: Int) {
+  orders(first: $first, after: $after, query: $query) {
     edges {
+      cursor
       node {
-        id 
-        name 
-        createdAt 
-        updatedAt
-        email
+        id
+        legacyResourceId
+        name
+        number
+        createdAt
+        cancelledAt
+        closedAt
         currencyCode
-        displayFinancialStatus
-        displayFulfillmentStatus
+        customerLocale
+        email
+        phone
         tags
-        customer { 
-          id 
-          email 
+        customer {
+          id
+          legacyResourceId
+          firstName
+          lastName
+          state
+          defaultEmailAddress {
+            emailAddress
+          }
+          defaultPhoneNumber {
+            phoneNumber
+          }
         }
-        billingAddress { 
-          address1 
-          city 
-          country 
-          zip 
+        billingAddress {
+          firstName
+          lastName
+          company
+          phone
+          address1
+          address2
+          city
+          province
+          country
+          zip
+          countryCode
         }
-        shippingAddress { 
-          address1 
-          city 
-          country 
-          zip 
+        shippingAddress {
+          firstName
+          lastName
+          company
+          phone
+          address1
+          address2
+          city
+          province
+          country
+          zip
+          countryCode
         }
-        totalPriceSet { 
-          shopMoney { 
-            amount 
-            currencyCode 
-          } 
-        }        
+        discountCode
+        discountApplications(first: $discountApplicationsFirst) {
+          edges {
+            cursor
+            node {
+              __typename
+            }
+          }
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+        }
+        shippingLines(first: $shippingLinesFirst) {
+          edges {
+            cursor
+            node {
+              title
+              taxLines {
+                title
+                rate
+              }
+            }
+          }
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+        }
+        lineItems(first: $lineItemsFirst) {
+          edges {
+            cursor
+            node {
+              id
+              quantity
+              sku
+              variant {
+                id
+                legacyResourceId
+                title
+              }
+              taxLines {
+                title
+                rate
+              }
+            }
+          }
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+        }
+        totalPriceSet {
+          shopMoney {
+            amount
+            currencyCode
+          }
+        }
+        returns(first: $returnsFirst) {
+          edges {
+            cursor
+            node {
+              id
+              createdAt
+            }
+          }
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+        }
+        refunds {
+          id
+          createdAt
+        }
       }
     }
-    pageInfo { 
-      hasNextPage 
-      endCursor 
+    pageInfo {
+      hasNextPage
+      endCursor
     }
   }
 }
@@ -295,12 +391,8 @@ query OrdersMultiNested($first: Int!, $after: String, $liFirst: Int!, $refundFir
           } 
         }
         refunds(first: $refundFirst) { 
-          edges { 
-            node { 
-              id 
-              createdAt 
-            } 
-          } 
+          id 
+          createdAt 
         }
       }
     }
@@ -629,8 +721,8 @@ Example variables (runtime, not part of GraphQL validation):
 ```
 
 ```graphql
-query VariantMetafields($query: String!) {
-  productVariants(query: $query) {
+query VariantMetafields($query: String!, $first: Int!) {
+  productVariants(query: $query, first: $first) {
     edges {
         node {
             id
@@ -661,7 +753,8 @@ query VariantMetafields($query: String!) {
 Example variables (runtime, not part of GraphQL validation):
 ```json
 {
-  "query": "sku:ABC-123"
+  "query": "sku:ABC-123",
+  "first": 10
 }
 ```
 
