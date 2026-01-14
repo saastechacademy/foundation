@@ -1,63 +1,41 @@
 # Unigate
 
 ## What it is
-Unigate is the shared integration layer for outbound communication and shipping gateways. It centralizes tenant-aware authentication, gateway configuration, and routing so upstream apps (like Poorti) can call one interface for shipping or communication without embedding carrier-specific logic.
+Unigate is a shared integration layer for communication and shipping. It keeps the auth and routing logic in one place so other apps (like Poorti) can call a single interface instead of dealing with each provider or carrier directly.
 
-Unigate is implemented as two modules:
-- **Unimail**: outbound communication (email + workflow events)
-- **Uniship**: shipping gateway configuration and carrier integrations
+## What it does
+Unigate provides:
+- communication services (send emails, create workflow events)
+- shipping services (rate shopping, request labels, refund labels)
+- tenant-aware gateway auth and configuration
 
-This document consolidates the current design and behavior. Detailed specs live in the existing unimail/uniship docs referenced below.
-
-## Unimail (communication)
-Purpose: expose a single interface for sending email and emitting workflow events, with tenant-specific credentials.
-
-Key interface services:
+## Key services
+Communication:
 - `co.hotwax.unigate.ApiInterfaceServices.send#EmailCommunication`
 - `co.hotwax.unigate.ApiInterfaceServices.create#WorkflowEvent`
 
-Core idea:
-- Unimail looks up tenant-specific auth (gateway config + credentials) and routes the request to the configured communication provider.
-
-Related docs:
-- `project-ideas/unigate/unimail/readme.md`
-
-## Uniship (shipping gateways)
-Purpose: manage shipping gateway configuration and route requests to carrier integrations for rate shopping, label creation, and refunds.
-
-Key interface services:
+Shipping:
 - `co.hotwax.unigate.ApiInterfaceServices.get#ShippingRate`
 - `co.hotwax.unigate.ApiInterfaceServices.request#ShippingLabels`
 - `co.hotwax.unigate.ApiInterfaceServices.refund#ShippingLabels`
 
-Core entities:
-- **ShippingGatewayConfig**: defines gateway-level service names for rate, label, and refund.
-- **ShippingGatewayAuth**: ties a tenant + gateway to credentials (`SystemMessageRemote`), enabling tenant-aware access.
+## How shipping works (high level)
+1. A client calls Unigate (rate, label, or refund).
+2. Unigate validates tenant and gateway auth.
+3. Unigate routes the request to the configured carrier service.
+4. The carrier service returns a normalized response.
 
-Execution flow (rate shopping):
-1. Upstream service calls Unigate rate API.
-2. Unigate validates tenant + gateway auth.
-3. Unigate loads `ShippingGatewayConfig` to resolve the carrier service to call.
-4. Carrier-specific service executes and returns a normalized response.
+## Rate shopping behavior
+When a carrier does **not** support rate shopping, Unigate returns:
+- `isRateShoppingSupported = false`
+- `statusCode = 501`
+- `shippingRates = []`
 
-Behavioral guarantees:
-- For carriers that do **not** support rate shopping, the rate service returns:
-  - `isRateShoppingSupported = false`
-  - `statusCode = 501`
-  - `shippingRates = []`
-- The caller is expected to handle this without throwing errors.
+The caller should continue the flow without throwing errors.
 
-Related docs:
-- `project-ideas/unigate/uniship/readme.md`
-- `project-ideas/unigate/uniship/entity/entity-model.md`
-- `project-ideas/unigate/uniship/entity/ShippingGatewayConfig.md`
-- `project-ideas/unigate/uniship/entity/ShippingGatewayAuthConfig.md`
-- `project-ideas/unigate/uniship/TenantAuthFilter.md`
+## Related docs
+- Carrier capability notes: `project-ideas/unigate/carriers.md`
 
 ## How Poorti uses Unigate
-- Poorti calls Unigate for rate shopping and label requests.
+- Poorti calls Unigate for rates and labels.
 - If Unigate is not enabled, Poorti can fall back to OMS services.
-- Rate shopping responses are normalized through Unigate so Poorti does not need carrier-specific logic.
-
-## Suggested next doc
-- Carrier capability matrix and integration notes (see `project-ideas/unigate/carriers.md`).
