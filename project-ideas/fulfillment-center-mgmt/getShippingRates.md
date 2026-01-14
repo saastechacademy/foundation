@@ -19,12 +19,18 @@ Fetch all available shipping rates for a shipment from Unigate. This service doe
   - `actualCarrierCode` - Carrier code returned by the gateway
   - `estimatedDeliveryDate` - Estimated delivery date (timestamp when parsed, otherwise string)
   - `estimatedDeliveryDateTs` - Parsed delivery date timestamp (null when parsing fails)
+- `isRateShoppingSupported` (Boolean)
+  - `true` when the carrier supports rate shopping
+  - `false` when rate shopping is not supported (no error is thrown)
 
 ## Detailed flow
 1. Load shipment data
    - Query `co.hotwax.shipment.OrderHeaderAndShipment` by `shipmentId`.
    - If no shipment exists, return error `Shipment [${shipmentId}] not found; cannot continue.`
-2. Validate Unigate configuration
+2. Check whether Unigate is enabled
+   - Call `ShippingServices.check#UnigateEnabled`.
+   - If not enabled, call `OmsRestShippingServices.get#ShippingRates` and return those rates.
+3. Validate Unigate configuration
    - Fetch `SystemMessageRemote` with `systemMessageRemoteId = UNIGATE_CONFIG`.
    - If missing, return error `SystemMessageRemote [UNIGATE_CONFIG] not found; carrier call aborted.`
 3. Determine carrier list
@@ -44,7 +50,8 @@ Fetch all available shipping rates for a shipment from Unigate. This service doe
    - When available, set `deliveryDays` and `shipmentMethod` on the request map.
 6. Call Unigate
    - Call `ShippingServices.call#RateRequest`.
-   - Only responses with `shippingEstimateAmount` and `carrierService` are kept.
+   - If `isRateShoppingSupported` is false, return with `shippingRates = []` and `isRateShoppingSupported = false`.
+   - Otherwise, map `shippingRates` from the Unigate response.
 7. Build the response list
    - For each successful response, map gateway fields into a `shippingRate` entry.
    - Parse `estimatedDeliveryDate` to `estimatedDeliveryDateTs` when possible and store both.
@@ -54,6 +61,7 @@ Fetch all available shipping rates for a shipment from Unigate. This service doe
 - Missing `ShippingCarrierConfig` causes the request template to stop and the call to fail.
 - If carrier shipment methods are missing for a carrier, that carrier is skipped.
 - If Unigate calls fail or return incomplete data, the entry is skipped, and the list may be empty.
+- When a carrier does not support rate shopping, the service returns `isRateShoppingSupported = false` with an empty list.
 
 ## Related services
 - [doRateShopping](doRateShopping.md) uses this service to pick a best rate and update the shipment route segment.
