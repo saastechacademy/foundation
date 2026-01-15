@@ -50,34 +50,41 @@ The caller should continue the flow without throwing errors.
 - If Unigate is not enabled, Poorti can fall back to OMS services.
 
 ## Entities and workflows
-This section lists the key Unigate entities and how they are used. It follows the same style as the inventory cycle count docs.
+This section lists the Unigate entities and how they are used, in a simple format.
 
 ### 1) Entities in scope
 
-#### A. Tenant entities (shared for communication + shipping)
-- **Party**: tenant record (organization).
-- **Organization**: tenant name and org details.
-- **PartyRole**: identifies the tenant role (used for access control).
+#### A. Party and tenant entities
+- **Party**: base record for people/organizations.
+- **Person**: person details for a Party.
+- **Organization**: organization details for a Party.
+- **PartyRole**: assigns roles to parties (tenant role).
+- **RoleType**: defines role hierarchy.
+- **UserAccount (extend)**: links a user to a Party.
 
 #### B. Communication gateway entities
-- **EmailGatewayConfig**: defines which send/event services are used for a provider (Klaviyo, SMTP/Mayur).
-- **EmailGatewayAuthConfig**: stores tenant-specific credentials and base URL for the provider.
+- **CommGatewayConfig**: defines which services are used for email and events.
+- **CommGatewayAuth**: tenant-specific auth for a communication gateway (ties to `SystemMessageRemote`).
 
 #### C. Shipping gateway entities
-- **ShippingGatewayConfig**: defines which services are used for rate, label, and refund.
-- **ShippingGatewayOption**: key-value options for a gateway configuration.
-- **ShippingGatewayAuthConfig**: tenant-specific credentials and base URL for a carrier.
+- **ShippingGatewayConfig**: defines which services are used for rate, label, refund, track, and validate address.
+- **ShippingGatewayAuth**: tenant-specific auth for shipping gateway (ties to `SystemMessageRemote`).
+
+#### D. View entities (for read convenience)
+- **ShippingGatewayAuthAndConfig**: joins auth + config for shipping.
+- **CommGatewayAuthAndConfig**: joins auth + config for communication.
+- **UserLoginKeyAndParty**: links user login key with Party.
 
 ### 2) Workflows (simple view)
 
 #### Communication
-1. Configure `EmailGatewayConfig` (provider type).
-2. Add tenant credentials in `EmailGatewayAuthConfig`.
+1. Configure `CommGatewayConfig` (provider service mapping).
+2. Add tenant credentials in `CommGatewayAuth`.
 3. Call `send#EmailCommunication` or `create#WorkflowEvent`.
 
 #### Shipping
-1. Configure `ShippingGatewayConfig` (rate/label/refund service names).
-2. Add tenant credentials in `ShippingGatewayAuthConfig`.
+1. Configure `ShippingGatewayConfig` (rate/label/refund/track/validate mappings).
+2. Add tenant credentials in `ShippingGatewayAuth`.
 3. Call `get#ShippingRate` for rate shopping.
 4. Call `request#ShippingLabels` for labels.
-5. Call `refund#ShippingLabels` when needed.
+5. Call `refund#ShippingLabels` or other shipping services when needed.
