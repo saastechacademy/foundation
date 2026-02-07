@@ -30,6 +30,8 @@ Mandatory content to include:
 13. Prefer Groovy closures over multiple iterates when it improves clarity (filter/search/sort).
 14. Always use `date-filter` for entities with `fromDate`/`thruDate`.
 15. If Groovy is more efficient, use a `script` tag in the XML service.
+16. NetSuite SuiteCloud: validate `deploy.xml` registration for new files.
+17. Log statement guidelines (levels, sensitivity, noise).
 
 The output must be a single `SKILLS.md` file with clear sections and bullet lists, covering all items above. Include any additional best practices deduced from OrderRouting and related services (examples: use-iterator for large result sets, service call error handling, transaction timeouts, semaphores, SQL templates with FTL, etc).
 ```
@@ -51,10 +53,18 @@ The output must be a single `SKILLS.md` file with clear sections and bullet list
 - Use allowed phrases (not found, missing required <field>, invalid <field>, not allowed, already <state>, not eligible, missing <data>, external call failed, no data, partial result, skipped, operation succeeded).
 - Log level conveys severity; do not prefix with [Error].
 - Always include primary identifiers and state.
+- Log levels: Error (system failure), Warn (business rule failure/expected issue), Info (success path/milestone).
+- Avoid logging sensitive data (PII, credentials).
+- Ensure error logs provide context (entity ID, action being attempted).
 
 ### Component dependencies
 - Service calls must only reference components listed in `component.xml` (plus core framework components).
 - If a service depends on another component, add `depends-on` first.
+
+### NetSuite SuiteCloud Deployment
+- Rule: If a new file is created (Script, XML, etc.), it MUST be registered in `deploy.xml`.
+- Rule: If missing in `deploy.xml`, flag as an error.
+- Rule: Suggest the required `<path>` entry for `deploy.xml` when missing.
 
 ### Service implementation (XML vs Groovy)
 - Prefer Minilang/XML actions over Groovy for services.
