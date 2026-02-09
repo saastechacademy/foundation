@@ -1,29 +1,80 @@
 # doRateShopping
 
-The doRateShopping service's main objective is to identify the most suitable shipping method for a given shipment. It uses [getShippingRates](getShippingRates.md) service to retrieve shipping rates for a shipment and then selects the most cost-effective shipping method.
+## Service name
+`co.hotwax.poorti.shipping.ShippingServices.do#RateShopping`
 
-## Detailed Implementation
+## Purpose
+Select the best shipping rate for a shipment and update the shipment route segment with the chosen carrier and cost details. The service delegates rate retrieval to [getShippingRates](getShippingRates.md), which may call Unigate or fall back to OMS based on configuration.
 
-Parameters 
-IN
-*   ShipmentId
+## Inputs
+- `shipmentId` (required)
 
-OUT
-* ShippingMethodTypeId
-* carrierPartyId
+## Outputs
+- `bestRate` (Map)
+  - Selected rate map from `shippingRates` (same shape as entries returned by [getShippingRates](getShippingRates.md)).
 
-To identify Unigate Gateway config Need productStoreId, carrierPartyId, facilityId
-Get it from OrderHeaderAndShipment view.
-https://demo-oms.hotwax.io/webtools/control/FindGeneric?entityName=OrderHeaderAndShipment
+The service also updates the shipment route segment in the database.
 
+## Detailed flow
+1. Load shipment data
+   - Fetch `co.hotwax.shipment.OrderHeaderAndShipment` by `shipmentId`.
+   - If missing, return error `Shipment [${shipmentId}] not found; cannot continue.`
+2. Load SLA date
+   - Fetch `OrderItemShipGroup` using `primaryOrderId` and `primaryShipGroupSeqId`.
+   - Parse `estimatedDeliveryDate` to a timestamp when present.
+3. Retrieve rates
+   - Call `ShippingServices.get#ShippingRates` with `shipmentId`.
+   - Extract `shippingRates` from the response.
+   - If `isRateShoppingSupported` is false, log and return without error.
+4. Choose the best rate
+   - If `estimatedDeliveryDate` exists, filter to rates with `estimatedDeliveryDateTs <= estimatedDeliveryDate`.
+   - If the filter yields none, fall back to all rates.
+   - Sort eligible rates by `shippingEstimateAmount` (ascending) and choose the first.
+5. Resolve shipment method type (if missing)
+   - Pull `carrierServiceCode` from `bestRate.shipmentMethod` or `bestRate.carrierServiceCode`.
+   - If `bestRate.shipmentMethodTypeId` is empty, look up `CarrierShipmentMethod` by:
+     - `partyId = bestRate.carrierPartyId` (fallback to shipment carrierPartyId)
+     - `roleTypeId = CARRIER`
+     - `carrierServiceCode`
+   - Use the resulting `shipmentMethodTypeId` when found.
+6. Update shipment route segment
+   - Update the first `ShipmentRouteSegment` with:
+     - `carrierPartyId` from `bestRate`
+     - `shipmentMethodTypeId` (resolved above)
+     - `actualCost` from `shippingEstimateAmount`
+     - `carrierServiceStatusId = SHRSCS_CONFIRMED`
+     - `carrierService`
+     - `actualCarrierCode`
+     - `gatewayRateId`
+   - Persist using `update#org.apache.ofbiz.shipment.shipment.ShipmentRouteSegment`.
 
-For given estimatedDeliveryDate, get all rates from shipping gateway
+## Error and edge cases
+- If `get#ShippingRates` returns no rates, the service does not update the shipment route segment.
+- If `isRateShoppingSupported` is false, the service logs the reason and exits without error.
+- If `bestRate` cannot be determined, it returns `No rate found for shipmentId: ${shipmentId}`.
+- Errors from `get#ShippingRates` will bubble up (for example, missing shipment or Unigate configuration).
 
-Rate Comparison and Selection:
-    1. Filter rates based on the SLA criteria
-       1. If the rates contain service days, filter results to match requested SLA
-       2. If rates contain estimated delivery date, compute the number of days and filter results to match requested SLA
-       3. If some rates don't contain service days or estimated delivery date, those rates should be demoted to the bottom of the rates. 
-       4. If no date attributes are present, return all rates with no addional sorting
-    2. Select the cheapest rate by sorting on estimated cost.
-       1. If multiple rates have the same estimated cost, select the rate with the least number of days.
+## Sample Unigate response payload
+The Unigate rate response is returned by `call#RateRequest` and propagated into `get#ShippingRates`.
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "isRateShoppingSupported": true,
+  "shippingRates": [
+    {
+      "shippingEstimateAmount": 12.75,
+      "shipmentMethod": "GROUND",
+      "carrierPartyId": "FEDEX",
+      "carrierService": "FEDEX_GROUND",
+      "gatewayRateId": "rate_123",
+      "actualCarrierCode": "FDX",
+      "estimatedDeliveryDate": "2026-01-20"
+    }
+  ]
+}
+```
+
+## Related services
+- [getShippingRates](getShippingRates.md) provides the rate list used for selection.
