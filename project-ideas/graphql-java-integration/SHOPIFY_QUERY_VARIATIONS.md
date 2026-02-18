@@ -810,3 +810,68 @@ query {
   }
 }
 ```
+
+Example variables (runtime, not part of GraphQL validation):
+```json
+{
+  "first": 1,
+  "after": null
+}
+```
+
+### 19) Agreements by order id (nested connections with filters)
+Purpose: validate nested connections with optional after/query filters and deeper nested connections.
+
+```graphql
+query AgreementsByOrderId($id: ID!, $agreementsAfter: String) {
+  node(id: $id) {
+    ... on Order {
+      agreements(first: 250, after: $agreementsAfter, query: "happened_at:>'2026-01-01'") {
+        edges {
+          node {
+            id
+            reason
+            happenedAt
+            app {
+              handle
+              title
+              shopifyDeveloped
+            }
+            user {
+              id
+              firstName
+              lastName
+            }
+            sales(first: 250) {
+              edges {
+                node {
+                  actionType
+                  lineType
+                  quantity
+                  totalAmount {
+                    presentmentMoney {
+                      amount
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+      }
+    }
+  }
+}
+```
+
+Example variables (runtime, not part of GraphQL validation):
+```json
+{
+  "id": "gid://shopify/Order/1234567890",
+  "agreementsAfter": "eyJ2IjoxLCJ0IjoiMjAyNi0wMS0wMVQwMDowMDowMFoifQ=="
+}
+```
