@@ -49,7 +49,7 @@ This document outlines the data mapping between HotWax OMS and NetSuite during t
 | `item.items[n].location.id`| `facilityIdentification[facilityIdentificationTypeId = 'NETSUITE_LOCATION_ID' and facilityId = returnHeader.destinationFacilityId].value` | Receiving facility NetSuite ID. |
 | `item.items[n].itemReceive`| `true` | Boolean flag. |
 | `item.items[n].restock` | `true` | Boolean flag. |
-| `item.items[n].custbody_hc_shipment_receipt_id` | `shipmentReceipt.receiptId` | OMS Receipt ID (Applicable for OPM/stock returns). |
+| `custbody_hc_shipment_receipt_id` | `shipmentReceipt.receiptId` | OMS Receipt ID (Applicable for OPM/stock returns). |
 
 ## 5. Refund Processing Scenarios
 
