@@ -30,11 +30,31 @@ Mandatory content to include:
 13. Prefer Groovy closures over multiple iterates when it improves clarity (filter/search/sort).
 14. Always use `date-filter` for entities with `fromDate`/`thruDate`.
 15. If Groovy is more efficient, use a `script` tag in the XML service.
+16. Adhere to the standard Moqui Component Directory Structure (entity, service, screen, data, src, etc.).
 
 The output must be a single `SKILLS.md` file with clear sections and bullet lists, covering all items above. Include any additional best practices deduced from OrderRouting and related services (examples: use-iterator for large result sets, service call error handling, transaction timeouts, semaphores, SQL templates with FTL, etc).
 ```
 
 ## Best practices inventory (must appear in SKILLS.md)
+
+### Component Workflow & Directory Structure
+- **entity/ (Data Model)**
+  - Read here to understand the schema. Write new `<entity>` and `<view-entity>` definitions here.
+  - Define schema **first**. Never put entity definitions inside services or screens.
+- **service/ (Business Logic & API)**
+  - Write Service Definitions (.xml). Use inline `<actions>` for standard logic (CRUD, orchestration).
+  - Follow "Definition First" — define `in-parameters` and `out-parameters` before writing any implementation logic.
+- **screen/ (User Interface)**
+  - Write Screen and Form definitions (.xml).
+  - Keep screens logic-free. Delegate all processing to services immediately.
+- **src/ (Complex Implementation)**
+  - Write compiled Java/Groovy classes here.
+  - Use strictly for algorithmic logic, heavy data processing, or external API integrations that are too complex for XML Actions.
+- **data/ (System Data)**
+  - Write `Seed` (Types, Enums) and `Demo` data here.
+  - Separate data by type (`TypeData.xml`, `DemoData.xml`) rather than one giant file.
+- **component.xml (Dependencies)**
+  - Write new `<depends-on>` entries here if you use resources from another component.
 
 ### Service naming
 - Use existing verbs already in the codebase; do not invent ad-hoc verbs.
