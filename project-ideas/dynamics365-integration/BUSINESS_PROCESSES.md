@@ -75,23 +75,22 @@ For successful sales order integration, it is a prerequisite that the customer r
 - **Key**: Part of the composite primary key: `(dataAreaId, CustomerAccount)`.
 - **Integration Key (Decision)**: For the current one-way sync, it is decided to use the internal HotWax **partyId** as the `CustomerAccount` in D365. This approach will be re-evaluated if requirements change in the future.
 
-### 2.3 Identification & Sync-back
+### 2.3 Identification Pattern
 - **Pattern**: 
-    1. OMS pushes customer with the **HotWax Party ID** mapped to the D365 `CustomerAccount` field.
-    2. D365 uses the provided ID for record creation.
-    3. Integration confirms the creation and ensure the `D365CustomerAccount` is stored as a `PartyIdentification` (e.g., `partyIdentificationTypeId='D365CustomerAccount'`) for consistency across entities.
+    1. OMS pushes customer with the **HotWax Party ID** or **Shopify Customer ID** mapped to the D365 `CustomerAccount` field.
+    2. D365 uses the provided ID for record creation. Since HotWax provides the identifier, no sync-back of a D365-generated ID is required.
+
 
 ### 2.4 Minimum Required Fields for Creation
-| Field | Purpose | Example (Person) | Example (Org) |
-| :--- | :--- | :--- | :--- |
-| `dataAreaId` | Legal entity | `dat` | `dat` |
-| `CustomerAccount` | Customer number | `CUST-TEST-001` | `CUST-ORG-001` |
-| `PartyType` | Person or Organization | `Person` | `Organization` |
-| `PersonFirstName` | First name | `Steve` | - |
-| `PersonLastName` | Last name | `Rogers` | - |
-| `OrganizationName` | Org name | - | `HotWax` |
-| `CustomerGroupId` | Financial grouping | `30` | `10` |
-| `SalesCurrencyCode` | Default currency | `USD` | `USD` |
+| Field | Purpose | Example (Person) |
+| :--- | :--- |:-----------------|
+| `dataAreaId` | Legal entity | `dat`            |
+| `CustomerAccount` | Customer number | `HW-10090`       |
+| `PartyType` | Customer Type | `Person`         |
+| `PersonFirstName` | First name | `Gurveen`        |
+| `PersonLastName` | Last name | `Bagga`          |
+| `CustomerGroupId` | Financial grouping | `30`             |
+| `SalesCurrencyCode` | Default currency | `USD`            |
 
 - **Reference**: [Import customers](https://learn.microsoft.com/en-us/dynamics365/guidance/resources/import-customers)
 

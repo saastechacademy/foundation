@@ -29,6 +29,9 @@ To track synchronization events and map D365 external identifiers back to Moqui 
 ### 0.1 Order Sync History
 Used to store the D365 Sales Order Number against the OMS Order ID upon successful creation in D365.
 
+> [!NOTE]
+> **TODO**: We are not using this entity for now since we are using `OrderIdentification` record to identify the sales order which is not sent from OMS to D365. Since we are using REST, once we receive the `salesOrderNumber`, we will create the `OrderIdentification` record.
+
 ```xml
 <entity entity-name="D365OrderSyncHistory" package="co.hotwax.d365.order">
     <field name="orderSyncHistoryId" type="id" is-pk="true"/>
@@ -48,27 +51,44 @@ Used to store the D365 Sales Order Number against the OMS Order ID upon successf
 
 - [ ] **Credentials Storage (`SystemMessageRemote`)**: 
     - Create `D365Auth` record in `SystemMessageRemote` entity.
-    - Fields: `username` (Client ID), `password` (Client Secret - encrypted), `sharedSecret` (Tenant ID), `sendUrl` (Token Endpoint).
+    - Fields: 
+      - `username` (Client ID), 
+      - `password` (Client Secret - encrypted), 
+      - `sharedSecret` (Tenant ID), 
+      - `sendUrl` (Token Endpoint), 
+      - `receiveUrl` (Instance Base URL).
+      
 - [ ] **Legal Entity Mapping**: 
     - Use `ProductStore.externalId` to store Moqui `ProductStore` -> D365 `dataAreaId` mapping.
+  
 - [ ] **Token Management**:
     - Implement `get#AzureAccessToken` service in `hotwax-d365` component.
-    - Logic: Retrieve credentials from `D365Auth` Smr, call Azure OAuth2 endpoint, and cache the token.
+    - Logic: Retrieve credentials from `D365Auth` SystemMessageRemote, call Azure OAuth2 endpoint, and cache the token.
+  
 - [ ] **Generic OData Client**: 
     - Implement `send#D365ODataRequest` service to handle token injection, base URL, and `dataAreaId` context.
 
+## Phase 2: Customer Synchronization
 ### 2.1 Sync Service Logic (`sync#Customer`)
 1. **Remote Lookup**: Call `GET /data/CustomersV3` with `$filter` by `CustomerAccount eq 'partyId'`.
 2. **Creation**: If not found, `POST /data/CustomersV3`.
     - Map `Party.partyId` -> `CustomerAccount`.
     - Provide mandatory fields: `dataAreaId`, `PartyType`, `CustomerGroupId`, `SalesCurrencyCode`.
 3. **Outcome**: The `partyId` is used directly as the `CustomerAccount` in D365. No local identification record is required.
+   - **TODO** Check to send the Shopify Customer Id here, and decide if we should have CustomerAccount field as auto created in D365 or we can continue to send unique identifier from OMS.
 
 ### 2.2 Mapping (`CustomersV3`)
-- `Party.partyId` -> `CustomerAccount`
-- `ProductStore.externalId` -> `dataAreaId`
-- `Person.firstName`/`lastName` -> `PersonFirstName`/`LastName`
-- `Organization.organizationName` -> `OrganizationName`
+| D365 Field | Moqui Field               | Usage / Notes |
+| :--- |:--------------------------| :--- |
+| `CustomerAccount` | `Party.partyId`           | Primary identifier in D365. |
+| `dataAreaId` | `ProductStore.externalId` | Legal entity context. |
+| `PersonFirstName` | `Person.firstName`        | Only for `PartyType` = `Person`. |
+| `PersonLastName` | `Person.lastName`         | Only for `PartyType` = `Person`. |
+| `PrimaryContactEmail`| `ContactMech.infoString` | Joined via `PartyContactMechPurpose` (PRIMARY_EMAIL). |
+| `PrimaryContactPhone`| `TelecomNumber`           | Joined via `PartyContactMechPurpose` (PRIMARY_PHONE). Formatted as: `[countryCode] [areaCode] [contactNumber]`. |
+| `SalesCurrencyCode` | `ProductStore.defaultCurrencyUomId` | Abbreviation of the default currency UOM for the `ProductStore`. |
+| `CustomerGroupId` |                           | **TODO**: Needs discussion. Currently hardcoded as '10' or '30' as it's not yet mapped in OMS. |
+
 
 ## Phase 3: Sales Order Sync
 
@@ -82,12 +102,12 @@ Used to store the D365 Sales Order Number against the OMS Order ID upon successf
 ### 3.2 Sync Service Logic (`sync#SalesOrders`)
 1. **Fetch Eligible Orders**: Query `D365EligibleSalesOrders` view.
 2. **Process Each Order**:
-    - **Customer Sync**: Call `sync#Customer` for the order's `partyId`. Returns `D365CustomerAccount`.
+    - **Customer Sync**: For every sales order, we check if the customer already exists in D365. Call `sync#Customer` for the order's `partyId`. If the customer exists in D365, we proceed to order creation using the returned `D365CustomerAccount`. If not, the service first creates the customer in D365 before proceeding.
     - **Sales Order Header**:
         - `POST /data/SalesOrderHeadersV4`.
         - Map `orderId` -> `SalesOrderNumber` (if manual sequencing is on).
         - Map `D365CustomerAccount` -> `OrderingCustomerAccountNumber`.
-        - Map `D365OrderDetails`:
+        - Map `D365SalesOrderDetail`:
             - `toName` -> `DeliveryAddressName`
             - `address1` + `address2` -> `DeliveryAddressStreet`
             - `city` -> `DeliveryAddressCity`
@@ -99,11 +119,43 @@ Used to store the D365 Sales Order Number against the OMS Order ID upon successf
         - Map `orderItemSeqId` -> `LineNumber` (numeric).
         - Map `productId` -> `ItemNumber` (currently hardcoded as '1000' for demo).
         - Map `quantity` -> `OrderedSalesQuantity`.
-3. **Synchronization Persistence**:
     - Store D365 Sales Order Number in `OrderIdentification` (type `D365_ORDER_ID`).
     - Save sync record in `D365OrderSyncHistory`.
 
-### 3.2 Prerequisites & TODOs
+### 3.3 Mappings
+#### Header (`SalesOrderHeadersV4`)
+| D365 Field | Moqui Field | Usage / Notes |
+| :--- | :--- | :--- |
+| `dataAreaId` | `ProductStore.externalId` | Legal entity context. |
+| `SalesOrderNumber` | `OrderHeader.orderId` | Manual sequencing must be enabled in D365. |
+| `OrderingCustomerAccountNumber` | `partyId` (BILL_TO) | The D365 `CustomerAccount`. |
+| `InvoiceCustomerAccountNumber` | `partyId` (BILL_TO) | Same as Ordering Customer. |
+| `RequestedShippingDate` | `orderDate` | Format: `YYYY-MM-DD`. |
+| `CurrencyCode` | `currencyUomId` | e.g., `USD`. |
+| `IsDeliveryAddressOrderSpecific` | "Yes" | Ensures address is unique to order. |
+| `DeliveryAddressName` | `PostalAddress.toName` | |
+| `DeliveryAddressDescription` | "OMS Ship To" | Fixed value. |
+| `DeliveryAddressStreet` | `address1` + `address2` | Concatenated. |
+| `DeliveryAddressCity` | `city` | |
+| `DeliveryAddressStateId` | `stateProvinceGeoId` | State code (e.g., `CA`). |
+| `DeliveryAddressZipCode` | `postalCode` | |
+| `DeliveryAddressCountryRegionId` | `countryGeoId` | Standard 3-letter code (e.g., `USA`). |
+
+#### Line (`SalesOrderLinesV3`)
+| D365 Field | Moqui Field | Usage / Notes |
+| :--- | :--- | :--- |
+| `dataAreaId` | `ProductStore.externalId` | Legal entity context. |
+| `SalesOrderNumber` | `SalesOrderNumber` | Linked to Header. |
+| `ItemNumber` | `itemNumber` | D365 Product ID from `D365_PRODUCT_ID` Identification. |
+| `LineNumber` | `orderItemSeqId` | Numeric sequence. |
+| `OrderedSalesQuantity` | `quantity` | |
+| `SalesPrice` | `unitPrice` | |
+| `RequestedShippingDate` | `orderDate` | Same as Header. |
+| `ShippingWarehouseId` | `shippingWarehouseId` | External ID of the fulfillment warehouse (currently filtered by `WH_ONLY_FULFILLMENT`; TODO: use a dedicated D365 Facility Group). |
+| `LineDiscountAmount` | `getItemDiscountAmount()` | Calculated from `OrderAdjustment` of type `EXT_PROMO_ADJUSTMENT`. |
+
+
+### 3.4 Prerequisites & TODOs
 > [!IMPORTANT]
 > - Customer must exist and not be on hold.
 > - Products must be "Released" to the Legal Entity.
@@ -112,7 +164,30 @@ Used to store the D365 Sales Order Number against the OMS Order ID upon successf
 - **TODO**: [Mapping] Define `facilityId` to D365 `InventorySiteId/WarehouseId` mapping.
 - **TODO**: [Mapping] Create mapping table for `TaxCategory` -> `ItemSalesTaxGroup`.
 
-## Phase 4: Sample Requests
+## Phase 4: Integration Type Mappings
+To avoid hardcoding values like `SalesOrderOriginCode` and `DeliveryModeCode` in service logic, we use the `IntegrationTypeMapping` entity to translate OMS identifiers into D365 codes.
+
+### 4.1 Configuration Structure
+Add records to `co.hotwax.integration.IntegrationTypeMapping` for the target system:
+
+| Mapping Category | OMS Internal ID (`mappingKey`) | D365 Code (`mappingValue`) | Enum Type (`integrationTypeId`) |
+| :--- | :--- | :--- | :--- |
+| **Sales Order Origin** | OMS Sales Channel (e.g., `WEB_SALES_CHANNEL`) | D365 Sales Origin (e.g., `Ecom`) | `D365_SALES_ORIGIN` |
+| **Delivery Mode** | OMS Shipment Method (e.g., `STANDARD`) | D365 Mode of Delivery (e.g., `Standard`) | `D365_DELIVERY_MODE` |
+
+### 4.2 Mapping Details
+- **Sales Order Origin**: Maps the OMS `salesChannelEnumId` (from `OrderHeader`) to the D365 Sales Origin. In D365, this is the 'Sales Origin' field.
+- **Delivery Mode**: Maps the OMS `shipmentMethodTypeId` (from `OrderItemShipGroup`) to the D365 Mode of Delivery. In D365, this is the 'Mode of delivery' field.
+
+### 4.3 Setup Steps
+1. **Define Enumerations**: Add the mapping category IDs (e.g., `D365_SALES_ORIGIN`) to `moqui.basic.Enumeration` with `enumTypeId="IntegrationType"`.
+2. **Populate Mappings**: Provide the specific mapping records:
+   - `integrationTypeId`: The category ID.
+   - `mappingKey`: The internal Moqui ID.
+   - `mappingValue`: The external D365 value.
+   - `integrationRefId`: Set to the same value as `mappingKey` for referential integrity.
+
+## Phase 5: Sample Requests
 
 ### Customer Creation (`CustomersV3`)
 ```json
@@ -161,27 +236,36 @@ Used to store the D365 Sales Order Number against the OMS Order ID upon successf
 }
 ```
 
-## Phase 5: Customer Payment Integration
+## Phase 6: Customer Payment Integration
 
-### 4.1 Sync Flow & Posting Strategy
+### 6.1 Sync Flow & Posting Strategy
 1.  **Draft Creation**: OMS POSTs `CustomerPaymentJournalHeaders` then `CustomerPaymentJournalLines`.
 2.  **Unposted State**: Journals created via OData are initially **Unposted** (`IsPosted = No`).
 3.  **Batch Posting**: A scheduled D365 batch job (standard or custom) identifies these unposted journals and executes the "Post" business logic to move them to the subledger.
 
-### 4.2 Mappings
+### 6.2 Mappings
 #### Header (`CustomerPaymentJournalHeaders`)
-- `JournalName` -> Fixed value (e.g., `CUSTPAY`)
-- `Description` -> "OMS Payment - SO [orderId]"
+| D365 Field | Moqui Field | Usage / Notes |
+| :--- | :--- | :--- |
+| `dataAreaId` | `ProductStore.externalId` | Legal entity context. |
+| `JournalName` | "CUSTPAY" | Fixed mapping for payment journals. |
+| `Description` | "OMS Payment - SO [id]" | Reference for identifying the batch. |
 
 #### Line (`CustomerPaymentJournalLines`)
-- `AccountDisplayValue` -> ESCAPED `CustomerAccount` (e.g., `HW\\-02`)
-- `AccountDisplayValue` -> constructed as `HW-` + `partyId` (e.g., `HW-10001`)
-- `CreditAmount` -> `OPP.maxAmount`
-- `PaymentReference` -> `OID.idValue` (D365 Sales Order Number)
-- `IsPrepayment` -> `No`
-- `OffsetAccountType`, `OffsetAccountDisplayValue` -> TODO: Define mapping from `paymentMethodTypeId` to D365 Bank/Offset accounts.
+| D365 Field | Moqui Field | Usage / Notes |
+| :--- | :--- | :--- |
+| `dataAreaId` | `ProductStore.externalId` | Legal entity context. |
+| `JournalBatchNumber` | `JournalBatchNumber` | Linked from Header. |
+| `AccountDisplayValue` | `partyId` | Customer Account (e.g., `HW-10001`). Must be escaped if needed. |
+| `AccountType` | "Cust" | Fixed value. |
+| `CreditAmount` | `OPP.maxAmount` | The settled amount. |
+| `PaymentReference` | `d365SalesOrderNumber` | Links payment back to SO in D365. |
+| `IsPrepayment` | "No" | Standard payment flow. |
+| `OffsetAccountType` | `paymentMethodTypeId` | Typically "Bank". |
+| `OffsetAccountDisplayValue` | `paymentMethodTypeId` | Bank account code (e.g., `USMF OPER`). |
 
-### 4.3 Implementation Steps
+
+### 6.3 Implementation Steps
 1. **View Entity**: `D365EligiblePaymentJournals`
     - Members: `OrderHeader`, `OrderIdentification` (D365_ORDER_ID), `OrderPaymentPreference` (PAYMENT_SETTLED), `ProductStore` (for dataAreaId).
     - Aliases: `orderId`, `d365SalesOrderNumber`, `orderPaymentPreferenceId`, `amount`, `paymentMethodTypeId`, `dataAreaId`, `partyId`.
@@ -193,7 +277,7 @@ Used to store the D365 Sales Order Number against the OMS Order ID upon successf
             - POST `CustomerPaymentJournalLines`.
             - TODO: Implement persistence for synced payments (e.g., `D365PaymentSyncHistory`).
 
-### 4.3 Sample Payload
+### 6.4 Sample Payload
 
 #### POST Header
 ```json
