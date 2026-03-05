@@ -30,7 +30,6 @@
    - Define a minimal query builder that builds a query AST.
    - Model a Moqui-inspired API:
      - `Entity`-like entry point: `GraphqlEntity("Order")` or `GraphqlQuery.from("orders")`.
-     - `value`-like container for selections (graphql-java AST selection set).
      - `condition`-like filters mapped to Shopify `query` argument (search syntax).
    - Support arguments: `first`, `after`, `sortKey`, `reverse`, `query`.
    - Support selection sets via graphql-java AST (`Field`, `SelectionSet`).
