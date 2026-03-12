@@ -38,30 +38,82 @@ It includes missing framework wrapper calls (`queue/receive/send/consume`) that 
 27. `co.hotwax.orderledger.system.FeedServices.consume#ProductUpdateWorker` (loop, force-new tx)
 28. `co.hotwax.oms.search.SearchServices.call#CreateProductIndex`
 
-## Short Description of Each Service/Job in the Chain
-- `queue_BulkQuerySystemMessage_BulkProductAndVariantsById` (job): Schedules product bulk query message creation.
-- `queue#BulkQuerySystemMessage`: Builds query params (`fromDate`, `thruDate`, labels, filter) and queues a message.
-- `queue#SystemMessage`: Creates outgoing SystemMessage (`SmsgProduced`), optionally sends immediately.
-- `send_BulkProductAndVariantsByIdQueryProducedSystemMessages` (job): Picks produced messages of this type and sends them.
-- `send#AllProducedSystemMessages`: Fetches pending produced outgoing messages and dispatches each.
-- `send#ProducedSystemMessage`: Resolves `sendServiceName`, updates status, executes concrete sender.
-- `send#BulkQuerySystemMessage`: Renders query template context and executes Shopify bulk query run.
-- `run#BulkOperationQuery`: Calls Shopify GraphQL `bulkOperationRunQuery`; returns operation id.
-- `poll_BulkOperationResult_ShopifyBulkQuery` (job): Poll loop entrypoint for all `ShopifyBulkQuery` children.
-- `poll#BulkOperationResult`: Finds in-progress (`SmsgSent`) bulk query message and forwards it to processor.
-- `process#BulkOperationResult`: Gets Shopify status; marks message status (`SmsgConfirmed/SmsgError/...`), then creates incoming result message when completed.
-- `get#BulkOperationResult`: Queries Shopify for bulk operation node (`status`, `url`, `errorCode`).
-- `receive#IncomingSystemMessage`: Persists incoming message (`SmsgReceived`) and kicks async consume.
-- `consume#ReceivedSystemMessage`: Resolves type’s `consumeServiceName` and executes it with status transitions.
-- `consume#BulkOperationResult`: Downloads JSONL result file and creates related produced message (`GenerateOMSUpdateProductsFeedNew`).
-- `store#BulkOperationResultFile`: HTTP GET download from Shopify signed URL to configured `receivePath`.
-- `generate#OMSFeedNew`: Orchestrator; calls transform service and then creates next incoming message (`ProductUpdatesFeedNew`).
-- `transform#JsonLToJsonForUpdatedProducts`: Parses JSONL product/variant/metafield rows, computes diffs/hashes, writes ProductUpdateHistory.
-- `compare#VirtualProduct`: Computes virtual product-level diffs and persists ProductUpdateHistory.
-- `compare#VariantProduct`: Computes variant-level diffs and persists ProductUpdateHistory.
-- `consume#UpdatedProductHistories`: Reads ProductUpdateHistory rows for parent message/shop and processes each.
-- `consume#ProductUpdateWorker`: Applies create/update logic in OMS entities for one history row.
-- `call#CreateProductIndex`: Calls OMS REST index endpoint to refresh search index for product (and variants conditionally).
+## Detailed Service Behavior (What Each Step Does)
+- `queue_BulkQuerySystemMessage_BulkProductAndVariantsById` (job):
+  - Scheduled trigger that starts this flow for `BulkProductAndVariantsByIdQuery`.
+- `co.hotwax.shopify.system.ShopifySystemMessageServices.queue#BulkQuerySystemMessage`:
+  - Reads type/remote parameters (`SystemMessageTypeParameter`).
+  - Builds `queryParams` with filter/date range and applies date buffers if configured.
+  - If `fromDate` is not passed, derives it from last `SmsgConfirmed` message of same type.
+  - Serializes params to `messageText` JSON and queues an outgoing SystemMessage (`sendNow:false`).
+- `org.moqui.impl.SystemMessageServices.queue#SystemMessage`:
+  - Creates outgoing SystemMessage (`SmsgProduced`, `isOutgoing=Y`) in a new transaction.
+  - If `sendNow=true`, dispatches `send#ProducedSystemMessage` (async by default; sync option in override).
+- `send_BulkProductAndVariantsByIdQueryProducedSystemMessages` (job):
+  - Calls `send#AllProducedSystemMessages` with `systemMessageTypeIds=BulkProductAndVariantsByIdQuery` to send only this message type.
+- `org.moqui.impl.SystemMessageServices.send#AllProducedSystemMessages`:
+  - Pulls retry-eligible produced messages (`SmsgProduced`, `isOutgoing=Y`, retry window check).
+  - Sends each message via `send#ProducedSystemMessage`; moves to `SmsgError` after retry limit.
+- `org.moqui.impl.SystemMessageServices.send#ProducedSystemMessage`:
+  - Resolves actual sender from `SystemMessageType.sendServiceName` (or remote override).
+  - Sets status to `SmsgSending`, executes concrete send service, captures `remoteMessageId`.
+  - On success marks `SmsgSent`; on failure restores initial status, increments `failCount`, writes `SystemMessageError`.
+- `co.hotwax.shopify.system.ShopifySystemMessageServices.send#BulkQuerySystemMessage`:
+  - Loads SystemMessage, parses `messageText` into `queryParams`, sets template location from `sendPath`.
+  - Calls `run#BulkOperationQuery`.
+  - Returns Shopify bulk operation id as `remoteMessageId`.
+- `co.hotwax.shopify.graphQL.ShopifyBulkImportServices.run#BulkOperationQuery`:
+  - Renders GraphQL template (`BulkProductAndVariantsByIdQuery.ftl`) and submits `bulkOperationRunQuery`.
+  - If Shopify returns `userErrors`, service fails; else returns `shopifyBulkOperationId`.
+- `poll_BulkOperationResult_ShopifyBulkQuery` (job):
+  - Polling entrypoint for all system message types under parent `ShopifyBulkQuery`.
+- `co.hotwax.shopify.system.ShopifySystemMessageServices.poll#BulkOperationResult`:
+  - Finds one `SmsgSent` message where `parentTypeId=ShopifyBulkQuery`.
+  - Calls `process#BulkOperationResult` for that message.
+- `co.hotwax.shopify.system.ShopifySystemMessageServices.process#BulkOperationResult`:
+  - Calls `get#BulkOperationResult` with Shopify bulk id.
+  - Maps Shopify status to SystemMessage status (`completed/canceled/failed/expired`).
+  - Writes `SystemMessageError` for failed/expired cases.
+  - On completed with URL, creates an incoming message via `receive#IncomingSystemMessage` (messageText = download URL), passing `consumeSmrId` when configured.
+- `co.hotwax.shopify.graphQL.ShopifyBulkImportServices.get#BulkOperationResult`:
+  - Queries Shopify bulk operation node and returns `status`, `url`, `errorCode`.
+- `org.moqui.impl.SystemMessageServices.receive#IncomingSystemMessage`:
+  - Creates incoming SystemMessage (`SmsgReceived`, `isOutgoing=N`) unless a custom receive service overrides it.
+  - Triggers `consume#ReceivedSystemMessage` asynchronously.
+- `org.moqui.impl.SystemMessageServices.consume#ReceivedSystemMessage`:
+  - Sets message to `SmsgConsuming`, calls the type’s `consumeServiceName`.
+  - On success sets `SmsgConsumed`; on failure reverts status/fail count and writes `SystemMessageError`.
+- `co.hotwax.shopify.system.ShopifySystemMessageServices.consume#BulkOperationResult`:
+  - Expands `receivePath` using ids/timestamp and stores Shopify JSONL file locally.
+  - Uses enum relation from current type to find the next type (`GenerateOMSUpdateProductsFeedNew`).
+  - Queues produced message for related type with `messageText=fileLocation`, `sendNow=true`, routed to `consumeSmrId`.
+- `co.hotwax.shopify.graphQL.ShopifyBulkImportServices.store#BulkOperationResultFile`:
+  - Downloads Shopify result from signed URL and writes bytes to local file location.
+- `co.hotwax.sob.system.FeedServices.generate#OMSFeedNew`:
+  - Loads current SystemMessage + remote, derives `shopId` from remote internal id.
+  - Collects additional type parameters and calls transform service (`systemMessage.consumeServiceName`).
+  - Resolves related enum/type and creates next incoming message of type `ProductUpdatesFeedNew`.
+- `co.hotwax.orderledger.system.FeedServices.transform#JsonLToJsonForUpdatedProducts`:
+  - Streams JSONL line-by-line; groups virtual products with child variants/metafields.
+  - Optionally skips products based on configured `additionalParameters`.
+  - Calls `compare#VirtualProduct` and `compare#VariantProduct` to compute changes.
+  - Persists/updates `ProductUpdateHistory` with `differenceMap`, hashes, and assoc deltas.
+- `co.hotwax.orderledger.product.ProductServices.compare#VirtualProduct`:
+  - Computes virtual-product diffs (core fields, tags, features, identifications, metafields).
+  - Creates/updates `ProductUpdateHistory` keyed by virtual product id + shop.
+- `co.hotwax.orderledger.product.ProductServices.compare#VariantProduct`:
+  - Computes variant diffs (identifier/price/assoc/features/tags/core fields).
+  - Creates/updates variant `ProductUpdateHistory`; also handles changed primary identifier remaps.
+- `co.hotwax.orderledger.system.FeedServices.consume#UpdatedProductHistories`:
+  - Fetches histories for `parentMessageId` and `shopId`.
+  - Iterates and calls `consume#ProductUpdateWorker` in `force-new` transactions.
+  - Calls `SearchServices.call#CreateProductIndex` per processed product.
+- `co.hotwax.orderledger.system.FeedServices.consume#ProductUpdateWorker`:
+  - Reads `differenceMap`, resolves target OMS product, and applies create/update for virtual/variant data.
+  - Updates associations, features, identifiers, type/category fields, and related Shopify mapping records.
+  - Returns `productId`, `isVirtual`, `hasUpdate` for caller decisions.
+- `co.hotwax.oms.search.SearchServices.call#CreateProductIndex`:
+  - REST bridge to OMS indexing endpoint (`service/createProductIndex`) with `productId` and optional `indexVariants`.
 
 ## SystemMessageTypes Involved
 ### 1) `BulkProductAndVariantsByIdQuery`
@@ -111,4 +163,3 @@ It includes missing framework wrapper calls (`queue/receive/send/consume`) that 
 - `runtime/component/oms/data/SeedData.xml`
 - `runtime/component/ofbiz-oms-usl/service/org/moqui/impl/SystemMessageServices.xml`
 - `framework/service/org/moqui/impl/SystemMessageServices.xml`
-
