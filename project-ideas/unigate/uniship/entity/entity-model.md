@@ -125,7 +125,7 @@ Tenant credentials are natively stored using Moqui's `SystemMessageRemote` entit
 #### `ShippingGatewayAuth` Entity
 > Navigates the mapping between a Unigate Tenant (`Party`), a System Credential (`SystemMessageRemote`), and a Gateway Configuration (`ShippingGatewayConfig`).
 
-By joining these three elements, the system knows exactly *which* URL/credentials a specific *tenant* should use when generating tracking labels.
+By joining these three elements, the system knows exactly *which* URL/credentials a specific *tenant* should use.
 
 ```xml
 <entity entity-name="ShippingGatewayAuth" package="co.hotwax.unigate" cache="true">
