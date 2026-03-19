@@ -134,8 +134,27 @@ The header captures the primary customer relationship and high-level delivery re
 
 - **Reference**: [Sales order types overview](https://learn.microsoft.com/en-us/dynamics365/supply-chain/sales-marketing/overview-sales-marketing#sales-orders)
 
+### 3.2 Idempotency & Conflict Prevention
+To ensure that orders are not duplicated in D365 during retries or partial failures, the integration follows a **Find-or-Create** pattern at both Header and Line levels.
 
-### 3.2 Shipping & Delivery Addresses (Order-Specific)
+- **Header Level**:
+  - **Field**: `CustomersOrderReference`.
+  - **Mapping**: Store the HotWax `orderId`.
+  - **Process**: Search by `CustomersOrderReference`. If found, use `SalesOrderNumber`.
+- **Line Level**:
+  - **Process**: Before syncing lines, the service fetches existing lines for the `SalesOrderNumber` via OData.
+  - **Logic**: Any line where `LineNumber` (mapped from `orderItemSeqId`) already exists in D365 is skipped.
+
+### 3.3 Transactional Atomicity (OData Limitations)
+Standard D365 OData entities (`SalesOrderHeadersV4` and `SalesOrderLinesV3`) **do not support atomic transactions** for combined header/line creation.
+
+> [!WARNING]
+> **Risk of Partial Orders**: Each API call (1 Header + N Lines) is committed as a separate transaction in D365. If a line sync fails, the header and previous lines remain in D365.
+> **Mitigation**: 
+> 1. **Idempotency**: Prevents duplicate headers on retry.
+> 2. **Delayed Persistence**: Moqui only marks the order as "Synced" after the final line is successfully acknowledged.
+
+### 3.4 Shipping & Delivery Addresses (Order-Specific)
 
 HotWax OMS sends the shipping address as part of the Sales Order header payload. This allows for transaction-scoped addresses without polluting the Customer Master.
 

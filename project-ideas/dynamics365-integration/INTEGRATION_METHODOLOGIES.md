@@ -22,9 +22,33 @@ To understand and integrate with D365 entities, you must be able to read the met
 ### 1.2 Usage Patterns
 OData is used for real-time synchronization between HotWax OMS and D365. It is the primary method for transactional data where immediate response or record creation is required.
 
+#### 1.2.1 Idempotency Pattern (Find-or-Create)
+To prevent duplicate records (e.g., Sales Headers) during retries, OData calls should follow a **Search-then-Sync** pattern:
+1.  **Search**: Query the entity using a unique external reference (e.g., OMS `orderId`).
+2.  **Verify**: If the record exists, skip creation and use the existing ERP identifier.
+3.  **Create**: Only `POST` if the search return zero results.
+
 ---
 
-## 2. Authentication & Security (OData)
+## 2. Custom Services (SysOperation)
+- **Use Case**: Atomic creation of complex documents (Header + Lines) in a single transaction.
+- **Protocol**: REST (JSON/XML) or SOAP.
+- **Description**: A custom X++ endpoint that accepts a full document payload. D365 processes the entire structure within one database transaction.
+
+### 2.1 Benefits over OData
+| Feature | OData (REST) | Custom Service |
+| :--- | :--- | :--- |
+| **Atomicity** | None (per call) | Full (Transactional) |
+| **Performance** | Multi-request (1+N) | Single Request |
+| **Payload** | Flat per entity | Nested/Hierarchical |
+| **Logic** | Default CRUD | Custom X++ Workflow |
+
+### 2.2 Recommendation
+For Sales Order synchronization where transactional integrity is critical, OData is suitable for initial phases (Approach 1), but **Custom Services (Approach 2)** are recommended for high-volume production deployments.
+
+---
+
+## 3. Authentication & Security (REST)
 
 Integrating with D365 F&O requires a multi-layered security configuration. All API calls execute in the context of a specific D365 user, not a generic application identity.
 
