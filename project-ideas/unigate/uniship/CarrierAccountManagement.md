@@ -28,16 +28,16 @@
 
 ---
 
-## Steve Madden Use Case Example
+## Multi Account Use Case Example
 
-To illustrate this design, we will use the Steve Madden retail ecosystem (encompassing brands like ATM, DV, BJ, and SM across hundreds of facilities) as our primary example. For the purpose of this analogy, we have considered 150 fulfillment facilities/warehouses.
+To illustrate this design, we will use a retail ecosystem (encompassing multiple brands across hundreds of facilities) as our primary example. For the purpose of this analogy, we have considered 150 fulfillment facilities/warehouses.
 
-- **Tenant Setup:** A single Tenant, `SMUS`, represents the entire Steve Madden US entity acting as the interface to OMS.
+- **Tenant Setup:** A single Tenant, `SMUS`, represents the entire company entity acting as the interface to OMS.
 - **Carrier Config:** `FEDEX_CONFIG` maps the generic FedEx rate and label services for all 150 facilities.
 - **API Credentials:** 150 different SystemMessageRemote records are created to hold specific credentials for Facility 1, Facility 2, etc. (e.g., `FEDEX_ACCOUNT_01`).
 - **Auth Mapping:** 150 records link the `SMUS` tenant and its `FEDEX_CONFIG` to the 150 distinct facility SystemMessageRemote records.
 - **Facility Configuration:** The facility configuration for Facility 1 in OMS natively points to `SMUS` (Tenant), `FEDEX_CONFIG` (Gateway), and `FEDEX_ACCOUNT_01` (SystemMessageRemote ID).
-- **Unigate Connection:** OMS uses a single `UNIGATE_CONFIG` SystemMessageRemote holding the single super-secret key to connect to Unigate on behalf of all 150 Steve Madden stores.
+- **Unigate Connection:** OMS uses a single `UNIGATE_CONFIG` SystemMessageRemote holding the single super-secret key to connect to Unigate on behalf of all 150 stores.
 
 ---
 
@@ -60,7 +60,7 @@ To illustrate this design, we will use the Steve Madden retail ecosystem (encomp
 
     <!-- The Single Unified Tenant -->
     <co.hotwax.unigate.Party partyId="SMUS" partyTypeEnumId="PtyOrganization">
-        <organization organizationName="Steve Madden US"/>
+        <organization organizationName="org_name"/>
     </co.hotwax.unigate.Party>
     
     <moqui.security.UserAccount userId="SMUS_SYS_USER" username="smus.unigate.sys" userFullName="SMUS System Account" partyId="SMUS"/>
@@ -75,8 +75,8 @@ To illustrate this design, we will use the Steve Madden retail ecosystem (encomp
                                              refundLabelsServiceName="co.hotwax.shipping.fedex.FedexServices.refund#ShippingLabels" />
 
     <!-- Distinct SystemMessageRemote records for Multiple Facilities -->
-    <moqui.service.message.SystemMessageRemote systemMessageRemoteId="FEDEX_ACCOUNT_01" description="FedEx Auth Keys strictly for ATM Store 01" sendUrl="https://apis-sandbox.fedex.com" username="facility01_user" sharedSecret="facility01_secret"/>
-    <moqui.service.message.SystemMessageRemote systemMessageRemoteId="FEDEX_ACCOUNT_02" description="FedEx Auth Keys strictly for SM Store 02" sendUrl="https://apis-sandbox.fedex.com" username="facility02_user" sharedSecret="facility02_secret"/>
+    <moqui.service.message.SystemMessageRemote systemMessageRemoteId="FEDEX_ACCOUNT_01" description="FedEx Auth Keys strictly for Store 01" sendUrl="https://apis-sandbox.fedex.com" username="facility01_user" sharedSecret="facility01_secret"/>
+    <moqui.service.message.SystemMessageRemote systemMessageRemoteId="FEDEX_ACCOUNT_02" description="FedEx Auth Keys strictly for Store 02" sendUrl="https://apis-sandbox.fedex.com" username="facility02_user" sharedSecret="facility02_secret"/>
 
     <!-- Auth Mapping linking the Triad: Config + Tenant + SystemMessageRemote -->
     <co.hotwax.unigate.ShippingGatewayAuth shippingGatewayConfigId="FEDEX_CONFIG" tenantPartyId="SMUS" systemMessageRemoteId="FEDEX_ACCOUNT_01"/>
