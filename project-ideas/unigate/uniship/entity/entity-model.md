@@ -1,10 +1,10 @@
-## 📘 Entity Model UniShip Microservice
+## Entity Model UniShip Microservice
 
 This document outlines the minimal set of entities required to support a multitenant shipping gateway microservice, using the Moqui framework without adopting the full Mantle UDM.
 
 ---
 
-### ✅ Entities for Uniship Tenant Management
+### Entities for Uniship Tenant Management
 
 #### 1. `Party`
 Represents any participant — in this context, your uniship tenant (retailer).
@@ -25,11 +25,11 @@ Assigns a role to a party for classification and access control.
 
 ---
 
-### 📄 XML Definitions for Tenant Entities
+### XML Definitions for Tenant Entities
 
 Below are the XML definitions for the three core entities, modeled in alignment with Moqui’s UDM structure.
 
-#### 🗂 `Party`
+#### `Party`
 ```xml
 <entity entity-name="Party" package="co.hotwax.uniship">
     <field name="partyId" type="id" is-pk="true"/>
@@ -60,7 +60,7 @@ Below are the XML definitions for the three core entities, modeled in alignment 
 </entity>
 ```
 
-#### 🗂 `Organization`
+#### `Organization`
 ```xml
 <entity entity-name="Organization" package="co.hotwax.uniship">
     <field name="partyId" type="id" is-pk="true"/>
@@ -72,7 +72,7 @@ Below are the XML definitions for the three core entities, modeled in alignment 
 </entity>
 ```
 
-#### 🗂 `PartyRole`
+#### `PartyRole`
 ```xml
 <entity entity-name="PartyRole" package="co.hotwax.uniship">
     <field name="partyId" type="id" is-pk="true"/>
@@ -92,51 +92,60 @@ Below are the XML definitions for the three core entities, modeled in alignment 
 </entity>
 ```
 
-### 🧩 Gateway Configuration Entities
+### Gateway Configuration Entities
 
-#### 🗂 `ShippingGatewayConfig`
-> Defines core service configuration for each shipping gateway per tenant.
+#### `ShippingGatewayConfig`
+> Defines core service configuration for each shipping gateway logic universally (e.g. FEDEX, UPS).
+
 ```xml
-<entity entity-name="ShippingGatewayConfig" package="co.hotwax.uniship">
+<entity entity-name="ShippingGatewayConfig" package="co.hotwax.unigate" use="configuration" cache="true">
     <field name="shippingGatewayConfigId" type="id" is-pk="true"/>
-    <field name="tenantPartyId" type="id"/>
-    <field name="description" type="text-short"/>
-    <field name="getRateServiceName" type="text-long"/>
-    <field name="requestLabelsServiceName" type="text-long"/>
-    <field name="refundLabelsServiceName" type="text-long"/>
+    <field name="description" type="text-medium"/>
+    <field name="getOrderRateServiceName" type="text-medium"/>
+    <field name="getShippingRatesBulkName" type="text-medium"/>
+    <field name="getAutoPackageInfoName" type="text-medium"/>
+    <field name="getRateServiceName" type="text-medium"/>
+    <field name="requestLabelsServiceName" type="text-medium"/>
+    <field name="refundLabelsServiceName" type="text-medium"/>
+    <field name="trackLabelsServiceName" type="text-medium"/>
+    <field name="validateAddressServiceName" type="text-medium"/>
+</entity>
+```
 
-    <relationship type="one" related="co.hotwax.uniship.Party">
+### Tenant Credential Storage
+
+Tenant credentials are natively stored using Moqui's `SystemMessageRemote` entity.
+
+#### `moqui.service.message.SystemMessageRemote`
+> Moqui's native entity used to securely store API connection information.
+
+- Stores `sendUrl`, `username`, `password`, `publicKey`, and `sharedSecret`.
+- Provides a clean, standard destination for tenant URL mappings.
+
+#### `ShippingGatewayAuth` Entity
+> Navigates the mapping between a Unigate Tenant (`Party`), a System Credential (`SystemMessageRemote`), and a Gateway Configuration (`ShippingGatewayConfig`).
+
+By joining these three elements, the system knows exactly *which* URL/credentials a specific *tenant* should use.
+
+```xml
+<entity entity-name="ShippingGatewayAuth" package="co.hotwax.unigate" cache="true">
+    <field name="systemMessageRemoteId" type="id" is-pk="true"/>
+    <field name="shippingGatewayConfigId" type="id" is-pk="true"/>
+    <field name="tenantPartyId" type="id" is-pk="true"/>
+    <field name="fromDate" type="date-time" is-pk="true"/>
+    <field name="thruDate" type="date-time"/>
+    
+    <relationship type="one" related="moqui.service.message.SystemMessageRemote" short-alias="remote"/>
+    <relationship type="one" related="co.hotwax.unigate.ShippingGatewayConfig"/>
+    <relationship type="one" related="co.hotwax.unigate.Party" short-alias="tenant">
         <key-map field-name="tenantPartyId"/>
     </relationship>
 </entity>
 ```
 
-#### 🗂 `ShippingGatewayOption`
-> Stores additional configuration options as key-value pairs for each gateway config.
-```xml
-<entity entity-name="ShippingGatewayOption" package="co.hotwax.uniship">
-    <field name="shippingGatewayConfigId" type="id" is-pk="true"/>
-    <field name="optionEnumId" type="id" is-pk="true"/>
-    <field name="optionValue" type="text-long"/>
+> **Note**: A nearly identical structure exists for `CommGatewayConfig` and `CommGatewayAuth` to map Communication/Email Gateways (like Klaviyo or SNS) to specific tenants.
 
-    <relationship type="one" related="co.hotwax.uniship.ShippingGatewayConfig">
-        <key-map field-name="shippingGatewayConfigId"/>
-    </relationship>
-    <relationship type="one" related="moqui.basic.Enumeration">
-        <key-map field-name="optionEnumId"/>
-    </relationship>
+### Notes on Uniship Tenant Entity Setup
 
-    <seed-data>
-        <moqui.basic.EnumerationType enumTypeId="ShippingGatewayOption" description="Shipping Gateway Config Option"/>
-    </seed-data>
-</entity>
-```
-### 🔐 Tenant Credential Storage
-
-### 📄 ShippingGatewayAuthConfig Entity
-
-The `ShippingGatewayAuthConfig` entity is designed to store tenant-specific authentication tokens information for a given shipping gateway. 
-
-### 🧩 Notes on Uniship Tenant Entity Setup
 - These three entities are sufficient to define and classify each tenant (retailer) in the system.
 - You may define additional `RoleType` entries (e.g., `UnishipTenant`, `Carrier`) as needed.
