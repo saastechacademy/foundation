@@ -130,10 +130,6 @@ This document outlines key framework-level topics to explore in Apache OFBiz, wi
 * Component loading
 * Risks: insecure defaults
 
----
-
-## Bonus Topics
-
 ### 21. WebTools Application
 
 * Admin interface
