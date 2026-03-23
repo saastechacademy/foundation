@@ -14,11 +14,11 @@
 
 - Understanding the process of reporting vulnerabilities in Apache OFBiz and the associated procedures
 
-https://ofbiz.apache.org/security.html 
+  https://ofbiz.apache.org/security.html 
   
-https://www.apache.org/security/
+  https://www.apache.org/security/
   
-https://github.com/apache/ofbiz-framework/blob/trunk/SECURITY.md
+  https://github.com/apache/ofbiz-framework/blob/trunk/SECURITY.md
 
 
 - Analysis of the last 20 vulnerabilities in Apache OFBiz, including reproducing them, reviewing the fixes, and understanding them in detail
