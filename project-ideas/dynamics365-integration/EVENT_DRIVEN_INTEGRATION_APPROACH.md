@@ -9,52 +9,137 @@ Many traditional integrations in Moqui either rely on manual "sweeps" (polling) 
 2. **Atomicity Issues**: If an integration service fails after a database change, the external system is out of sync.
 3. **Difficult Monitoring**: No centralized "Integration Table" to track which events have been logged but not yet sent.
 
-## The Solution: Moqui "Outbox" Pattern
-We propose leveraging Moqui's native `DataFeed` and `DataDocument` infrastructure to implement an asynchronous **Outbox Pattern**.
+## The Solution: Moqui "Outbox" Pattern (Event-Driven)
+We propose leveraging Moqui's native `DataFeed` and `DataDocument` infrastructure to implement an asynchronous **Outbox Pattern**, driven by status history events.
 
-### 1. Unified Event Detection (`DataFeed` & `DataDocument`)
-Instead of polling `OrderHeader` for status changes, we define a set of `DataDocument`s that capture the core event data.
+### 1. Immutable Event Detection (`OrderStatus` / `ShipmentStatus`)
+Instead of polling the header tables (where fields can change multiple times), we monitor the **Status History** entities. 
+- **Mechanism**: Every status change creates a *new* record in the history table. By making this the primary entity of our `DataFeed`, we ensure that the integration triggers exactly **once** per status transition.
+- **Transactional Integrity**: The `DataFeed` only fires after a successful database commit, ensuring data consistency.
 
-- **DataDocument**: Lightweight structure containing the `orderId` and `statusId`.
-- **DataFeed**: A real-time (`DTFDTP_RT_PUSH`) monitor that triggers on entity changes. It ensures transactional integrity by only firing after a successful DB commit.
+## 2. Outbox Implementation Options
+Once a `DataFeed` triggers, the event is logged to a persistent store:
 
-### 2. Integration Event Log (`SystemMessage`)
-When a `DataFeed` triggers, it calls a lightweight logging service that generates a `SystemMessage`. This record acts as our persistent "Integration Table".
+### Option A: Custom Integration Table (Manual Outbox)
+- **Flow**: `DataFeed` -> `log#IntegrationEvent` -> `D365IntegrationEvent`.
+- **Pros**: Highly specialized for D365 specifics (like custom batch IDs).
+- **Cons**: Requires manual development of status management and retry logic.
 
-- **SystemMessageType**: Represents the event (e.g., `ORDER_CREATED`, `ORDER_CANCELLED`, `SHIPMENT_PAID`).
-- **Status Tracking**: Messages start in `SmsCreated` and transition to `SmsSent` or `SmsError` upon processing.
+### Option B: SystemMessage (Framework Native)
+- **Flow**: `DataFeed` -> `log#IntegrationEvent` -> `SystemMessage`.
+- **Pros**: Built-in error capturing (full stack traces), retry limits, and a professional Monitoring UI.
+- **Cons**: Fixed status types.
 
-### 3. Decoupled Data Synchronization
-A separate scheduled job (Moqui `ServiceJob`) periodically polls for pending `SystemMessage` records.
-- **Full Data Fetching**: The "Send" service associated with the message type fetches the full transitive entity tree using Moqui's standard `EntityDataDocument` logic.
-- **Mapping**: The service maps Moqui's canonical JSON-like Map structure to the target system's (D365/NetSuite) API schema.
-- **Guaranteed Delivery**: Provides built-in retries and error reporting via the `SystemMessage` UI.
+## 3. Comparative Tradeoff Analysis
 
-## Flow Diagram
-```mermaid
-sequenceDiagram
-    participant App as Moqui App
-    participant DB as Entity Engine (SQL DB)
-    participant Feed as DataFeed (Real-time)
-    participant Outbox as SystemMessage (Outbox)
-    participant Job as ServiceJob (Async)
-    participant ERP as D365 API
+| Feature | Custom Integration Table | **SystemMessage (Framework)** |
+| :--- | :--- | :--- |
+| **Development Effort** | **High** (Build status/retry logic from scratch). | **Low** (Reuse existing framework code). |
+| **Error Logging** | Manual (Must store API error text). | **Automatic** (Captures full Java stack traces). |
+| **Monitoring UI** | Requires building a custom Screen. | **Standard Screen** (`SystemMessage`). |
+| **Reliability** | Depends on custom service quality. | **Proven** (Used globally in Moqui integrations). |
 
-    App->>DB: Store Order (Status: OrderCancelled)
-    DB-->>Feed: Trigger Change Hook
-    Feed->>Outbox: Log Event (orderId, type: CANCEL)
-    Note over DB, Outbox: Committed in same transaction
+## Event Mapping Table
+The following table defines the proposed mappings using the **Event-First** approach.
+
+| Event | Primary Entity (History) | Related Entity | Trigger Condition |
+| :--- | :--- | :--- | :--- |
+| **Order Created** | `OrderStatus` | `OrderHeader` | `statusId == 'ORDER_CREATED'` |
+| **Order Cancelled** | `OrderStatus` | `OrderHeader` | `statusId == 'ORDER_CANCELLED'` |
+| **Order Fulfillment** | `ShipmentStatus` | `Shipment` | `statusId == 'SHIPMENT_SHIPPED'` |
+| **Return Completed** | `ReturnStatus` | `ReturnHeader` | New `RETURN_COMPLETED` record |
+ 
+## Implementation Examples (XML Definition)
+
+### 1. Sales Order Created
+```xml
+<moqui.entity.document.DataDocument dataDocumentId="SalesOrderCreated" 
+    primaryEntityName="org.apache.ofbiz.order.order.OrderStatus" indexName="order_events">
+    <fields fieldSeqId="01" fieldPath="orderId"/>
+    <fields fieldSeqId="02" fieldPath="statusId"/>
+    <fields fieldSeqId="03" fieldPath="statusDatetime"/>
+    <fields fieldSeqId="04" fieldPath="OrderHeader:orderTypeId"/>
     
-    Job->>Outbox: Find pending messages
-    Outbox->>Job: return [orderId, type]
-    Job->>Job: Fetch full Order details
-    Job->>ERP: POST /SalesOrderLinesV3 (OData)
-    ERP-->>Job: 201 Created
-    Job->>Outbox: Update Status (SmsSent)
+    <fields fieldSeqId="05" fieldPath="OrderHeader:productStoreId"/>
+
+    <conditions conditionSeqId="01" fieldNameAlias="statusId" fieldValue="ORDER_CREATED"/>
+    <conditions conditionSeqId="02" fieldNameAlias="orderTypeId" fieldValue="SALES_ORDER"/>
+</moqui.entity.document.DataDocument>
 ```
 
-## Benefits
-- **Reliability**: Uses JTA transaction synchronization to ensure database and integration logs remain atomic.
-- **Decoupling**: The online transaction remains fast; the integration happens in the background.
-- **Traceability**: All outbound messages are auditable via the `SystemMessage` interface.
-- **Scalability**: Multiple processors can handle different `SystemMessageType` exports without interfering with each other.
+### 2. Sales Order Cancelled
+```xml
+<moqui.entity.document.DataDocument dataDocumentId="SalesOrderCancelled" 
+    primaryEntityName="org.apache.ofbiz.order.order.OrderStatus" indexName="order_events">
+    <fields fieldSeqId="01" fieldPath="orderId"/>
+    <fields fieldSeqId="02" fieldPath="statusId"/>
+    <fields fieldSeqId="03" fieldPath="OrderHeader:orderTypeId"/>
+    
+    <fields fieldSeqId="04" fieldPath="statusDatetime"/>
+    
+    <conditions conditionSeqId="01" fieldNameAlias="statusId" fieldValue="ORDER_CANCELLED"/>
+    <conditions conditionSeqId="02" fieldNameAlias="orderTypeId" fieldValue="SALES_ORDER"/>
+</moqui.entity.document.DataDocument>
+```
+
+### 3. Sales Order Fulfillment (Shipped)
+```xml
+<moqui.entity.document.DataDocument dataDocumentId="SalesOrderFulfillment" 
+    primaryEntityName="org.apache.ofbiz.shipment.shipment.ShipmentStatus" indexName="shipment_events">
+    <fields fieldSeqId="01" fieldPath="shipmentId"/>
+    <fields fieldSeqId="02" fieldPath="statusId"/>
+    <fields fieldSeqId="03" fieldPath="Shipment:shipmentTypeEnumId"/>
+    
+    <fields fieldSeqId="04" fieldPath="statusDatetime"/>
+
+    <conditions conditionSeqId="01" fieldNameAlias="statusId" fieldValue="SHIPMENT_SHIPPED"/>
+</moqui.entity.document.DataDocument>
+```
+
+### 4. Sales Order Return Completed
+```xml
+<moqui.entity.document.DataDocument dataDocumentId="SalesOrderReturnCompleted" 
+    primaryEntityName="org.apache.ofbiz.order.return.ReturnStatus" indexName="return_events">
+    <fields fieldSeqId="01" fieldPath="returnId"/>
+    <fields fieldSeqId="02" fieldPath="statusId"/>
+    <fields fieldSeqId="03" fieldPath="statusDatetime"/>
+
+    <conditions conditionSeqId="01" fieldNameAlias="statusId" fieldValue="RETURN_COMPLETED"/>
+</moqui.entity.document.DataDocument>
+```
+
+ 
+ ## Data Feed Configuration
+ Multiple `DataDocument`s can be attached to the same `DataFeed` to funnel all related events into a single dispatcher service.
+ 
+ ```xml
+ <moqui.entity.feed.DataFeed dataFeedId="SalesOrderCreated" 
+     feedTypeEnumId="DTFDTP_RT_PUSH" 
+     feedReceiveServiceName="co.hotwax.integration.IntegrationServices.log#OrderEvent">
+     <documents dataDocumentId="SalesOrderCreated"/>
+ </moqui.entity.feed.DataFeed>
+ 
+ <moqui.entity.feed.DataFeed dataFeedId="SalesOrderCancelled" 
+     feedTypeEnumId="DTFDTP_RT_PUSH" 
+     feedReceiveServiceName="co.hotwax.integration.IntegrationServices.log#OrderEvent">
+     <documents dataDocumentId="SalesOrderCancelled"/>
+ </moqui.entity.feed.DataFeed>
+ 
+ <moqui.entity.feed.DataFeed dataFeedId="SalesOrderFulfillment" 
+     feedTypeEnumId="DTFDTP_RT_PUSH" 
+     feedReceiveServiceName="co.hotwax.integration.IntegrationServices.log#ShipmentEvent">
+     <documents dataDocumentId="SalesOrderFulfillment"/>
+ </moqui.entity.feed.DataFeed>
+ 
+ <moqui.entity.feed.DataFeed dataFeedId="SalesOrderReturnCompleted" 
+     feedTypeEnumId="DTFDTP_RT_PUSH" 
+     feedReceiveServiceName="co.hotwax.integration.IntegrationServices.log#ReturnEvent">
+     <documents dataDocumentId="SalesOrderReturnCompleted"/>
+ </moqui.entity.feed.DataFeed>
+ ```
+ 
+ ## Benefits
+- **Atomicity**: The `DataFeed` mechanism ensures the outbox log is created only if the business transaction succeeds.
+- **Deduplication**: History-based triggering naturally prevents redundant events for a single transition.
+- **Traceability**: All outbound messages are auditable via the framework's native tools.
+- **Scalability**: Decoupling allows for high-throughput background processing without impact on customer-facing performance.
