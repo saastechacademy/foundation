@@ -10,13 +10,13 @@ Many traditional integrations in Moqui either rely on manual "sweeps" (polling) 
 3. **Difficult Monitoring**: No centralized "Integration Table" to track which events have been logged but not yet sent.
 
 ## The Solution: Moqui "Outbox" Pattern
-We propose leveraging Moqui's native `DataFeed`, `DataDocument`, and `SystemMessage` infrastructure to implement an asynchronous **Outbox Pattern**.
+We propose leveraging Moqui's native `DataFeed` and `DataDocument` infrastructure to implement an asynchronous **Outbox Pattern**.
 
 ### 1. Unified Event Detection (`DataFeed` & `DataDocument`)
 Instead of polling `OrderHeader` for status changes, we define a set of `DataDocument`s that capture the core event data.
 
 - **DataDocument**: Lightweight structure containing the `orderId` and `statusId`.
-- **DataFeed**: A real-time (`DtfdptRtPush`) monitor that triggers on entity changes. It ensures transactional integrity by only firing after a successful DB commit.
+- **DataFeed**: A real-time (`DTFDTP_RT_PUSH`) monitor that triggers on entity changes. It ensures transactional integrity by only firing after a successful DB commit.
 
 ### 2. Integration Event Log (`SystemMessage`)
 When a `DataFeed` triggers, it calls a lightweight logging service that generates a `SystemMessage`. This record acts as our persistent "Integration Table".
