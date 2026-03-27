@@ -38,8 +38,9 @@ Key entities:
 
 - **Party** — Represents both tenants (retailers) and shipping carriers.
 - **PartyRole** — Distinguishes between Tenant and Application user parties.
-- **ShippingGatewayConfig** — Defines the configuration for each shipping gateway (e.g., FedEx, UPS).
-- **ShippingGatewayAuthConfig** — Stores tenant-specific API credentials securely.
+- **ShippingGatewayConfig** — Defines the global configuration for each shipping gateway (e.g., FedEx, UPS).
+- **SystemMessageRemote** — Stores tenant-specific API credentials securely with native encryption.
+- **ShippingGatewayAuth** — The immutable mapping entity linking tenants, gateway configs, and their credentials.
 
 👉 Refer to the full [Entity Model Design](entity/entity-model.md) document for detailed definitions.
 
