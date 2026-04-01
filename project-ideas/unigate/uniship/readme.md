@@ -32,7 +32,7 @@ This system supports multi-tenant operations, using a userLoginKey and tenantId 
 
 ## 3. Entity Model Reference
 
-The Shipping Gateway Microservice uses a lightweight multi-tenant [data model](entity/tenant-model-design.md).
+The Shipping Gateway Microservice uses a lightweight multi-tenant [data model](../entity/tenant-model-design.md).
 
 Key entities:
 
@@ -41,7 +41,7 @@ Key entities:
 - **ShippingGatewayConfig** — Defines the configuration for each shipping gateway (e.g., FedEx, UPS).
 - **ShippingGatewayAuthConfig** — Stores tenant-specific API credentials securely.
 
-👉 Refer to the full [Entity Model Design](entity/entity-model.md) document for detailed definitions.
+👉 Refer to the full [Entity Model Design](../entity/entity-model.md) document for detailed definitions.
 
 ---
 

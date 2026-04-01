@@ -112,40 +112,11 @@ Below are the XML definitions for the three core entities, modeled in alignment 
 </entity>
 ```
 
-### Tenant Credential Storage
-
-Tenant credentials are natively stored using Moqui's `SystemMessageRemote` entity.
-
-#### `moqui.service.message.SystemMessageRemote`
-> Moqui's native entity used to securely store API connection information.
-
-- Stores `sendUrl`, `username`, `password`, `publicKey`, and `sharedSecret`.
-- Provides a clean, standard destination for tenant URL mappings.
-
-#### `ShippingGatewayAuth` Entity
-> Navigates the mapping between a Unigate Tenant (`Party`), a System Credential (`SystemMessageRemote`), and a Gateway Configuration (`ShippingGatewayConfig`).
-
-By joining these three elements, the system knows exactly *which* URL/credentials a specific *tenant* should use.
-
-```xml
-<entity entity-name="ShippingGatewayAuth" package="co.hotwax.unigate" cache="true">
-    <field name="systemMessageRemoteId" type="id" is-pk="true"/>
-    <field name="shippingGatewayConfigId" type="id" is-pk="true"/>
-    <field name="tenantPartyId" type="id" is-pk="true"/>
-    <field name="fromDate" type="date-time" is-pk="true"/>
-    <field name="thruDate" type="date-time"/>
-    
-    <relationship type="one" related="moqui.service.message.SystemMessageRemote" short-alias="remote"/>
-    <relationship type="one" related="co.hotwax.unigate.ShippingGatewayConfig"/>
-    <relationship type="one" related="co.hotwax.unigate.Party" short-alias="tenant">
-        <key-map field-name="tenantPartyId"/>
-    </relationship>
-</entity>
-```
+### [ShippingGatewayAuth](ShippingGatewayAuth.md) Entity
 
 > **Note**: A nearly identical structure exists for `CommGatewayConfig` and `CommGatewayAuth` to map Communication/Email Gateways (like Klaviyo or SNS) to specific tenants.
 
-### Notes on Uniship Tenant Entity Setup
+### Notes on Unigate Tenant Entity Setup
 
 - These three entities are sufficient to define and classify each tenant (retailer) in the system.
 - You may define additional `RoleType` entries (e.g., `UnishipTenant`, `Carrier`) as needed.
