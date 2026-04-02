@@ -16,19 +16,50 @@ The `ShippingGatewayAuth` record stores **tenant-specific authentication and end
 
 ## 3. Entity: `ShippingGatewayAuth`
 
-| Field Name            | Type     | Required | Description                                                                  |
-| --------------------- | -------- | -------- | ---------------------------------------------------------------------------- |
-| shippingGatewayAuthId | String   | Yes      | Primary key.                                                                 |
-| tenantPartyId         | String   | Yes      | Party ID of the tenant (a.k.a. tenantPartyId).                               |
-| shippingGatewayConfigId | String   | Yes      | Refers to the predefined shipping gateway type (e.g., ShipHawk, FedEx, UPS). |
-| modeEnumId            | String   | No       | Enum for environment: Sandbox or Production.                                 |
-| authTypeEnumId        | String   | Yes      | Enum that defines the type of authentication: API key, OAuth2, etc.          |
-| baseUrl               | String   | Yes      | The base URL of the gateway endpoint for this tenant.                        |
-| apiKey                | String   | Optional | API key or equivalent credential.                                            |
-| clientId              | String   | Optional | OAuth2 client ID (if applicable).                                            |
-| clientSecret          | String   | Optional | OAuth2 client secret (if applicable).                                        |
-| accessToken           | String   | Optional | OAuth2 access token (if managed manually).                                   |
-| description           | String   | No       | Optional metadata or remarks.                                                |
+```xml
+<entity entity-name="ShippingGatewayAuth" package="co.hotwax.unigate" use="configuration" cache="false">
+    <field name="shippingGatewayAuthId" type="id" is-pk="true"/>
+    <field name="tenantPartyId" type="id" not-null="true"/>
+    <field name="shippingGatewayConfigId" type="id" not-null="true"/>
+
+    <field name="modeEnumId" type="id"/>
+    <field name="authTypeEnumId" type="id" not-null="true"/>
+    <field name="baseUrl" type="text-medium" not-null="true"/>
+
+    <field name="apiKey" type="text-medium" encrypt="true"/>
+    <field name="clientId" type="text-medium"/>
+    <field name="clientSecret" type="text-medium" encrypt="true"/>
+    <field name="accessToken" type="text-very-long" encrypt="true"/>
+    <field name="description" type="text-medium"/>
+
+    <field name="lastUpdatedStamp" type="date-time"/>
+    <field name="lastUpdatedTxStamp" type="date-time"/>
+    <field name="createdStamp" type="date-time"/>
+    <field name="createdTxStamp" type="date-time"/>
+
+    <relationship type="one" related="co.hotwax.unigate.ShippingGatewayConfig">
+        <key-map field-name="shippingGatewayConfigId"/>
+    </relationship>
+    <relationship type="one" related="co.hotwax.unigate.Party" short-alias="tenant">
+        <key-map field-name="tenantPartyId"/>
+    </relationship>
+    <relationship type="one" title="Mode" related="moqui.basic.Enumeration" short-alias="modeEnum">
+        <key-map field-name="modeEnumId"/>
+    </relationship>
+    <relationship type="one" title="AuthType" related="moqui.basic.Enumeration" short-alias="authTypeEnum">
+        <key-map field-name="authTypeEnumId"/>
+    </relationship>
+
+    <index name="SHIP_GTWY_AUTH_TNT_CFG">
+        <index-field name="tenantPartyId"/>
+        <index-field name="shippingGatewayConfigId"/>
+    </index>
+</entity>
+```
+
+### Notes
+
+* Credential fields use `encrypt="true"` so Moqui can store them encrypted at rest.
 
 ---
 

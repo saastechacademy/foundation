@@ -94,6 +94,28 @@ Below are the XML definitions for the three core entities, modeled in alignment 
 
 ### Gateway Configuration Entities
 
+#### `CommGatewayConfig`
+> Defines the shared service-level configuration for each communication gateway, such as Klaviyo or SMTP-backed providers.
+
+```xml
+<entity entity-name="CommGatewayConfig" package="co.hotwax.unigate" use="configuration" cache="true">
+    <field name="commGatewayConfigId" type="id" is-pk="true"/>
+    <field name="description" type="text-medium"/>
+    <field name="sendEmailServiceName" type="text-medium"/>
+    <field name="createEventServiceName" type="text-medium"/>
+</entity>
+```
+
+This entity is used as the gateway dispatch configuration for communication operations:
+
+* `sendEmailServiceName` identifies the service to invoke for sending email communications.
+* `createEventServiceName` identifies the service to invoke for creating workflow or event payloads in the provider.
+
+For example:
+
+* Klaviyo uses both `sendEmailServiceName` and `createEventServiceName`.
+* An SMTP-based provider may only need `sendEmailServiceName`.
+
 #### `ShippingGatewayConfig`
 > Defines core service configuration for each shipping gateway logic universally (e.g. FEDEX, UPS).
 
@@ -114,7 +136,7 @@ Below are the XML definitions for the three core entities, modeled in alignment 
 
 ### [ShippingGatewayAuth](ShippingGatewayAuth.md) Entity
 
-> **Note**: A nearly identical structure exists for `CommGatewayConfig` and `CommGatewayAuth` to map Communication/Email Gateways (like Klaviyo or SNS) to specific tenants.
+### [CommGatewayAuth](CommGatewayAuth.md) Entity
 
 ### Notes on Unigate Tenant Entity Setup
 
