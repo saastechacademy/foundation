@@ -214,22 +214,28 @@ So the corrected conclusion is:
 - over-receipt is not absent in Shopify
 - over-receipt is present, but it is shipment-scoped rather than TO-item-scoped
 
-## Remaining Gaps Still Standing
+## Additional Gap Proof Run
 
-These were not disproven by the live test and should still be treated as real gaps unless later evidence shows otherwise:
+The remaining exception-path gaps were tested in a follow-up run on April 11, 2026.
 
-1. `TO_Receive_Only`
-   - Shopify still has no first-class receive-only transfer orchestration equivalent
-2. Receipt without shipment linkage
-   - live Shopify receive calls still require `inventoryShipment` and shipment line ids
-3. Unexpected-item receipt
-   - live Shopify receive flow still operates on shipment line ids, not arbitrary newly arrived products
-4. Receiver-driven close of partial receipt
-   - not shown in the live run
-5. Reject to `REJECTED_ITM_PARKING`
-   - not represented in Shopify transfer cancel flow
-6. OMS close-fulfillment semantics
-   - Shopify still has remove-item and shipment-flow tools, not the same item-close semantics
+That proof set is documented separately in:
+
+- `runtime/component/shopify-oms-bridge/docs/shopify_transfer_order_gap_proof_evidence_2026-04-11.md`
+
+The follow-up run proved:
+
+1. `TO_Receive_Only` is still not a clean Shopify equivalent
+   - Shopify has `inventoryShipmentReceive`, but no transfer-level receive mutation
+2. Receipt without shipment linkage is not supported
+   - passing a transfer id to `inventoryShipmentReceive` failed with `RESOURCE_NOT_FOUND`
+3. Unexpected-item receipt is not supported through shipment receive
+   - `InventoryShipmentReceiveItemInput` does not allow `inventoryItemId`
+4. Receiver-driven close after partial receipt is not supported cleanly
+   - after partial receipt, `inventoryTransferRemoveItems` failed because the transfer was already `IN_PROGRESS`
+5. Reject to `REJECTED_ITM_PARKING` is still not represented
+   - Shopify cancel exists, but the `InventoryTransfer` type still has no reject-specific fields
+6. OMS close-fulfillment semantics remain stronger
+   - Shopify line removal becomes unavailable once shipment execution has started
 
 ## Operational Notes
 

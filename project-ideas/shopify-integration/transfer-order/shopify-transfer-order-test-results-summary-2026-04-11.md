@@ -32,6 +32,8 @@ The same test set also proved that Shopify is not a one-to-one replacement for O
 | Small live | `TO-LIVE-20260411-A` | Store to store | `1` | `2` | `1` | Full happy path succeeded |
 | Small live | `TO-LIVE-20260411-B` | Store to store | `1` | `2` | `1` | One transfer with two shipments succeeded |
 | Small live | `TO-LIVE-20260411-C` | Store to store | `1` | `1 requested / 2 received` | `1` | Over-receipt succeeded |
+| Gap proof | `TO-LIVE-20260411-D` | Store to store | `1` | `2` | `1` | Partial receipt succeeded; transfer-level receive and post-shipment close failed cleanly |
+| Gap proof | `TO-LIVE-20260411-E` | Store to store | `1` | `1` | `1` | Draft cancel succeeded; reject semantics still absent |
 | Bulk create-only probe | `TO-BULK-20260411-LGW-AUS-B01/B02` | Warehouse to store | `500` logical attempt split across `2` transfers | create-only probe | `2` | Transfer create succeeded, shipment execution exposed destination and tracking constraints |
 | Bulk execution | `LGW-AUS-EXEC2` | Warehouse to store | `285` | `1,425` | `2` | End-to-end execution succeeded |
 | Bulk execution | `AUS-CAR-EXEC2` | Store to store | `1,500` | `7,500` | `6` | End-to-end execution succeeded |
@@ -57,6 +59,8 @@ All links use the Shopify admin transfer URL pattern:
 | Happy path | `TO-LIVE-20260411-A` | `#T0007` | `https://gorjana-sandbox.myshopify.com/admin/products/transfers/3874193452` |
 | Two shipments under one transfer | `TO-LIVE-20260411-B` | `#T0008` | `https://gorjana-sandbox.myshopify.com/admin/products/transfers/3874226220` |
 | Over-receipt probe | `TO-LIVE-20260411-C` | `#T0009` | `https://gorjana-sandbox.myshopify.com/admin/products/transfers/3874258988` |
+| Gap proof: partial receive and failed close | `TO-LIVE-20260411-D` | `#T0026` | `https://gorjana-sandbox.myshopify.com/admin/products/transfers/3875012652` |
+| Gap proof: cancel versus reject | `TO-LIVE-20260411-E` | `#T0027` | `https://gorjana-sandbox.myshopify.com/admin/products/transfers/3875045420` |
 
 ### Bulk create-only probe
 
@@ -135,6 +139,41 @@ Inventory conclusion:
 - the gap is not absence of over-receipt
 - the gap is that over-receipt is still shipment-scoped rather than TO-item-scoped
 
+### Gap proof path: `TO-LIVE-20260411-D`
+
+Observed state result:
+
+- transfer `#T0026` was created ready to ship with quantity `2`
+- shipment `#T0026-1` was created and moved to `IN_TRANSIT`
+- partial receipt of `1` succeeded
+- shipment became `PARTIALLY_RECEIVED`
+- transfer became `IN_PROGRESS`
+- transfer line showed `shippedQuantity = 2` and `shippableQuantity = 0`
+- `inventoryTransferRemoveItems` then failed with:
+  - `Transfer can only have its items removed in a Draft or Ready-to-ship status.`
+- `inventoryShipmentReceive` called with the transfer id failed with:
+  - `Invalid id: gid://shopify/InventoryTransfer/3875012652`
+- trying to add `inventoryItemId` to the shipment receive input failed schema validation because that field is not defined
+
+Inventory conclusion:
+
+- after the partial receipt, Austin held `available = 13` and `incoming = 1` for SKU `207-113-G`
+- Atlanta held `available = 196` and `reserved = 0`
+- Shopify preserved the open incoming remainder, but did not allow a receiver-side close of that remainder
+
+### Gap proof path: `TO-LIVE-20260411-E`
+
+Observed state result:
+
+- draft transfer `#T0027` was created successfully
+- `inventoryTransferCancel` moved it to `CANCELED`
+- `InventoryTransfer` schema introspection showed no reject-specific fields such as reject reason or reject destination
+
+Inventory conclusion:
+
+- Shopify cancel is valid as a cancel
+- it is not a full reject equivalent to OMS reject-to-parking behavior
+
 ### Bulk route: `LGW-AUS-EXEC2`
 
 | Stage | Origin available | Origin reserved | Origin on_hand | Destination available | Destination incoming | Destination on_hand |
@@ -203,6 +242,8 @@ Route conclusion:
 | Destination inventory state | shipment create failed with `INVENTORY_STATE_NOT_ACTIVE` if the item was not stocked at destination | executable routes are a stricter subset of authorable OMS routes |
 | Receipt model | receive is shipment-line based | OMS TO-item receiving does not map cleanly |
 | Over-receipt | supported, but through shipment receive only | OMS and Shopify can reach the same inventory effect through different control shapes |
+| Receive-only and close semantics | transfer-level receive and post-shipment close are not available | OMS exception handling remains stronger |
+| Reject semantics | cancel exists but reject routing fields are absent | OMS reject-to-parking does not map cleanly |
 | Evidence and reconciliation at scale | long inventory snapshots can time out or reset | retry logic is needed even when mutations succeed |
 
 ## OMS Versus Shopify Operational Conclusion
@@ -222,4 +263,5 @@ These tests also prove that OMS should remain the system of record for Transfer 
 - `shopify-transfer-order-vs-oms-gap-analysis.md`
 - `shopify-transfer-order-scenarios.md`
 - `shopify-transfer-order-live-test-evidence-2026-04-11.md`
+- `shopify-transfer-order-gap-proof-evidence-2026-04-11.md`
 - `shopify-transfer-order-bulk-live-test-evidence-2026-04-11.md`
