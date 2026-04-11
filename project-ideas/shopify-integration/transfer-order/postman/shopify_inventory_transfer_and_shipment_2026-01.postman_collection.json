@@ -1,0 +1,1032 @@
+{
+  "info": {
+    "_postman_id": "dc4362db-8937-4a5d-8f91-6a09670464f8",
+    "name": "Shopify Inventory Transfer And Shipment 2026-01",
+    "description": "Runnable Postman collection for Shopify Admin GraphQL inventory transfer and shipment flows on API version 2026-01.\n\nSequence:\n1. Fill the environment values for locations and inventory items.\n2. Run a request from 01 Draft Transfer Flow or 03 Ready-To-Ship Direct Flow.\n3. Run the matching detail query to capture generated line item and shipment IDs.\n4. Continue with shipment mutations and receive mutations as required.\n\nNotes:\n- The collection is pinned to 2026-01 because that is the requested version.\n- inventoryShipmentSetBarcode is intentionally excluded because it was added in 2026-04 and would not be runnable on 2026-01.\n- Idempotent mutations use Postman {{$guid}} values in the body so repeated runs do not reuse the same key.\n- Transfer and shipment detail queries store IDs back into the active Postman environment for the next request.\n\nScale support:\n- Use 00 Scale Setup > Location Inventory Levels to page live inventory by location.\n- Use 00 Scale Setup > Run Inventory Items Bulk Export and Current Bulk Operation when you need a full inventory export for large-route planning.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "00 Scale Setup",
+      "description": "Requests used to discover large route candidates before creating bulk inventory transfers.",
+      "item": [
+        {
+          "name": "Location Inventory Levels",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const location = json?.data?.location;",
+                  "const pageInfo = location?.inventoryLevels?.pageInfo;",
+                  "if (location?.name) pm.environment.set('location_name', location.name);",
+                  "if (pageInfo?.hasNextPage && pageInfo?.endCursor) { pm.environment.set('after_cursor', JSON.stringify(pageInfo.endCursor)); } else { pm.environment.set('after_cursor', 'null'); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "X-Shopify-Access-Token",
+                "value": "{{access_token}}",
+                "type": "text"
+              }
+            ],
+            "description": "Pages live inventory levels for one location. Use this to identify tracked items with enough available quantity before building a large transfer route.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query locationInventoryLevels($id: ID!, $first: Int!, $after: String) { location(id: $id) { id name inventoryLevels(first: $first, after: $after) { edges { cursor node { item { id sku tracked } quantities(names: [\\\"available\\\", \\\"incoming\\\", \\\"reserved\\\", \\\"on_hand\\\"]) { name quantity } } } pageInfo { hasNextPage endCursor } } } }\",\n  \"variables\": {\n    \"id\": \"{{location_id}}\",\n    \"first\": {{first}},\n    \"after\": {{after_cursor}}\n  }\n}"
+            },
+            "url": {
+              "raw": "https://{{store_url}}/admin/api/{{api_version}}/graphql.json",
+              "protocol": "https",
+              "host": [
+                "{{store_url}}"
+              ],
+              "path": [
+                "admin",
+                "api",
+                "{{api_version}}",
+                "graphql.json"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Run Inventory Items Bulk Export",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const bulk = json?.data?.bulkOperationRunQuery?.bulkOperation;",
+                  "if (bulk?.id) pm.environment.set('bulk_operation_id', bulk.id);",
+                  "if (bulk?.status) pm.environment.set('bulk_operation_status', bulk.status);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "X-Shopify-Access-Token",
+                "value": "{{access_token}}",
+                "type": "text"
+              }
+            ],
+            "description": "Starts a Shopify bulk export of inventory items with location inventory levels. Use this when you need a full large-scale inventory discovery pass.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation runInventoryItemsBulkExport { bulkOperationRunQuery(query: \\\"\\\"\\\"{ inventoryItems { edges { node { id sku inventoryLevels { edges { node { location { id name } quantities(names: [\\\\\\\"available\\\\\\\", \\\\\\\"incoming\\\\\\\", \\\\\\\"reserved\\\\\\\", \\\\\\\"on_hand\\\\\\\"]) { name quantity } } } } } } } }\\\"\\\"\\\") { bulkOperation { id status } userErrors { field message } } }\"\n}"
+            },
+            "url": {
+              "raw": "https://{{store_url}}/admin/api/{{api_version}}/graphql.json",
+              "protocol": "https",
+              "host": [
+                "{{store_url}}"
+              ],
+              "path": [
+                "admin",
+                "api",
+                "{{api_version}}",
+                "graphql.json"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Current Bulk Operation",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const bulk = json?.data?.currentBulkOperation;",
+                  "if (bulk?.id) pm.environment.set('bulk_operation_id', bulk.id);",
+                  "if (bulk?.status) pm.environment.set('bulk_operation_status', bulk.status);",
+                  "if (bulk?.url) pm.environment.set('bulk_operation_url', bulk.url);",
+                  "if (bulk?.partialDataUrl) pm.environment.set('bulk_operation_partial_data_url', bulk.partialDataUrl || '');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "X-Shopify-Access-Token",
+                "value": "{{access_token}}",
+                "type": "text"
+              }
+            ],
+            "description": "Polls the currently running Shopify bulk operation and captures the download URL when it completes.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query currentBulkOperation { currentBulkOperation { id status errorCode createdAt completedAt objectCount fileSize url partialDataUrl } }\"\n}"
+            },
+            "url": {
+              "raw": "https://{{store_url}}/admin/api/{{api_version}}/graphql.json",
+              "protocol": "https",
+              "host": [
+                "{{store_url}}"
+              ],
+              "path": [
+                "admin",
+                "api",
+                "{{api_version}}",
+                "graphql.json"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "00 Queries",
+      "description": "Read requests to inspect transfers and shipments and to hydrate environment variables for later mutation requests.",
+      "item": [
+        {
+          "name": "Inventory Transfers List",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const firstTransfer = json?.data?.inventoryTransfers?.nodes?.[0];",
+                  "if (firstTransfer?.id) pm.environment.set('transfer_id', firstTransfer.id);",
+                  "if (firstTransfer?.referenceName) pm.environment.set('reference_name', firstTransfer.referenceName);",
+                  "if (firstTransfer?.status) pm.environment.set('latest_transfer_status', firstTransfer.status);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "X-Shopify-Access-Token",
+                "value": "{{access_token}}",
+                "type": "text"
+              }
+            ],
+            "description": "Lists inventory transfers. Useful as a starting point to capture an existing transfer ID.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query inventoryTransfers($first: Int!, $query: String) { inventoryTransfers(first: $first, query: $query) { nodes { id name referenceName status dateCreated totalQuantity receivedQuantity lineItemsCount { count } } pageInfo { hasNextPage endCursor } } }\",\n  \"variables\": {\n    \"first\": {{first}},\n    \"query\": \"{{transfer_query}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "https://{{store_url}}/admin/api/{{api_version}}/graphql.json",
+              "protocol": "https",
+              "host": [
+                "{{store_url}}"
+              ],
+              "path": [
+                "admin",
+                "api",
+                "{{api_version}}",
+                "graphql.json"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Inventory Transfer Detail",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const transfer = json?.data?.inventoryTransfer;",
+                  "const lineItems = transfer?.lineItems?.nodes || [];",
+                  "const shipments = transfer?.shipments?.nodes || [];",
+                  "if (transfer?.id) pm.environment.set('transfer_id', transfer.id);",
+                  "if (transfer?.referenceName) pm.environment.set('reference_name', transfer.referenceName);",
+                  "if (transfer?.status) pm.environment.set('latest_transfer_status', transfer.status);",
+                  "if (lineItems[0]?.id) pm.environment.set('transfer_line_item_id', lineItems[0].id);",
+                  "if (lineItems[1]?.id) pm.environment.set('transfer_line_item_id_2', lineItems[1].id);",
+                  "if (lineItems[0]?.inventoryItem?.id) pm.environment.set('inventory_item_id', lineItems[0].inventoryItem.id);",
+                  "if (lineItems[1]?.inventoryItem?.id) pm.environment.set('inventory_item_id_2', lineItems[1].inventoryItem.id);",
+                  "if (shipments[0]?.id) pm.environment.set('shipment_id', shipments[0].id);",
+                  "if (shipments[0]?.status) pm.environment.set('latest_shipment_status', shipments[0].status);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "X-Shopify-Access-Token",
+                "value": "{{access_token}}",
+                "type": "text"
+              }
+            ],
+            "description": "Gets a single transfer with line items and linked shipments. Run this after transfer creation, line-item changes, or shipment creation.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query inventoryTransfer($id: ID!, $lineItemFirst: Int!, $shipmentFirst: Int!) { inventoryTransfer(id: $id) { id name referenceName status dateCreated note tags totalQuantity receivedQuantity lineItemsCount { count } lineItems(first: $lineItemFirst) { nodes { id title totalQuantity processableQuantity shippableQuantity shippedQuantity inventoryItem { id sku } } } shipments(first: $shipmentFirst) { nodes { id name status dateCreated dateShipped dateReceived } } } }\",\n  \"variables\": {\n    \"id\": \"{{transfer_id}}\",\n    \"lineItemFirst\": {{line_item_first}},\n    \"shipmentFirst\": {{shipment_first}}\n  }\n}"
+            },
+            "url": {
+              "raw": "https://{{store_url}}/admin/api/{{api_version}}/graphql.json",
+              "protocol": "https",
+              "host": [
+                "{{store_url}}"
+              ],
+              "path": [
+                "admin",
+                "api",
+                "{{api_version}}",
+                "graphql.json"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Inventory Shipment Detail",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const shipment = json?.data?.inventoryShipment;",
+                  "const lineItems = shipment?.lineItems?.nodes || [];",
+                  "if (shipment?.id) pm.environment.set('shipment_id', shipment.id);",
+                  "if (shipment?.status) pm.environment.set('latest_shipment_status', shipment.status);",
+                  "if (lineItems[0]?.id) pm.environment.set('shipment_line_item_id', lineItems[0].id);",
+                  "if (lineItems[1]?.id) pm.environment.set('shipment_line_item_id_2', lineItems[1].id);",
+                  "if (lineItems[0]?.inventoryItem?.id) pm.environment.set('inventory_item_id', lineItems[0].inventoryItem.id);",
+                  "if (lineItems[1]?.inventoryItem?.id) pm.environment.set('inventory_item_id_2', lineItems[1].inventoryItem.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "X-Shopify-Access-Token",
+                "value": "{{access_token}}",
+                "type": "text"
+              }
+            ],
+            "description": "Gets a single shipment with line items, tracking, and receive totals. Run this after shipment create, add-items, tracking, in-transit, or receive requests.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query inventoryShipment($id: ID!, $lineItemFirst: Int!) { inventoryShipment(id: $id) { id name status dateCreated dateShipped dateReceived lineItemsCount { count } lineItemTotalQuantity totalAcceptedQuantity totalReceivedQuantity totalRejectedQuantity tracking { trackingNumber company trackingUrl arrivesAt } lineItems(first: $lineItemFirst) { nodes { id quantity acceptedQuantity rejectedQuantity unreceivedQuantity inventoryItem { id sku } } } } }\",\n  \"variables\": {\n    \"id\": \"{{shipment_id}}\",\n    \"lineItemFirst\": {{line_item_first}}\n  }\n}"
+            },
+            "url": {
+              "raw": "https://{{store_url}}/admin/api/{{api_version}}/graphql.json",
+              "protocol": "https",
+              "host": [
+                "{{store_url}}"
+              ],
+              "path": [
+                "admin",
+                "api",
+                "{{api_version}}",
+                "graphql.json"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "01 Draft Transfer Flow",
+      "description": "Create a draft transfer, then edit, set items, remove items, and mark it ready to ship.",
+      "item": [
+        {
+          "name": "Create Draft Transfer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const transfer = json?.data?.inventoryTransferCreate?.inventoryTransfer;",
+                  "if (transfer?.id) pm.environment.set('transfer_id', transfer.id);",
+                  "if (transfer?.status) pm.environment.set('latest_transfer_status', transfer.status);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "X-Shopify-Access-Token",
+                "value": "{{access_token}}",
+                "type": "text"
+              }
+            ],
+            "description": "Official mutation: inventoryTransferCreate. Creates a draft transfer with line items.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation inventoryTransferCreate($input: InventoryTransferCreateInput!, $idempotencyKey: String!) { inventoryTransferCreate(input: $input) @idempotent(key: $idempotencyKey) { inventoryTransfer { id name referenceName status dateCreated } userErrors { field message } } }\",\n  \"variables\": {\n    \"input\": {\n      \"originLocationId\": \"{{origin_location_id}}\",\n      \"destinationLocationId\": \"{{destination_location_id}}\",\n      \"lineItems\": [\n        {\n          \"inventoryItemId\": \"{{inventory_item_id}}\",\n          \"quantity\": {{inventory_item_quantity}}\n        },\n        {\n          \"inventoryItemId\": \"{{inventory_item_id_2}}\",\n          \"quantity\": {{inventory_item_quantity_2}}\n        }\n      ],\n      \"tags\": [\n        \"postman\",\n        \"transfer-test\"\n      ],\n      \"dateCreated\": \"{{date_created_datetime}}\",\n      \"note\": \"{{note}}\",\n      \"referenceName\": \"{{reference_name}}\"\n    },\n    \"idempotencyKey\": \"{{$guid}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "https://{{store_url}}/admin/api/{{api_version}}/graphql.json",
+              "protocol": "https",
+              "host": [
+                "{{store_url}}"
+              ],
+              "path": [
+                "admin",
+                "api",
+                "{{api_version}}",
+                "graphql.json"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Edit Transfer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "X-Shopify-Access-Token",
+                "value": "{{access_token}}",
+                "type": "text"
+              }
+            ],
+            "description": "Official mutation: inventoryTransferEdit. Uses the edit-specific originId and destinationId fields.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation inventoryTransferEdit($id: ID!, $input: InventoryTransferEditInput!) { inventoryTransferEdit(id: $id, input: $input) { inventoryTransfer { id name referenceName status note tags } userErrors { field message } } }\",\n  \"variables\": {\n    \"id\": \"{{transfer_id}}\",\n    \"input\": {\n      \"originId\": \"{{origin_location_id}}\",\n      \"destinationId\": \"{{destination_location_id}}\",\n      \"dateCreated\": \"{{date_created_date}}\",\n      \"note\": \"{{note}}\",\n      \"tags\": [\n        \"postman\",\n        \"edited\"\n      ],\n      \"referenceName\": \"{{reference_name}}\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "https://{{store_url}}/admin/api/{{api_version}}/graphql.json",
+              "protocol": "https",
+              "host": [
+                "{{store_url}}"
+              ],
+              "path": [
+                "admin",
+                "api",
+                "{{api_version}}",
+                "graphql.json"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Set Transfer Items",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "X-Shopify-Access-Token",
+                "value": "{{access_token}}",
+                "type": "text"
+              }
+            ],
+            "description": "Official mutation: inventoryTransferSetItems. Adds or resets quantities by inventory item.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation inventoryTransferSetItems($input: InventoryTransferSetItemsInput!, $idempotencyKey: String!) { inventoryTransferSetItems(input: $input) @idempotent(key: $idempotencyKey) { inventoryTransfer { id status lineItemsCount { count } } updatedLineItems { inventoryItemId newQuantity } userErrors { field message code } } }\",\n  \"variables\": {\n    \"input\": {\n      \"id\": \"{{transfer_id}}\",\n      \"lineItems\": [\n        {\n          \"inventoryItemId\": \"{{inventory_item_id}}\",\n          \"quantity\": {{inventory_item_quantity_set}}\n        },\n        {\n          \"inventoryItemId\": \"{{inventory_item_id_2}}\",\n          \"quantity\": {{inventory_item_quantity_set_2}}\n        }\n      ]\n    },\n    \"idempotencyKey\": \"{{$guid}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "https://{{store_url}}/admin/api/{{api_version}}/graphql.json",
+              "protocol": "https",
+              "host": [
+                "{{store_url}}"
+              ],
+              "path": [
+                "admin",
+                "api",
+                "{{api_version}}",
+                "graphql.json"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Transfer Items",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "X-Shopify-Access-Token",
+                "value": "{{access_token}}",
+                "type": "text"
+              }
+            ],
+            "description": "Official mutation: inventoryTransferRemoveItems. Requires transfer line item IDs, not inventory item IDs.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation inventoryTransferRemoveItems($input: InventoryTransferRemoveItemsInput!) { inventoryTransferRemoveItems(input: $input) { inventoryTransfer { id status lineItemsCount { count } } removedQuantities { inventoryItemId newQuantity } userErrors { field message } } }\",\n  \"variables\": {\n    \"input\": {\n      \"id\": \"{{transfer_id}}\",\n      \"transferLineItemIds\": [\n        \"{{transfer_line_item_id}}\"\n      ]\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "https://{{store_url}}/admin/api/{{api_version}}/graphql.json",
+              "protocol": "https",
+              "host": [
+                "{{store_url}}"
+              ],
+              "path": [
+                "admin",
+                "api",
+                "{{api_version}}",
+                "graphql.json"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Mark Transfer Ready To Ship",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "X-Shopify-Access-Token",
+                "value": "{{access_token}}",
+                "type": "text"
+              }
+            ],
+            "description": "Official mutation: inventoryTransferMarkAsReadyToShip.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation inventoryTransferMarkAsReadyToShip($id: ID!) { inventoryTransferMarkAsReadyToShip(id: $id) { inventoryTransfer { id name referenceName status } userErrors { field message } } }\",\n  \"variables\": {\n    \"id\": \"{{transfer_id}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "https://{{store_url}}/admin/api/{{api_version}}/graphql.json",
+              "protocol": "https",
+              "host": [
+                "{{store_url}}"
+              ],
+              "path": [
+                "admin",
+                "api",
+                "{{api_version}}",
+                "graphql.json"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02 Shipment Flow",
+      "description": "Shipment operations after a transfer is ready to ship.",
+      "item": [
+        {
+          "name": "Create Draft Shipment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const shipment = json?.data?.inventoryShipmentCreate?.inventoryShipment;",
+                  "if (shipment?.id) pm.environment.set('shipment_id', shipment.id);",
+                  "if (shipment?.status) pm.environment.set('latest_shipment_status', shipment.status);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "X-Shopify-Access-Token",
+                "value": "{{access_token}}",
+                "type": "text"
+              }
+            ],
+            "description": "Official mutation: inventoryShipmentCreate. Creates a draft shipment against the transfer.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation inventoryShipmentCreate($input: InventoryShipmentCreateInput!, $idempotencyKey: String!) { inventoryShipmentCreate(input: $input) @idempotent(key: $idempotencyKey) { userErrors { field message code } inventoryShipment { id name status dateCreated } } }\",\n  \"variables\": {\n    \"input\": {\n      \"movementId\": \"{{transfer_id}}\",\n      \"lineItems\": [\n        {\n          \"inventoryItemId\": \"{{inventory_item_id}}\",\n          \"quantity\": {{shipment_item_quantity}}\n        }\n      ]\n    },\n    \"idempotencyKey\": \"{{$guid}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "https://{{store_url}}/admin/api/{{api_version}}/graphql.json",
+              "protocol": "https",
+              "host": [
+                "{{store_url}}"
+              ],
+              "path": [
+                "admin",
+                "api",
+                "{{api_version}}",
+                "graphql.json"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add Shipment Items",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "X-Shopify-Access-Token",
+                "value": "{{access_token}}",
+                "type": "text"
+              }
+            ],
+            "description": "Official mutation: inventoryShipmentAddItems.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation inventoryShipmentAddItems($id: ID!, $lineItems: [InventoryShipmentLineItemInput!]!, $idempotencyKey: String!) { inventoryShipmentAddItems(id: $id, lineItems: $lineItems) @idempotent(key: $idempotencyKey) { userErrors { field message code } inventoryShipment { id name status } } }\",\n  \"variables\": {\n    \"id\": \"{{shipment_id}}\",\n    \"lineItems\": [\n      {\n        \"inventoryItemId\": \"{{inventory_item_id_2}}\",\n        \"quantity\": {{shipment_item_quantity_2}}\n      }\n    ],\n    \"idempotencyKey\": \"{{$guid}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "https://{{store_url}}/admin/api/{{api_version}}/graphql.json",
+              "protocol": "https",
+              "host": [
+                "{{store_url}}"
+              ],
+              "path": [
+                "admin",
+                "api",
+                "{{api_version}}",
+                "graphql.json"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Shipment Item Quantities",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "X-Shopify-Access-Token",
+                "value": "{{access_token}}",
+                "type": "text"
+              }
+            ],
+            "description": "Official mutation: inventoryShipmentUpdateItemQuantities. Note that the payload field is shipment, not inventoryShipment.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation inventoryShipmentUpdateItemQuantities($id: ID!, $items: [InventoryShipmentUpdateItemQuantitiesInput!]) { inventoryShipmentUpdateItemQuantities(id: $id, items: $items) { shipment { id name status } updatedLineItems { id quantity acceptedQuantity rejectedQuantity unreceivedQuantity } userErrors { field message } } }\",\n  \"variables\": {\n    \"id\": \"{{shipment_id}}\",\n    \"items\": [\n      {\n        \"shipmentLineItemId\": \"{{shipment_line_item_id}}\",\n        \"quantity\": {{shipment_item_quantity_update}}\n      }\n    ]\n  }\n}"
+            },
+            "url": {
+              "raw": "https://{{store_url}}/admin/api/{{api_version}}/graphql.json",
+              "protocol": "https",
+              "host": [
+                "{{store_url}}"
+              ],
+              "path": [
+                "admin",
+                "api",
+                "{{api_version}}",
+                "graphql.json"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Shipment Items",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "X-Shopify-Access-Token",
+                "value": "{{access_token}}",
+                "type": "text"
+              }
+            ],
+            "description": "Official mutation: inventoryShipmentRemoveItems. Requires shipment line item IDs.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation inventoryShipmentRemoveItems($id: ID!, $lineItems: [ID!]!) { inventoryShipmentRemoveItems(id: $id, lineItems: $lineItems) { inventoryShipment { id name status } userErrors { field message } } }\",\n  \"variables\": {\n    \"id\": \"{{shipment_id}}\",\n    \"lineItems\": [\n      \"{{shipment_line_item_id_2}}\"\n    ]\n  }\n}"
+            },
+            "url": {
+              "raw": "https://{{store_url}}/admin/api/{{api_version}}/graphql.json",
+              "protocol": "https",
+              "host": [
+                "{{store_url}}"
+              ],
+              "path": [
+                "admin",
+                "api",
+                "{{api_version}}",
+                "graphql.json"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Set Shipment Tracking",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "X-Shopify-Access-Token",
+                "value": "{{access_token}}",
+                "type": "text"
+              }
+            ],
+            "description": "Official mutation: inventoryShipmentSetTracking.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation inventoryShipmentSetTracking($id: ID!, $tracking: InventoryShipmentTrackingInput!) { inventoryShipmentSetTracking(id: $id, tracking: $tracking) { inventoryShipment { id name status tracking { trackingNumber company trackingUrl arrivesAt } } userErrors { field message } } }\",\n  \"variables\": {\n    \"id\": \"{{shipment_id}}\",\n    \"tracking\": {\n      \"trackingNumber\": \"{{tracking_number}}\",\n      \"company\": \"{{tracking_company}}\",\n      \"trackingUrl\": \"{{tracking_url}}\",\n      \"arrivesAt\": \"{{tracking_arrives_at}}\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "https://{{store_url}}/admin/api/{{api_version}}/graphql.json",
+              "protocol": "https",
+              "host": [
+                "{{store_url}}"
+              ],
+              "path": [
+                "admin",
+                "api",
+                "{{api_version}}",
+                "graphql.json"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Mark Shipment In Transit",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "X-Shopify-Access-Token",
+                "value": "{{access_token}}",
+                "type": "text"
+              }
+            ],
+            "description": "Official mutation: inventoryShipmentMarkInTransit.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation inventoryShipmentMarkInTransit($id: ID!, $dateShipped: DateTime) { inventoryShipmentMarkInTransit(id: $id, dateShipped: $dateShipped) { inventoryShipment { id name status dateShipped } userErrors { field message } } }\",\n  \"variables\": {\n    \"id\": \"{{shipment_id}}\",\n    \"dateShipped\": \"{{date_shipped}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "https://{{store_url}}/admin/api/{{api_version}}/graphql.json",
+              "protocol": "https",
+              "host": [
+                "{{store_url}}"
+              ],
+              "path": [
+                "admin",
+                "api",
+                "{{api_version}}",
+                "graphql.json"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Receive Shipment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "X-Shopify-Access-Token",
+                "value": "{{access_token}}",
+                "type": "text"
+              }
+            ],
+            "description": "Official mutation: inventoryShipmentReceive. This request is aligned to the 2026-01 documented example shape for maximum runnability. If you want to test optional dateReceived or bulkReceiveAction arguments, extend this request after the basic flow succeeds.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation inventoryShipmentReceive($id: ID!, $lineItems: [InventoryShipmentReceiveItemInput!], $idempotencyKey: String!) { inventoryShipmentReceive(id: $id, lineItems: $lineItems) @idempotent(key: $idempotencyKey) { userErrors { field message } inventoryShipment { id name status dateReceived } } }\",\n  \"variables\": {\n    \"id\": \"{{shipment_id}}\",\n    \"lineItems\": [\n      {\n        \"shipmentLineItemId\": \"{{shipment_line_item_id}}\",\n        \"quantity\": {{shipment_receive_quantity}},\n        \"reason\": \"{{shipment_receive_reason}}\"\n      }\n    ],\n    \"idempotencyKey\": \"{{$guid}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "https://{{store_url}}/admin/api/{{api_version}}/graphql.json",
+              "protocol": "https",
+              "host": [
+                "{{store_url}}"
+              ],
+              "path": [
+                "admin",
+                "api",
+                "{{api_version}}",
+                "graphql.json"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03 Ready-To-Ship Direct Flow",
+      "description": "Alternate path when you want Shopify to start from a ready-to-ship transfer or to create the shipment directly in transit.",
+      "item": [
+        {
+          "name": "Create Ready To Ship Transfer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const transfer = json?.data?.inventoryTransferCreateAsReadyToShip?.inventoryTransfer;",
+                  "if (transfer?.id) pm.environment.set('transfer_id', transfer.id);",
+                  "if (transfer?.status) pm.environment.set('latest_transfer_status', transfer.status);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "X-Shopify-Access-Token",
+                "value": "{{access_token}}",
+                "type": "text"
+              }
+            ],
+            "description": "Official mutation: inventoryTransferCreateAsReadyToShip.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation inventoryTransferCreateAsReadyToShip($input: InventoryTransferCreateAsReadyToShipInput!, $idempotencyKey: String!) { inventoryTransferCreateAsReadyToShip(input: $input) @idempotent(key: $idempotencyKey) { inventoryTransfer { id name referenceName status dateCreated } userErrors { field message } } }\",\n  \"variables\": {\n    \"input\": {\n      \"originLocationId\": \"{{origin_location_id}}\",\n      \"destinationLocationId\": \"{{destination_location_id}}\",\n      \"lineItems\": [\n        {\n          \"inventoryItemId\": \"{{inventory_item_id}}\",\n          \"quantity\": {{inventory_item_quantity}}\n        },\n        {\n          \"inventoryItemId\": \"{{inventory_item_id_2}}\",\n          \"quantity\": {{inventory_item_quantity_2}}\n        }\n      ],\n      \"tags\": [\n        \"postman\",\n        \"ready-to-ship\"\n      ],\n      \"dateCreated\": \"{{date_created_datetime}}\",\n      \"note\": \"{{note}}\",\n      \"referenceName\": \"{{reference_name}}\"\n    },\n    \"idempotencyKey\": \"{{$guid}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "https://{{store_url}}/admin/api/{{api_version}}/graphql.json",
+              "protocol": "https",
+              "host": [
+                "{{store_url}}"
+              ],
+              "path": [
+                "admin",
+                "api",
+                "{{api_version}}",
+                "graphql.json"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Shipment In Transit",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const shipment = json?.data?.inventoryShipmentCreateInTransit?.inventoryShipment;",
+                  "if (shipment?.id) pm.environment.set('shipment_id', shipment.id);",
+                  "if (shipment?.status) pm.environment.set('latest_shipment_status', shipment.status);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "X-Shopify-Access-Token",
+                "value": "{{access_token}}",
+                "type": "text"
+              }
+            ],
+            "description": "Official mutation: inventoryShipmentCreateInTransit.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation inventoryShipmentCreateInTransit($input: InventoryShipmentCreateInput!, $idempotencyKey: String!) { inventoryShipmentCreateInTransit(input: $input) @idempotent(key: $idempotencyKey) { userErrors { field message code } inventoryShipment { id name status dateCreated dateShipped } } }\",\n  \"variables\": {\n    \"input\": {\n      \"movementId\": \"{{transfer_id}}\",\n      \"lineItems\": [\n        {\n          \"inventoryItemId\": \"{{inventory_item_id}}\",\n          \"quantity\": {{shipment_item_quantity}}\n        }\n      ]\n    },\n    \"idempotencyKey\": \"{{$guid}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "https://{{store_url}}/admin/api/{{api_version}}/graphql.json",
+              "protocol": "https",
+              "host": [
+                "{{store_url}}"
+              ],
+              "path": [
+                "admin",
+                "api",
+                "{{api_version}}",
+                "graphql.json"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "04 Cleanup And Variations",
+      "description": "Non-happy-path and variation requests for duplicate and cancel behavior.",
+      "item": [
+        {
+          "name": "Duplicate Transfer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const transfer = json?.data?.inventoryTransferDuplicate?.inventoryTransfer;",
+                  "if (transfer?.id) pm.environment.set('transfer_id', transfer.id);",
+                  "if (transfer?.status) pm.environment.set('latest_transfer_status', transfer.status);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "X-Shopify-Access-Token",
+                "value": "{{access_token}}",
+                "type": "text"
+              }
+            ],
+            "description": "Official mutation: inventoryTransferDuplicate.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation inventoryTransferDuplicate($id: ID!, $idempotencyKey: String!) { inventoryTransferDuplicate(id: $id) @idempotent(key: $idempotencyKey) { inventoryTransfer { id name referenceName status } userErrors { field message } } }\",\n  \"variables\": {\n    \"id\": \"{{transfer_id}}\",\n    \"idempotencyKey\": \"{{$guid}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "https://{{store_url}}/admin/api/{{api_version}}/graphql.json",
+              "protocol": "https",
+              "host": [
+                "{{store_url}}"
+              ],
+              "path": [
+                "admin",
+                "api",
+                "{{api_version}}",
+                "graphql.json"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Transfer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "X-Shopify-Access-Token",
+                "value": "{{access_token}}",
+                "type": "text"
+              }
+            ],
+            "description": "Official mutation: inventoryTransferCancel.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation inventoryTransferCancel($id: ID!) { inventoryTransferCancel(id: $id) { inventoryTransfer { id name referenceName status } userErrors { field message } } }\",\n  \"variables\": {\n    \"id\": \"{{transfer_id}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "https://{{store_url}}/admin/api/{{api_version}}/graphql.json",
+              "protocol": "https",
+              "host": [
+                "{{store_url}}"
+              ],
+              "path": [
+                "admin",
+                "api",
+                "{{api_version}}",
+                "graphql.json"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
