@@ -2,23 +2,17 @@
 
 ## Purpose
 
-This document records the live Shopify tests run on April 12, 2026 for two one-sided transfer scenarios:
+This document records the live Shopify tests for two one-sided transfer scenarios:
 
 1. outbound from a Shopify location to an external destination managed outside Shopify
 2. inbound to a Shopify location from an external origin managed outside Shopify
 
 The goal was to prove whether Shopify `InventoryTransfer` and `InventoryShipment` support transfers where one side of the movement is omitted.
 
-Raw API evidence is stored under:
-
-- `runtime/component/shopify-oms-bridge/docs/evidence/shopify_transfer_external_end_tests_2026-04-12`
-
 ## Environment
 
-- Shop: `gorjana-sandbox.myshopify.com`
 - API version: `2026-01`
 - SKU: `207-113-G`
-- Inventory item: `gid://shopify/InventoryItem/46295996661804`
 - Quantity tested: `1`
 - Shopify location used as origin: `Atlanta`
 - Shopify location used as destination: `Austin`
@@ -87,7 +81,6 @@ Conclusion:
 
 - Shopify supports an outbound transfer whose destination is external to Shopify
 - at `READY_TO_SHIP`, Shopify reserved origin inventory even though no Shopify destination existed
-- the immediate shipment create worked and remained linked through the transfer’s `shipments` collection
 
 ## Scenario 2: Inbound To Shopify Location From External Origin
 
@@ -144,16 +137,6 @@ Conclusion:
 - Shopify allowed the transfer header and the shipment header even without a Shopify origin
 - creating the ready transfer and draft shipment did not yet change Austin inventory in this test
 
-## Important Technical Note
-
-`InventoryShipment` still does not expose a direct parent-transfer field in the reviewed schema.
-
-So the shipment-to-transfer linkage in these tests was proven by:
-
-- creating the shipment with `movementId = inventoryTransfer.id`
-- querying the transfer back and confirming the created shipment appeared under `inventoryTransfer.shipments`
-- verifying the shipment line items matched the transfer line items exactly
-
 ## Final Conclusion
 
 These two specific scenarios are supported by Shopify:
@@ -161,12 +144,8 @@ These two specific scenarios are supported by Shopify:
 - Shopify location -> external destination
 - external origin -> Shopify location
 
-The tested result is not theoretical. Both flows created real Shopify transfers and real Shopify shipments with one omitted end of the movement.
+What remains separate from this is later execution behavior such as:
 
-What remains separate from this proof is later execution behavior such as:
-
-- marking these shipments in transit
+- marking these shipments in transit should move the inventory
 - receiving the inbound flow
 - comparing inventory movement after in-transit and receipt
-
-This run proves the create-and-link behavior only, which is the exact scope requested.
