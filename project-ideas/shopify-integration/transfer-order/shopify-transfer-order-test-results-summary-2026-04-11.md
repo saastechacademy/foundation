@@ -34,6 +34,8 @@ The same test set also proved that Shopify is not a one-to-one replacement for O
 | Small live | `TO-LIVE-20260411-C` | Store to store | `1` | `1 requested / 2 received` | `1` | Over-receipt succeeded |
 | Gap proof | `TO-LIVE-20260411-D` | Store to store | `1` | `2` | `1` | Partial receipt succeeded; transfer-level receive and post-shipment close failed cleanly |
 | Gap proof | `TO-LIVE-20260411-E` | Store to store | `1` | `1` | `1` | Draft cancel succeeded; reject semantics still absent |
+| External-end proof | `TO-EXT-OUT-20260412-A` | Shopify location to external destination | `1` | `1` | `1` | One-sided outbound transfer and shipment succeeded |
+| External-end proof | `TO-EXT-IN-20260412-B` | External origin to Shopify location | `1` | `1` | `1` | One-sided inbound transfer and shipment succeeded |
 | Bulk create-only probe | `TO-BULK-20260411-LGW-AUS-B01/B02` | Warehouse to store | `500` logical attempt split across `2` transfers | create-only probe | `2` | Transfer create succeeded, shipment execution exposed destination and tracking constraints |
 | Bulk execution | `LGW-AUS-EXEC2` | Warehouse to store | `285` | `1,425` | `2` | End-to-end execution succeeded |
 | Bulk execution | `AUS-CAR-EXEC2` | Store to store | `1,500` | `7,500` | `6` | End-to-end execution succeeded |
@@ -61,6 +63,8 @@ All links use the Shopify admin transfer URL pattern:
 | Over-receipt probe | `TO-LIVE-20260411-C` | `#T0009` | `https://gorjana-sandbox.myshopify.com/admin/products/transfers/3874258988` |
 | Gap proof: partial receive and failed close | `TO-LIVE-20260411-D` | `#T0026` | `https://gorjana-sandbox.myshopify.com/admin/products/transfers/3875012652` |
 | Gap proof: cancel versus reject | `TO-LIVE-20260411-E` | `#T0027` | `https://gorjana-sandbox.myshopify.com/admin/products/transfers/3875045420` |
+| External-end proof: origin only | `TO-EXT-OUT-20260412-A` | `#T0028` | `https://gorjana-sandbox.myshopify.com/admin/products/transfers/3875110956` |
+| External-end proof: destination only | `TO-EXT-IN-20260412-B` | `#T0029` | `https://gorjana-sandbox.myshopify.com/admin/products/transfers/3875143724` |
 
 ### Bulk create-only probe
 
@@ -174,6 +178,39 @@ Inventory conclusion:
 - Shopify cancel is valid as a cancel
 - it is not a full reject equivalent to OMS reject-to-parking behavior
 
+### External-end proof path: `TO-EXT-OUT-20260412-A`
+
+Observed state result:
+
+- transfer `#T0028` was created with `origin = Atlanta` and `destination = null`
+- transfer status was `READY_TO_SHIP`
+- draft shipment `#T0028-1` was created immediately
+- transfer `shipments` included the created shipment
+- shipment line item matched the transfer line item exactly for SKU `207-113-G` and quantity `1`
+
+Inventory conclusion:
+
+- Atlanta changed from `available = 196, reserved = 0, on_hand = 196`
+- to `available = 195, reserved = 1, on_hand = 196`
+- Austin did not change during this scenario
+- Shopify therefore supports a Shopify-origin to external-destination header and shipment flow
+
+### External-end proof path: `TO-EXT-IN-20260412-B`
+
+Observed state result:
+
+- transfer `#T0029` was created with `origin = null` and `destination = Austin`
+- transfer status was `READY_TO_SHIP`
+- draft shipment `#T0029-1` was created immediately
+- transfer `shipments` included the created shipment
+- shipment line item matched the transfer line item exactly for SKU `207-113-G` and quantity `1`
+
+Inventory conclusion:
+
+- Austin inventory did not change during ready-transfer and draft-shipment creation
+- Shopify therefore supports an external-origin to Shopify-destination header and shipment flow
+- this specific run proved create-and-link behavior; it did not advance shipment `#T0029-1` to in-transit or receive
+
 ### Bulk route: `LGW-AUS-EXEC2`
 
 | Stage | Origin available | Origin reserved | Origin on_hand | Destination available | Destination incoming | Destination on_hand |
@@ -242,6 +279,7 @@ Route conclusion:
 | Destination inventory state | shipment create failed with `INVENTORY_STATE_NOT_ACTIVE` if the item was not stocked at destination | executable routes are a stricter subset of authorable OMS routes |
 | Receipt model | receive is shipment-line based | OMS TO-item receiving does not map cleanly |
 | Over-receipt | supported, but through shipment receive only | OMS and Shopify can reach the same inventory effect through different control shapes |
+| External-end transfers | supported with one omitted end on the transfer header | Shopify can represent external origin or destination for transfer and draft shipment creation |
 | Receive-only and close semantics | transfer-level receive and post-shipment close are not available | OMS exception handling remains stronger |
 | Reject semantics | cancel exists but reject routing fields are absent | OMS reject-to-parking does not map cleanly |
 | Evidence and reconciliation at scale | long inventory snapshots can time out or reset | retry logic is needed even when mutations succeed |
@@ -264,4 +302,5 @@ These tests also prove that OMS should remain the system of record for Transfer 
 - `shopify-transfer-order-scenarios.md`
 - `shopify-transfer-order-live-test-evidence-2026-04-11.md`
 - `shopify-transfer-order-gap-proof-evidence-2026-04-11.md`
+- `shopify-transfer-order-external-end-live-test-evidence-2026-04-12.md`
 - `shopify-transfer-order-bulk-live-test-evidence-2026-04-11.md`
