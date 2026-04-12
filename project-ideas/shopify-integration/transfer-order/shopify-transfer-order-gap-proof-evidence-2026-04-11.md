@@ -1,4 +1,4 @@
-# Shopify Transfer Order Gap Proof Evidence
+# Shopify Transfer Order Gap Proof
 
 ## Purpose
 
