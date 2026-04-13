@@ -4,6 +4,7 @@ This document consolidates the detail design for:
 - `sync#ShopifyProductUpdates`
 - `poll#ShopifyBulkOperationResult` (consolidated poller)
 - `process#ShopifyProductDataFile`
+- `sync#ShopifyProduct`
 
 ---
 
@@ -173,24 +174,22 @@ Poll Shopify for completion of a sent bulk query SystemMessage and, when complet
 
 ---
 
+## 3) process#ShopifyProductDataFile (consolidated poller)
 
-## 4) SystemMessageType Configuration (conceptual)
+### Purpose
+Process the downloaded Shopify JSONL file, transform it into a normalized product JSON structure, and schedule downstream OMS/MDM sync work.
+
+- Called by: `consumeServiceName` on `BulkQueryShopifyProductUpdates` SystemMessageType
+
+### 4) sync#ShopifyProduct
+### Purpose
+Sync individual products to OMS based on the processed bulk query results. This service is called for each product extracted from the bulk query result file.
+
+
+## 5) SystemMessageType Configuration (conceptual)
 
 - `ShopifyBulkQuery` remains the parent SystemMessageType and carries **deployment defaults** (send/receive services, base paths, etc.).
 - Each query subtype (e.g., `BulkQueryShopifyProductUpdates`) **overrides only the fields it needs** (for example `receivePath`).
 - Effective values are resolved using a parent-override rule: `COALESCE(subtype.field, parent.field)`.
 - Each producer service is responsible for producing a resolved query in `messageText`.
-
----
-
-## 5) Notes
-
-- The poller job should call the new consolidated service `poll#ShopifyBulkOperationResult`, which always targets `SystemMessageType.parentTypeId = ShopifyBulkQuery`.
-
----
-
-
-### Using 
-
-Find all the SystemMessageType of type ShopifyBulkQuery configured in system. Allow user to schedule produceServiceName ServiceJob
 
