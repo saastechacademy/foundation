@@ -1,9 +1,9 @@
-# Shopify Bulk Query – Detail Design
+# Sync Shopify Product Updates – Detail Design
 
 This document consolidates the detail design for:
 - `sync#ShopifyProductUpdates`
 - `poll#ShopifyBulkOperationResult` (consolidated poller)
-- `process#ShopifyProductDataFile`
+- `consume#ShopifyProductDataFile`
 - `sync#ShopifyProduct`
 
 ---
@@ -11,7 +11,7 @@ This document consolidates the detail design for:
 ## 1) sync#ShopifyProductUpdates
 
 ### Purpose
-Prepare a fully resolved bulk query and create a `BulkProductAndVariantsByIdQuery` SystemMessage for the scheduler to send.
+Prepare a fully resolved bulk query and create a `BulkQueryShopifyProductUpdates` SystemMessage for the scheduler to send.
 
 ### Inputs
 - `fromDate` / `thruDate` (Timestamp/String, optional)
@@ -29,7 +29,7 @@ Prepare a fully resolved bulk query and create a `BulkProductAndVariantsByIdQuer
     - normalize `fromDate` / `thruDate` to UTC
     - include `filterQuery`, `namespaces`
 2) Render query template:
-    - `queryText = ec.resourceFacade.template("component://sob/template/graphQL/BulkProductAndVariantsByIdQuery.ftl", "")`
+    - `queryText = ec.resourceFacade.template("component://sob/template/graphQL/BulkQueryShopifyProductUpdates.ftl", "")`
     - FTL reads `queryParams` from context
 3) Create SystemMessage:
     - `org.moqui.impl.SystemMessageServices.queue#SystemMessage`
@@ -45,9 +45,6 @@ Prepare a fully resolved bulk query and create a `BulkProductAndVariantsByIdQuer
 - Template render errors: return error; do not create SystemMessage.
 - `sendNow` failures: SystemMessage marked `SmsgError`.
 
----
-
-
 ## Sample SystemMessageType Data
 
 ```xml
@@ -57,12 +54,11 @@ Prepare a fully resolved bulk query and create a `BulkProductAndVariantsByIdQuer
                                          parentTypeId="ShopifyBulkQuery"
                                          produceServiceName="co.hotwax.sob.product.sync#ShopifyProductUpdates"
                                          sendServiceName="co.hotwax.shopify.system.ShopifySystemMessageServices.send#ShopifyBulkQueryMessage" 
-                                         consumeServiceName="co.hotwax.sob.product.process#ShopifyProductDataFile">
+                                         consumeServiceName="co.hotwax.sob.product.consume#ShopifyProductDataFile"
+                                         receiveMovePath="s3://my-bucket/shopify/bulk-updates/">
 </moqui.service.message.SystemMessageType>
 
 ```
-
----
 
 ## Sample SystemMessage Data (Lifecycle)
 
@@ -81,9 +77,9 @@ Prepare a fully resolved bulk query and create a `BulkProductAndVariantsByIdQuer
         remoteMessageId="gid://shopify/BulkOperation/1234567890"
         lastAttemptDate="2025-02-01 10:01:10.000"/>
 
-<!-- 3) Confirmed (file downloaded to receivePath) -->
+<!-- 3) Received (file downloaded to receiveMovePath) -->
 <moqui.service.message.SystemMessage systemMessageId="SM_BULK_0001"
-        statusId="SmsgConfirmed"
+        statusId="SmsgReceived"
         processedDate="2025-02-01 10:05:00.000"/>
 
 ```
@@ -153,6 +149,16 @@ Poll Shopify for completion of a sent bulk query SystemMessage and, when complet
    - Use `systemMessage.remoteMessageId` (Shopify bulk operation ID)
    - Call `co.hotwax.shopify.graphQL.ShopifyBulkImportServices.get#BulkOperationResult`
    - Extract `status` and `url`
+   - Set `systemMessage.statusId = SmsgReceived` to indicate we've received the status update
+
+4) Download file to OMS
+    - Build `fileLocation` and place it as per `receiveMovePath` (e.g., `s3://my-bucket/shopify/bulk-updates/`) and a unique filename (e.g., `bulk_update_20250201_100500.jsonl`)
+    - Call `co.hotwax.shopify.graphQL.ShopifyBulkImportServices.store#BulkOperationResultFile`
+    - save the path to the downloaded file in `SystemMessageType.receiveMovePath`
+
+6) Post-Download Processing (consume step)
+    - Set `systemMessage.statusId = Consuming` to indicate processsing
+    - Call `consumeServiceName=consume#ShopifyProductDataFile` on `BulkQueryShopifyProductUpdates`.
 
 3) Handle status
    - `completed` → proceed to download
@@ -160,26 +166,32 @@ Poll Shopify for completion of a sent bulk query SystemMessage and, when complet
    - `running` / `created` → leave `SmsgSent`, return message
    - `completed` with no URL → mark `SmsgConfirmed`, return warning
 
-4) Download file to OMS at `SystemMessageType.receivePath`
-   - Build `fileLocation` using `receivePath` for the query subtype
-   - Call `co.hotwax.shopify.graphQL.ShopifyBulkImportServices.store#BulkOperationResultFile`
-
 5) Finalize
-   - On success: update SystemMessage `SmsgConfirmed`
+   - On success: update SystemMessage `SmsgConsuming`
    - On download error: create `SystemMessageError`, mark `SmsgError`
 
-6) Post-Download Processing (consume step)
-   - The `consumeServiceName=process#ShopifyProductDataFile` on `BulkQueryShopifyProductUpdates` runs `transform#JsonLToJsonForUpdatedProducts`.
-   - create MDM import for processing the downloaded data. 
 
 ---
 
-## 3) process#ShopifyProductDataFile (consolidated poller)
+## 3) consume#ShopifyProductDataFile (consolidated poller)
 
 ### Purpose
 Process the downloaded Shopify JSONL file, transform it into a normalized product JSON structure, and schedule downstream OMS/MDM sync work.
 
+- In parameter name="systemMessageId"
 - Called by: `consumeServiceName` on `BulkQueryShopifyProductUpdates` SystemMessageType
+
+### Flow
+1) Load the downloaded file from `SystemMessageType.receiveMovePath`.
+2) For each line (JSON object) in the JSONL file:
+   - Parse the line into a JSON object.
+   - Transform the Shopify product data into a normalized JSON structure suitable for OMS/MDM processing.
+   - This service runs `transform#JsonLToJsonForUpdatedProducts` 
+3) create MDM import for processing the downloaded data.
+4) update the `SystemMessage` status to `SmsgConfirmed` after successfully uploading the file to MDM for processing.
+
+
+
 
 ### 4) sync#ShopifyProduct
 ### Purpose
