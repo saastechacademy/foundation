@@ -99,9 +99,8 @@ In addition to owning a client project, Team Leads are expected to treat **Apach
 **Recommended weekly allocation (guideline):**
 
 * **50% Primary client project:** delivery governance, key decisions, design/reviews, risk management, client technical leadership
-* **20% OFBiz:** community outputs (answers/docs/patches/write-ups) planned on a small backlog
-* **15% Enablement:** mentoring juniors, improving team standards, reusable internal assets (design templates, verification SQL playbooks)
-* **15% Buffer:** true unplanned work; track where it went and use it as a signal to fix root causes
+* **25% OFBiz:** community outputs (answers/docs/patches/write-ups) planned on a small backlog
+* **25% Enablement:** mentoring juniors, improving team standards, reusable internal assets (design templates, verification SQL playbooks)
 
 ---
 
