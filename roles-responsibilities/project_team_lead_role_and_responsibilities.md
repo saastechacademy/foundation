@@ -112,6 +112,106 @@ In addition to owning a client project, Team Leads are expected to treat **Apach
 
 ---
 
+## Required Leadership Outputs
+The Team Lead must maintain a small set of visible working outputs that show planning, review, coaching, and improvement are happening regularly.
+
+### 1) Sprint Planning and Tracking
+- Keep a sprint plan for every sprint.
+- List the work items the team committed to deliver in that sprint.
+- For each item, record owner, status, and blocker, if any.
+- Mark items that are at risk of missing the sprint.
+- Review and update the sprint plan during the sprint.
+
+**Minimum fields:**
+- work item
+- owner
+- status
+- blocker
+- risk
+
+### 2) Project Risk Management
+- Keep a project risk log and update it every week.
+- Add new risks as soon as they are identified.
+- For each risk, record impact, action, owner, and status.
+- Review open risks every week and update actions and status.
+- Escalate risks early if they may affect scope, timeline, or quality.
+
+**Minimum fields:**
+- risk
+- impact
+- action
+- owner
+- status
+
+### 3) Design Notes for Important Changes
+- Write design notes before development starts for important changes.
+- Use design notes for workflow changes, data model changes, integration changes, and other non-trivial work.
+- Keep the design note simple and focused on the change being made.
+- Review the design note with the team when the change affects multiple people or modules.
+- Update the design note if the approach changes during implementation.
+
+**Minimum fields:**
+- problem
+- proposed approach
+- affected workflow or modules
+- affected data or entities
+- key decisions or assumptions
+
+### 4) Pull Request Review
+- Review pull requests for important changes before they are merged.
+- Give clear review comments when code needs correction, simplification, or better design.
+- Check that the change matches the agreed approach and does not create unnecessary technical debt.
+- Check that verification and test thinking are included where needed.
+- Do not approve changes that are unclear, risky, or poorly understood.
+
+**Review should check:**
+- correctness
+- design
+- readability
+- testability
+- alignment with team standards
+
+### 5) Junior Developer Coaching
+- Keep short coaching notes for each junior developer.
+- Update the notes regularly based on code reviews, design discussions, and delivery work.
+- Record the junior’s current growth area, recent feedback, and next improvement step.
+- Use the notes to track whether the junior is becoming more independent over time.
+- Review progress with the junior regularly.
+
+**Minimum fields:**
+- junior name
+- current growth area
+- recent feedback
+- next step
+
+### 6) Post-release Review
+- Write a short post-release review after major releases.
+- Record what was released, what went well, and what problems were seen.
+- Capture follow-up actions needed to fix issues or improve future releases.
+- Share the review with the team when the release has important learnings.
+- Use the review to improve release quality and team practices.
+
+**Minimum fields:**
+- release or change
+- what went well
+- issues seen
+- follow-up action
+
+### 7) Monthly Team Improvement
+- Choose 1 or 2 team improvement actions each month.
+- Write down why each improvement was chosen.
+- Assign an owner for each improvement action.
+- Review progress during the month.
+- At month end, mark each action as completed, continued, or dropped.
+
+**Minimum fields:**
+- improvement action
+- reason
+- owner
+- status
+
+---
+
 ## What the Team Lead is evaluated on
 - Predictable delivery and client outcomes
 - Quality: defects, rework, support stability
