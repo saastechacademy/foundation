@@ -14,6 +14,7 @@ This document consolidates the detail design for:
 Prepare a fully resolved bulk query and create a `BulkQueryShopifyProductUpdates` SystemMessage for the scheduler to send.
 
 ### Inputs
+- `shopifyShopId` (String, required) – used to lookup credentials and identify the remote system in `systemMessageRemoteId`
 - `fromDate` / `thruDate` (Timestamp/String, optional)
 - `namespaces` (List, optional)
 
@@ -21,8 +22,6 @@ Prepare a fully resolved bulk query and create a `BulkQueryShopifyProductUpdates
 - `systemMessageTypeId = BulkQueryShopifyProductUpdates`
 - `systemMessageRemoteId = <input>`
 - `messageText = <resolved query string>`
-- `isOutgoing = Y`
-- `statusId = SmsgProduced` (unless `sendNow = true`)
 
 ### Flow
 1) Build `queryParams` map:
@@ -34,17 +33,8 @@ Prepare a fully resolved bulk query and create a `BulkQueryShopifyProductUpdates
 3) Create SystemMessage:
     - `org.moqui.impl.SystemMessageServices.queue#SystemMessage`
     - in-map: `[systemMessageTypeId:'BulkQueryShopifyProductUpdates', systemMessageRemoteId, messageText: queryText, sendNow:false]`
-4) Optional immediate send:
-    - If `sendNow = true`, call `send#ShopifyBulkQueryMessage` with `systemMessageId`
 
-### Outputs
-- `systemMessageId`
-- If `sendNow = true`: `shopifyBulkOperationId`, `remoteMessageId`
-
-### Failure Handling
-- Template render errors: return error; do not create SystemMessage.
-- `sendNow` failures: SystemMessage marked `SmsgError`.
-
+   
 ## Sample SystemMessageType Data
 
 ```xml
@@ -84,6 +74,25 @@ Prepare a fully resolved bulk query and create a `BulkQueryShopifyProductUpdates
 
 ```
 
+## Shopify bulk operation status flow (StatusFlow + StatusFlowTransition data)
+
+```xml
+            <moqui.basic.StatusFlowTransition statusFlowId="SHOPIFY_BULK_OPERATION" statusId="SmsgProduced" toStatusId="SmsgSending" transitionName="Sending"/>
+            <moqui.basic.StatusFlowTransition statusFlowId="SHOPIFY_BULK_OPERATION" statusId="SmsgSending" toStatusId="SmsgSent" transitionName="Send"/>
+            <moqui.basic.StatusFlowTransition statusFlowId="SHOPIFY_BULK_OPERATION" statusId="SmsgSending" toStatusId="SmsgProduced" transitionName="Back to Produced"/>
+            <moqui.basic.StatusFlowTransition statusFlowId="SHOPIFY_BULK_OPERATION" statusId="SmsgProduced" toStatusId="SmsgSent" transitionName="Send"/>
+            <moqui.basic.StatusFlowTransition statusFlowId="SHOPIFY_BULK_OPERATION" statusId="SmsgSent" toStatusId="SmsgConfirmed" transitionName="Confirm"/>
+            <moqui.basic.StatusFlowTransition statusFlowId="SHOPIFY_BULK_OPERATION" statusId="SmsgSent" toStatusId="SmsgRejected" transitionName="Reject"/>
+            <moqui.basic.StatusFlowTransition statusFlowId="SHOPIFY_BULK_OPERATION" statusId="SmsgSent" toStatusId="SmsgReceived" transitionName="Receive"/>
+
+            <moqui.basic.StatusFlowTransition statusFlowId="SHOPIFY_BULK_OPERATION" statusId="SmsgReceived" toStatusId="SmsgConsuming" transitionName="Consuming"/>
+            <moqui.basic.StatusFlowTransition statusFlowId="SHOPIFY_BULK_OPERATION" statusId="SmsgConsuming" toStatusId="SmsgConsumed" transitionName="Consume"/>
+            <moqui.basic.StatusFlowTransition statusFlowId="SHOPIFY_BULK_OPERATION" statusId="SmsgConsuming" toStatusId="SmsgReceived" transitionName="Back to Received"/>
+            <moqui.basic.StatusFlowTransition statusFlowId="SHOPIFY_BULK_OPERATION" statusId="SmsgReceived" toStatusId="SmsgConsumed" transitionName="Consume"/>
+            <moqui.basic.StatusFlowTransition statusFlowId="SHOPIFY_BULK_OPERATION" statusId="SmsgConsumed" toStatusId="SmsgConfirmed" transitionName="Confirm"/>
+            <moqui.basic.StatusFlowTransition statusFlowId="SHOPIFY_BULK_OPERATION" statusId="SmsgConsumed" toStatusId="SmsgRejected" transitionName="Reject"/>
+
+```
 
 
 ## 2) send#ShopifyBulkQueryMessage
@@ -154,7 +163,7 @@ Poll Shopify for completion of a sent bulk query SystemMessage and, when complet
 4) Download file to OMS
     - Build `fileLocation` and place it as per `receiveMovePath` (e.g., `s3://my-bucket/shopify/bulk-updates/`) and a unique filename (e.g., `bulk_update_20250201_100500.jsonl`)
     - Call `co.hotwax.shopify.graphQL.ShopifyBulkImportServices.store#BulkOperationResultFile`
-    - save the path to the downloaded file in `SystemMessageType.receiveMovePath`
+    - save the downloaded file in `SystemMessageType.receiveMovePath`
 
 6) Post-Download Processing (consume step)
     - Set `systemMessage.statusId = Consuming` to indicate processsing
