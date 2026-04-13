@@ -1,13 +1,95 @@
 # Shopify Bulk Query – Detail Design
 
 This document consolidates the detail design for:
-- `send#ShopifyBulkQueryMessage`
+- `sync#ShopifyProductUpdates`
 - `poll#ShopifyBulkOperationResult` (consolidated poller)
-- `systemMessageTypeId = BulkQueryShopifyProductUpdates parentTypeId = ShopifyBulkQuery consumeServiceName=process#ShopifyProductDataFile`
+- `process#ShopifyProductDataFile`
 
 ---
 
-## 1) send#ShopifyBulkQueryMessage
+## 1) sync#ShopifyProductUpdates
+
+### Purpose
+Prepare a fully resolved bulk query and create a `BulkProductAndVariantsByIdQuery` SystemMessage for the scheduler to send.
+
+### Inputs
+- `fromDate` / `thruDate` (Timestamp/String, optional)
+- `namespaces` (List, optional)
+
+### SystemMessage Created
+- `systemMessageTypeId = BulkQueryShopifyProductUpdates`
+- `systemMessageRemoteId = <input>`
+- `messageText = <resolved query string>`
+- `isOutgoing = Y`
+- `statusId = SmsgProduced` (unless `sendNow = true`)
+
+### Flow
+1) Build `queryParams` map:
+    - normalize `fromDate` / `thruDate` to UTC
+    - include `filterQuery`, `namespaces`
+2) Render query template:
+    - `queryText = ec.resourceFacade.template("component://sob/template/graphQL/BulkProductAndVariantsByIdQuery.ftl", "")`
+    - FTL reads `queryParams` from context
+3) Create SystemMessage:
+    - `org.moqui.impl.SystemMessageServices.queue#SystemMessage`
+    - in-map: `[systemMessageTypeId:'BulkQueryShopifyProductUpdates', systemMessageRemoteId, messageText: queryText, sendNow:false]`
+4) Optional immediate send:
+    - If `sendNow = true`, call `send#ShopifyBulkQueryMessage` with `systemMessageId`
+
+### Outputs
+- `systemMessageId`
+- If `sendNow = true`: `shopifyBulkOperationId`, `remoteMessageId`
+
+### Failure Handling
+- Template render errors: return error; do not create SystemMessage.
+- `sendNow` failures: SystemMessage marked `SmsgError`.
+
+---
+
+
+## Sample SystemMessageType Data
+
+```xml
+<!-- Bulk product and variants by ID query -->
+<moqui.service.message.SystemMessageType systemMessageTypeId="BulkQueryShopifyProductUpdates"
+                                         description="Product and Variants updates query for Shopify"
+                                         parentTypeId="ShopifyBulkQuery"
+                                         produceServiceName="co.hotwax.sob.product.sync#ShopifyProductUpdates"
+                                         sendServiceName="co.hotwax.shopify.system.ShopifySystemMessageServices.send#ShopifyBulkQueryMessage" 
+                                         consumeServiceName="co.hotwax.sob.product.process#ShopifyProductDataFile">
+</moqui.service.message.SystemMessageType>
+
+```
+
+---
+
+## Sample SystemMessage Data (Lifecycle)
+
+```xml
+<!-- 1) Queued (Produced) -->
+<moqui.service.message.SystemMessage systemMessageId="SM_BULK_0001"
+        systemMessageTypeId="BulkQueryShopifyProductUpdates"
+        systemMessageRemoteId="ShopifyRemote_001"
+        statusId="SmsgProduced" isOutgoing="Y"
+        messageText="query { /* resolved GraphQL */ }"
+        initDate="2025-02-01 10:00:00.000"/>
+
+<!-- 2) Sent (remoteMessageId set after Shopify accepts bulk query) -->
+<moqui.service.message.SystemMessage systemMessageId="SM_BULK_0001"
+        statusId="SmsgSent"
+        remoteMessageId="gid://shopify/BulkOperation/1234567890"
+        lastAttemptDate="2025-02-01 10:01:10.000"/>
+
+<!-- 3) Confirmed (file downloaded to receivePath) -->
+<moqui.service.message.SystemMessage systemMessageId="SM_BULK_0001"
+        statusId="SmsgConfirmed"
+        processedDate="2025-02-01 10:05:00.000"/>
+
+```
+
+
+
+## 2) send#ShopifyBulkQueryMessage
 
 ### Purpose
 Send a fully resolved Shopify GraphQL bulk query stored in `SystemMessage.messageText` and persist the Shopify bulk operation ID as `remoteMessageId` using Moqui OOTB send behavior.
@@ -33,7 +115,7 @@ Send a fully resolved Shopify GraphQL bulk query stored in `SystemMessage.messag
 
 ---
 
-## 2) poll#ShopifyBulkOperationResult (consolidated poller)
+## 3) poll#ShopifyBulkOperationResult (consolidated poller)
 
 ### Purpose
 Poll Shopify for completion of a sent bulk query SystemMessage and, when complete, download the result file and save it to the OMS default location in one service.
@@ -107,85 +189,6 @@ Poll Shopify for completion of a sent bulk query SystemMessage and, when complet
 
 ---
 
-## 2) sync#ShopifyProductUpdates
-
-### Purpose
-Prepare a fully resolved bulk product+variants-by-id query and create a `BulkProductAndVariantsByIdQuery` SystemMessage for the scheduler to send.
-
-### Inputs
-- `fromDate` / `thruDate` (Timestamp/String, optional)
-- `namespaces` (List, optional)
-
-### SystemMessage Created
-- `systemMessageTypeId = BulkQueryShopifyProductUpdates`
-- `systemMessageRemoteId = <input>`
-- `messageText = <resolved query string>`
-- `isOutgoing = Y`
-- `statusId = SmsgProduced` (unless `sendNow = true`)
-
-### Flow
-1) Build `queryParams` map:
-   - normalize `fromDate` / `thruDate` to UTC
-   - include `filterQuery`, `namespaces`
-2) Render query template:
-   - `queryText = ec.resourceFacade.template("component://sob/template/graphQL/BulkProductAndVariantsByIdQuery.ftl", "")`
-   - FTL reads `queryParams` from context
-3) Create SystemMessage:
-   - `org.moqui.impl.SystemMessageServices.queue#SystemMessage`
-   - in-map: `[systemMessageTypeId:'BulkQueryShopifyProductUpdates', systemMessageRemoteId, messageText: queryText, sendNow:false]`
-4) Optional immediate send:
-   - If `sendNow = true`, call `send#ShopifyBulkQueryMessage` with `systemMessageId`
-
-### Outputs
-- `systemMessageId`
-- If `sendNow = true`: `shopifyBulkOperationId`, `remoteMessageId`
-
-### Failure Handling
-- Template render errors: return error; do not create SystemMessage.
-- `sendNow` failures: SystemMessage marked `SmsgError`.
-
----
-
-
-## Sample SystemMessageType Data
-
-```xml
-<!-- Bulk product and variants by ID query -->
-<moqui.service.message.SystemMessageType systemMessageTypeId="BulkQueryShopifyProductUpdates"
-                                         description="Product and Variants updates query for Shopify"
-                                         parentTypeId="ShopifyBulkQuery"
-                                         produceServiceName="co.hotwax.sob.product.sync#ShopifyProductUpdates"
-                                         sendServiceName="co.hotwax.shopify.system.ShopifySystemMessageServices.send#ShopifyBulkQueryMessage" 
-                                         consumeServiceName="co.hotwax.sob.product.process#ShopifyProductDataFile">
-</moqui.service.message.SystemMessageType>
-
-```
-
----
-
-## Sample SystemMessage Data (Lifecycle)
-
-```xml
-<!-- 1) Queued (Produced) -->
-<moqui.service.message.SystemMessage systemMessageId="SM_BULK_0001"
-        systemMessageTypeId="BulkQueryShopifyProductUpdates"
-        systemMessageRemoteId="ShopifyRemote_001"
-        statusId="SmsgProduced" isOutgoing="Y"
-        messageText="query { /* resolved GraphQL */ }"
-        initDate="2025-02-01 10:00:00.000"/>
-
-<!-- 2) Sent (remoteMessageId set after Shopify accepts bulk query) -->
-<moqui.service.message.SystemMessage systemMessageId="SM_BULK_0001"
-        statusId="SmsgSent"
-        remoteMessageId="gid://shopify/BulkOperation/1234567890"
-        lastAttemptDate="2025-02-01 10:01:10.000"/>
-
-<!-- 3) Confirmed (file downloaded to receivePath) -->
-<moqui.service.message.SystemMessage systemMessageId="SM_BULK_0001"
-        statusId="SmsgConfirmed"
-        processedDate="2025-02-01 10:05:00.000"/>
-
-```
 
 ### Using 
 
