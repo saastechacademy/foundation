@@ -74,12 +74,20 @@ The Team Lead provides:
 - Structured reviews and coaching
 - Weekly visibility on junior progress
 
-### 7) Team culture and work discipline
+### 7) AI in development enablement
+- Run one weekly team session on use of AI in development.
+- Get team members to share how they used AI during the week, what worked, what failed, and what they learned.
+- Lead the discussion so the team learns from each other’s experience.
+- At the end of the session, document a few best practices the team agrees to follow.
+- Also define 1 or 2 experiments the team will try in the next week.
+- In the next session, review what happened and decide what to continue, change, or stop.
+
+### 8) Team culture and work discipline
 - Build a culture of punctuality, focus, and full productive workdays.
 - Ensure the team follows office schedule expectations and avoids “late start” normalization.
 - When performance is weak, first verify fundamentals: attendance, consistency, communication, planning discipline.
 
-### 8) Communication and storytelling (twice monthly minimum)
+### 9) Communication and storytelling (twice monthly minimum)
 At the end of each sprint (at least twice a month), communicate the “life of the team/project”:
 - Achievements and learnings
 - Major client problems solved (business process / UX / operations)
@@ -100,7 +108,7 @@ In addition to owning a client project, Team Leads are expected to treat **Apach
 
 * **50% Primary client project:** delivery governance, key decisions, design/reviews, risk management, client technical leadership
 * **25% OFBiz:** community outputs (answers/docs/patches/write-ups) planned on a small backlog
-* **25% Enablement:** mentoring juniors, improving team standards, reusable internal assets (design templates, verification SQL playbooks)
+* **25% Enablement:** mentoring juniors, improving team standards, running weekly AI-in-development sessions, and capturing best practices and experiments
 
 ---
 
@@ -111,4 +119,3 @@ In addition to owning a client project, Team Leads are expected to treat **Apach
 - Team capability growth, especially junior productivity
 - Execution culture: discipline, accountability, operational maturity
 - Clear communication and leadership behaviors
-
