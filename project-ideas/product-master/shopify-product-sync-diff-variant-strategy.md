@@ -158,14 +158,3 @@ Downstream loaders inspect `detailJson` only; no separate Y/N flags are required
 4. **Downstream format** – is `detailJson` sufficient or need separate file export?
 
 ---
-
-## 7. Implementation To‑Dos
-- [ ] Extend `ProductUpdateHistory` (add `variantIdsCsv`, `variantSetHash`).
-- [ ] Patch flush logic in `transform#JsonLToJsonForUpdatedProducts`:
-  * compute variant set & hash
-  * skip or diff as per §2
-  * always refresh baseline row
-- [ ] Unit tests: no‑change, add variant, remove variant, add + remove.
-- [ ] Load & monitor metrics (`runtime/log/shopify-sync-metrics.json`).
-
----
