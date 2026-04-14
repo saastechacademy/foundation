@@ -130,46 +130,10 @@ sequenceDiagram
 | External POS sale or non-Shopify sale reduces inventory | dedicated sales posting service boundary | `ShopifyInventoryAdjustmentSyncHistory` | `inventoryAdjustQuantities` | Use only when Shopify is not already the system that created the sale |
 | Cycle count or approved manual variance changes QOH and ATP | `co.hotwax.cycleCount.InventoryCountServices.create#PhysicalInventory` when variance is applied | `ShopifyInventoryAdjustmentSyncHistory` | `inventoryAdjustQuantities` | Manual variance follows the same lane |
 | External reset accepted by OMS | `reset#InventoryItem` or `create#ExternalInventoryReset` completion | `ShopifyExternalResetSyncHistory` | `inventoryAdjustQuantities` using computed delta only | Even this lane stays delta-based after OMS computes the difference |
-| TO cancel before shipment or receipt | `co.hotwax.orderledger.order.TransferOrderServices.cancel#TransferOrder` post-service | `ShopifyToReservationReleaseSyncHistory` | Cancel the related Shopify transfer or remove remaining draft-ready quantities so origin `available` is restored | OMS cancels reservation before item status moves to `ITEM_CANCELLED` |
-| TO reject before shipment | `co.hotwax.poorti.TransferOrderFulfillmentServices.reject#TransferOrder` post-service | `ShopifyToReservationReleaseSyncHistory` | Cancel the related Shopify transfer or remove remaining quantities from the sellable route | OMS cancels reservation and moves the item to `REJECTED_ITM_PARKING`; Shopify should restore sellable stock at the original mapped location |
-| SO reject or SO cancel before shipment | `co.hotwax.oms.order.OrderServices.reject#OrderItem` and sales-order cancel service boundary | `ShopifySalesReservationReleaseSyncHistory` | Reverse the earlier reservation delta so facility `available` increases | This is required when OMS owned the reservation that reduced Shopify inventory |
-
-## Cancellation And Rejection Behavior
-
-### Transfer Order Cancel
-
-OMS transfer order cancel already reverts reservation before shipment starts.
-
-The cancel service:
-
-- blocks cancel if shipment is packed or shipped
-- blocks cancel if any receipt already exists
-- cancels reservation for each TO item
-- moves item status to `ITEM_CANCELLED`
-
-So the Shopify side must reverse the reservation effect already posted earlier. That means restoring origin sellable inventory, not creating a new shipment flow.
-
-### Transfer Order Reject
-
-OMS transfer order reject already cancels reservation before shipment starts.
-
-The reject service:
-
-- blocks reject if fulfillment already started
-- rejects all items together
-- calls `reject#OrderItem`
-- `reject#OrderItem` cancels reservation on the original facility
-- then moves the item to `REJECTED_ITM_PARKING`
-
-For Shopify, the important impact is the release of origin sellable reservation. The rejected virtual facility does not need a Shopify mirror unless the business explicitly maps such a facility to Shopify, which is not the normal case.
-
-### Sales Order Reject Or Cancel
-
-OMS sales order reject and cancel also release reservation.
-
-The sales order cancel path calls `reject#OrderItem`, and `reject#OrderItem` cancels reservation on the original facility before reallocating to the reject facility.
-
-For Shopify, when OMS owned the reservation, the facility that lost ATP earlier must gain it back on reject or cancel.
+| TO cancel before shipment or receipt | `co.hotwax.orderledger.order.TransferOrderServices.cancel#TransferOrder` post-service | `ShopifyToReservationReleaseSyncHistory` | Cancel the related Shopify transfer or remove remaining draft or ready quantities so origin `available` is restored | Use this only to reverse inventory already deducted on Shopify by the earlier reservation delta; OMS blocks TO cancel once shipment or receipt has started |
+| TO reject before shipment | `co.hotwax.poorti.TransferOrderFulfillmentServices.reject#TransferOrder` post-service | `ShopifyToReservationReleaseSyncHistory` | Cancel the related Shopify transfer or remove remaining quantities from the sellable route | Use this only to reverse inventory already deducted on Shopify by the earlier reservation delta; OMS reject also cancels reservation and moves the item to `REJECTED_ITM_PARKING` |
+| SO cancel before shipment | `co.hotwax.orderledger.order.OrderServices.cancel#SalesOrderItem` post-service | `ShopifySalesReservationReleaseSyncHistory` | Reverse the earlier reservation delta so facility `available` increases | Use this when OMS owned the reservation that had already reduced Shopify ATP |
+| SO reject before shipment | `co.hotwax.oms.order.OrderServices.reject#OrderItem` post-service | `ShopifySalesReservationReleaseSyncHistory` | Reverse the earlier reservation delta so facility `available` increases | Use this when OMS owned the reservation that had already reduced Shopify ATP |
 
 ## Shopify Workflow By Lane
 
@@ -229,17 +193,3 @@ This lane does not hard reset Shopify. It remains delta-only.
 - The 15-minute batch is simple and bounded.
 - Recovery is based on missing or unsent history, not on rescanning all inventory ledger rows.
 - Each lane is independent, so TO receipt logic does not pollute store fulfillment or cycle count logic.
-
-## Recommended Initial Cut
-
-Implement first:
-
-1. TO reservation
-2. TO shipment
-3. TO receipt
-4. TO cancel or reject reversal
-5. Store fulfillment shipment
-6. SO cancel or reject reversal
-7. Cycle count and manual variance
-
-Add external reset delta once the baseline match and store setting guard are in place.
