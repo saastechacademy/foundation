@@ -2,191 +2,244 @@
 
 ## Purpose
 
-This document summarizes the OMS events that should drive Shopify inventory updates and recommends the lowest-load trigger boundary for each event.
+This document defines a simple event-driven design for keeping Shopify inventory aligned with OMS.
 
-The target design is event-based. OMS remains the system of record. Shopify is updated so store inventory stays usable during the day without relying on repeated full resets.
+OMS remains the system of record. Shopify is updated only to reflect inventory impact at mapped Shopify locations. The design is delta-based only. It does not use hard inventory reset during the day.
 
-## Executive Summary
+## Pre-Requisites
 
-The event model should be split into four lanes:
+- OMS and Shopify inventory levels must match before this design is enabled.
+- Sync must run only for product stores where a dedicated `ProductStoreSetting`, for example `SHOPIFY_INV_SYNC`, enables Shopify inventory sync.
+- If the product store setting is off, no trigger should create history and no batch should post inventory to Shopify.
+
+Without a matched starting baseline, a delta-only design will drift instead of converge.
+
+## Design Summary
+
+The model has four lanes:
 
 1. Store fulfillment events
 2. Transfer shipment events
 3. Inventory adjustment events
 4. External reset events
 
-Do not drive this from broad `InventoryItemDetail` or `Shipment` watches. Those entities are too generic and too noisy. Use the business event that actually changed inventory, queue a small outbox message, and let a dedicated Shopify feed service post the corresponding Shopify workflow.
+The design should work like this:
 
-For transfer orders, this means:
+1. A service SECA runs after the OMS business service completes.
+2. The SECA creates one row in a source-specific Shopify sync history entity.
+3. A batch service runs every 15 minutes.
+4. The batch finds history rows not yet sent to Shopify and posts the required Shopify delta workflow.
+5. The batch also finds source records for which history was never created and backfills the missing history rows before sending them.
 
-- create only the minimum Shopify `InventoryTransfer` records needed to support `InventoryShipment`
-- do not use Shopify to manage OMS transfer order lifecycle
-- use Shopify transfer and shipment APIs only to reproduce the inventory effect that OMS already decided
+This gives two layers of safety:
 
-## Recommended Trigger Model
+- primary event capture through service SECAs
+- recovery through the 15-minute batch
 
-Use one shared queue service and multiple small sender services.
+This design does not use `SystemMessage`.
 
-### Shared Queue
+## Core Principles
 
-- `queue#ShopifyInventoryEvent`
-- Inputs: `eventType`, `entityName`, `primaryKey`, `shopId`, `facilityId`, `eventDate`
-- Responsibility:
-  - create one outbox/system-message style event
-  - deduplicate by a deterministic key
-  - retry safely
-  - hand off to the correct sender service
+- OMS decides the business event.
+- Shopify receives only the inventory effect of that event.
+- Only deltas are posted to Shopify.
+- No daytime hard reset should be used for these flows.
+- Each trigger source gets its own sync history entity.
+- Batch posting reads from sync history first, not from raw ledger noise.
+- Transfer lifecycle is not mirrored in Shopify for business control. Transfer APIs are used only when Shopify requires them for inventory movement.
 
-### Sender Services
+## Sync Architecture
 
-- `send#ShopifyStoreFulfillmentEvent`
-- `send#ShopifyTransferShipmentOutEvent`
-- `send#ShopifyTransferReceiptInEvent`
-- `send#ShopifyInventoryAdjustmentEvent`
-- `send#ShopifyInventoryResetEvent`
+### Trigger Model
 
-This split is better than one large receiver because each lane has different source entities, grouping rules, and Shopify APIs.
+Use service SECAs on the OMS services that already represent the committed business boundary.
+
+Do not use a broad data feed on `InventoryItemDetail` or `Shipment`. Those are too generic and will create unnecessary load and ambiguity.
+
+### History Model
+
+Each trigger source should have its own history entity. Example split:
+
+| Source event | History entity |
+| --- | --- |
+| TO reservation at store | `ShopifyToReservationSyncHistory` |
+| TO outbound shipment | `ShopifyTransferShipmentSyncHistory` |
+| TO inbound receipt | `ShopifyTransferReceiptSyncHistory` |
+| Store fulfillment shipment | `ShopifyStoreFulfillmentSyncHistory` |
+| Cycle count or manual variance | `ShopifyInventoryAdjustmentSyncHistory` |
+| External reset delta | `ShopifyExternalResetSyncHistory` |
+| SO cancel or reject reservation release | `ShopifySalesReservationReleaseSyncHistory` |
+| TO cancel or reject reservation release | `ShopifyToReservationReleaseSyncHistory` |
+
+Each history row should store at least:
+
+- source business key
+- productStoreId
+- facilityId
+- shopId when resolved
+- event type
+- delta quantity payload or enough data to derive it
+- status such as `PENDING`, `SENT`, `FAILED`, `SKIPPED`
+- retry count
+- last error text
+- created date and sent date
+
+## Processing Flow
+
+```mermaid
+flowchart TD
+    A[OMS business service completes] --> B[SECA checks ProductStoreSetting]
+    B -->|sync disabled| C[Skip]
+    B -->|sync enabled| D[Create source-specific sync history row]
+    D --> E[15 minute batch]
+    E --> F[Backfill missing history rows]
+    F --> G[Read pending history rows]
+    G --> H[Build Shopify delta workflow]
+    H --> I[Post to Shopify]
+    I -->|success| J[Mark history SENT]
+    I -->|failure| K[Mark history FAILED for retry]
+```
+
+## Sequence View
+
+```mermaid
+sequenceDiagram
+    participant OMS as OMS Service
+    participant SECA as Service SECA
+    participant HIST as Sync History Entity
+    participant BATCH as 15 Min Batch
+    participant SHOP as Shopify
+
+    OMS->>SECA: business transaction committed
+    SECA->>SECA: check ProductStoreSetting
+    SECA->>HIST: create pending history row
+    BATCH->>HIST: find missing or pending rows
+    BATCH->>SHOP: post delta workflow
+    SHOP-->>BATCH: success or error
+    BATCH->>HIST: update SENT or FAILED
+```
 
 ## Trigger Matrix
 
-| OMS event | Recommended trigger boundary | Why this is the right trigger | Shopify workflow | Feed service behavior |
+| OMS event | SECA trigger boundary | Sync history entity | Shopify workflow | Notes |
 | --- | --- | --- | --- | --- |
-| Store-origin TO reservation reduces ATP | `co.hotwax.oms.impl.OrderReservationServices.process#OrderItemAllocation` after commit, only for transfer orders originating from stores | This is the exact point where OMS reserves sellable inventory for the TO | Create or update a Shopify `InventoryTransfer` and move it to `READY_TO_SHIP` so Shopify origin `available` decreases and `reserved` increases | Build one transfer payload per OMS TO and store route, resolve origin and destination Shopify locations, aggregate line quantities by `inventoryItemId`, create draft transfer if needed, then mark ready to ship |
-| Store-origin TO shipment reduces QOH | `co.hotwax.poorti.TransferOrderFulfillmentServices.ship#TransferOrderShipment` post-service | This service creates `ItemIssuance`, writes `InventoryItemDetail.quantityOnHandDiff = -qty`, and marks the shipment `SHIPMENT_SHIPPED` | Ensure prerequisite `InventoryTransfer` exists, create Shopify `InventoryShipment`, then mark shipment in transit | Read the shipped OMS transfer shipment, map order items to Shopify inventory items, create the shipment against the transfer, push tracking if available, and mark in transit so Shopify origin `on_hand` drops and destination `incoming` rises |
-| TO receipt into store increases ATP and QOH | `ShipmentReceipt` create or update, grouped by `shipmentId + datetimeReceived + facilityId` | Receipt quantity is stored on `ShipmentReceipt`, not on a single shipment status transition | `inventoryShipmentReceive` against the existing Shopify shipment | Group shipment-backed receipts from the same receiving session, sum by `shipmentItemId`, and post receipt quantities to Shopify; if OMS creates receipt rows without shipment linkage, keep them in exception handling because Shopify cannot receive against a transfer item without a shipment line |
-| Online order shipped from store | `co.hotwax.poorti.FulfillmentServices.ship#Shipment` post-service | This is the point where OMS issues stock and marks the shipment shipped | First move the Shopify Fulfillment Order to the actual shipping store when needed, then create the Shopify fulfillment | Resolve Shopify order and fulfillment order, compare assigned location with actual OMS shipping facility, call Fulfillment Order move when the store differs, then create the fulfillment with tracking |
-| External POS sale or non-Shopify-origin sale reduces ATP or QOH | A dedicated sales posting boundary, not Shopify fulfillment | There is no Shopify order or fulfillment order to absorb this inventory change | Use `inventoryAdjustQuantities` as an inventory-only correction path | For final sale, reduce `available` and `on_hand`; for reservation-only behavior, reduce `available` only; do not do this for Shopify POS orders because Shopify already owns those reservations and fulfillments |
-| Cycle count or approved manual variance changes ATP and QOH | `co.hotwax.cycleCount.InventoryCountServices.create#PhysicalInventory` when `decisionOutcomeEnumId = APPLIED`, or an outbox event on created `PhysicalInventory` / `InventoryItemVariance` | This is the business-approved inventory correction point | `inventoryAdjustQuantities` | Post the applied variance to Shopify for the mapped location and inventory item; when OMS changed both ATP and QOH together, send both quantity-state adjustments; manual variance should use this same lane |
-| External authoritative reset from ERP, WMS, or NetSuite | `reset#InventoryItem` result or `create#ExternalInventoryReset` completion | This is the authoritative reconciliation boundary | Absolute set workflow using Shopify inventory set mutations, not transfer or fulfillment APIs | Resolve the final authoritative quantities and set them in Shopify; use delta mutations only when the external source explicitly sends deltas, otherwise use set-style mutations so Shopify lands on the same truth as OMS |
+| Store-origin TO reservation reduces ATP | `co.hotwax.oms.impl.OrderReservationServices.process#OrderItemAllocation` after commit, only for transfer orders originating from stores | `ShopifyToReservationSyncHistory` | Create or update a minimal Shopify `InventoryTransfer` and move it to `READY_TO_SHIP` so origin `available` decreases and `reserved` increases | This is needed only because Shopify cannot create `InventoryShipment` without `InventoryTransfer` |
+| Store-origin TO outbound shipment reduces QOH | `co.hotwax.poorti.TransferOrderFulfillmentServices.ship#TransferOrderShipment` post-service | `ShopifyTransferShipmentSyncHistory` | Create `InventoryShipment`, then mark it in transit | This reproduces origin `on_hand` reduction and destination `incoming` increase |
+| TO inbound receipt into store increases ATP and QOH | `ShipmentReceipt` create or update, grouped by `shipmentId + datetimeReceived + facilityId` | `ShopifyTransferReceiptSyncHistory` | `inventoryShipmentReceive` | Receipt must be shipment-backed for Shopify; non-shipment OMS receipts stay in exception handling |
+| Online order shipped from store | `co.hotwax.poorti.FulfillmentServices.ship#Shipment` post-service | `ShopifyStoreFulfillmentSyncHistory` | Move Fulfillment Order to actual store when needed, then create fulfillment | This ensures Shopify applies fulfillment against the actual shipping store |
+| External POS sale or non-Shopify sale reduces inventory | dedicated sales posting service boundary | `ShopifyInventoryAdjustmentSyncHistory` | `inventoryAdjustQuantities` | Use only when Shopify is not already the system that created the sale |
+| Cycle count or approved manual variance changes QOH and ATP | `co.hotwax.cycleCount.InventoryCountServices.create#PhysicalInventory` when variance is applied | `ShopifyInventoryAdjustmentSyncHistory` | `inventoryAdjustQuantities` | Manual variance follows the same lane |
+| External reset accepted by OMS | `reset#InventoryItem` or `create#ExternalInventoryReset` completion | `ShopifyExternalResetSyncHistory` | `inventoryAdjustQuantities` using computed delta only | Even this lane stays delta-based after OMS computes the difference |
+| TO cancel before shipment or receipt | `co.hotwax.orderledger.order.TransferOrderServices.cancel#TransferOrder` post-service | `ShopifyToReservationReleaseSyncHistory` | Cancel the related Shopify transfer or remove remaining draft-ready quantities so origin `available` is restored | OMS cancels reservation before item status moves to `ITEM_CANCELLED` |
+| TO reject before shipment | `co.hotwax.poorti.TransferOrderFulfillmentServices.reject#TransferOrder` post-service | `ShopifyToReservationReleaseSyncHistory` | Cancel the related Shopify transfer or remove remaining quantities from the sellable route | OMS cancels reservation and moves the item to `REJECTED_ITM_PARKING`; Shopify should restore sellable stock at the original mapped location |
+| SO reject or SO cancel before shipment | `co.hotwax.oms.order.OrderServices.reject#OrderItem` and sales-order cancel service boundary | `ShopifySalesReservationReleaseSyncHistory` | Reverse the earlier reservation delta so facility `available` increases | This is required when OMS owned the reservation that reduced Shopify inventory |
 
-## Why These Trigger Boundaries Are Lower Load
+## Cancellation And Rejection Behavior
 
-### Do Not Watch `Shipment`
+### Transfer Order Cancel
 
-`Shipment` changes for many reasons that do not all require Shopify inventory updates:
+OMS transfer order cancel already reverts reservation before shipment starts.
 
-- creation
-- package changes
-- route segment changes
-- tracking updates
-- status changes
+The cancel service:
 
-A broad `Shipment` feed would create unnecessary reads and false positives.
+- blocks cancel if shipment is packed or shipped
+- blocks cancel if any receipt already exists
+- cancels reservation for each TO item
+- moves item status to `ITEM_CANCELLED`
 
-### Use `ShipmentReceipt` For Inbound TO Inventory
+So the Shopify side must reverse the reservation effect already posted earlier. That means restoring origin sellable inventory, not creating a new shipment flow.
 
-Inbound transfer receipt should not be driven only from `receive#TransferOrder` or from `ShipmentStatus`.
+### Transfer Order Reject
 
-OMS receiving can:
+OMS transfer order reject already cancels reservation before shipment starts.
 
-- split one receiving action across multiple shipments
-- receive at item level
-- create over-receipt rows without shipment linkage
-- stamp all rows from one receiving session with the same `datetimeReceived`
+The reject service:
 
-That means `ShipmentReceipt` is the durable source for inbound quantity, and `shipmentId + datetimeReceived + facilityId` is the correct grouping key for Shopify receipt posting.
+- blocks reject if fulfillment already started
+- rejects all items together
+- calls `reject#OrderItem`
+- `reject#OrderItem` cancels reservation on the original facility
+- then moves the item to `REJECTED_ITM_PARKING`
 
-### Use Post-Service Or Tx-Commit Boundaries For Outbound Events
+For Shopify, the important impact is the release of origin sellable reservation. The rejected virtual facility does not need a Shopify mirror unless the business explicitly maps such a facility to Shopify, which is not the normal case.
 
-For outbound TO shipment and sales shipment, the correct event happens only after OMS has already written the issuance and inventory ledger entries. That keeps Shopify sync aligned with committed OMS state and avoids duplicate or premature calls.
+### Sales Order Reject Or Cancel
+
+OMS sales order reject and cancel also release reservation.
+
+The sales order cancel path calls `reject#OrderItem`, and `reject#OrderItem` cancels reservation on the original facility before reallocating to the reject facility.
+
+For Shopify, when OMS owned the reservation, the facility that lost ATP earlier must gain it back on reject or cancel.
 
 ## Shopify Workflow By Lane
 
-### 1. Store Fulfillment Events
+### 1. Store Fulfillment Lane
 
-Use this for online orders shipped from stores.
+Use this for online orders fulfilled from a retail store.
 
 Workflow:
 
-1. Find the Shopify order and open fulfillment orders.
-2. Identify the actual shipping store from OMS.
+1. Resolve the Shopify order and open fulfillment orders.
+2. Resolve the actual shipping facility in OMS.
 3. If Shopify assigned a different location, move the fulfillment order to the actual store.
 4. Create the Shopify fulfillment from that store.
 
-This is the correct Shopify equivalent because store-shipped orders should be fulfilled against the actual retail location that issued the inventory.
-
-### 2. Transfer Shipment Events
+### 2. Transfer Shipment Lane
 
 Use this for store to warehouse, warehouse to store, and store to store transfer movement.
 
 Workflow:
 
-1. On reservation, create the minimum Shopify `InventoryTransfer` representation and move it to `READY_TO_SHIP` when OMS has reserved ATP that Shopify must reflect.
-2. On ship, create `InventoryShipment` from the transfer and mark it in transit.
-3. On receive, call `inventoryShipmentReceive`.
+1. On OMS reservation, create the minimum `InventoryTransfer` needed for Shopify inventory reservation.
+2. On OMS ship, create `InventoryShipment` and mark it in transit.
+3. On OMS receive, call `inventoryShipmentReceive`.
+4. On OMS cancel or reject before ship, cancel or shrink the Shopify transfer so reserved stock is released.
 
-This is the cleanest Shopify equivalent available today because Shopify does not allow `InventoryShipment` without `InventoryTransfer`.
+### 3. Inventory Adjustment Lane
 
-### 3. Inventory Adjustment Events
+Use this for:
 
-Use this for cycle count and approved manual correction.
+- cycle count
+- manual variance
+- external POS sale when Shopify did not create the sale
+- reservation release adjustments when a compensation delta is simpler than a transfer cancellation
 
 Workflow:
 
-1. Read the approved variance from OMS.
-2. Resolve the Shopify inventory item and location.
+1. Resolve location and inventory item.
+2. Build delta quantity change.
 3. Post `inventoryAdjustQuantities`.
 
-Use this when the business action is a correction, not a shipment or fulfillment.
+### 4. External Reset Lane
 
-### 4. External Reset Events
-
-Use this when an external system is the source of truth and OMS has already accepted the reconciliation.
+Use this when an external system sends a new truth to OMS and OMS computes a difference.
 
 Workflow:
 
-1. Read the final authoritative quantity after `reset#InventoryItem` or `create#ExternalInventoryReset`.
-2. Resolve the Shopify inventory item and location.
-3. Set Shopify to the final target quantity using set-style inventory mutations.
+1. OMS computes the delta.
+2. Store the delta in reset sync history.
+3. Post only the delta to Shopify.
 
-This lane should not reuse transfer or fulfillment APIs because the business event is reconciliation, not movement.
+This lane does not hard reset Shopify. It remains delta-only.
 
-## Transfer-Specific Notes
+## Why This Model Is Lower Load
 
-Live Shopify transfer testing proved the following behavior:
-
-- Shopify cannot create `InventoryShipment` without `InventoryTransfer`
-- `READY_TO_SHIP` reduces origin `available` and increases origin `reserved`
-- marking shipment in transit reduces origin `on_hand` and increases destination `incoming`
-- receiving increases destination `available` and decreases destination `incoming`
-
-That means the minimum Shopify flow needed to reproduce OMS transfer inventory is:
-
-1. reserve using `InventoryTransfer` in ready state when OMS reservation must affect Shopify ATP
-2. ship using `InventoryShipment`
-3. receive using `inventoryShipmentReceive`
-
-## Implementation Notes
-
-- Prefer service ECAs or tx-commit hooks for outbound reservation and shipment events.
-- Prefer `ShipmentReceipt`-driven feeds for inbound transfer receipt.
-- Keep one idempotency key per business event, not per retry.
-- If event-based posting fails, replay from the outbox. Do not fall back first to broad polling of `InventoryItemDetail`.
-- Scheduled recovery can exist as a safety net, but it should read failed outbox events, not re-derive all business changes from scratch.
+- SECAs fire only when the real OMS business service succeeds.
+- History rows isolate Shopify sync from the transactional service path.
+- The 15-minute batch is simple and bounded.
+- Recovery is based on missing or unsent history, not on rescanning all inventory ledger rows.
+- Each lane is independent, so TO receipt logic does not pollute store fulfillment or cycle count logic.
 
 ## Recommended Initial Cut
 
-Implement these three triggers first:
+Implement first:
 
-1. `process#OrderItemAllocation` for store-origin transfer reservation
-2. `ship#TransferOrderShipment` for outbound transfer shipment
-3. `ShipmentReceipt` create or update for inbound transfer receipt
+1. TO reservation
+2. TO shipment
+3. TO receipt
+4. TO cancel or reject reversal
+5. Store fulfillment shipment
+6. SO cancel or reject reversal
+7. Cycle count and manual variance
 
-Then add:
-
-4. `ship#Shipment` for store fulfillment of online orders
-5. `create#PhysicalInventory` for cycle count and manual variance
-6. `reset#InventoryItem` or `create#ExternalInventoryReset` for authoritative resets
-
-This gives the shortest path to reducing daytime inventory drift on Shopify while keeping OMS as the only system that owns the business process.
-
-## References
-
-- `runtime/component/oms/service/co/hotwax/oms/impl/OrderReservationServices.xml`
-- `runtime/component/oms/service/co/hotwax/orderledger/order/TransferOrderServices.xml`
-- `runtime/component/poorti/service/co/hotwax/poorti/TransferOrderFulfillmentServices.xml`
-- `runtime/component/poorti/service/co/hotwax/poorti/FulfillmentServices.xml`
-- `runtime/component/poorti/service/co/hotwax/cycleCount/InventoryCountServices.xml`
-- `project-ideas/fulfillment-center-mgmt/inventory-mgmt/reset_inventory_item_spec.md`
-- `project-ideas/fulfillment-center-mgmt/inventory-mgmt/external_inventory_reset_design.md`
-- Shopify Admin GraphQL: `inventoryTransferCreate`, `inventoryTransferMarkAsReadyToShip`, `inventoryShipmentCreate`, `inventoryShipmentMarkInTransit`, `inventoryShipmentReceive`, `inventoryAdjustQuantities`, `inventorySetQuantities`, `fulfillmentOrderMove`, `fulfillmentCreate`
+Add external reset delta once the baseline match and store setting guard are in place.
