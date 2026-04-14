@@ -6,15 +6,12 @@ Build a resource‑friendly batch job that reads the ~100 k‑line Shopify pro
 ---
 
 ## 2. End‑to‑End Flow (per run)
-1. **Stream read JSONL** → one line at a time (Jackson `ObjectReader`).
-2. **Group by parent product** (Shopify `product.id`).
-3. After each parent boundary or at EOF:
+1. For each Product:
    - Compute **variantSetHash** (SHA‑256 of sorted variant IDs).
    - Quick‑skip if hash unchanged since last run.
    - Otherwise build `added` / `removed` sets and field‑level diffs.
    - Persist one row in `ProductUpdateHistory`.
    - Upsert baseline row in `ProductUpdateHistory`.
-4. Commit every **250 parents**, optionally sleep 20 ms when `SystemProperty.sync.lowPriority=Y` (Not yet implemented).
 
 ---
 
