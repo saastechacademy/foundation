@@ -26,10 +26,10 @@ The model has four lanes:
 The design should work like this:
 
 1. A service SECA runs after the OMS business service completes.
-2. The SECA creates one row in a source-specific Shopify sync history entity.
+2. The SECA does not create history. It only marks the source event as eligible for sync by virtue of the source record existing.
 3. A batch service runs every 15 minutes.
-4. The batch finds history rows not yet sent to Shopify and posts the required Shopify delta workflow.
-5. The batch also finds source records for which history was never created and backfills the missing history rows before sending them.
+4. The batch finds source records for which no success history exists and posts the required Shopify delta workflow.
+5. A history row is written only after the Shopify call succeeds.
 
 This gives two layers of safety:
 
@@ -44,8 +44,8 @@ This design does not use `SystemMessage`.
 - Shopify receives only the inventory effect of that event.
 - Only deltas are posted to Shopify.
 - No daytime hard reset should be used for these flows.
-- Each trigger source gets its own sync history entity.
-- Batch posting reads from sync history first, not from raw ledger noise.
+- Each trigger source gets its own sync history entity, but history is success-only.
+- If no history exists for a source record, it is treated as not yet synced.
 - Transfer lifecycle is not mirrored in Shopify for business control. Transfer APIs are used only when Shopify requires them for inventory movement.
 
 ## Sync Architecture
@@ -79,10 +79,10 @@ Each history row should store at least:
 - shopId when resolved
 - event type
 - delta quantity payload or enough data to derive it
-- status such as `PENDING`, `SENT`, `FAILED`, `SKIPPED`
-- retry count
-- last error text
-- created date and sent date
+- Shopify reference created by the successful call when relevant
+- sent date
+
+No history row should be written for failed or skipped attempts. Absence of history means the source record is still unsynced.
 
 ## Processing Flow
 
@@ -90,14 +90,13 @@ Each history row should store at least:
 flowchart TD
     A[OMS business service completes] --> B[SECA checks ProductStoreSetting]
     B -->|sync disabled| C[Skip]
-    B -->|sync enabled| D[Create source-specific sync history row]
+    B -->|sync enabled| D[Leave source record available for batch pickup]
     D --> E[15 minute batch]
-    E --> F[Backfill missing history rows]
-    F --> G[Read pending history rows]
-    G --> H[Build Shopify delta workflow]
-    H --> I[Post to Shopify]
-    I -->|success| J[Mark history SENT]
-    I -->|failure| K[Mark history FAILED for retry]
+    E --> F[Find source records with no success history]
+    F --> G[Build Shopify delta workflow]
+    G --> H[Post to Shopify]
+    H -->|success| I[Create success history row]
+    H -->|failure| J[No history written]
 ```
 
 ## Sequence View
@@ -112,11 +111,11 @@ sequenceDiagram
 
     OMS->>SECA: business transaction committed
     SECA->>SECA: check ProductStoreSetting
-    SECA->>HIST: create pending history row
-    BATCH->>HIST: find missing or pending rows
+    SECA-->>BATCH: source record remains eligible
+    BATCH->>HIST: find source records with no success history
     BATCH->>SHOP: post delta workflow
     SHOP-->>BATCH: success or error
-    BATCH->>HIST: update SENT or FAILED
+    BATCH->>HIST: create row only on success
 ```
 
 ## Trigger Matrix
@@ -191,5 +190,5 @@ This lane does not hard reset Shopify. It remains delta-only.
 - SECAs fire only when the real OMS business service succeeds.
 - History rows isolate Shopify sync from the transactional service path.
 - The 15-minute batch is simple and bounded.
-- Recovery is based on missing or unsent history, not on rescanning all inventory ledger rows.
+- Recovery is based on missing success history, not on rescanning all inventory ledger rows.
 - Each lane is independent, so TO receipt logic does not pollute store fulfillment or cycle count logic.
