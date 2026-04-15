@@ -15,7 +15,7 @@ This implementation covers these lanes:
 1. Transfer shipment
 2. Transfer receipt
 3. Store fulfillment shipment
-4. Inventory adjustment for cycle count, manual variance, external POS sale, and `_NA_` accumulated inventory reset delta
+4. Inventory adjustment for cycle count, manual variance, external POS sale, and `_NA_` accumulated inventory reset delta from `ExternalInventoryReset`
 
 Reservation sync is intentionally not included in phase 1. For sales orders, Shopify inventory should change when the POS/store shipment is issued, not when OMS reservation happens.
 
@@ -170,9 +170,24 @@ This service should be reused for:
 - cycle count
 - manual variance
 - external POS sale where Shopify did not create the sale
-- `_NA_` accumulated inventory reset delta after OMS computes the difference
+- `_NA_` accumulated inventory reset delta from the created `ExternalInventoryReset` record
 
-### 7. Logging Service
+### 7. External Reset Sync Service
+
+Suggested role:
+
+- `sync#ExternalInventoryResetToShopify`
+
+Responsibility:
+
+- read the created `ExternalInventoryReset` record by `resetItemId`
+- process only `_NA_` facility reset records for accumulated inventory
+- use `quantityOnHandDiff` and `availableToPromiseDiff` from the reset record as the Shopify delta source
+- call `inventoryAdjustQuantities`
+
+`reset#InventoryItem` should not be the sync source. It computes diffs and calls `create#ExternalInventoryReset`; the durable reset row is the event that should drive Shopify posting.
+
+### 8. Logging Service
 
 Suggested role:
 
@@ -221,7 +236,7 @@ The `SECA` should not:
 | `ShipmentReceipt` create or update support service | `post-service` or entity hook wrapper | `sync#TransferReceiptToShopify` |
 | `co.hotwax.poorti.FulfillmentServices.ship#Shipment` | `post-service` | `sync#StoreFulfillmentToShopify` |
 | `co.hotwax.cycleCount.InventoryCountServices.create#PhysicalInventory` | `post-service` | `sync#InventoryAdjustmentToShopify` |
-| `reset#InventoryItem` or `create#ExternalInventoryReset` for `_NA_` facility | `post-service` | `sync#InventoryAdjustmentToShopify` |
+| `create#ExternalInventoryReset` for `_NA_` facility | `post-service` | `sync#ExternalInventoryResetToShopify` |
 
 ## Failure Handling
 

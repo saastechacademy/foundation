@@ -77,7 +77,7 @@ sequenceDiagram
 | Online order shipped from store | `co.hotwax.poorti.FulfillmentServices.ship#Shipment` post-service | `sync#StoreFulfillmentToShopify` | Move Fulfillment Order to actual store when needed, then create fulfillment | This ensures Shopify applies fulfillment against the actual shipping store |
 | External POS sale or non-Shopify sale reduces inventory | dedicated sales posting or issuance boundary | `sync#InventoryAdjustmentToShopify` | `inventoryAdjustQuantities` | Use only when Shopify is not already the system that created the sale; Shopify POS orders are already handled by Shopify |
 | Cycle count or approved manual variance changes QOH and ATP | `co.hotwax.cycleCount.InventoryCountServices.create#PhysicalInventory` when variance is applied | `sync#InventoryAdjustmentToShopify` | `inventoryAdjustQuantities` | Manual variance follows the same lane |
-| `_NA_` facility reset for accumulated inventory | `reset#InventoryItem` or `create#ExternalInventoryReset` completion for `_NA_` facility | `sync#InventoryAdjustmentToShopify` | `inventoryAdjustQuantities` using computed delta only | This is for accumulated inventory pushed through `_NA_`; store-level POS inventory should still be event-driven by shipment, receipt, and correction events |
+| `_NA_` facility reset for accumulated inventory | `create#ExternalInventoryReset` completion, using the created `ExternalInventoryReset` record as the source | `sync#ExternalInventoryResetToShopify` | `inventoryAdjustQuantities` using `quantityOnHandDiff` and `availableToPromiseDiff` from the reset record | `reset#InventoryItem` computes diffs, but the Shopify sync source should be the durable `ExternalInventoryReset` row created for `_NA_`; store-level POS inventory should still be event-driven by shipment, receipt, and correction events |
 
 ## Shopify Workflow By Lane
 
@@ -111,7 +111,7 @@ Use this for:
 - cycle count
 - manual variance
 - external POS sale when Shopify did not create the sale
-- external reset delta for `_NA_` accumulated inventory after OMS computes the difference
+- external reset delta for `_NA_` accumulated inventory from the created `ExternalInventoryReset` record
 
 Workflow:
 
