@@ -6,17 +6,18 @@ This document describes a phase 1 implementation for Shopify inventory sync with
 
 The goal is to keep the implementation small, understandable, and close to the real OMS business events.
 
+The implementation manages Shopify inventory only for POS/store locations that exist in Shopify. Non-Shopify facilities are out of scope, except the `_NA_` facility reset path used for accumulated inventory.
+
 ## Scope
 
 This implementation covers these lanes:
 
-1. Transfer reservation from store
-2. Transfer shipment
-3. Transfer receipt
-4. Transfer cancel or reject reversal
-5. Store fulfillment shipment
-6. Sales reservation release on cancel or reject
-7. Inventory adjustment for cycle count, manual variance, external POS sale, and external reset delta
+1. Transfer shipment
+2. Transfer receipt
+3. Store fulfillment shipment
+4. Inventory adjustment for cycle count, manual variance, external POS sale, and `_NA_` accumulated inventory reset delta
+
+Reservation sync is intentionally not included in phase 1. For sales orders, Shopify inventory should change when the POS/store shipment is issued, not when OMS reservation happens.
 
 ## What Phase 1 Does Not Add
 
@@ -44,10 +45,8 @@ classDiagram
       +route to lane helper
     }
     class TransferSyncService {
-      +sync reservation
       +sync shipment
       +sync receipt
-      +sync release
     }
     class FulfillmentSyncService {
       +sync store fulfillment
@@ -113,7 +112,7 @@ Responsibility:
 
 - resolve `shopId`
 - resolve Shopify Admin config
-- resolve OMS facility to Shopify location
+- resolve OMS POS/store facility to Shopify location
 - resolve OMS product to Shopify inventory item
 - fail fast if required mapping is missing
 
@@ -123,21 +122,14 @@ This service should be shared by all lanes.
 
 Suggested roles:
 
-- `sync#TransferReservationToShopify`
 - `sync#TransferShipmentToShopify`
 - `sync#TransferReceiptToShopify`
-- `sync#TransferReservationReleaseToShopify`
 
 Responsibilities:
 
-`sync#TransferReservationToShopify`
-- build one transfer payload from OMS reserved quantities
-- create or update the minimum Shopify `InventoryTransfer`
-- move the transfer to `READY_TO_SHIP`
-
 `sync#TransferShipmentToShopify`
 - find the shipped OMS transfer shipment
-- ensure the prerequisite Shopify transfer exists
+- create the prerequisite Shopify transfer if needed
 - create `InventoryShipment`
 - set tracking when available
 - mark shipment in transit
@@ -146,11 +138,6 @@ Responsibilities:
 - group receipt quantities by `shipmentId + datetimeReceived + facilityId`
 - map to the correct Shopify shipment items
 - call `inventoryShipmentReceive`
-
-`sync#TransferReservationReleaseToShopify`
-- handle TO cancel and TO reject
-- reverse the sellable reservation effect already posted to Shopify
-- prefer cancelling or shrinking the transfer instead of using a generic adjustment when the transfer is still the correct carrier of the event
 
 ### 5. Store Fulfillment Sync Service
 
@@ -183,8 +170,7 @@ This service should be reused for:
 - cycle count
 - manual variance
 - external POS sale where Shopify did not create the sale
-- reservation release compensation when transfer cancellation is not the right representation
-- external reset delta after OMS computes the difference
+- `_NA_` accumulated inventory reset delta after OMS computes the difference
 
 ### 7. Logging Service
 
@@ -231,16 +217,11 @@ The `SECA` should not:
 
 | OMS service | SECA timing | Routed sync service |
 | --- | --- | --- |
-| `co.hotwax.oms.impl.OrderReservationServices.process#OrderItemAllocation` | `tx-commit` | `sync#TransferReservationToShopify` when the order is a store-origin TO |
 | `co.hotwax.poorti.TransferOrderFulfillmentServices.ship#TransferOrderShipment` | `post-service` | `sync#TransferShipmentToShopify` |
 | `ShipmentReceipt` create or update support service | `post-service` or entity hook wrapper | `sync#TransferReceiptToShopify` |
-| `co.hotwax.orderledger.order.TransferOrderServices.cancel#TransferOrder` | `post-service` | `sync#TransferReservationReleaseToShopify` |
-| `co.hotwax.poorti.TransferOrderFulfillmentServices.reject#TransferOrder` | `post-service` | `sync#TransferReservationReleaseToShopify` |
 | `co.hotwax.poorti.FulfillmentServices.ship#Shipment` | `post-service` | `sync#StoreFulfillmentToShopify` |
-| `co.hotwax.orderledger.order.OrderServices.cancel#SalesOrderItem` | `post-service` | `sync#SalesReservationReleaseToShopify` or `sync#InventoryAdjustmentToShopify` |
-| `co.hotwax.oms.order.OrderServices.reject#OrderItem` | `post-service` | `sync#SalesReservationReleaseToShopify` or `sync#InventoryAdjustmentToShopify` |
 | `co.hotwax.cycleCount.InventoryCountServices.create#PhysicalInventory` | `post-service` | `sync#InventoryAdjustmentToShopify` |
-| `reset#InventoryItem` or `create#ExternalInventoryReset` | `post-service` | `sync#InventoryAdjustmentToShopify` |
+| `reset#InventoryItem` or `create#ExternalInventoryReset` for `_NA_` facility | `post-service` | `sync#InventoryAdjustmentToShopify` |
 
 ## Failure Handling
 
@@ -281,6 +262,8 @@ Example: store-origin TO shipment
 - use adjustment mutations only for adjustment-style events
 - use transfer and shipment APIs only for actual transfer movement
 - do not mirror OMS lifecycle for control purposes in Shopify
+- skip non-Shopify facilities except the explicitly handled `_NA_` accumulated inventory reset path
+- do not implement reservation sync in phase 1
 
 ## Operational Note
 

@@ -6,11 +6,14 @@ This document defines the trigger points for a simple OMS to Shopify inventory s
 
 OMS remains the system of record. Shopify is updated only for the inventory effect of OMS events at mapped Shopify locations. The design is delta-based only. It does not use daytime hard reset.
 
+The scope is POS/store locations that exist in Shopify. Non-Shopify facilities are not part of this event sync.
+
 ## Pre-Requisites
 
 - OMS and Shopify inventory levels must match before this design is enabled.
 - Sync must run only for product stores where a dedicated `ProductStoreSetting`, for example `SHOPIFY_INV_SYNC`, enables Shopify inventory sync.
 - If the product store setting is off, the `SECA` must not attempt Shopify inventory sync.
+- Facility must map to a Shopify POS/store location before any store inventory delta is posted.
 
 Without a matched starting baseline, a delta-only design will drift instead of converge.
 
@@ -34,6 +37,7 @@ This design does not use `SystemMessage`. It also does not introduce sync histor
 - `SECA` is the primary integration trigger.
 - Failure handling is log-first in phase 1.
 - Transfer lifecycle is not mirrored in Shopify for business control. Transfer APIs are used only when Shopify requires them for inventory movement.
+- Phase 1 does not sync reservation events. Inventory is posted to Shopify when OMS creates the physical movement or correction event, such as shipment issuance, receipt, or cycle count variance.
 
 ## Processing Flow
 
@@ -68,17 +72,12 @@ sequenceDiagram
 
 | OMS event | SECA trigger boundary | Sync service | Shopify workflow | Notes |
 | --- | --- | --- | --- | --- |
-| Store-origin TO reservation reduces ATP | `co.hotwax.oms.impl.OrderReservationServices.process#OrderItemAllocation` after commit, only for transfer orders originating from stores | `sync#TransferReservationToShopify` | Create or update a minimal Shopify `InventoryTransfer` and move it to `READY_TO_SHIP` so origin `available` decreases and `reserved` increases | This exists only because Shopify cannot create `InventoryShipment` without `InventoryTransfer` |
 | Store-origin TO outbound shipment reduces QOH | `co.hotwax.poorti.TransferOrderFulfillmentServices.ship#TransferOrderShipment` post-service | `sync#TransferShipmentToShopify` | Create `InventoryShipment`, then mark it in transit | This reproduces origin `on_hand` reduction and destination `incoming` increase |
 | TO inbound receipt into store increases ATP and QOH | `ShipmentReceipt` create or update, grouped by `shipmentId + datetimeReceived + facilityId` | `sync#TransferReceiptToShopify` | `inventoryShipmentReceive` | Receipt must be shipment-backed for Shopify; non-shipment OMS receipts stay in exception handling |
 | Online order shipped from store | `co.hotwax.poorti.FulfillmentServices.ship#Shipment` post-service | `sync#StoreFulfillmentToShopify` | Move Fulfillment Order to actual store when needed, then create fulfillment | This ensures Shopify applies fulfillment against the actual shipping store |
-| External POS sale or non-Shopify sale reduces inventory | dedicated sales posting service boundary | `sync#InventoryAdjustmentToShopify` | `inventoryAdjustQuantities` | Use only when Shopify is not already the system that created the sale |
+| External POS sale or non-Shopify sale reduces inventory | dedicated sales posting or issuance boundary | `sync#InventoryAdjustmentToShopify` | `inventoryAdjustQuantities` | Use only when Shopify is not already the system that created the sale; Shopify POS orders are already handled by Shopify |
 | Cycle count or approved manual variance changes QOH and ATP | `co.hotwax.cycleCount.InventoryCountServices.create#PhysicalInventory` when variance is applied | `sync#InventoryAdjustmentToShopify` | `inventoryAdjustQuantities` | Manual variance follows the same lane |
-| External reset accepted by OMS | `reset#InventoryItem` or `create#ExternalInventoryReset` completion | `sync#InventoryAdjustmentToShopify` | `inventoryAdjustQuantities` using computed delta only | Even this lane stays delta-based after OMS computes the difference |
-| TO cancel before shipment or receipt | `co.hotwax.orderledger.order.TransferOrderServices.cancel#TransferOrder` post-service | `sync#TransferReservationReleaseToShopify` | Cancel the related Shopify transfer or remove remaining draft or ready quantities so origin `available` is restored | Use this only to reverse inventory already deducted on Shopify by the earlier reservation delta; OMS blocks TO cancel once shipment or receipt has started |
-| TO reject before shipment | `co.hotwax.poorti.TransferOrderFulfillmentServices.reject#TransferOrder` post-service | `sync#TransferReservationReleaseToShopify` | Cancel the related Shopify transfer or remove remaining quantities from the sellable route | Use this only to reverse inventory already deducted on Shopify by the earlier reservation delta |
-| SO cancel before shipment | `co.hotwax.orderledger.order.OrderServices.cancel#SalesOrderItem` post-service | `sync#SalesReservationReleaseToShopify` | Reverse the earlier reservation delta so facility `available` increases | Use this when OMS owned the reservation that had already reduced Shopify ATP |
-| SO reject before shipment | `co.hotwax.oms.order.OrderServices.reject#OrderItem` post-service | `sync#SalesReservationReleaseToShopify` | Reverse the earlier reservation delta so facility `available` increases | Use this when OMS owned the reservation that had already reduced Shopify ATP |
+| `_NA_` facility reset for accumulated inventory | `reset#InventoryItem` or `create#ExternalInventoryReset` completion for `_NA_` facility | `sync#InventoryAdjustmentToShopify` | `inventoryAdjustQuantities` using computed delta only | This is for accumulated inventory pushed through `_NA_`; store-level POS inventory should still be event-driven by shipment, receipt, and correction events |
 
 ## Shopify Workflow By Lane
 
@@ -99,10 +98,11 @@ Use this for store to warehouse, warehouse to store, and store to store transfer
 
 Workflow:
 
-1. On OMS reservation, create the minimum `InventoryTransfer` needed for Shopify inventory reservation.
-2. On OMS ship, create `InventoryShipment` and mark it in transit.
+1. On OMS ship, create the minimum `InventoryTransfer` needed to support Shopify `InventoryShipment`.
+2. Create `InventoryShipment` and mark it in transit.
 3. On OMS receive, call `inventoryShipmentReceive`.
-4. On OMS cancel or reject before ship, cancel or shrink the Shopify transfer so reserved stock is released.
+
+No reservation sync is included in phase 1.
 
 ### 3. Inventory Adjustment Lane
 
@@ -111,8 +111,7 @@ Use this for:
 - cycle count
 - manual variance
 - external POS sale when Shopify did not create the sale
-- reservation release adjustments when a compensation delta is simpler than a transfer cancellation
-- external reset delta after OMS computes the difference
+- external reset delta for `_NA_` accumulated inventory after OMS computes the difference
 
 Workflow:
 
