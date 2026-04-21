@@ -237,6 +237,11 @@ The API to [createTransferOrder](../oms/createTransferOrder.md) builds on the [c
 
 **NOTE**
 1. The Fulfillment App will list all TOs where Order is in ORDER_APPROVED status and Items are in ITEM_PENDING_FULFILL status so that they are eligible to be fulfilled in OMS.
+2. The API-specific details for TO fulfillment are maintained in:
+   - [Create Out Transfer Shipment](createOutTransferShipment.md)
+   - [Ship Out Transfer Shipment](shipOutTransferShipment.md)
+   - [Close Transfer Order Fulfillment](closeTransferOrderItemFulfillment.md)
+   - [Reject Transfer Order](rejectTransferOrder.md)
 
 ### Receive Transfer Order
 When a Transfer Order (TO) is shipped from one facility to another, the receiving facility must accurately receive the items against the original order. 
@@ -281,10 +286,12 @@ The system supports a variety of real-world receiving conditions, ensuring flexi
    - The system allows its receipt, marking it as an **unexpected item** without an `orderItemSeqId`.
 
 4. **Receive TO Item and Close**
-   - Item is fully received, and the system marks it as closed.
+   - The same `/receipts` API is used with `statusId = ITEM_COMPLETED`.
+   - Item is received and the system marks it as closed.
    - No further receipts will be accepted for that item.
 
 5. **Close Received TO Item (Even if Partial)**
+   - The same `/receipts` API is used with `statusId = ITEM_COMPLETED` and without additional quantity.
    - The receiver can choose to close a TO Item manually, even if the full quantity hasn’t been received.
    - This is useful when excess items will not be shipped or are considered lost.
 
@@ -292,7 +299,9 @@ The system supports a variety of real-world receiving conditions, ensuring flexi
 
 #### Implementation Details
 
-[ShipmentReceipt](receiveTransferOrder.md) records are created for the receipts recorded against the TO Items.
+The API-specific details for Transfer Order receiving are maintained in [Receive Transfer Order](receiveTransferOrder.md).
+`ShipmentReceipt` records are created for the receipts recorded against the TO Items.
+After receipt processing, OMS runs `checkCancelComplete#Order`, so the Transfer Order may move to `ORDER_COMPLETED` automatically based on the resulting item state.
 
 ##### Receiving Against TO Items, Not Shipments
 `ShipmentReceipt` records will be internally linked to `Shipment` IDs **if available**, to support:
