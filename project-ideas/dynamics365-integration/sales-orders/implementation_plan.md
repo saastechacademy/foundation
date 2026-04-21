@@ -29,8 +29,6 @@ To track synchronization events and map D365 external identifiers back to Moqui 
 ### Order Sync History
 Used to store the D365 Sales Order Number against the OMS Order ID upon successful creation in D365.
 
-> [!NOTE]
-> **TODO**: We are not using this entity for now since we are using `OrderIdentification` record to identify the sales order which is not sent from OMS to D365. Since we are using REST, once we receive the `salesOrderNumber`, we will create the `OrderIdentification` record.
 
 ```xml
 <entity entity-name="D365OrderSyncHistory" package="co.hotwax.d365.order">
@@ -104,7 +102,7 @@ Used to store the D365 Sales Order Number against the OMS Order ID upon successf
 
 To handle the complexity of Sales Order documents (Header + Lines) and D365's transactional constraints, the implementation follows a phased approach:
 
-#### Approach 1: OData with Idempotency (Current)
+#### Approach 1: OData with Idempotency
 Used for rapid implementation and standard entity compatibility.
 
 1. **Fetch Eligible Orders**: Query `D365EligibleSalesOrders` view.
@@ -119,7 +117,44 @@ Used for rapid implementation and standard entity compatibility.
         - **Sync**: Iterate items; if `orderItemSeqId` exists in D365, skip; otherwise `POST` to `/data/SalesOrderLinesV3`.
     - **Atomic Persistence**: Only after **all** lines succeed, create Moqui `OrderIdentification` (`D365_ORDER_ID`).
 
-#### Approach 2: Custom Service / SysOperation (Future)
+#### Approach 2: Data Import Package (Current)
+Used for larger volumes and asynchronous processing by bundling sales orders into a single Data Management Framework (DMF) package.
+
+1. **Fetch Eligible Orders**: Query `D365EligibleSalesOrders` view in batches (e.g., limit 100).
+2. **Customer Sync**: Create or verify customers synchronously via OData before bundling orders.
+3. **Generate Package**: Bundle the order data into the `SalesOrdersCompositeV4` XML schema (`SALESORDERHEADERV3ENTITY`, `SALESORDERLINEV2ENTITY`, `SALESORDERHEADERCHARGEV2ENTITY`). Generate `Manifest.xml` and `PackageHeader.xml`, and archive them into a zip file.
+4. **Blob Upload**: Call `GetAzureWriteUrl` to obtain an Azure Blob URL and `PUT` the zip file.
+5. **Import Automation**: Trigger `/data/DataManagementDefinitionGroups/Microsoft.Dynamics.DataEntities.ImportFromPackage` with the mapped Blob URL.
+
+**Currently Prepared Field Mappings (Data Package):**
+
+| Entity | XML Attribute | Mapping from OMS Entities |
+| :--- | :--- | :--- |
+| `SALESORDERHEADERV3ENTITY` | `CUSTOMERSORDERREFERENCE` | `orderId` |
+| `SALESORDERHEADERV3ENTITY` | `SALESORDERORIGINCODE` | `'Ecom'` |
+| `SALESORDERHEADERV3ENTITY` | `DELIVERYMODECODE` | `'Standard'` |
+| `SALESORDERHEADERV3ENTITY` | `ORDERINGCUSTOMERACCOUNTNUMBER` | D365 Customer account |
+| `SALESORDERHEADERV3ENTITY` | `INVOICECUSTOMERACCOUNTNUMBER` | D365 Customer account |
+| `SALESORDERHEADERV3ENTITY` | `CURRENCYCODE` | `currencyUomId` (default `USD`) |
+| `SALESORDERHEADERV3ENTITY` | `DELIVERYADDRESSNAME` | `PostalAddress.toName` |
+| `SALESORDERHEADERV3ENTITY` | `DELIVERYADDRESSDESCRIPTION` | `'OMS Ship To'` |
+| `SALESORDERHEADERV3ENTITY` | `DELIVERYADDRESSSTREET` | `address1` + `address2` |
+| `SALESORDERHEADERV3ENTITY` | `DELIVERYADDRESSCITY` | `city` |
+| `SALESORDERHEADERV3ENTITY` | `DELIVERYADDRESSSTATEID` | `stateProvinceGeoId` |
+| `SALESORDERHEADERV3ENTITY` | `DELIVERYADDRESSZIPCODE` | `postalCode` |
+| `SALESORDERHEADERV3ENTITY` | `DELIVERYADDRESSCOUNTRYREGIONID` | `countryGeoId` |
+| `SALESORDERLINEV2ENTITY` | `ITEMNUMBER` | `itemNumber` (default `1000`) |
+| `SALESORDERLINEV2ENTITY` | `LINEDISCOUNTAMOUNT` | Item Discount Amount |
+| `SALESORDERLINEV2ENTITY` | `LINENUMBER` | `orderItemSeqId` |
+| `SALESORDERLINEV2ENTITY` | `ORDEREDSALESQUANTITY` | `quantity` |
+| `SALESORDERLINEV2ENTITY` | `SALESPRICE` | `unitPrice` |
+| `SALESORDERLINEV2ENTITY` | `SHIPPINGWAREHOUSEID` | `shippingWarehouseId` |
+| `SALESORDERHEADERCHARGEV2ENTITY` | `FIXEDCHARGEAMOUNT` | Total calculated Shipping Cost |
+| `SALESORDERHEADERCHARGEV2ENTITY` | `SALESCHARGECODE` | `'FREIGHT'` |
+
+#### Approach 3: Custom Service / SysOperation (Future)
+**TODO:** This approach is not yet implemented.
+
 Designed for high-volume and guaranteed document atomicity.
 
 1. **Atomic Request**: Send a single nested JSON document (Header + Lines) to a custom X++ service.
@@ -143,13 +178,20 @@ Designed for high-volume and guaranteed document atomicity.
 | `DeliveryAddressStateId` | `stateProvinceGeoId` | State code (e.g., `CA`). |
 | `DeliveryAddressZipCode` | `postalCode` | |
 | `DeliveryAddressCountryRegionId` | `countryGeoId` | Standard 3-letter code (e.g., `USA`). |
+| **TODO** | `placedDate` | **TODO**: No direct field on `SalesOrderHeaderV4` for the original order placement date (`OrderCreationDateTime` is when created in D365). |
+| **TODO** | Shopify Order Id/Name | **TODO**: Haven't found a place in the OData payload to map Shopify identity strings. |
+| **TODO** | Ship-to Phone | **TODO**: Cannot find direct field on `SalesOrderHeaderV4` for shipping destination phone. |
 
 #### Line (`SalesOrderLinesV3`)
 | D365 Field | Moqui Field | Usage / Notes |
 | :--- | :--- | :--- |
 | `dataAreaId` | `ProductStore.externalId` | Legal entity context. |
 | `SalesOrderNumber` | `SalesOrderNumber` | Linked to Header. |
-| `ItemNumber` | `itemNumber` | D365 Product ID from `D365_PRODUCT_ID` Identification (defaults to '1000' currently). |
+| `ItemNumber` | `itemNumber` | **TODO**: Needs strict mapping to underlying `D365_PRODUCT_ID` via `ProductIdentification`. Currently defaults to '1000'. |
+| `ProductColorId` | **TODO** | **TODO**: Variant dimensions strictly needed by D365. Define storage in OMS (`ProductIdentification`) and map here. |
+| `ProductSizeId` | **TODO** | **TODO**: Variant dimension mapping. |
+| `ProductStyleId` | **TODO** | **TODO**: Variant dimension mapping. |
+| `ProductConfigurationId` | **TODO** | **TODO**: Variant dimension mapping. |
 | `LineNumber` | `orderItemSeqId` | Numeric sequence. |
 | `OrderedSalesQuantity` | `quantity` | |
 | `SalesPrice` | `unitPrice` | |
