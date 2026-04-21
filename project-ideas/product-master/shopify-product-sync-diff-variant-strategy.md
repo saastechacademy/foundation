@@ -6,15 +6,12 @@ Build a resource‑friendly batch job that reads the ~100 k‑line Shopify pro
 ---
 
 ## 2. End‑to‑End Flow (per run)
-1. **Stream read JSONL** → one line at a time (Jackson `ObjectReader`).
-2. **Group by parent product** (Shopify `product.id`).
-3. After each parent boundary or at EOF:
+1. For each Product:
    - Compute **variantSetHash** (SHA‑256 of sorted variant IDs).
    - Quick‑skip if hash unchanged since last run.
    - Otherwise build `added` / `removed` sets and field‑level diffs.
    - Persist one row in `ProductUpdateHistory`.
    - Upsert baseline row in `ProductUpdateHistory`.
-4. Commit every **250 parents**, optionally sleep 20 ms when `SystemProperty.sync.lowPriority=Y` (Not yet implemented).
 
 ---
 
@@ -159,16 +156,5 @@ Downstream loaders inspect `detailJson` only; no separate Y/N flags are required
 2. **Baseline storage** – reuse `ProductUpdateHistory` vs. new `ShopifyProductVariantSnapshot`?
 3. **Batch size & throttle** – 250 & 20 ms OK?
 4. **Downstream format** – is `detailJson` sufficient or need separate file export?
-
----
-
-## 7. Implementation To‑Dos
-- [ ] Extend `ProductUpdateHistory` (add `variantIdsCsv`, `variantSetHash`).
-- [ ] Patch flush logic in `transform#JsonLToJsonForUpdatedProducts`:
-  * compute variant set & hash
-  * skip or diff as per §2
-  * always refresh baseline row
-- [ ] Unit tests: no‑change, add variant, remove variant, add + remove.
-- [ ] Load & monitor metrics (`runtime/log/shopify-sync-metrics.json`).
 
 ---
