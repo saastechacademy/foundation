@@ -237,6 +237,17 @@ The API to [createTransferOrder](../oms/createTransferOrder.md) builds on the [c
 
 **NOTE**
 1. The Fulfillment App will list all TOs where Order is in ORDER_APPROVED status and Items are in ITEM_PENDING_FULFILL status so that they are eligible to be fulfilled in OMS.
+2. The API-specific details for TO fulfillment are maintained in:
+   - [Create Out Transfer Shipment](createOutTransferShipment.md)
+   - [Ship Out Transfer Shipment](shipOutTransferShipment.md)
+   - [Close Transfer Order Fulfillment](closeTransferOrderItemFulfillment.md)
+   - [Reject Transfer Order](rejectTransferOrder.md)
+3. OMS-managed fulfillment applies to:
+   - `Store to Store`
+   - `Store to Warehouse`
+4. NetSuite-managed fulfillment applies to:
+   - `Warehouse to Store`
+5. The NetSuite integration jobs and message types for these fulfillment flows are documented in [NetSuite Transfer Order Sync Design](../netsuite-integration/transfer-order/NetSuiteTransferOrderSyncDesign.md).
 
 ### Receive Transfer Order
 When a Transfer Order (TO) is shipped from one facility to another, the receiving facility must accurately receive the items against the original order. 
@@ -281,7 +292,7 @@ The system supports a variety of real-world receiving conditions, ensuring flexi
    - The system allows its receipt, marking it as an **unexpected item** without an `orderItemSeqId`.
 
 4. **Receive TO Item and Close**
-   - Item is fully received, and the system marks it as closed.
+   - Item is received and the system marks it as closed.
    - No further receipts will be accepted for that item.
 
 5. **Close Received TO Item (Even if Partial)**
@@ -292,7 +303,14 @@ The system supports a variety of real-world receiving conditions, ensuring flexi
 
 #### Implementation Details
 
-[ShipmentReceipt](receiveTransferOrder.md) records are created for the receipts recorded against the TO Items.
+The API-specific details for Transfer Order receiving are maintained in [Receive Transfer Order](receiveTransferOrder.md).
+`ShipmentReceipt` records are created for the receipts recorded against the TO Items.
+After receipt processing, OMS runs `checkCancelComplete#Order`, so the Transfer Order may move to `ORDER_COMPLETED` automatically based on the resulting item state.
+Receiving in OMS applies to:
+1. `Store to Store`
+2. `Warehouse to Store`
+
+The NetSuite integration jobs and message types for OMS receiving flows are documented in [NetSuite Transfer Order Sync Design](../netsuite-integration/transfer-order/NetSuiteTransferOrderSyncDesign.md).
 
 ##### Receiving Against TO Items, Not Shipments
 `ShipmentReceipt` records will be internally linked to `Shipment` IDs **if available**, to support:
@@ -335,6 +353,39 @@ This is the **default behavior** of the receive API and helps:
 
 1. According to current behavior, [rejectTransferOrder](rejectTransferOrder.md) if fulfilment has not been started i.e. no shipped or packed shipments exists for the TO.
 2. The complete TO will be rejected, no partial rejection will be handled as of now.
+
+### Transfer Order Integration with NetSuite
+
+The Transfer Order lifecycle spans three components:
+1. `mantle-netsuite-connector` for NetSuite feed import/export and mapping
+2. `oms` for Transfer Order creation and approval
+3. `poorti` for fulfillment, shipment creation/update, receiving, and receipt reconciliation
+
+NetSuite integration currently supports all three Transfer Order types:
+
+1. `Store to Store`
+   - Transfer Order is exported from NetSuite and created in OMS
+   - Approval happens in OMS
+   - Fulfillment happens in OMS
+   - Receiving happens in OMS
+   - Shipment and receipt updates are sent back to NetSuite
+
+2. `Store to Warehouse`
+   - Transfer Order is exported from NetSuite and created in OMS
+   - Approval happens in OMS
+   - Fulfillment happens in OMS
+   - Receiving happens outside OMS
+   - Shipment updates are sent back to NetSuite
+
+3. `Warehouse to Store`
+   - Transfer Order is exported from NetSuite and created in OMS
+   - Approval happens in OMS
+   - Fulfillment happens in NetSuite
+   - Fulfillment feed is imported into OMS to create shipments
+   - Receiving happens in OMS
+   - Receipt updates are sent back to NetSuite
+
+The detailed NetSuite lifecycle, System Message Types, Service Jobs, and NetSuite SuiteScript objects are documented in [NetSuite Transfer Order Sync Design](../netsuite-integration/transfer-order/NetSuiteTransferOrderSyncDesign.md).
 
 ## Receive Shipment
 
