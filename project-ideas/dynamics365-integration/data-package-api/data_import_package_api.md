@@ -19,27 +19,35 @@ The Data Import Package API follows these core steps:
 
 ---
 
-## 3. Example Implementation: Sales Order Sync
+## 4. Implemented Services Over D365 Data Package Import APIs
 
-Synchronizing Sales Orders from OMS to D365 using the `SalesOrdersCompositeV4` entity.
+The connector currently has the following generic implemented services over the D365 Data Package import APIs:
 
-### Phase 1: Outbound Sync (`sync#SalesOrdersDataPackage`)
+- **Generic poll service for import execution**
+  - Service: [D365DataPackageServices.poll#ImportDataPackageStatus](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml:216)
+  - Used by import polling service jobs to monitor D365 import execution ids stored as `SystemMessage` entity records
+- **Generic single-execution checker**
+  - Service: [D365DataPackageServices.check#ImportDataPackageStatus](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml:324)
+  - Checks one import execution id and updates the related `SystemMessage` entity record
+- **Generic execution error reader**
+  - Service: [D365DataPackageServices.get#ExecutionErrors](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml:372)
+  - Retrieves D365 DMF execution errors for a given import execution id
 
-1.  **Fetch Eligible Orders**: Batch records (e.g., 50 orders) from `co.hotwax.d365.order.D365EligibleSalesOrders`.
-2.  **Generate Payload**: Append order Header and Line data into an in-memory XML DOM representing `SalesOrdersCompositeV4.xml`.
-3.  **Create ZIP Package**: Archive the XML and manifest strings into a ZIP byte array.
-4.  **Submit to D365**:
-    *   Call `GetAzureWriteUrl` -> Get `BlobId`.
-    *   Upload ZIP -> `HTTP PUT`.
-    *   Call `ImportFromPackage(BlobId, definitionGroupId: 'SALES_ORDER_IMPORT')`.
+### 4.1 Import APIs Used
 
-### Phase 2: Result Polling
-Because Data Package imports are asynchronous, we decouple the result tracking:
-1.  **Query D365**: Periodically query the OData `SalesOrderHeadersV4` endpoint.
-2.  **Map Back**: Identify successful imports by matching the `CustomersOrderReference` (OMS ID) to the generated `SalesOrderNumber` (D365 ID) and update the local `OrderIdentification`.
+- `GetAzureWriteUrl` API
+- `ImportFromPackage` API
+- `GetExecutionSummaryStatus` API
+- `GetExecutionErrors` API
+
+### 4.2 Boundary of the Generic Layer
+
+- The generic services in [D365DataPackageServices.xml](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml) cover import-status polling and error retrieval after an import execution id already exists.
+- Package construction, ZIP upload, `ImportFromPackage` submission, tracking-entity updates, and any follow-up reconciliation remain consumer-flow responsibilities.
+- For the sales-order-specific implementation that uses these generic APIs, refer to [implementation_plan.md](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/foundation/project-ideas/dynamics365-integration/sales-orders/implementation_plan.md).
 
 ---
 
-## 4. Prerequisites
+## 5. Prerequisites
 *   **Permissions**: The App Registration requires Data Management privileges in D365 (**System administration > Setup > Microsoft Entra ID applications**).
 *   **Roles**: Assign the **Data management administrator** role or a custom role with DMF access to the integration user.
