@@ -54,9 +54,11 @@ For a clean "System of Record" integration, the recommended configuration is:
 - **Manual**: No (Auto-generate)
 - **Continuous**: No (unless legally required)
 
-#### 1.3.4 Sandbox Environment & Initial Phase
+#### 1.3.4 Dev Environment & Initial Phase
 > [!NOTE]
-> In our **Sandbox environment**, the `Customer account` sequence is currently set to **Manual**. Keeping in mind the initial one-way synchronization strategy, HotWax OMS will provide the `CustomerAccount` (mapped to HotWax `partyId`) in the integration payload.
+> In the current connector implementation, customer creation assumes that the `Customer account` sequence can accept a caller-provided value. HotWax OMS provides the `CustomerAccount` in the format `HW-<partyId>`.
+>
+> **TODO:** Re-evaluate this if the D365 environment is moved to auto-generated customer numbering (`Manual = No`). That would require a change in the customer sync implementation.
 
 ---
 
@@ -73,18 +75,21 @@ For successful sales order integration, it is a prerequisite that the customer r
 - **Nature**: The business-facing identifier used in sales orders, invoices, and reports.
 - **Master ID**: It is the unique identifier for a customer *within* a specific `dataAreaId`.
 - **Key**: Part of the composite primary key: `(dataAreaId, CustomerAccount)`.
-- **Integration Key (Decision)**: For the current one-way sync, it is decided to use the internal HotWax **partyId** as the `CustomerAccount` in D365. This approach will be re-evaluated if requirements change in the future.
+- **Integration Key (Current Implementation)**: The current connector uses the HotWax `partyId` with an `HW-` prefix as the D365 `CustomerAccount` value, i.e. `HW-<partyId>`.
 
 ### 2.3 Identification Pattern
 - **Pattern**: 
-    1. OMS pushes customer with the **HotWax Party ID** or **Shopify Customer ID** mapped to the D365 `CustomerAccount` field.
+    1. OMS pushes customer with `CustomerAccount = HW-<partyId>`.
     2. D365 uses the provided ID for record creation. Since HotWax provides the identifier, no sync-back of a D365-generated ID is required.
+
+> [!NOTE]
+> Using the Shopify Customer ID instead of `partyId` is still exploratory and is not part of the current implementation.
 
 
 ### 2.4 Minimum Required Fields for Creation
 | Field | Purpose | Example (Person) |
 | :--- | :--- |:-----------------|
-| `dataAreaId` | Legal entity | `dat`            |
+| `dataAreaId` | Legal entity | `usmf`           |
 | `CustomerAccount` | Customer number | `HW-10090`       |
 | `PartyType` | Customer Type | `Person`         |
 | `PersonFirstName` | First name | `Gurveen`        |
@@ -93,6 +98,11 @@ For successful sales order integration, it is a prerequisite that the customer r
 | `SalesCurrencyCode` | Default currency | `USD`            |
 
 - **Reference**: [Import customers](https://learn.microsoft.com/en-us/dynamics365/guidance/resources/import-customers)
+
+> [!NOTE]
+> In the current implementation, `dataAreaId` is still hardcoded to `usmf`, and `CustomerGroupId` is still hardcoded to `30`.
+>
+> **TODO:** Replace these hardcoded values with environment-specific mappings.
 
 ### 2.5 Financial Configuration (Customer Groups)
 The **Customer Group (`CustomerGroupId`)** is the primary "Financial Driver" for a customer.
@@ -116,70 +126,92 @@ D365 does not store a specific General Ledger (GL) account on the customer recor
 
 ## 3. Sales Orders Sync
 
-Sales orders are created in D365 F&O using the `SalesOrderHeadersV4` and `SalesOrderLinesV3` data entities. 
+Sales orders are synchronized from HotWax OMS to D365 F&O after prerequisite customer creation. The business process is the same regardless of transport method, but the connector currently supports two separate implementation patterns:
+- **OData pattern**: Direct sync using `SalesOrderHeadersV4` and `SalesOrderLinesV3`.
+- **DMF / Data Package pattern**: Package-based import using the `Sales orders composite V4` composite entity.
 
 > **Prerequisite**: A customer record must exist in D365 before a sales order can be created for that customer. Refer to the [Customer Sync](#2-customer-sync) section for more details.
 
-### 3.1 Sales Order Header (`SalesOrderHeadersV4`)
+### 3.1 Business Process Overview
 
-The header captures the primary customer relationship and high-level delivery requirements.
+- **Order Selection**: Eligible OMS sales orders are identified for export to D365.
+- **Customer Prerequisite**: The bill-to customer is created or verified in D365 before order creation/import.
+- **Order Creation**: The sales order header and lines are sent to D365 using either OData or DMF.
+- **Acknowledgment**: The order is considered synced only after the selected integration path reaches its defined success checkpoint.
+- **Downstream Ownership**: Fulfillment, packing slip posting, invoicing, and settlement remain D365-side operational processes.
 
-- **Identification**: `SalesOrderNumber` is the unique identifier. Similar to customers, this can be manual or automatic.
-- **Customer Association**: 
-    - `OrderingCustomerAccountNumber`: The customer who placed the order (OMS `partyId`).
-    - `InvoiceCustomerAccountNumber`: The customer who will be billed.
-- **Dates**: `RequestedShippingDate` defines the fulfillment deadline.
+### 3.2 Supported Integration Patterns
 
-- **Reference**: [Import sales orders](https://learn.microsoft.com/en-us/dynamics365/guidance/resources/import-sales-orders)
+#### 3.2.1 OData Pattern
+This pattern creates the sales order directly through standard OData entities.
 
-- **Reference**: [Sales order types overview](https://learn.microsoft.com/en-us/dynamics365/supply-chain/sales-marketing/overview-sales-marketing#sales-orders)
+- **D365 Interface**: `SalesOrderHeadersV4` and `SalesOrderLinesV3`
+- **Processing Style**: Direct request-driven sync
+- **Idempotency Pattern**:
+    - Header lookup uses `CustomersOrderReference = orderId`
+    - Line lookup uses `LineNumber = orderItemSeqId`
+- **Constraint**: Header and line creation are separate operations, so partial document creation is possible on failure.
+- **Current Use Case**: Simple direct sync and entity-level control.
 
-### 3.2 Idempotency & Conflict Prevention
-To ensure that orders are not duplicated in D365 during retries or partial failures, the integration follows a **Find-or-Create** pattern at both Header and Line levels.
+#### 3.2.2 DMF / Data Package Pattern
+This pattern creates a composite package and submits it through the Data Management Framework (DMF).
 
-- **Header Level**:
-  - **Field**: `CustomersOrderReference`.
-  - **Mapping**: Store the HotWax `orderId`.
-  - **Process**: Search by `CustomersOrderReference`. If found, use `SalesOrderNumber`.
-- **Line Level**:
-  - **Process**: Before syncing lines, the service fetches existing lines for the `SalesOrderNumber` via OData.
-  - **Logic**: Any line where `LineNumber` (mapped from `orderItemSeqId`) already exists in D365 is skipped.
+- **D365 Interface**: `Sales orders composite V4`
+- **Composite Child Records**:
+    - `SALESORDERHEADERV3ENTITY`
+    - `SALESORDERLINEV2ENTITY`
+    - `SALESORDERHEADERCHARGEV2ENTITY`
+- **Processing Style**: Batch/package-based import
+- **Constraint**: Import processing is asynchronous from the business point of view and requires package submission/orchestration.
+- **Current Use Case**: Larger-volume order import and composite payload submission.
 
-### 3.3 Transactional Atomicity (OData Limitations)
-Standard D365 OData entities (`SalesOrderHeadersV4` and `SalesOrderLinesV3`) **do not support atomic transactions** for combined header/line creation.
+#### 3.2.3 Pattern Comparison
 
-> [!WARNING]
-> **Risk of Partial Orders**: Each API call (1 Header + N Lines) is committed as a separate transaction in D365. If a line sync fails, the header and previous lines remain in D365.
-> **Mitigation**: 
-> 1. **Idempotency**: Prevents duplicate headers on retry.
-> 2. **Delayed Persistence**: Moqui only marks the order as "Synced" after the final line is successfully acknowledged.
-
-### 3.4 Shipping & Delivery Addresses (Order-Specific)
-
-HotWax OMS sends the shipping address as part of the Sales Order header payload. This allows for transaction-scoped addresses without polluting the Customer Master.
-
-- **Entity**: `SalesOrderHeadersV4`
-- **Pattern**: **Order-Specific Addresses**.
-    - **Trigger**: Set `IsDeliveryAddressOrderSpecific` to `Yes`.
-    - **Effect**: The address is stored in `SalesTable` and linked via `LogisticsLocation` and `LogisticsPostalAddress`, but is **transaction-scoped**. It is not attached to the Customer master party record.
-- **Key Fields**:
-    - `DeliveryAddressName` (e.g., Customer Name)
-    - `DeliveryAddressStreet`, `City`, `StateId`, `ZipCode`, `CountryRegionId`
-    - `DeliveryAddressDescription` (e.g., "OMS Ship To")
+| Pattern | D365 Interface | Entity Model | Processing Style | Main Constraint |
+| :--- | :--- | :--- | :--- | :--- |
+| OData | `SalesOrderHeadersV4`, `SalesOrderLinesV3` | Separate header and line entities | Direct request/response | Partial order creation on failure |
+| DMF | `Sales orders composite V4` | Composite import package | Batch/asynchronous | Package generation, upload, and import monitoring |
 
 > [!NOTE]
-> In GET responses, `IsDeliveryAddressOrderSpecific` might return "No", but the link to the order-specific address remains correct for fulfillment.
+> Detailed implementation specifics for both patterns are documented in [implementation_plan.md](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/foundation/project-ideas/dynamics365-integration/sales-orders/implementation_plan.md) and the shared DMF reference at [data_import_package_api.md](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/foundation/project-ideas/dynamics365-integration/data-package-api/data_import_package_api.md).
 
-### 3.3 Sales Order Lines (`SalesOrderLinesV3`)
+### 3.3 Shared Business Rules
 
-Each line item represents a specific product being sold.
+The following business rules apply regardless of whether the order is synchronized through OData or DMF.
 
-- **Fulfillment Attributes**:
-    - `ShippingSiteId` and `ShippingWarehouseId`: Mandatory fields defining the physical source of inventory.
-- **Quantities**: `OrderedSalesQuantity` reflects the quantity to fulfill.
-- **Pricing**:
-    - `SalesPrice`: The unit price before discounts.
-    - `LineDiscountAmount`: Any flat discount applied to the line.
+- **D365 Order Identity**: `SalesOrderNumber` is the D365-generated order identifier returned after successful creation/import.
+- **External Reference**: HotWax `orderId` is carried as `CustomersOrderReference` to support lookup and reconciliation.
+- **Customer Association**:
+    - `OrderingCustomerAccountNumber` uses the resolved D365 customer account returned by customer sync.
+    - `InvoiceCustomerAccountNumber` currently uses the same resolved D365 customer account.
+- **Address Handling**: OMS shipping address details are sent on the order so D365 can use order-level delivery details.
+- **Sync Completion Rule**: The order should only be treated as fully synced in OMS after the selected integration path has successfully completed.
+
+> [!NOTE]
+> The exact success checkpoint differs by pattern. OData can treat successful entity creation as the checkpoint, while DMF may require import submission plus downstream confirmation/monitoring.
+
+> [!NOTE]
+> The current connector implementations still contain TODOs for exact D365 item mapping, variant dimensions, hardcoded defaults, and some header-level field gaps. These remain implementation concerns, not business-process blockers.
+
+### 3.4 Order-Specific Address Pattern
+
+HotWax OMS sends the shipping address as part of the sales order data so the delivery address remains scoped to the order transaction instead of changing the customer master.
+
+- **OData Pattern**:
+    - Uses order header delivery address fields
+    - Explicitly sets `IsDeliveryAddressOrderSpecific = Yes`
+- **DMF Pattern**:
+    - Supplies address attributes through the composite header entity
+- **Key Business Fields**:
+    - Recipient name
+    - Street
+    - City
+    - State/Province
+    - Postal code
+    - Country/region
+
+> [!NOTE]
+> The OData implementation explicitly sets `IsDeliveryAddressOrderSpecific = Yes`. The exact read-back behavior in D365 responses should still be validated in the target environment.
 
 ---
 
@@ -191,11 +223,14 @@ Customer payments from HotWax OMS are captured in D365 F&O as **Customer Payment
 - **Pattern**: Payment journals are created as unposted drafts via OData.
 - **Timing**: Payments are sent to D365 immediately after capture in OMS, which may occur before the Sales Invoice is generated in D365.
 - **Entity**: `CustomerPaymentJournalHeaders` and `CustomerPaymentJournalLines`.
+- **Current Idempotency Pattern**:
+    - Header lookup uses `Description = OMS Payment Journal - SO <d365SalesOrderNumber>`.
+    - Line lookup uses `PaymentId = orderPaymentPreferenceId`.
 
 ### 4.2 Prepayment vs. Standard Payment
 - **Standard Payment (On-Account)**:
     - **Setup**: `IsPrepayment = No`.
-    - **Behavior**: Creates an "Open Transaction" on the customer account with a `PaymentReference` (mapped to OMS `orderId`).
+    - **Behavior**: Creates an "Open Transaction" on the customer account with `PaymentReference` currently mapped to the D365 `SalesOrderNumber`.
     - **Pros**: Simpler configuration, less sensitive to tax validation errors during journal posting.
 - **Prepayment**:
     - **Setup**: `IsPrepayment = Yes`.
@@ -205,13 +240,16 @@ Customer payments from HotWax OMS are captured in D365 F&O as **Customer Payment
 ### 4.3 Settlement Strategy
 1.  **Creation**: Payment is posted to the customer account "on-account" (unapplied).
 2.  **Invoice Generation**: Later, when the order is fulfilled, a Sales Invoice is created.
-3.  **Settlement**: A separate process (either D365 batch settlement or custom logic) matches the payment to the invoice using the shared `PaymentReference` or Order ID.
+3.  **Settlement**: A separate process (either D365 batch settlement or custom logic) is expected to match the payment to the invoice using the shared D365 sales order reference.
+
+> [!NOTE]
+> The current connector creates unposted payment journal headers and lines. It does not yet implement journal posting or invoice settlement orchestration.
 
 ---
 
 ## 5. Fulfillment & Invoicing
 
-Fulfillment actions (Picking and Packing) are performed directly within D365 F&O.
+This section captures the intended D365-side operational flow after order synchronization. The connector implementation reviewed here focuses on pushing customers, sales orders, and payment journals; fulfillment and invoice posting are still D365-side process decisions.
 
 ### 5.1 Fulfillment Flow
 - **Picking and Packing**: These operations are handled in D365.
@@ -221,10 +259,13 @@ Fulfillment actions (Picking and Packing) are performed directly within D365 F&O
 - **Custom Logic**: Orders created via OData may not automatically trigger invoicing upon packing slip posting.
 - **Requirement**: Implement or trigger invoicing logic within D365 to ensure the Sales Order moves to the "Invoiced" state.
 
+> [!TODO]
+> Validate the exact invoicing behavior in the target D365 environment. This is retained as an exploration point and is not enforced by the current HotWax connector code.
+
 ### 5.3 Settlement Logic
 Since one Sales Order can produce multiple invoices (due to partial shipments or split fulfillment), the settlement process must be robust.
 - **Pattern**: Apply captured payments to open invoices for the same Sales Order.
-- **Matching**: Use the shared `orderId` (stored in `PaymentReference` on the payment and as the `SalesOrder` number on the invoice).
+- **Matching**: The current payment sync writes the D365 `SalesOrderNumber` into `PaymentReference`. Any future settlement flow should be aligned to that identifier unless the mapping is changed.
 - **Rule**: Oldest invoice first or exact match based on shipment.
 
 ---
@@ -243,13 +284,14 @@ The following questions should be clarified with the D365 Finance/Functional tea
 
 ### 6.3 Financial Configuration
 - What is the default **Sales Currency Code** (e.g., USD, EUR) to be used for these customers? Does it vary by legal entity?
-- [ ] Can you confirm that the **Number Sequence** for "Customer account" is set to **Automatic** with **Manual = No** in the Accounts Receivable parameters?
+- [ ] Can you confirm whether the current environment allows caller-provided `CustomerAccount` values for customer creation?
+- [ ] If the target state is **Automatic** numbering with **Manual = No**, when should the connector be updated to stop sending `CustomerAccount`?
 
 ---
 
 ## 7. Outbound Notifications (D365 -> OMS)
 
-To keep HotWax OMS in sync with fulfillment and financial actions performed in D365, the system will use **Business Events** to push updates.
+This section is retained as a future-state exploration area. I did not find corresponding outbound event handling implementation in the current `hotwax-d365` connector code reviewed for this pass.
 
 ### 7.1 Fulfillment Updates (Packing Slip)
 - **D365 Event**: `SalesOrderPackingSlipPostBusinessEvent` (or similar).
@@ -264,3 +306,6 @@ To keep HotWax OMS in sync with fulfillment and financial actions performed in D
 ### 7.3 Integration Pattern
 - **Method**: D365 pushes a JSON payload to a Moqui REST endpoint via an HTTPS Webhook or Azure Power Automate.
 - **Payload**: Minimal event data (Event ID, Company, SalesOrderNumber) used by Moqui to then pull detailed data via OData if necessary.
+
+> [!TODO]
+> Confirm which D365 business events are actually available and intended for use in this project, then document the implementation path separately from the currently shipped connector behavior.
