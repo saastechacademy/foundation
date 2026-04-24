@@ -89,12 +89,3 @@ NotNaked’s advanced operations are powered by an integrated technology stack:
 
 
 For managing unified orders, inventory, and fulfillment across all channels, NotNaked requires an [Enterprise-Level Application](https://www.ibm.com/think/topics/enterprise-applications). They selected [**HotWax Commerce**](https://www.hotwax.co/) — an **omnichannel Order Management System (OMS)** — as the backbone of their retail operations, enabling seamless integration across e-commerce, stores, warehouses, and logistics.
-
-## **Related Documentation**
-To understand the full scope of the NotNaked project, please refer to the following documents:
-
-*   [**Setup Guide**](SetupGuide.md): Step-by-step instructions for configuring the instance.
-*   [**Brokering Requirements**](BrokeringRequirements.md): Specific business logic for order allocation.
-*   [**Initial Requirements Checklist**](InitialRequirements.md): Technical and functional requirements for deployment.
-*   [**Experience OMS Flow**](ExperienceOmsFlow.md): A walkthrough of the order lifecycle from Shopify to fulfillment.
-*   [**Product Marketing Seed Data**](ProductMarketingSeed.md): Catalog and promotion strategy details.

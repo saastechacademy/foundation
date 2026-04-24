@@ -30,11 +30,3 @@
 
 * **Minimum Split Value**  
    If an order needs splitting, each split portion should have a retail value of at least $50. If the partial split falls below that threshold, the system should keep the entire order together in one fulfillment location or highlight it as an exception.
-
----
-
-## **Related Documentation**
-*   [**Introduction**](Introduction.md)
-*   [**Setup Guide**](SetupGuide.md)
-*   [**Initial Requirements Checklist**](InitialRequirements.md)
-*   [**Experience OMS Flow**](ExperienceOmsFlow.md)
