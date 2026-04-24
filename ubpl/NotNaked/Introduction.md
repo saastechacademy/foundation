@@ -42,7 +42,7 @@ NotNaked operates retail locations in several cities. These stores function not 
    * **Address:** 700 SW 5th Avenue, Portland, OR 97204
 
 ## **Warehousing and Fulfillment Centers**
-NotNaked maintains warehouses at following locations.
+NotNaked maintains warehouses at the following locations.
 1. **Memphis, Tennessee**
    * *NotNaked Fulfillment Center – Memphis*  
    * **Address:** 1230 E Brooks Road, Memphis, TN 38116  
