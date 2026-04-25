@@ -273,13 +273,24 @@ This is a fully implemented direct-sync path that creates a sales order header a
 
 ##### 1.2.2 DMF / Data Package Import Implementation
 
-##### Current Implementation Summary
-This is a fully implemented package-based path that builds a `Sales orders composite V4` XML file in memory, wraps it in a DMF package, uploads it to Azure Blob storage, and triggers D365 import automation.
+This section documents two approaches for the DMF / Data Package path:
+
+- **Approach 1**: execution tracking using `SystemMessage` records after the remote D365 trigger call
+- **Approach 2**: a Moqui-native `SystemMessage` send lifecycle using `SmsgProduced` -> `SmsgSending` -> `SmsgSent` -> `SmsgConfirmed`
 
 See the shared Data Package API reference: [data_import_package_api.md](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/foundation/project-ideas/dynamics365-integration/data-package-api/data_import_package_api.md). That document describes only the generic D365 package API services; the sales-order-specific job, packaging, and submission details remain in this implementation plan.
 
-##### Service Flow
-1. **Fetch Eligible Orders**: Query `D365EligibleSalesOrdersDMF` with a batch limit.
+##### Approach 1 - Execution Tracking Using `SystemMessage` Records
+
+###### Summary
+This approach builds a `Sales orders composite V4` XML file in memory, wraps it in a DMF package, uploads it to Azure Blob storage, and triggers D365 import automation.
+
+This approach uses `SystemMessage` primarily as an execution-tracking record after the remote D365 API call has already happened. In other words, the `SystemMessage` row is used to persist the returned execution identifier and provide a poll target, but the standard Moqui `SystemMessageType.sendServiceName` flow is not the primary orchestration mechanism for the initial trigger.
+
+This means the pattern is operationally useful, but it behaves more like a lightweight async tracker than a fully native Moqui outgoing message flow.
+
+###### Service Flow
+1. **Fetch Eligible Orders**: Query the view-entity `D365EligibleSalesOrdersDMF` with a batch limit.
 2. **Create DMF submission tracking record**:
     - Persist the entity `D365SalesOrderImportHistory` during packaging so the same order is not packaged again immediately
 3. **Customer Sync**: Create or verify customers synchronously via OData before packaging orders.
@@ -305,9 +316,173 @@ See the shared Data Package API reference: [data_import_package_api.md](/Users/g
     - PUT the ZIP file to Azure Blob storage
 11. **Trigger Import**:
     - Call the `ImportFromPackage` API with `definitionGroupId` and `BlobId`
-12. **Local Persistence**:
+12. **Persist Execution Tracking**:
+    - Create a `SystemMessage` entity record in `SmsgProduced` with `messageText = executionId`
+    - Poll later using the generic import-status services
+13. **Local Persistence**:
     - The entity `D365SalesOrderImportHistory` remains the DMF submission marker
     - **TODO**: confirm/complete final mapping back to the entity `OrderIdentification` after import execution succeeds
+
+###### Why this design feels transitional
+- The remote D365 import trigger has already been executed before the `SystemMessage` entity record is queued.
+- `queue#SystemMessage(sendNow=false)` is therefore used mainly as durable tracking state, not as a true outgoing send pipeline.
+- The `SystemMessageType` exists and categorizes the flow, but its `sendServiceName` is not the primary initiator of the remote work.
+- This is functionally valid, but it does not fully align with the usual Moqui pattern where a produced outgoing message is later sent by `send#ProducedSystemMessage`.
+
+###### Example Tracking Record Shape
+
+In this approach, the effective tracking payload is close to:
+
+```json
+{
+  "systemMessageTypeId": "D365_IMPORT_ORDERS",
+  "systemMessageRemoteId": "D365_HotWax_Sandbox",
+  "statusId": "SmsgProduced",
+  "isOutgoing": "Y",
+  "messageText": "D365 executionId returned by ImportFromPackage"
+}
+```
+
+The key point is that `messageText` is effectively acting as execution-id storage.
+
+##### Approach 2 - Moqui-Native `SystemMessage` Send Flow
+
+###### Summary
+This approach uses a single outgoing `SystemMessageType` and maps the D365 DMF lifecycle onto native Moqui `SystemMessage` statuses:
+
+- `SmsgProduced`: export/import request has been queued locally
+- `SmsgSending`: the configured `sendServiceName` is currently triggering the remote D365 package API
+- `SmsgSent`: D365 accepted the request and returned an execution id
+- `SmsgConfirmed`: OMS later confirmed that D365 finished successfully and OMS completed its follow-up processing
+
+This design treats the `SystemMessage` entity as the canonical record of one remote D365 package execution from initial queueing through final confirmation.
+
+###### Status Flow
+
+The intended lifecycle is:
+
+```json
+{
+  "statusFlow": [
+    "SmsgProduced",
+    "SmsgSending",
+    "SmsgSent",
+    "SmsgConfirmed"
+  ]
+}
+```
+
+This is valid against the Moqui `SystemMessage` status transitions:
+- `SmsgProduced -> SmsgSending`
+- `SmsgSending -> SmsgSent`
+- `SmsgSent -> SmsgConfirmed`
+
+###### Proposed Processing Flow
+1. **Producer Job**:
+    - Create one outgoing `SystemMessage` entity record in `SmsgProduced`
+    - Set `sendNow = false`
+    - Store all D365 trigger metadata needed by the send and poll stages
+2. **Send Job**:
+    - Run `org.moqui.impl.SystemMessageServices.send#AllProducedSystemMessages`
+    - This invokes `SystemMessageType.sendServiceName`
+3. **Configured Send Service**:
+    - Load the `SystemMessage` entity record by `systemMessageId`
+    - Read package metadata from `messageText`
+    - Trigger the remote D365 package API
+    - Return `remoteMessageId = executionId`
+4. **Framework Status Update**:
+    - Moqui updates the message from `SmsgSending` to `SmsgSent`
+    - The returned D365 `executionId` is stored in `remoteMessageId`
+5. **Poll/Confirm Job**:
+    - A custom scheduled service reads messages in `SmsgSent`
+    - Use `remoteMessageId` as the D365 `executionId`
+    - Check completion status in D365
+6. **Confirmation Processing**:
+    - If still running, leave the message in `SmsgSent`
+    - If successful, complete the downstream OMS follow-up work and update the message to `SmsgConfirmed`
+    - If unrecoverable, update the message to `SmsgError`
+
+###### Why this design is stronger
+- It uses `sendServiceName` for the actual remote trigger, which matches the Moqui outgoing message model.
+- `remoteMessageId` becomes the natural home for the D365 `executionId`.
+- `SmsgSent` gets a precise meaning: D365 accepted the request, but OMS has not yet confirmed remote completion.
+- `SmsgConfirmed` gets a precise meaning: remote execution completed successfully and OMS completed the follow-up processing.
+- The trigger phase benefits from the standard Moqui send/retry lifecycle for messages in `SmsgProduced` / `SmsgError`.
+
+###### Proposed `SystemMessage` Shape
+
+The queued message should carry all metadata needed for the send and confirm phases. One reasonable shape is:
+
+```json
+{
+  "systemMessageTypeId": "D365_IMPORT_ORDERS",
+  "systemMessageRemoteId": "D365_HotWax_Sandbox",
+  "statusId": "SmsgProduced",
+  "isOutgoing": "Y",
+  "messageText": {
+    "definitionGroupId": "HotWax_Import_SalesOrders_Composite",
+    "packageName": "Sales orders composite V4",
+    "legalEntityId": "USMF",
+    "fileName": "Sales orders composite V4.xml",
+    "orderIds": [
+      "OMS10001",
+      "OMS10002"
+    ]
+  },
+  "remoteMessageId": null
+}
+```
+
+After the send service succeeds, the same message would effectively look like:
+
+```json
+{
+  "systemMessageTypeId": "D365_IMPORT_ORDERS",
+  "systemMessageRemoteId": "D365_HotWax_Sandbox",
+  "statusId": "SmsgSent",
+  "isOutgoing": "Y",
+  "messageText": {
+    "definitionGroupId": "HotWax_Import_SalesOrders_Composite",
+    "packageName": "Sales orders composite V4",
+    "legalEntityId": "USMF",
+    "fileName": "Sales orders composite V4.xml",
+    "orderIds": [
+      "OMS10001",
+      "OMS10002"
+    ]
+  },
+  "remoteMessageId": "D365 executionId returned by ImportFromPackage"
+}
+```
+
+After OMS confirms the remote execution and completes follow-up processing, the message would move to:
+
+```json
+{
+  "systemMessageTypeId": "D365_IMPORT_ORDERS",
+  "systemMessageRemoteId": "D365_HotWax_Sandbox",
+  "statusId": "SmsgConfirmed",
+  "isOutgoing": "Y",
+  "remoteMessageId": "D365 executionId returned by ImportFromPackage"
+}
+```
+
+###### Responsibilities by Field
+- `systemMessageTypeId`: identifies the integration stream
+- `systemMessageRemoteId`: identifies the D365 remote configuration
+- `messageText`: stores the business metadata needed to trigger and later confirm the request
+- `remoteMessageId`: stores the D365 `executionId`
+
+###### Design Trade-offs
+- This design is cleaner from a Moqui messaging perspective.
+- It still needs a dedicated confirmation/poll job for messages already in `SmsgSent`, because `send#AllProducedSystemMessages` only handles `SmsgProduced`.
+- The proposed pattern is therefore:
+  - standard Moqui send/retry for the initial trigger
+  - custom scheduled confirmation loop for the remote completion phase
+
+###### Decision Note
+- We started with **Approach 1**, which helped validate the D365 DMF packaging, upload, and execution-tracking mechanics.
+- We will proceed with **Approach 2** for the next iteration so that the design aligns more closely with native Moqui `SystemMessage` semantics and gives clearer meaning to the statuses `SmsgProduced`, `SmsgSending`, `SmsgSent`, and `SmsgConfirmed`.
 
 ##### DMF Composite Entity Mappings
 
@@ -413,7 +588,11 @@ Add records to the entity `co.hotwax.integration.IntegrationTypeMapping` for the
 
 This flow covers the return of D365-generated sales order identifiers back into OMS so the OMS can store the `SalesOrderNumber` against the originating order.
 
-See the shared Data Package export reference: [data_export_package_api.md](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/foundation/project-ideas/dynamics365-integration/data-package-api/data_export_package_api.md). That document describes only the generic D365 package API services; the sales-order-specific trigger job, poll job, DataManager config, and row-processing service remain in this implementation plan.
+See the shared Data Package export reference: [data_export_package_api.md](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/foundation/project-ideas/dynamics365-integration/data-package-api/data_export_package_api.md). That document is the source of truth for the generic D365 export framework and documents both approaches that were explored:
+- **Approach 1**: execution tracking using `SystemMessage` entity records after the D365 export trigger call
+- **Approach 2**: the Moqui-native `SystemMessage` send lifecycle now used by the connector
+
+This sales-order section focuses on how the sales-order reconciliation flow uses those approaches and, in the current design, how it uses the generic export queue/send/poll services.
 
 #### 2.1 Objective
 - Read the D365-generated `SalesOrderNumber`
@@ -423,35 +602,114 @@ See the shared Data Package export reference: [data_export_package_api.md](/User
 #### 2.2 Primary Use Case
 - **DMF import reconciliation**: DMF submission is asynchronous, so OMS needs a follow-up export/reconciliation step to confirm which D365 sales order number was assigned to each imported order.
 
-#### 2.2.1 Implemented Job and Service Sequence
+#### 2.2.1 Two Export Approaches Considered for Sales Orders
 
-The current implementation uses D365 Data Package export services and Maarg DataManager processing in the following sequence:
+##### Approach 1 - Execution Tracking Using `SystemMessage` Entity Records
 
-1. **Trigger job**: the service job `d365_ExportSalesOrdersTrigger`
-   - Defined in [D365OrderSyncData.xml](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/data/D365OrderSyncData.xml:179)
-   - Calls the service [D365DataPackageServices.trigger#DataPackageExport](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml:4)
+This was the earlier export design for sales-order reconciliation.
+
+Sales-order-specific values in this approach:
+- `systemMessageTypeId = D365_EXP_SALES_ORDERS`
+- `definitionGroupId = HotWax_Export_Sales_Orders`
+- `packageName = SalesOrderHeadersV4`
+- `fileName = Sales order headers V4.csv`
+- `dataManagerConfigId = D365_IMP_SALES_ORD`
+
+Relevant services in that approach:
+- generic trigger service `D365DataPackageServices.trigger#DataPackageExport`
+- generic poll service `D365DataPackageServices.poll#DataPackageStatus`
+- generic single-message checker `D365DataPackageServices.check#DataPackageStatus`
+- sales-order row-processing service `D365OrderServices.store#D365SalesOrderNumber`
+
+Behavior in that approach:
+1. the sales-order trigger job called the generic trigger service
+2. the generic trigger service called D365 `ExportToPackage`
+3. after D365 returned `executionId`, OMS created a `SystemMessage` entity record in `SmsgProduced`
+4. that `SystemMessage.messageText` stored the `executionId`
+5. the poll job read `SmsgProduced` tracker messages and called `GetExecutionSummaryStatus`
+6. on success, the checker called `GetExportedPackageUrl`, downloaded the package, extracted `Sales order headers V4.csv`, and uploaded the file to the DataManager config `D365_IMP_SALES_ORD`
+7. DataManager then invoked the service `D365OrderServices.store#D365SalesOrderNumber`
+
+This approach remains important in the documentation because it explains the earlier design and the reason the reconciliation flow was initially modeled as execution tracking over `SystemMessage`.
+
+##### Approach 2 - Moqui-Native `SystemMessage` Send Flow
+
+This is the current sales-order export design.
+
+Sales-order-specific values in this approach:
+- `systemMessageTypeId = D365_EXP_SALES_ORDERS`
+- `sendServiceName = D365DataPackageServices.send#ExportDataPackage`
+- `definitionGroupId = HotWax_Export_Sales_Orders`
+- `packageName = SalesOrderHeadersV4`
+- `fileName = Sales order headers V4.csv`
+- `dataManagerConfigId = D365_IMP_SALES_ORD`
+
+Relevant services and jobs in this approach:
+- trigger job `d365_QueueSalesOrderExport`
+- generic queue service `D365DataPackageServices.queue#ExportDataPackage`
+- generic send service `D365DataPackageServices.send#ExportDataPackage`
+- poll job `d365_ExportSalesOrdersPoll`
+- generic poll service `D365DataPackageServices.poll#ExportDataPackageStatus`
+- generic single-message checker `D365DataPackageServices.check#ExportDataPackageStatus`
+- sales-order row-processing service `D365OrderServices.store#D365SalesOrderNumber`
+
+Behavior in this approach:
+1. the trigger job `d365_QueueSalesOrderExport` queues a `SystemMessage` entity record for the sales-order export flow
+2. the generic queue service `queue#ExportDataPackage` stores a JSON payload in `SystemMessage.messageText` with:
+   - `definitionGroupId = HotWax_Export_Sales_Orders`
+   - `packageName = SalesOrderHeadersV4`
+   - `fileName = Sales order headers V4.csv`
+   - `dataManagerConfigId = D365_IMP_SALES_ORD`
+3. because `sendNow=true`, Moqui invokes `send#ProducedSystemMessage`
+4. the configured `sendServiceName`, `send#ExportDataPackage`, calls D365 `ExportToPackage`
+5. D365 returns `executionId`
+6. Moqui stores that `executionId` in `SystemMessage.remoteMessageId` and moves the message through:
+   - `SmsgProduced`
+   - `SmsgSending`
+   - `SmsgSent`
+7. the poll job `d365_ExportSalesOrdersPoll` finds sales-order export messages in `SmsgSent`
+8. `check#ExportDataPackageStatus` calls `GetExecutionSummaryStatus`
+9. when the export succeeds, the checker:
+   - calls `GetExportedPackageUrl`
+   - downloads the ZIP package
+   - extracts `Sales order headers V4.csv`
+   - uploads the file to the DataManager config `D365_IMP_SALES_ORD`
+10. DataManager invokes `D365OrderServices.store#D365SalesOrderNumber`
+11. on successful file processing, the `SystemMessage` entity record moves to `SmsgConfirmed`
+
+This approach is now preferred because the `SystemMessage` entity record is the real outbound unit of work and the message statuses have their intended Moqui meaning.
+
+#### 2.2.2 Implemented Job and Service Sequence
+
+The current implementation uses the generic export queue/send/poll model and Maarg DataManager processing in the following sequence:
+
+1. **Queue job**: the service job `d365_QueueSalesOrderExport`
+   - Defined in [D365ServiceJobData.xml](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/data/D365ServiceJobData.xml)
+   - Calls the generic queue service [D365DataPackageServices.queue#ExportDataPackage](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml:4)
    - Parameters:
      - `systemMessageTypeId = D365_EXP_SALES_ORDERS`
      - `definitionGroupId = HotWax_Export_Sales_Orders`
      - `packageName = SalesOrderHeadersV4`
+     - `fileName = Sales order headers V4.csv`
+     - `dataManagerConfigId = D365_IMP_SALES_ORD`
      - `legalEntityId`
-2. **Generic trigger service execution**: the service `trigger#DataPackageExport`
-   - Calls the generic low-level export service [D365DataPackageServices.export#DataPackage](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml:47)
-   - Creates a `SystemMessage` entity record with the returned `executionId` for later polling
-3. **Low-level export API execution**: the service `export#DataPackage`
-   - Calls D365 `ExportToPackage`
-   - Returns `executionId`
+2. **Generic queue service execution**: the service `queue#ExportDataPackage`
+   - creates the export payload JSON in `SystemMessage.messageText`
+   - queues the `SystemMessage` entity record in `SmsgProduced`
+   - immediately invokes Moqui send processing through `queue#SystemMessage(sendNow=true)`
+3. **Generic send service execution**: the service `send#ExportDataPackage`
+   - reads the payload from `SystemMessage.messageText`
+   - calls D365 `ExportToPackage`
+   - returns `remoteMessageId = executionId`
 4. **Poll job**: the service job `d365_ExportSalesOrdersPoll`
-   - Defined in [D365OrderSyncData.xml](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/data/D365OrderSyncData.xml:191)
-   - Calls the service [D365DataPackageServices.poll#DataPackageStatus](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml:85)
+   - Defined in [D365ServiceJobData.xml](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/data/D365ServiceJobData.xml)
+   - Calls the service [D365DataPackageServices.poll#ExportDataPackageStatus](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml:86)
    - Parameters:
      - `systemMessageTypeId = D365_EXP_SALES_ORDERS`
-     - `fileNamePrefix = Sales order headers V4.csv`
-     - `dataManagerConfigId = D365_IMP_SALES_ORD`
-5. **Generic poll service execution**: the service `poll#DataPackageStatus`
-   - Finds `SystemMessage` entity records in `SmsgProduced`
-   - Invokes the service `check#DataPackageStatus` for each execution id
-6. **Low-level poll/check execution**: the service `check#DataPackageStatus`
+5. **Generic poll service execution**: the service `poll#ExportDataPackageStatus`
+   - Finds `SystemMessage` entity records in `SmsgSent`
+   - Invokes the service `check#ExportDataPackageStatus` for each execution id
+6. **Low-level poll/check execution**: the service `check#ExportDataPackageStatus`
    - Calls D365 `GetExecutionSummaryStatus`
    - When succeeded or partially succeeded, calls D365 `GetExportedPackageUrl`
    - Downloads the ZIP
@@ -477,15 +735,16 @@ The current implementation uses D365 Data Package export services and Maarg Data
 For generic package export trigger/poll/download mechanics, refer to [data_export_package_api.md](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/foundation/project-ideas/dynamics365-integration/data-package-api/data_export_package_api.md).
 
 #### 2.4 Proposed Service Flow
-1. Trigger D365 export using `d365_ExportSalesOrdersTrigger`.
-2. Start a D365 export execution for definition group `HotWax_Export_Sales_Orders`.
-3. Persist the returned `executionId` as a `SystemMessage`.
-4. Poll the export execution using the service job `d365_ExportSalesOrdersPoll`.
-5. Once the execution succeeds, download the exported ZIP package.
-6. Extract `Sales order headers V4.csv`.
-7. Feed the file into the DataManager config `D365_IMP_SALES_ORD`.
-8. Execute the service `store#D365SalesOrderNumber` for each CSV row.
-9. Create or update the OMS entity `OrderIdentification` with:
+1. Queue D365 export using `d365_QueueSalesOrderExport`.
+2. Create a `SystemMessage` entity record with the sales-order export payload.
+3. Invoke the configured `sendServiceName` and start a D365 export execution for definition group `HotWax_Export_Sales_Orders`.
+4. Persist the returned `executionId` in `SystemMessage.remoteMessageId`.
+5. Poll the export execution using the service job `d365_ExportSalesOrdersPoll`.
+6. Once the execution succeeds, download the exported ZIP package.
+7. Extract `Sales order headers V4.csv`.
+8. Feed the file into the DataManager config `D365_IMP_SALES_ORD`.
+9. Execute the service `store#D365SalesOrderNumber` for each CSV row.
+10. Create or update the OMS entity `OrderIdentification` with:
     - `orderIdentificationTypeId = D365_ORDER_ID`
     - `idValue = SALESORDERNUMBER`
 
@@ -496,9 +755,9 @@ For generic package export trigger/poll/download mechanics, refer to [data_expor
 
 #### 2.6 Current Status
 - **Implemented today**:
-    - Trigger service job: `d365_ExportSalesOrdersTrigger`
+    - Queue service job: `d365_QueueSalesOrderExport`
     - Poll service job: `d365_ExportSalesOrdersPoll`
-    - Generic Data Package export service names: `trigger#DataPackageExport`, `export#DataPackage`, `poll#DataPackageStatus`, `check#DataPackageStatus`
+    - Generic Data Package export service names: `queue#ExportDataPackage`, `send#ExportDataPackage`, `poll#ExportDataPackageStatus`, `check#ExportDataPackageStatus`
     - Row-storage service name: `store#D365SalesOrderNumber`
 - **Still open for refinement**:
     - retry/backoff policy tuning for delayed D365 export completion
@@ -506,8 +765,8 @@ For generic package export trigger/poll/download mechanics, refer to [data_expor
     - tighter linkage between `D365SalesOrderImportHistory` and final reconciliation status
 
 #### 2.7 Export / Reconciliation TODOs
-- Define the service name and schedule for D365-to-OMS sales order number reconciliation.
-- Define whether reconciliation should be polling-based only or optionally event-assisted.
+- decide whether the queue job naming/schedule should differ by environment
+- define whether reconciliation should remain polling-based only or optionally become event-assisted later
 - Confirm query filters and selected fields for `SalesOrderHeadersV4`.
 - Define retry/backoff behavior for imports that are still processing in D365.
 - Define exception handling when multiple D365 records are returned for a single OMS `orderId`.

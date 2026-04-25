@@ -41,36 +41,175 @@ Synchronizing Released Product Variants from D365 to Moqui/HotWax OMS.
 
 ---
 
-## 4. Implemented Services Over D365 Data Package Export APIs
+## 4. Export Integration Approaches
 
-The connector currently uses the following implemented generic and consumer services over the D365 Data Package export APIs:
+The connector has explored two integration approaches over the D365 Data Package Export APIs.
 
+### Approach 1 - Execution Tracking Using `SystemMessage` Records
+
+This was the earlier implementation approach.
+
+#### Summary
+- The export was triggered first.
+- After D365 returned the `executionId`, OMS created a `SystemMessage` entity record only to track that execution.
+- The `SystemMessage` record was not the outbound unit of work; it was used as an execution tracker.
+
+#### Services in this approach
 - **Generic trigger service**
-  - Service: [D365DataPackageServices.trigger#DataPackageExport](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml:4)
-  - Creates a `SystemMessage` entity record after triggering an export
-- **Generic low-level export service**
-  - Service: [D365DataPackageServices.export#DataPackage](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml:47)
-  - Calls D365 `ExportToPackage`
-- **Generic poll service**
-  - Service: [D365DataPackageServices.poll#DataPackageStatus](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml:85)
-  - Finds pending `SystemMessage` entity executions and checks them
+  - Service: `D365DataPackageServices.trigger#DataPackageExport`
+  - Responsibility:
+    - call D365 `ExportToPackage`
+    - then create a `SystemMessage` entity record with `statusId = SmsgProduced`
 - **Generic single-execution checker**
-  - Service: [D365DataPackageServices.check#DataPackageStatus](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml:109)
-  - Calls `GetExecutionSummaryStatus` and `GetExportedPackageUrl`
+  - Service: `D365DataPackageServices.check#DataPackageStatus`
+  - Responsibility:
+    - read `executionId` from `SystemMessage.messageText`
+    - call `GetExecutionSummaryStatus`
+    - on success call `GetExportedPackageUrl`
+    - download and process the exported file
+- **Generic poll service**
+  - Service: `D365DataPackageServices.poll#DataPackageStatus`
+  - Responsibility:
+    - find `SystemMessage` entity records in `SmsgProduced`
+    - call `check#DataPackageStatus`
+
+#### How the `SystemMessage` record was used
+- `systemMessageTypeId`: integration stream identifier
+- `systemMessageRemoteId`: D365 remote configuration identifier
+- `messageText`: stored the D365 `executionId`
+- `statusId = SmsgProduced`: used as a tracking state, not as a true Moqui send state
+
+#### Why this approach was useful
+- It validated the D365 export mechanics:
+  - `ExportToPackage`
+  - `GetExecutionSummaryStatus`
+  - `GetExportedPackageUrl`
+  - ZIP download and extraction
+- It made the D365 execution visible in `SystemMessage`
+- It gave a straightforward reconciliation path for early connector development
+
+#### Limitation of this approach
+- It used `SystemMessage` mainly as a persistence/tracking record
+- It did not follow the native Moqui `sendServiceName` flow for outgoing messages
+- `sendNow=false` meant the created `SystemMessage` entity record was not intended to be sent through `send#ProducedSystemMessage`
+- `SmsgProduced` therefore represented a tracker row, not a true produced outbound message
+
+### Approach 2 - Moqui-Native `SystemMessage` Send Flow
+
+This is the current export model and the implemented generic framework.
+
+#### Summary
+- OMS first queues a `SystemMessage` entity record in `SmsgProduced`
+- the configured `sendServiceName` performs the D365 `ExportToPackage` call
+- D365 returns `executionId`
+- Moqui stores the returned `executionId` in `SystemMessage.remoteMessageId`
+- OMS later polls `SmsgSent` messages and moves them to `SmsgConfirmed` after successful package processing
+
+#### Generic services in this approach
+- **Generic queue service**
+  - Service: [D365DataPackageServices.queue#ExportDataPackage](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml:4)
+  - Responsibility:
+    - validate export-specific inputs
+    - build the export payload JSON
+    - call `org.moqui.impl.SystemMessageServices.queue#SystemMessage`
+    - queue the message with `sendNow=true`
+- **Generic send service**
+  - Service: [D365DataPackageServices.send#ExportDataPackage](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml:40)
+  - Responsibility:
+    - implement `org.moqui.impl.SystemMessageServices.send#SystemMessage`
+    - parse `SystemMessage.messageText`
+    - call D365 `ExportToPackage`
+    - return `remoteMessageId = executionId`
+- **Generic poll service**
+  - Service: [D365DataPackageServices.poll#ExportDataPackageStatus](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml:86)
+  - Responsibility:
+    - find sent export messages by `systemMessageTypeId` and `statusId = SmsgSent`
+    - call the single-message checker
+- **Generic single-message poll/check service**
+  - Service: [D365DataPackageServices.check#ExportDataPackageStatus](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml:110)
+  - Responsibility:
+    - read `executionId` from `SystemMessage.remoteMessageId`
+    - call `GetExecutionSummaryStatus`
+    - when complete, call `GetExportedPackageUrl`
+    - download the ZIP package
+    - extract the configured file
+    - either:
+      - upload the extracted file to DataManager, or
+      - save the extracted file to the configured target directory
+    - move the `SystemMessage` entity record to `SmsgConfirmed` on success
+    - move it to `SmsgError` on terminal failure
+- **Generic download service**
+  - Service: [D365DataPackageServices.download#DataPackage](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml:276)
+  - Responsibility:
+    - download the D365 ZIP
+    - extract the configured file to a local directory
+- **Generic execution error reader**
+  - Service: [D365DataPackageServices.get#ExecutionErrors](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml:385)
+  - Responsibility:
+    - call D365 `GetExecutionErrors`
+
+#### `SystemMessage` field usage in this approach
+- `systemMessageTypeId`: identifies the export stream, for example:
+  - `D365_EXPORT_PRODUCTS`
+  - `D365_EXPORT_WAREHOUSES`
+  - `D365_EXP_SALES_ORDERS`
+- `systemMessageRemoteId`: identifies the D365 remote configuration
+- `messageText`: stores JSON metadata needed for send and poll, for example:
+
+```json
+{
+  "definitionGroupId": "HotWax_Export_Sales_Orders",
+  "packageName": "SalesOrderHeadersV4",
+  "legalEntityId": "USMF",
+  "fileName": "Sales order headers V4.csv",
+  "dataManagerConfigId": "D365_IMP_SALES_ORD",
+  "targetDirectory": null,
+  "systemMessageRemoteId": "D365_HotWax_Sandbox"
+}
+```
+
+- `remoteMessageId`: stores the D365 `executionId`
+
+#### Status lifecycle in this approach
+- `SmsgProduced`
+  - OMS has queued the outbound export message
+- `SmsgSending`
+  - Moqui is invoking the configured `sendServiceName`
+- `SmsgSent`
+  - D365 accepted the export request and returned `executionId`
+- `SmsgConfirmed`
+  - OMS polled the execution, downloaded the exported package, and processed the file successfully
+- `SmsgError`
+  - D365 export failed, or OMS failed to process the returned file
+
+#### Boundary of the generic layer
+- The generic export services in [D365DataPackageServices.xml](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml) now cover:
+  - queuing export `SystemMessage` entity records
+  - triggering D365 `ExportToPackage`
+  - polling export status
+  - signed URL retrieval
+  - ZIP download and extraction
+  - DataManager upload or local directory extraction
+- Consumer flows provide the concrete values:
+  - `systemMessageTypeId`
+  - `definitionGroupId`
+  - `packageName`
+  - `fileName`
+  - `dataManagerConfigId` or `targetDirectory`
+- Consumer flows also provide the downstream row-processing logic through the configured DataManager import service.
 
 ### 4.1 Implemented Export APIs Used
 
 - `ExportToPackage` API
 - `GetExecutionSummaryStatus` API
 - `GetExportedPackageUrl` API
+- `GetExecutionErrors` API
 
-### 4.2 Boundary of the Generic Layer
+### 4.2 Guidance for Consumer Flows
 
-- The generic services in [D365DataPackageServices.xml](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml) cover export triggering, export-status polling, signed URL retrieval, and ZIP download/extraction.
-- Consumer flows provide the concrete `systemMessageTypeId`, `definitionGroupId`, `packageName`, `fileNamePrefix`, and downstream handling choice:
-  - pass a DataManager config id to upload the extracted file into DataManager, or
-  - pass a target directory to save the extracted file to disk.
-- For the sales-order-specific export reconciliation flow that uses these generic services, refer to [implementation_plan.md](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/foundation/project-ideas/dynamics365-integration/sales-orders/implementation_plan.md).
+- Use **Approach 2** for current and future export integrations.
+- Keep **Approach 1** documented only as the earlier design that validated the D365 export mechanics.
+- For the sales-order-specific export reconciliation flow that uses the current generic export services, refer to [implementation_plan.md](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/foundation/project-ideas/dynamics365-integration/sales-orders/implementation_plan.md).
 
 ---
 
