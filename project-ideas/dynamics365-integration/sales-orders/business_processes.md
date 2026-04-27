@@ -6,59 +6,9 @@ HotWax acts as an integration adapter to ensure that D365, as the financial syst
 
 ## 1. Foundational Concepts & System Setup
 
-Before records can be synchronized, the foundational structural context must be established in Dynamics 365.
+The generic business-process foundations for D365 F&O integration are documented in [business_process_foundations.md](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/foundation/project-ideas/dynamics365-integration/foundation/business_process_foundations.md).
 
-### 1.1 Multi-Company Structure (dataAreaId) & Legal Entities
-- **dataAreaId**: Represents the Legal Entity (Company). 
-- **System Bucket**: Every table in D365 is partitioned by this "Company Code." It defines the context for all validation and financial posting.
-- **Organization Administration**: Legal entities are managed under the Organization Administration module.
-- **Validation**: Fields like Customer group, currency, and posting profiles are validated within the specific company context.
-
-- **Reference**: [Organization administration home page](https://learn.microsoft.com/en-us/dynamics365/fin-ops-core/fin-ops/organization-administration/organization-administration-home-page?context=%2Fdynamics365%2Fcontext%2Ffinance)
-
-
-### 1.2 Architectural Concept: The Party Model
-- **Concept**: A Customer is built on top of a **Party** record in the Global Address Book.
-- **Types**: Person and Organization are types of Party.
-- **Global Scope**: Parties are global across all legal entities, whereas Customers are specific to a `dataAreaId`.
-
-### 1.3 Number Sequences & Identification (Customer Account)
-Number sequences are used in D365 to generate unique identifiers for entities like Customers and Sales Orders. The generation of the `CustomerAccount` is company-specific and controlled entirely by the Number Sequence configuration.
-
-- **Reference**: [Number sequences overview](https://learn.microsoft.com/en-us/dynamics365/fin-ops-core/fin-ops/organization-administration/number-sequence-overview?toc=%2Fdynamics365%2Fretail%2Ftoc.json)
-
-#### 1.3.1 Verifying Configuration
-To check the sequence in a specific legal entity (e.g., USMF):
-1.  **Navigate to**: `Accounts receivable > Setup > Accounts receivable parameters > Number sequences tab`.
-2.  **Locate Reference**: Find the `Customer account` reference to identify the assigned **Number sequence code** (e.g., `Acco_294`).
-3.  **Inspect Setup**: Click the code to review key settings:
-    - **Scope**: Typically set to **Company** (partitioned by legal entity).
-    - **Manual**: 
-        - **Yes**: The API/caller must provide the `CustomerAccount`.
-        - **No**: D365 auto-generates the ID.
-    - **Format**: Defines the structure (e.g., `CUST-######`).
-
-#### 1.3.2 Impact on Integration
-The **Manual** flag directly dictates API behavior during a `POST` request:
-| Manual Setting | API Behavior |
-| :--- | :--- |
-| **Yes** | `CustomerAccount` **must** be provided in the payload. |
-| **No** | `CustomerAccount` is **auto-generated**; provided IDs are ignored/error. |
-
-> [!IMPORTANT]
-> If `Manual = Yes` and the ID is missing, the API returns: *"Field 'Customer account' must be filled in."*
-
-#### 1.3.3 Recommended Strategy
-For a clean "System of Record" integration, the recommended configuration is:
-- **Scope**: Company
-- **Manual**: No (Auto-generate)
-- **Continuous**: No (unless legally required)
-
-#### 1.3.4 Dev Environment & Initial Phase
-> [!NOTE]
-> In the current connector implementation, customer creation assumes that the `Customer account` sequence can accept a caller-provided value. HotWax OMS provides the `CustomerAccount` in the format `HW-<partyId>`.
->
-> **TODO:** Re-evaluate this if the D365 environment is moved to auto-generated customer numbering (`Manual = No`). That would require a change in the customer sync implementation.
+This sales-order document focuses only on customer, sales-order, and payment process behavior that is specific to the sales-order domain.
 
 ---
 

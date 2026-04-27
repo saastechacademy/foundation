@@ -3,13 +3,10 @@
 This document outlines the technical design and implementation steps for integrating HotWax OMS with Microsoft Dynamics 365 Finance & Operations (D365 F&O).
 
 ## 1. Technical Architecture
-- **Protocols / Interfaces**:
+- Sales-order integration uses the generic D365 connector foundation documented in [connector_foundation.md](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/foundation/project-ideas/dynamics365-integration/foundation/connector_foundation.md).
+- **Sales-order specific interfaces**:
     - OData v4 (REST) for direct entity-based sync
     - Data Management Framework (DMF) / Data Package API for composite package import
-- **Authentication**: OAuth 2.0 Client Credentials Flow via Azure AD.
-- **Mapping Strategy**: 
-    - **Legal Entity Mapping**: Moqui `ProductStore` / `Organization` -> D365 `dataAreaId`.
-    - **Logic**: Every sync request must explicitly include the mapped `dataAreaId` to target the correct legal entity.
 
 ---
 
@@ -49,24 +46,9 @@ Used to store the D365 Sales Order Number against the OMS Order ID upon successf
 
 ## Foundation
 
-- [ ] **Credentials Storage (`SystemMessageRemote`)**: 
-    - Create `D365Auth` record in `SystemMessageRemote` entity.
-    - Fields: 
-      - `username` (Client ID), 
-      - `password` (Client Secret - encrypted), 
-      - `sharedSecret` (Tenant ID), 
-      - `sendUrl` (Token Endpoint), 
-      - `receiveUrl` (Instance Base URL).
-      
-- [ ] **Legal Entity Mapping**: 
-    - Use `ProductStore.externalId` to store Moqui `ProductStore` -> D365 `dataAreaId` mapping.
-  
-- [ ] **Token Management**:
-    - Implement `get#AzureAccessToken` service in `hotwax-d365` component.
-    - Logic: Retrieve credentials from `D365Auth` SystemMessageRemote, call Azure OAuth2 endpoint, and cache the token.
-  
-- [ ] **Generic OData Client**: 
-    - Implement `send#D365ODataRequest` service to handle token injection, base URL, and `dataAreaId` context.
+The generic connector foundation for authentication, credentials storage, legal-entity mapping, token management, and common OData request handling is documented in [connector_foundation.md](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/foundation/project-ideas/dynamics365-integration/foundation/connector_foundation.md).
+
+This sales-order implementation plan focuses on the sales-order-specific services, entities, views, and orchestration built on top of that shared connector layer.
 
 ## Customer Synchronization
 ### Sync Service Logic (`sync#Customer`)
