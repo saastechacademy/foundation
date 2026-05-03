@@ -19,6 +19,31 @@ This implementation covers these lanes:
 
 Reservation sync is intentionally not included in phase 1. For sales orders, Shopify inventory should change when the POS/store shipment is issued, not when OMS reservation happens.
 
+## Online Store Inventory Boundary
+
+This implementation is for store and POS inventory events in Shopify. The goal is to keep the store-side inventory movement and event trace aligned with OMS as events occur.
+
+This implementation is not the source for Shopify Online Store PDP inventory in phase 1.
+
+The intended operating model is:
+
+- store inventory events are posted to Shopify as they occur in OMS
+- store inventory and transfer movement become visible in Shopify at the relevant store locations
+- online available inventory continues to be synchronized by the existing hard sync and upload recent inventory changes jobs
+
+This boundary is important because Shopify calculates online quantity from locations that fulfill online orders. Shopify also allows a location to be prevented from fulfilling online orders, and when that is done the inventory at that location is removed from the product's online quantity shown to customers.
+
+Implementation implication:
+
+- this event-based sync should be used for store locations that are not intended to contribute to online sellable quantity
+- under that Shopify location configuration, store event sync keeps Shopify store inventory accurate without changing PDP online available inventory
+- if a store location is configured in Shopify to fulfill online orders, then its available inventory can contribute to online quantity and this assumption no longer holds
+
+Expected transition over time:
+
+- as more store-impacting OMS flows move to `SECA`-driven event sync, the hard sync jobs should stop producing store-side inventory changes in normal operation
+- those jobs still remain the current source for online available inventory and for any inventory lanes not yet covered by event sync
+
 ## What Phase 1 Does Not Add
 
 - no sync history entities
@@ -201,6 +226,21 @@ Example: `TO_Receive_Only` warehouse-to-store receipt
 - persist Shopify transfer shipment ids on the OMS shipment using `ShipmentAttribute` `SHPFY_INV_SHIPMENTS`
 - for `TO_Receive_Only`, treat shipment-level initialization as the normal path when no prior Shopify shipment exists
 - one `ExternalInventoryReset` row currently results in one Shopify adjustment call; reset rows are not grouped by `resetDateResourceId` in phase 1
+
+## Shopify Support Basis
+
+The above online inventory boundary is consistent with Shopify's documented behavior:
+
+- Shopify states that `available` inventory is the inventory that can be sold, while `incoming` inventory is not available to sell until it is received
+- Shopify states that online orders are assigned based on available inventory at locations that fulfill online orders
+- Shopify states that preventing a location from fulfilling online orders removes that location's inventory from the product's online quantity shown to customers
+
+Official references:
+
+- Shopify inventory states: https://help.shopify.com/en/manual/products/inventory/managing-inventory-quantities/inventory-states
+- Shopify location fulfillment for online orders: https://help.shopify.com/en/manual/fulfillment/setup/locations/fulfillment
+- Shopify multi-location inventory and online quantity: https://help.shopify.com/en/manual/locations/assigning-inventory-to-locations
+- Shopify fulfillable inventory behavior: https://help.shopify.com/en/manual/fulfillment/setup/fulfillable-inventory
 
 ## Operational Note
 
