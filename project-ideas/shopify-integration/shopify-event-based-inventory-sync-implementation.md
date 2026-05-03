@@ -242,6 +242,39 @@ Official references:
 - Shopify multi-location inventory and online quantity: https://help.shopify.com/en/manual/locations/assigning-inventory-to-locations
 - Shopify fulfillable inventory behavior: https://help.shopify.com/en/manual/fulfillment/setup/fulfillable-inventory
 
+## Shopify Resources Used In This Implementation
+
+This implementation relies on these Shopify Admin GraphQL resources and mutations:
+
+- `InventoryTransfer` object
+- `InventoryShipment` object
+- `inventoryTransferCreateAsReadyToShip`
+- `inventoryShipmentCreateInTransit`
+- `inventoryShipmentReceive`
+- `inventoryAdjustQuantities`
+- `fulfillmentOrderMove`
+- `fulfillmentCreate`
+
+These resources are sufficient for phase 1 because the design goal is not to mirror OMS order orchestration in Shopify. The goal is to reflect store-side inventory movement and shipment events in Shopify as OMS commits them.
+
+## Idempotency Introduction Should Not Be Left Out
+
+A follow-up improvement should add Shopify-side idempotency for the inventory movement and inventory adjustment mutations that support it. This is important because OMS `SECA`-driven event sync can still face replay scenarios from manual rerun, service retry, duplicate trigger delivery, or uncertain remote outcome after network failure.
+
+Current implementation position:
+
+- OMS-side correlation already reduces duplicate transfer posting through `ShipmentAttribute` `SHPFY_INV_SHIPMENTS`
+- OMS-side shipment fulfillment correlation already stores the returned Shopify fulfillment id on the OMS shipment
+- phase 1 does not yet pass Shopify GraphQL idempotency for supported inventory mutations
+
+Recommended next step:
+
+- introduce deterministic idempotency keys derived from OMS event identity for `inventoryTransferCreateAsReadyToShip`, `inventoryShipmentCreateInTransit`, `inventoryShipmentReceive`, and `inventoryAdjustQuantities`
+- keep OMS-side correlation checks as the first line of defense
+- continue to treat fulfillment sync separately unless Shopify explicitly documents idempotent support for the fulfillment mutations being used
+
+This should be treated as an important reliability enhancement, especially for inventory adjustments, because duplicate replay of a delta mutation can apply the same quantity change twice.
+
 ## Operational Note
 
 This approach is the right starting point for a small implementation.
