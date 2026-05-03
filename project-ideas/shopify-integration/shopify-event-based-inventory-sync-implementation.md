@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document describes a phase 1 implementation for Shopify inventory sync with direct `SECA` action and no dedicated sync history entities.
+This document describes the current phase 1 implementation for Shopify inventory sync with direct `SECA` action and no dedicated sync history entities.
 
 The goal is to keep the implementation small, understandable, and close to the real OMS business events.
 
@@ -38,112 +38,56 @@ classDiagram
       +call lane sync service
       +log failures
     }
-    class SyncRouterService {
-      +resolve shop context
-      +validate facility mapping
-      +validate product mapping
-      +route to lane helper
-    }
     class TransferSyncService {
-      +sync shipment
-      +sync receipt
+      +post#ShopifyTransferShipment
+      +receive#ShopifyTransferShipment
     }
     class FulfillmentSyncService {
-      +sync store fulfillment
+      +post#ShopifyFulfillment
     }
     class AdjustmentSyncService {
-      +sync inventory adjustment
-    }
-    class ShopifyHelperService {
-      +resolve shop
-      +resolve locations
-      +resolve inventory item ids
-      +execute graphql
+      +post#ShopifyPhysicalInventoryVariance
+      +post#ShopifyManualPhysicalInventoryVariance
+      +post#ShopifyExternalInventoryReset
+      +post#ShopifyInventoryAdjustments
     }
 
-    SecaTrigger --> SyncRouterService
-    SyncRouterService --> TransferSyncService
-    SyncRouterService --> FulfillmentSyncService
-    SyncRouterService --> AdjustmentSyncService
-    TransferSyncService --> ShopifyHelperService
-    FulfillmentSyncService --> ShopifyHelperService
-    AdjustmentSyncService --> ShopifyHelperService
+    SecaTrigger --> TransferSyncService
+    SecaTrigger --> FulfillmentSyncService
+    SecaTrigger --> AdjustmentSyncService
 ```
 
 ## Service Roles
 
-### 1. Setting Guard Service
+### 1. Transfer Sync Services
 
-Suggested role:
+Implemented roles:
 
-- `is#ShopifyInventorySyncEnabled`
-
-Responsibility:
-
-- read `ProductStoreSetting`
-- return true only when the store is explicitly enabled for Shopify inventory sync
-- stop all downstream sync when disabled
-
-This service should be called first by every `SECA` path.
-
-### 2. Sync Router Service
-
-Suggested role:
-
-- `route#ShopifyInventorySync`
-
-Responsibility:
-
-- receive the business key from `SECA`
-- determine the event lane
-- resolve `productStoreId`
-- call the setting guard
-- route to the correct lane-specific sync service
-
-This keeps the `SECA` thin and reusable.
-
-### 3. Shopify Context Resolver
-
-Suggested role:
-
-- `resolve#ShopifyInventorySyncContext`
-
-Responsibility:
-
-- resolve `shopId`
-- resolve Shopify Admin config
-- resolve OMS POS/store facility to Shopify location
-- resolve OMS product to Shopify inventory item
-- fail fast if required mapping is missing
-
-This service should be shared by all lanes.
-
-### 4. Transfer Sync Services
-
-Suggested roles:
-
-- `sync#TransferShipmentToShopify`
-- `sync#TransferReceiptToShopify`
+- `co.hotwax.sob.transfer.ShopifyTransferOrderServices.post#ShopifyTransferShipment`
+- `co.hotwax.sob.transfer.ShopifyTransferOrderServices.receive#ShopifyTransferShipment`
 
 Responsibilities:
 
-`sync#TransferShipmentToShopify`
+`post#ShopifyTransferShipment`
 - find the shipped OMS transfer shipment
-- create the prerequisite Shopify transfer if needed
-- create `InventoryShipment`
-- set tracking when available
-- mark shipment in transit
+- resolve the Shopify shop from `productStoreId` and mapped route facilities
+- aggregate shipment lines by Shopify inventory item
+- create Shopify `InventoryTransfer`
+- create Shopify `InventoryShipment`
+- store created Shopify shipment ids in `ShipmentAttribute` `SHPFY_INV_SHIPMENTS`
 
-`sync#TransferReceiptToShopify`
-- group receipt quantities by `shipmentId + datetimeReceived + facilityId`
-- map to the correct Shopify shipment items
-- call `inventoryShipmentReceive`
+`receive#ShopifyTransferShipment`
+- process each `ShipmentReceipt` row after commit
+- reuse `SHPFY_INV_SHIPMENTS` when already created for the OMS shipment
+- if `SHPFY_INV_SHIPMENTS` is missing, initialize Shopify transfer and shipment from the OMS shipment first
+- for `TO_Receive_Only`, initialize the Shopify transfer with destination location only and leave origin blank
+- call `inventoryShipmentReceive` against the existing Shopify shipment line
 
-### 5. Store Fulfillment Sync Service
+### 2. Store Fulfillment Sync Service
 
-Suggested role:
+Implemented role:
 
-- `sync#StoreFulfillmentToShopify`
+- `co.hotwax.sob.fulfillment.FulfillmentFeedServices.post#ShopifyFulfillment`
 
 Responsibility:
 
@@ -154,11 +98,14 @@ Responsibility:
 
 This is the correct store-shipment equivalent for Shopify.
 
-### 6. Inventory Adjustment Sync Service
+### 3. Inventory Adjustment Sync Services
 
-Suggested role:
+Implemented roles:
 
-- `sync#InventoryAdjustmentToShopify`
+- `co.hotwax.sob.product.InventoryServices.post#ShopifyPhysicalInventoryVariance`
+- `co.hotwax.sob.product.InventoryServices.post#ShopifyManualPhysicalInventoryVariance`
+- `co.hotwax.sob.product.InventoryServices.post#ShopifyExternalInventoryReset`
+- `co.hotwax.sob.product.InventoryServices.post#ShopifyInventoryAdjustments`
 
 Responsibility:
 
@@ -172,54 +119,17 @@ This service should be reused for:
 - external POS sale where Shopify did not create the sale
 - `_NA_` accumulated inventory reset delta from the created `ExternalInventoryReset` record
 
-### 7. External Reset Sync Service
+Manual variance is intentionally filtered:
 
-Suggested role:
-
-- `sync#ExternalInventoryResetToShopify`
-
-Responsibility:
-
-- read the created `ExternalInventoryReset` record by `resetItemId`
-- process only `_NA_` facility reset records for accumulated inventory
-- use `quantityOnHandDiff` and `availableToPromiseDiff` from the reset record as the Shopify delta source
-- call `inventoryAdjustQuantities`
-
-`reset#InventoryItem` should not be the sync source. It computes diffs and calls `create#ExternalInventoryReset`; the durable reset row is the event that should drive Shopify posting.
-
-### 8. Logging Service
-
-Suggested role:
-
-- `log#ShopifyInventorySyncFailure`
-
-Responsibility:
-
-- write one structured application log entry
-- keep logging format stable so support can search by business key
-
-Suggested log fields:
-
-- event type
-- source service
-- orderId
-- orderItemSeqId
-- shipmentId
-- receiptId
-- physicalInventoryId
-- productStoreId
-- facilityId
-- shopId
-- Shopify location id
-- payload summary
-- Shopify error text
+- `post#ShopifyManualPhysicalInventoryVariance` only syncs when the persisted `InventoryItemDetail` rows for the `physicalInventoryId` do not carry `orderId`, `returnId`, or `shipmentId`
+- this prevents order-specific, shipment-specific, or return-specific physical inventory records from being pushed as manual adjustment deltas
 
 ## SECA Responsibilities
 
 The `SECA` should do only three things:
 
 1. identify the source business key
-2. call the router service
+2. call the lane sync service
 3. log failure without disturbing committed OMS work
 
 The `SECA` should not:
@@ -230,13 +140,14 @@ The `SECA` should not:
 
 ## Suggested SECA Layout
 
-| OMS service | SECA timing | Routed sync service |
+| OMS service | SECA timing | Sync service |
 | --- | --- | --- |
-| `co.hotwax.poorti.TransferOrderFulfillmentServices.ship#TransferOrderShipment` | `post-service` | `sync#TransferShipmentToShopify` |
-| `ShipmentReceipt` create or update support service | `post-service` or entity hook wrapper | `sync#TransferReceiptToShopify` |
-| `co.hotwax.poorti.FulfillmentServices.ship#Shipment` | `post-service` | `sync#StoreFulfillmentToShopify` |
-| `co.hotwax.cycleCount.InventoryCountServices.create#PhysicalInventory` | `post-service` | `sync#InventoryAdjustmentToShopify` |
-| `create#ExternalInventoryReset` for `_NA_` facility | `post-service` | `sync#ExternalInventoryResetToShopify` |
+| `co.hotwax.poorti.TransferOrderFulfillmentServices.ship#TransferOrderShipment` | `post-commit` | `co.hotwax.sob.transfer.ShopifyTransferOrderServices.post#ShopifyTransferShipment` |
+| `create#org.apache.ofbiz.shipment.receipt.ShipmentReceipt` | `post-commit` | `co.hotwax.sob.transfer.ShopifyTransferOrderServices.receive#ShopifyTransferShipment` |
+| `co.hotwax.poorti.FulfillmentServices.ship#Shipment` | `post-commit` | `co.hotwax.sob.fulfillment.FulfillmentFeedServices.post#ShopifyFulfillment` |
+| `co.hotwax.cycleCount.InventoryCountServices.create#PhysicalInventory` | `post-commit` | `co.hotwax.sob.product.InventoryServices.post#ShopifyPhysicalInventoryVariance` |
+| `co.hotwax.poorti.FulfillmentServices.create#PhysicalInventory` | `post-commit` | `co.hotwax.sob.product.InventoryServices.post#ShopifyManualPhysicalInventoryVariance` |
+| `create#ExternalInventoryReset` | `post-commit` | `co.hotwax.sob.product.InventoryServices.post#ShopifyExternalInventoryReset` |
 
 ## Failure Handling
 
@@ -248,6 +159,14 @@ Phase 1 failure handling is intentionally simple:
 - no sync history row is created
 - replay is manual in phase 1
 
+Current async behavior is lane-specific:
+
+- transfer shipment sync is async
+- fulfillment sync is async
+- cycle count variance sync is async
+- receipt sync is intentionally not async, to avoid parallel `ShipmentReceipt` rows creating duplicate Shopify transfer/shipment records for the same OMS shipment
+- manual physical inventory sync remains immediate post-commit with `ignore-error="true"`
+
 This is acceptable for the first cut because:
 
 - the design stays small
@@ -258,20 +177,20 @@ If failures become frequent, the next enhancement should be a small retry or out
 
 ## Service Interaction Example
 
-Example: store-origin TO shipment
+Example: `TO_Receive_Only` warehouse-to-store receipt
 
-1. OMS ships the transfer shipment.
-2. `SECA` fires after `ship#TransferOrderShipment`.
-3. Router checks `SHOPIFY_INV_SYNC` for the product store.
-4. Transfer shipment sync service resolves Shopify context.
-5. Service ensures the transfer exists.
-6. Service creates Shopify shipment.
-7. Service marks shipment in transit.
-8. On failure, log the error with `orderId`, `shipmentId`, `facilityId`, and `shopId`.
+1. OMS creates the transfer order and advances it through approval into pending receipt.
+2. OMS creates `ShipmentReceipt` rows as the store receives inventory.
+3. `SECA` fires after each `ShipmentReceipt` commit.
+4. Receipt sync resolves the Shopify shop, destination location, and product inventory item mapping.
+5. If `SHPFY_INV_SHIPMENTS` already exists on the OMS shipment, the service reuses those Shopify shipment ids.
+6. If `SHPFY_INV_SHIPMENTS` is missing, the service initializes Shopify transfer and shipment from the OMS shipment.
+7. For `TO_Receive_Only`, the created Shopify transfer uses destination location only, so origin remains blank on Shopify.
+8. The service then calls `inventoryShipmentReceive` for the accepted quantity on the matching Shopify shipment line.
+9. Subsequent receipt rows for the same OMS shipment reuse the stored Shopify shipment ids instead of creating new receipt-side Shopify documents.
 
 ## Implementation Notes
 
-- keep all Shopify GraphQL calls in helper services, not inside `SECA`
 - fail fast on missing location or product mapping
 - never hard reset inventory from these event paths
 - use adjustment mutations only for adjustment-style events
@@ -279,6 +198,9 @@ Example: store-origin TO shipment
 - do not mirror OMS lifecycle for control purposes in Shopify
 - skip non-Shopify facilities except the explicitly handled `_NA_` accumulated inventory reset path
 - do not implement reservation sync in phase 1
+- persist Shopify transfer shipment ids on the OMS shipment using `ShipmentAttribute` `SHPFY_INV_SHIPMENTS`
+- for `TO_Receive_Only`, treat shipment-level initialization as the normal path when no prior Shopify shipment exists
+- one `ExternalInventoryReset` row currently results in one Shopify adjustment call; reset rows are not grouped by `resetDateResourceId` in phase 1
 
 ## Operational Note
 
