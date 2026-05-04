@@ -32,6 +32,7 @@ The connector currently has the following generic implemented services over the 
 - **Generic execution error reader**
   - Service: [D365DataPackageServices.get#ExecutionErrors](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml:372)
   - Retrieves D365 DMF execution errors for a given import execution id
+  - Called by `check#ImportDataPackageStatus` when D365 reports a terminal failure status
 
 ### 4.1 Import APIs Used
 
@@ -40,7 +41,18 @@ The connector currently has the following generic implemented services over the 
 - `GetExecutionSummaryStatus` API
 - `GetExecutionErrors` API
 
-### 4.2 Boundary of the Generic Layer
+### 4.2 Import Failure Error Handling
+
+- Import status jobs should call `D365DataPackageServices.poll#ImportDataPackageStatus` with the stream-specific `systemMessageTypeId`.
+- The poller finds matching `SystemMessage` records in `SmsgProduced` and calls `D365DataPackageServices.check#ImportDataPackageStatus`.
+- The checker calls D365 `GetExecutionSummaryStatus` using the execution id stored in `SystemMessage.remoteMessageId`.
+- If D365 returns `Failed`, `Unknown`, or `Canceled`, the checker calls `D365DataPackageServices.get#ExecutionErrors`, which invokes D365 `GetExecutionErrors`.
+- After the terminal failure is detected, the `SystemMessage` is updated to `SmsgError`.
+- Known D365 limitation observed with composite entity imports: for the Sales Orders Data Package import using `Sales orders composite V4`, D365 returns `Failed` from `GetExecutionSummaryStatus`, but `GetExecutionErrors` does not return the detailed execution errors through the API.
+- Until this is resolved, failed composite imports may need to be reviewed manually in D365 Data Management.
+- **TODO**: revisit error retrieval for failed composite imports and identify an API or exportable log source that returns detailed D365 execution errors.
+
+### 4.3 Boundary of the Generic Layer
 
 - The generic services in [D365DataPackageServices.xml](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml) cover import-status polling and error retrieval after an import execution id already exists.
 - Package construction, ZIP upload, `ImportFromPackage` submission, tracking-entity updates, and any follow-up reconciliation remain consumer-flow responsibilities.
