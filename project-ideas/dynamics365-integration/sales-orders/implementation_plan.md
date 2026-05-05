@@ -134,7 +134,7 @@ This is a fully implemented direct-sync path that creates a sales order header a
 7. **Idempotent Line Check**:
     - Query `SalesOrderLinesV3`
     - Filter by `SalesOrderNumber`
-    - Collect existing `LineNumber` values
+    - Collect existing `ExternalItemNumber` values
 8. **Line Create**:
     - Iterate eligible order items
     - Skip cancelled items
@@ -175,6 +175,7 @@ This is a fully implemented direct-sync path that creates a sales order header a
 | `DeliveryAddressStateId` | Normalized `stateProvinceGeoId` | Strips OMS prefixes when present. |
 | `DeliveryAddressZipCode` | `orderDetail.postalCode` | |
 | `DeliveryAddressCountryRegionId` | `orderDetail.countryGeoId` | |
+| `DefaultShippingWarehouseId` | Hardcoded `'NA'` | Temporary testing value. **TODO**: revisit before production. |
 | `Email` | `orderDetail.email` | Contact email on order header. |
 
 ###### Line (`SalesOrderLinesV3`)
@@ -182,17 +183,19 @@ This is a fully implemented direct-sync path that creates a sales order header a
 | :--- | :--- | :--- |
 | `dataAreaId` | `order.dataAreaId` | Legal entity context. |
 | `SalesOrderNumber` | Resolved D365 `SalesOrderNumber` | Linked to created/found header. |
-| `LineNumber` | `orderItemSeqId` | Cast to integer. |
-| `ItemNumber` | `item.itemNumber` | Defaults to `'1000'`. **TODO**: strict D365 product mapping needed. |
+| `ExternalItemNumber` | `orderItemSeqId` | OMS order item sequence id sent as a string and used for idempotency and later line-level reconciliation. |
+| `ItemNumber` | Resolved parent product identifier | Current implementation derives this from the OMS parent Shopify product id. **TODO**: confirm final D365 product identifier strategy. |
 | `OrderedSalesQuantity` | `item.quantity` | |
 | `SalesPrice` | `item.unitPrice` | |
 | `LineDiscountAmount` | `getItemDiscountAmount()` | Derived from OMS discounts. |
+| `ProductSizeId` | `ProductFeature(SIZE)` | Sent when the OMS item exposes a size feature. |
+| `ProductColorId` | `ProductFeature(COLOR)` | Sent when the OMS item exposes a color feature. |
 | `shipmentMethodTypeId` | `OrderItemShipGroup.shipmentMethodTypeId` | Used to derive the order-level `DeliveryModeCode`. |
 | `ShippingWarehouseId` | `item.shippingWarehouseId` | Sent only for `WH_ONLY_FULFILLMENT` items. |
 
 ##### OData Idempotency and Failure Behavior
 - **Header idempotency key**: `CustomersOrderReference`
-- **Line idempotency key**: `LineNumber`
+- **Line idempotency key**: `ExternalItemNumber`
 - **Failure behavior**: Partial orders are possible because header and lines are separate API calls.
 - **Mitigation**:
     - Re-query header before create
@@ -237,8 +240,8 @@ This is a fully implemented direct-sync path that creates a sales order header a
 - Reservation remains an ERP-side operational step and should be handled later in D365 according to warehouse fulfillment workflow.
 
 ##### OData TODOs / Gaps
-- Resolve `ItemNumber` from D365 product identification instead of defaulting to `1000`
-- Add support for D365 variant dimension fields
+- Confirm the final D365 `ItemNumber` strategy used for OMS parent product identifiers
+- Add support for additional D365 variant dimension fields beyond the current size/color handling if required
 - Revisit missing header fields such as order date, Shopify order identity, and ship-to phone
 
 ##### OData Sample Requests
@@ -280,11 +283,13 @@ This is a fully implemented direct-sync path that creates a sales order header a
  {
   "dataAreaId": "usmf",
   "SalesOrderNumber": "000891",
-  "ItemNumber": "1000",
-  "LineNumber": 1,
+  "ExternalItemNumber": "00101",
+  "ItemNumber": "SHOPIFY_PARENT_PRODUCT_ID",
   "OrderedSalesQuantity": 1,
   "SalesPrice": 100,
   "LineDiscountAmount": 20,
+  "ProductSizeId": "M",
+  "ProductColorId": "Blue",
   "ShippingWarehouseId": "13"
  }
 ```
@@ -339,7 +344,7 @@ This means the pattern is operationally useful, but it behaves more like a light
     - Poll later using the generic import-status services
 13. **Local Persistence**:
     - The entity `D365SalesOrderImportHistory` remains the DMF submission marker
-    - **TODO**: confirm/complete final mapping back to the entity `OrderIdentification` after import execution succeeds
+    - Final mapping back to the entity `OrderIdentification` is handled asynchronously by the sales order header export flow described in section 2
 
 ###### Why this design feels transitional
 - The remote D365 import trigger has already been executed before the `SystemMessage` entity record is queued.
@@ -353,7 +358,7 @@ In this approach, the effective tracking payload is close to:
 
 ```json
 {
-  "systemMessageTypeId": "D365_IMPORT_ORDERS",
+  "systemMessageTypeId": "D365_IMP_SLS_ORDERS",
   "systemMessageRemoteId": "D365_HotWax_Sandbox",
   "statusId": "SmsgProduced",
   "isOutgoing": "Y",
@@ -433,7 +438,7 @@ The queued message should carry all metadata needed for the send and confirm pha
 
 ```json
 {
-  "systemMessageTypeId": "D365_IMPORT_ORDERS",
+  "systemMessageTypeId": "D365_IMP_SLS_ORDERS",
   "systemMessageRemoteId": "D365_HotWax_Sandbox",
   "statusId": "SmsgProduced",
   "isOutgoing": "Y",
@@ -455,7 +460,7 @@ After the send service succeeds, the same message would effectively look like:
 
 ```json
 {
-  "systemMessageTypeId": "D365_IMPORT_ORDERS",
+  "systemMessageTypeId": "D365_IMP_SLS_ORDERS",
   "systemMessageRemoteId": "D365_HotWax_Sandbox",
   "statusId": "SmsgSent",
   "isOutgoing": "Y",
@@ -477,7 +482,7 @@ After OMS confirms the remote execution and completes follow-up processing, the 
 
 ```json
 {
-  "systemMessageTypeId": "D365_IMPORT_ORDERS",
+  "systemMessageTypeId": "D365_IMP_SLS_ORDERS",
   "systemMessageRemoteId": "D365_HotWax_Sandbox",
   "statusId": "SmsgConfirmed",
   "isOutgoing": "Y",
@@ -520,6 +525,7 @@ After OMS confirms the remote execution and completes follow-up processing, the 
 | `DELIVERYADDRESSSTATEID` | Normalized `stateProvinceGeoId` | |
 | `DELIVERYADDRESSZIPCODE` | `orderDetail.postalCode` | |
 | `DELIVERYADDRESSCOUNTRYREGIONID` | `orderDetail.countryGeoId` | |
+| `DEFAULTSHIPPINGWAREHOUSEID` | Hardcoded `'NA'` | Temporary testing value. **TODO**: revisit before production. |
 | `EMAIL` | `orderDetail.email` | |
 
 ###### Line (`SALESORDERLINEV2ENTITY`)
@@ -531,6 +537,8 @@ After OMS confirms the remote execution and completes follow-up processing, the 
 | `LINENUMBER` | Not sent by OMS in the current DMF payload | D365 exposes this as decimal and should not be used to preserve OMS order item sequence ids with leading zeros. |
 | `ORDEREDSALESQUANTITY` | `quantity` | |
 | `SALESPRICE` | `unitPrice` | |
+| `PRODUCTSIZEID` | `ProductFeature(SIZE)` | Sent when the OMS item exposes a size feature. |
+| `PRODUCTCOLORID` | `ProductFeature(COLOR)` | Sent when the OMS item exposes a color feature. |
 | `shipmentMethodTypeId` | `OrderItemShipGroup.shipmentMethodTypeId` | Used to derive the order-level `DELIVERYMODECODE`. |
 | `SHIPPINGWAREHOUSEID` | `shippingWarehouseId` | Sent for D365 fulfillment warehouse use case. |
 
@@ -582,11 +590,11 @@ After OMS confirms the remote execution and completes follow-up processing, the 
 ##### Poll Sales Order Import Package Status
 - **Job**: `d365_PollSalesOrderImportStatus`
 - **Service**: `co.hotwax.d365.D365DataPackageServices.poll#ImportDataPackageStatus`
-- **System message type**: `D365_IMPORT_ORDERS`
+- **System message type**: `D365_IMP_SLS_ORDERS`
 - **Purpose**: Poll D365 for the execution status of sales order import packages submitted by `d365_ImportSalesOrders`.
 - **Execution id source**: The current sales-order import flow stores the D365 execution id returned by `ImportFromPackage` in `SystemMessage.remoteMessageId`.
 - **Polling behavior**:
-    - The poll job reads `D365_IMPORT_ORDERS` `SystemMessage` records in `SmsgProduced`.
+    - The poll job reads `D365_IMP_SLS_ORDERS` `SystemMessage` records in `SmsgProduced`.
     - For each record, it calls `check#ImportDataPackageStatus`.
     - The checker calls D365 `GetExecutionSummaryStatus`.
     - If D365 returns `Succeeded` or `PartiallySucceeded`, the current implementation moves the `SystemMessage` to `SmsgSent`.
@@ -598,9 +606,8 @@ After OMS confirms the remote execution and completes follow-up processing, the 
 For generic package upload/import mechanics and API sequencing, refer to [data_import_package_api.md](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/foundation/project-ideas/dynamics365-integration/data-package-api/data_import_package_api.md).
 
 ##### DMF TODOs / Gaps
-- Confirm final success reconciliation from import execution to `OrderIdentification`
 - Resolve `ITEMNUMBER` from OMS-to-D365 product mapping
-- Add D365 variant dimension support in the composite payload
+- Add support for additional D365 variant dimension fields beyond the current size/color handling if required
 - Validate whether shipping charge handling through `SALESORDERHEADERCHARGEV2ENTITY` is sufficient for all order scenarios
 
 #### 1.3 Mixed Cart Order Handling
@@ -653,63 +660,9 @@ This section captures the current integration understanding for mixed-cart sales
 - OMS should not trigger reservation during order export.
 - Warehouse/site context should be finalized before any reservation process is executed in D365.
 
-##### Update Location for Brokered Lines
-- Once OMS has final brokered fulfillment location information, it can update the D365 sales order line warehouse before reservation or downstream posting.
-- The verified OData shape from the Dynamics 365 Postman collection uses `PATCH` on `SalesOrderLinesV3`, keyed by legal entity and the D365 line `InventoryLotId`.
-- Minimum OData fields required to update the warehouse when OMS already has the D365 line identifier:
-
-| Field | Location | Usage / Notes |
-| :--- | :--- | :--- |
-| `dataAreaId` | URL key | D365 legal entity, for example `usmf`. |
-| `InventoryLotId` | URL key | D365 sales order line identifier returned by `SalesOrderLinesV3`. |
-| `ShippingWarehouseId` | Request body | Target D365 warehouse id for the brokered fulfillment location. |
-
-- The request body only needs the field being changed:
-
-```http
-PATCH {{d365_url}}/data/SalesOrderLinesV3(dataAreaId='{legalEntityId}',InventoryLotId='{inventoryLotId}')
-Accept: application/json
-Content-Type: application/json
-```
-
-```json
-{
-  "ShippingWarehouseId": "{d365WarehouseId}"
-}
-```
-
-- Example from the verified Postman request:
-
-```http
-PATCH {{d365_url}}/data/SalesOrderLinesV3(dataAreaId='usmf',InventoryLotId='479464')
-```
-
-```json
-{
-  "ShippingWarehouseId": "100"
-}
-```
-
-- If OMS does not already have the D365 line identifier, the integration must first resolve or persist it. One practical lookup is to query `SalesOrderLinesV3` by `SalesOrderNumber` and then match the intended OMS line before updating `ShippingWarehouseId`.
-- For the DMF path, the candidate file/package should use the same line identity and update field:
-
-| DMF field / column | Required | Usage / Notes |
-| :--- | :--- | :--- |
-| `DATAAREAID` / `dataAreaId` | Yes | D365 legal entity. |
-| `INVENTORYLOTID` / `InventoryLotId` | Yes | D365 sales order line identifier to update. |
-| `SHIPPINGWAREHOUSEID` / `ShippingWarehouseId` | Yes | New D365 warehouse id. |
-| `SALESORDERNUMBER` / `SalesOrderNumber` | Recommended | Traceability and fallback matching if the line id is not persisted in OMS. |
-| `LINENUMBER` / `LineNumber` | Recommended | Traceability and fallback matching within the sales order. |
-
-- Expected minimum DMF row when `InventoryLotId` is available:
-
-```csv
-DATAAREAID,INVENTORYLOTID,SHIPPINGWAREHOUSEID
-usmf,479464,100
-```
-
-- **TODO:** verify the DMF import project/entity accepts `InventoryLotId` as the update key for line-level warehouse reassignment. If the project requires sales-order business keys instead, include `SALESORDERNUMBER` and `LINENUMBER` and align the column names to the entity export generated by D365.
-- Because reservation is currently manual in the tested D365 setup, this location update is expected to be safe before reservation. If D365 reservation behavior changes to automatic, this assumption must be retested.
+##### Brokered Warehouse Update
+- The implemented brokered order item warehouse update flow is documented separately in section 3.
+- That separation is intentional because the flow depends on the sales order and sales order line export reconciliations, even though the business use case originates from mixed-cart order handling.
 
 ##### Invoicing Implication
 - D365 can generate multiple invoices from a single sales order.
@@ -782,190 +735,181 @@ Add records to the entity `co.hotwax.integration.IntegrationTypeMapping` for the
 
 ### 2. Export of Sales Orders from D365 to OMS
 
-This flow covers the return of D365-generated sales order identifiers back into OMS so the OMS can store the `SalesOrderNumber` against the originating order.
+This flow returns the D365-generated `SalesOrderNumber` back into OMS after the OMS-to-D365 sales order import completes. The generic Data Package queue/send/poll services remain documented in [data_export_package_api.md](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/foundation/project-ideas/dynamics365-integration/data-package-api/data_export_package_api.md); this section covers the sales-order-header-specific D365 project, jobs, row mappings, and OMS persistence.
 
-See the shared Data Package export reference: [data_export_package_api.md](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/foundation/project-ideas/dynamics365-integration/data-package-api/data_export_package_api.md). That document is the source of truth for the generic D365 export framework and documents both approaches that were explored:
-- **Approach 1**: execution tracking using `SystemMessage` entity records after the D365 export trigger call
-- **Approach 2**: the Moqui-native `SystemMessage` send lifecycle now used by the connector
+#### Objective
+- Store the D365 `SalesOrderNumber` against the originating OMS order.
+- Make the D365 sales order identifier available for downstream OMS flows, especially payment synchronization and sales order line reconciliation.
 
-This sales-order section focuses on how the sales-order reconciliation flow uses those approaches and, in the current design, how it uses the generic export queue/send/poll services.
+#### D365 Export Project Prerequisites
+- **Sales order header export project**: `HotWax_Export_Sales_Orders`
+  - Entity: `SalesOrderHeadersV4`
+- In the D365 UI, `Enable Change Tracking` is enabled for the `SalesOrderHeadersV4` export entity. The current connector relies on D365 change tracking to export changed OMS-created records.
+- The D365 export project should run in `Incremental Push` mode along with change tracking so changed OMS-created rows are picked up correctly.
+- Change tracking only controls incremental selection. The project filters still determine which D365 records are considered eligible for the export.
+- **Future option**: if change tracking proves too broad operationally, introduce an explicit D365 field such as `HcOrderExported` and use that to drive export selection instead.
 
-#### 2.1 Objective
-- Read the D365-generated `SalesOrderNumber`
-- Match it back to the originating OMS `orderId`
-- Store the value in OMS as `OrderIdentification` with type `D365_SLS_ORD_NUM`
+#### Implemented Flow
 
-#### 2.2 Primary Use Case
-- **DMF import reconciliation**: DMF submission is asynchronous, so OMS needs a follow-up export/reconciliation step to confirm which D365 sales order number was assigned to each imported order.
+This export reconciles the D365-assigned `SalesOrderNumber` back to the OMS order.
 
-#### 2.2.1 Two Export Approaches Considered for Sales Orders
+###### D365 / OMS Components
+- **System message type**: `D365_EXP_SALES_ORDERS`
+- **Queue job**: `d365_QueueSalesOrderExport`
+- **Poll job**: `d365_ExportSalesOrdersPoll`
+- **Definition group**: `HotWax_Export_Sales_Orders`
+- **Package name**: `SalesOrderHeadersV4`
+- **CSV file**: `Sales order headers V4.csv`
+- **DataManager config**: `D365_IMP_SALES_ORD`
+- **Row-storage service**: `co.hotwax.d365.D365OrderServices.store#D365SalesOrderNumber`
 
-##### Approach 1 - Execution Tracking Using `SystemMessage` Entity Records
+###### Implemented Processing Sequence
+1. The queue job `d365_QueueSalesOrderExport` calls `D365DataPackageServices.queue#ExportDataPackage`.
+2. The generic queue service creates a `SystemMessage` record with the sales-order export payload and invokes the configured `sendServiceName`.
+3. `D365DataPackageServices.send#ExportDataPackage` calls D365 `ExportToPackage`.
+4. D365 returns an `executionId`, which OMS stores in `SystemMessage.remoteMessageId`.
+5. The poll job `d365_ExportSalesOrdersPoll` calls `D365DataPackageServices.poll#ExportDataPackageStatus`.
+6. On success, the checker downloads the exported ZIP, extracts `Sales order headers V4.csv`, and hands it to the DataManager config `D365_IMP_SALES_ORD`.
+7. DataManager invokes `store#D365SalesOrderNumber` for each CSV row.
 
-This was the earlier export design for sales-order reconciliation.
+###### Exported Fields Used by OMS
+| D365 CSV field | OMS usage |
+| :--- | :--- |
+| `CUSTOMERSORDERREFERENCE` | OMS `orderId` |
+| `SALESORDERNUMBER` | Stored as `OrderIdentification.idValue` for type `D365_SLS_ORD_NUM` |
 
-Sales-order-specific values in this approach:
-- `systemMessageTypeId = D365_EXP_SALES_ORDERS`
-- `definitionGroupId = HotWax_Export_Sales_Orders`
-- `packageName = SalesOrderHeadersV4`
-- `fileName = Sales order headers V4.csv`
-- `dataManagerConfigId = D365_IMP_SALES_ORD`
-
-Relevant services in that approach:
-- generic trigger service `D365DataPackageServices.trigger#DataPackageExport`
-- generic poll service `D365DataPackageServices.poll#DataPackageStatus`
-- generic single-message checker `D365DataPackageServices.check#DataPackageStatus`
-- sales-order row-processing service `D365OrderServices.store#D365SalesOrderNumber`
-
-Behavior in that approach:
-1. the sales-order trigger job called the generic trigger service
-2. the generic trigger service called D365 `ExportToPackage`
-3. after D365 returned `executionId`, OMS created a `SystemMessage` entity record in `SmsgProduced`
-4. that `SystemMessage.messageText` stored the `executionId`
-5. the poll job read `SmsgProduced` tracker messages and called `GetExecutionSummaryStatus`
-6. on success, the checker called `GetExportedPackageUrl`, downloaded the package, extracted `Sales order headers V4.csv`, and uploaded the file to the DataManager config `D365_IMP_SALES_ORD`
-7. DataManager then invoked the service `D365OrderServices.store#D365SalesOrderNumber`
-
-This approach remains important in the documentation because it explains the earlier design and the reason the reconciliation flow was initially modeled as execution tracking over `SystemMessage`.
-
-##### Approach 2 - Moqui-Native `SystemMessage` Send Flow
-
-This is the current sales-order export design.
-
-Sales-order-specific values in this approach:
-- `systemMessageTypeId = D365_EXP_SALES_ORDERS`
-- `sendServiceName = D365DataPackageServices.send#ExportDataPackage`
-- `definitionGroupId = HotWax_Export_Sales_Orders`
-- `packageName = SalesOrderHeadersV4`
-- `fileName = Sales order headers V4.csv`
-- `dataManagerConfigId = D365_IMP_SALES_ORD`
-
-Relevant services and jobs in this approach:
-- trigger job `d365_QueueSalesOrderExport`
-- generic queue service `D365DataPackageServices.queue#ExportDataPackage`
-- generic send service `D365DataPackageServices.send#ExportDataPackage`
-- poll job `d365_ExportSalesOrdersPoll`
-- generic poll service `D365DataPackageServices.poll#ExportDataPackageStatus`
-- generic single-message checker `D365DataPackageServices.check#ExportDataPackageStatus`
-- sales-order row-processing service `D365OrderServices.store#D365SalesOrderNumber`
-
-Behavior in this approach:
-1. the trigger job `d365_QueueSalesOrderExport` queues a `SystemMessage` entity record for the sales-order export flow
-2. the generic queue service `queue#ExportDataPackage` stores a JSON payload in `SystemMessage.messageText` with:
-   - `definitionGroupId = HotWax_Export_Sales_Orders`
-   - `packageName = SalesOrderHeadersV4`
-   - `fileName = Sales order headers V4.csv`
-   - `dataManagerConfigId = D365_IMP_SALES_ORD`
-3. because `sendNow=true`, Moqui invokes `send#ProducedSystemMessage`
-4. the configured `sendServiceName`, `send#ExportDataPackage`, calls D365 `ExportToPackage`
-5. D365 returns `executionId`
-6. Moqui stores that `executionId` in `SystemMessage.remoteMessageId` and moves the message through:
-   - `SmsgProduced`
-   - `SmsgSending`
-   - `SmsgSent`
-7. the poll job `d365_ExportSalesOrdersPoll` finds sales-order export messages in `SmsgSent`
-8. `check#ExportDataPackageStatus` calls `GetExecutionSummaryStatus`
-9. when the export succeeds, the checker:
-   - calls `GetExportedPackageUrl`
-   - downloads the ZIP package
-   - extracts `Sales order headers V4.csv`
-   - uploads the file to the DataManager config `D365_IMP_SALES_ORD`
-10. DataManager invokes `D365OrderServices.store#D365SalesOrderNumber`
-11. on successful file processing, the `SystemMessage` entity record moves to `SmsgConfirmed`
-
-This approach is now preferred because the `SystemMessage` entity record is the real outbound unit of work and the message statuses have their intended Moqui meaning.
-
-#### 2.2.2 Implemented Job and Service Sequence
-
-The current implementation uses the generic export queue/send/poll model and Maarg DataManager processing in the following sequence:
-
-1. **Queue job**: the service job `d365_QueueSalesOrderExport`
-   - Defined in [D365ServiceJobData.xml](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/data/D365ServiceJobData.xml)
-   - Calls the generic queue service [D365DataPackageServices.queue#ExportDataPackage](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml:4)
-   - Parameters:
-     - `systemMessageTypeId = D365_EXP_SALES_ORDERS`
-     - `definitionGroupId = HotWax_Export_Sales_Orders`
-     - `packageName = SalesOrderHeadersV4`
-     - `fileName = Sales order headers V4.csv`
-     - `dataManagerConfigId = D365_IMP_SALES_ORD`
-     - `legalEntityId`
-2. **Generic queue service execution**: the service `queue#ExportDataPackage`
-   - creates the export payload JSON in `SystemMessage.messageText`
-   - queues the `SystemMessage` entity record in `SmsgProduced`
-   - immediately invokes Moqui send processing through `queue#SystemMessage(sendNow=true)`
-3. **Generic send service execution**: the service `send#ExportDataPackage`
-   - reads the payload from `SystemMessage.messageText`
-   - calls D365 `ExportToPackage`
-   - returns `remoteMessageId = executionId`
-4. **Poll job**: the service job `d365_ExportSalesOrdersPoll`
-   - Defined in [D365ServiceJobData.xml](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/data/D365ServiceJobData.xml)
-   - Calls the service [D365DataPackageServices.poll#ExportDataPackageStatus](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml:86)
-   - Parameters:
-     - `systemMessageTypeId = D365_EXP_SALES_ORDERS`
-5. **Generic poll service execution**: the service `poll#ExportDataPackageStatus`
-   - Finds `SystemMessage` entity records in `SmsgSent`
-   - Invokes the service `check#ExportDataPackageStatus` for each execution id
-6. **Low-level poll/check execution**: the service `check#ExportDataPackageStatus`
-   - Calls D365 `GetExecutionSummaryStatus`
-   - When succeeded or partially succeeded, calls D365 `GetExportedPackageUrl`
-   - Downloads the ZIP
-   - Extracts the file matching `Sales order headers V4.csv`
-   - Hands the extracted file to the DataManager config `D365_IMP_SALES_ORD`
-7. **DataManager import service execution**
-   - Configured in [D365DataManagerData.xml](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/data/D365DataManagerData.xml:6)
-   - Uses the import service [D365OrderServices.store#D365SalesOrderNumber](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365OrderServices.xml:551)
-8. **Sales order number storage**
-   - The service `store#D365SalesOrderNumber` reads each exported row
-   - Maps `CUSTOMERSORDERREFERENCE -> orderId`
-   - Maps `SALESORDERNUMBER -> D365_SLS_ORD_NUM`
-   - Creates or updates the entity `OrderIdentification`
-
-#### 2.3 Export / Reconciliation Source
-- **D365 entity/API used**: `SalesOrderHeadersV4`
-- **Primary lookup field**: `CustomersOrderReference`
-- **Expected mapping**:
-    - `CustomersOrderReference` = OMS `orderId`
-    - `SalesOrderNumber` = D365-generated sales order identifier
-    - `dataAreaId` = legal entity context for safer matching
-
-For generic package export trigger/poll/download mechanics, refer to [data_export_package_api.md](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/foundation/project-ideas/dynamics365-integration/data-package-api/data_export_package_api.md).
-
-#### 2.4 Proposed Service Flow
-1. Queue D365 export using `d365_QueueSalesOrderExport`.
-2. Create a `SystemMessage` entity record with the sales-order export payload.
-3. Invoke the configured `sendServiceName` and start a D365 export execution for definition group `HotWax_Export_Sales_Orders`.
-4. Persist the returned `executionId` in `SystemMessage.remoteMessageId`.
-5. Poll the export execution using the service job `d365_ExportSalesOrdersPoll`.
-6. Once the execution succeeds, download the exported ZIP package.
-7. Extract `Sales order headers V4.csv`.
-8. Feed the file into the DataManager config `D365_IMP_SALES_ORD`.
-9. Execute the service `store#D365SalesOrderNumber` for each CSV row.
-10. Create or update the OMS entity `OrderIdentification` with:
-    - `orderIdentificationTypeId = D365_SLS_ORD_NUM`
-    - `idValue = SALESORDERNUMBER`
-
-#### 2.5 Persistence Target in OMS
+###### OMS Persistence
 - **Entity**: `co.hotwax.order.OrderIdentification`
 - **Type**: `D365_SLS_ORD_NUM`
-- **Purpose**: Make the D365 sales order identifier available for downstream payment sync, settlement, and cross-system traceability.
+- **Purpose**: downstream D365 cross-reference for payments, line export reconciliation, and brokered order item updates
 
-#### 2.6 Current Status
-- **Implemented today**:
-    - Queue service job: `d365_QueueSalesOrderExport`
-    - Poll service job: `d365_ExportSalesOrdersPoll`
-    - Generic Data Package export service names: `queue#ExportDataPackage`, `send#ExportDataPackage`, `poll#ExportDataPackageStatus`, `check#ExportDataPackageStatus`
-    - Row-storage service name: `store#D365SalesOrderNumber`
-- **Still open for refinement**:
-    - retry/backoff policy tuning for delayed D365 export completion
-    - validation/handling for duplicate or ambiguous exported records
-    - tighter linkage between `D365SalesOrderImportHistory` and final reconciliation status
+### 2.1 Export of Sales Order Lines from D365 to OMS
 
-#### 2.7 Export / Reconciliation TODOs
-- decide whether the queue job naming/schedule should differ by environment
-- define whether reconciliation should remain polling-based only or optionally become event-assisted later
-- Confirm query filters and selected fields for `SalesOrderHeadersV4`.
-- Define retry/backoff behavior for imports that are still processing in D365.
-- Define exception handling when multiple D365 records are returned for a single OMS `orderId`.
+This flow returns the D365-generated `InventoryLotId` back into OMS after the OMS-to-D365 sales order import completes.
+
+#### Objective
+- Store the D365 `InventoryLotId` against the originating OMS order item.
+- Make the D365 sales order line identifier available for brokered order item warehouse updates back to D365.
+
+#### D365 Export Project Prerequisites
+- **Sales order line export project**: `HotWax_Export_Sales_Order_Lines`
+  - Entity: `SalesOrderLinesV3`
+  - Current filter: `ExternalItemNumber != ""`
+- In the D365 UI, `Enable Change Tracking` is enabled for the `SalesOrderLinesV3` export entity. The current connector relies on D365 change tracking to export changed OMS-created records.
+- The D365 export project should run in `Incremental Push` mode along with change tracking so changed OMS-created rows are picked up correctly.
+- Change tracking only controls incremental selection. The project filters still determine which D365 records are considered eligible for the export.
+- **Future option**: if change tracking proves too broad operationally, introduce an explicit D365 field such as `HcOrderLineExported` and use that to drive export selection instead.
+
+#### Implemented Flow
+
+This export reconciles the D365-assigned `InventoryLotId` back to the OMS order item.
+
+###### D365 / OMS Components
+- **System message type**: `D365_EXP_SLS_ORD_LN`
+- **Queue job**: `d365_QueueSalesOrderLinesExport`
+- **Poll job**: `d365_ExportSalesOrderLinesPoll`
+- **Definition group**: `HotWax_Export_Sales_Order_Lines`
+- **Package name**: `SalesOrderLinesV3`
+- **CSV file**: `Sales order lines V3.csv`
+- **DataManager config**: `D365_IMP_SLS_ORD_LN`
+- **Row-storage service**: `co.hotwax.d365.D365OrderServices.store#D365SalesOrderLineInventoryLotId`
+
+###### Implemented Processing Sequence
+1. The queue job `d365_QueueSalesOrderLinesExport` calls `D365DataPackageServices.queue#ExportDataPackage`.
+2. The generic queue service creates a `SystemMessage` record for the sales-order-line export flow and invokes the configured `sendServiceName`.
+3. `D365DataPackageServices.send#ExportDataPackage` calls D365 `ExportToPackage`.
+4. D365 returns an `executionId`, which OMS stores in `SystemMessage.remoteMessageId`.
+5. The poll job `d365_ExportSalesOrderLinesPoll` calls `D365DataPackageServices.poll#ExportDataPackageStatus`.
+6. On success, the checker downloads the exported ZIP, extracts `Sales order lines V3.csv`, and hands it to the DataManager config `D365_IMP_SLS_ORD_LN`.
+7. DataManager invokes `store#D365SalesOrderLineInventoryLotId` for each CSV row.
+
+###### Exported Fields Used by OMS
+| D365 CSV field | OMS usage |
+| :--- | :--- |
+| `SALESORDERNUMBER` | Used to resolve the OMS order through `OrderIdentification` type `D365_SLS_ORD_NUM` |
+| `EXTERNALITEMNUMBER` | Used to resolve the OMS `orderItemSeqId` exactly as sent from OMS |
+| `INVENTORYLOTID` | Stored on the OMS order item as the D365 sales-order-line identifier |
+
+###### OMS Matching and Persistence Rules
+- OMS must run the sales order header export before the sales order line export, because the line-storage service first resolves the OMS order through `D365_SLS_ORD_NUM`.
+- OMS sends `orderItemSeqId` to D365 in `EXTERNALITEMNUMBER` during the sales order import.
+- Values such as `00101` must be sent to D365 as-is and matched back as-is in OMS.
+- `LineNumber` is not used for reconciliation because D365 exposes it as a decimal field and it is not the right place to preserve OMS item sequence ids with leading zeros.
+- The line-storage service creates or updates `OrderItemAttribute` with:
+  - `attrName = D365SalesOrderItemInventoryLotId`
+  - `attrValue = INVENTORYLOTID`
+- Re-exported values can overwrite the previously stored OMS `InventoryLotId`. That is acceptable in the current design because the line identifier is expected to remain stable after order creation.
+
+#### End-to-End Dependency Chain
+1. OMS imports the sales order to D365.
+2. D365 sales order header export stores `D365_SLS_ORD_NUM` in OMS.
+3. D365 sales order line export stores `D365SalesOrderItemInventoryLotId` in OMS.
+4. OMS uses those stored identifiers to drive later brokered warehouse updates back into D365.
+
+#### Current Design Notes
+- The connector now uses the generic `queue#ExportDataPackage` -> `send#ExportDataPackage` -> `poll#ExportDataPackageStatus` pattern for both header and line exports.
+- The D365 execution id is stored in `SystemMessage.remoteMessageId`.
+- The export jobs are currently polling based.
+- Duplicate or ambiguous exported rows should be treated as operational issues:
+  - sales order header export expects one OMS order per `CUSTOMERSORDERREFERENCE`
+  - sales order line export expects one OMS item per `SalesOrderNumber + ExternalItemNumber`
+
+#### Export TODOs / Future Refinements
+- tune retry/backoff behavior for delayed D365 export completion
+- tighten D365 export project filters further if change tracking alone proves noisy
+- evaluate whether explicit D365 flags such as `HcOrderExported` and `HcOrderLineExported` should replace or supplement change tracking
+- revisit whether polling should remain the only reconciliation mechanism or whether D365 events can assist later
+
+### 3. Brokered Order Items Update from OMS to D365
+
+Once OMS has final brokered fulfillment location information, it can update the D365 sales order line warehouse before reservation or downstream posting.
+
+- The connector implements this as a DMF / Data Package import using the D365 project `HotWax_Import_Brokered_Order_Items`.
+- The earlier OData `PATCH SalesOrderLinesV3(dataAreaId, InventoryLotId)` shape was verified manually and remains a useful reference for troubleshooting, but the implemented connector path is the Data Package import.
+- This flow depends on the two prior export reconciliations:
+  - section 2 must already have stored `D365_SLS_ORD_NUM`
+  - section 2.1 must already have stored `D365SalesOrderItemInventoryLotId`
+
+#### Implemented OMS Components
+- **Eligible view**: `D365EligibleBrokeredOrderItems`
+- **Import service**: `co.hotwax.d365.D365OrderServices.import#BrokeredOrderItemsDataPackage`
+- **System message type**: `D365_IMP_BRKRD_ITEMS`
+- **Queue job**: `d365_ImportBrokeredOrderItems`
+- **Poll job**: `d365_PollBrokeredOrderItemsImportStatus`
+
+#### D365 Import Project
+- **Project name**: `HotWax_Import_Brokered_Order_Items`
+- **Entity**: `Sales order lines V3`
+- **Package settings**:
+  - `SourceFormat = CSV`
+  - `DefaultRefreshType = IncrementalPush`
+- The generated package currently uses UTF-8 encoded files (`PackageHeader.xml`, `Manifest.xml`, and `Sales order lines V3.csv`).
+- **Validated file shape**:
+
+```csv
+INVENTORYLOTID,SHIPPINGWAREHOUSEID
+479494,100
+479495,13
+```
+
+- `DATAAREAID` is intentionally not included in the file. The OMS service requires `dataAreaId` as an input parameter and passes it to D365 as `legalEntityId` in the `ImportFromPackage` request.
+
+#### Eligibility Rules in OMS
+- OMS includes an item in the brokered-items feed only when:
+  - the order already has `OrderIdentification` type `D365_SLS_ORD_NUM`
+  - the order item already has `OrderItemAttribute` `D365SalesOrderItemInventoryLotId`
+  - the item is in `ITEM_APPROVED`
+  - the selected facility has a D365 warehouse id in `Facility.externalId`
+  - the facility is not virtual
+  - the facility currently belongs to `WH_ONLY_FULFILLMENT`
+  - there is no prior `ExternalFulfillmentOrderItem` row, or the existing row is in `REJECT`
+- **TODO**: replace the temporary `WH_ONLY_FULFILLMENT` facility-group rule with a dedicated D365 brokered fulfillment grouping later.
+
+#### OMS Tracking Behavior
+- After D365 accepts the import package and returns an execution id, OMS creates a `SystemMessage` record in `SmsgProduced` for `D365_IMP_BRKRD_ITEMS`.
+- OMS also creates or updates `ExternalFulfillmentOrderItem` with `fulfillmentStatus = Sent` for each packaged order item.
+- `Sent` means OMS has successfully submitted the brokered location update package to D365. Final D365 completion is still confirmed later by the poll job.
+- Because reservation is currently manual in the tested D365 setup, this location update is expected to be safe before reservation. If D365 reservation behavior changes to automatic, this assumption must be retested.
 
 ## Customer Payment Integration
 
