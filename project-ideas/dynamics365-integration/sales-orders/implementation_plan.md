@@ -340,7 +340,7 @@ This means the pattern is operationally useful, but it behaves more like a light
 11. **Trigger Import**:
     - Call the `ImportFromPackage` API with `definitionGroupId` and `BlobId`
 12. **Persist Execution Tracking**:
-    - Create a `SystemMessage` entity record in `SmsgProduced` with `remoteMessageId = executionId`
+    - After D365 accepts the package and returns `executionId`, create a `SystemMessage` entity record in `SmsgSent` with `remoteMessageId = executionId`
     - Poll later using the generic import-status services
 13. **Local Persistence**:
     - The entity `D365SalesOrderImportHistory` remains the DMF submission marker
@@ -360,7 +360,7 @@ In this approach, the effective tracking payload is close to:
 {
   "systemMessageTypeId": "D365_IMP_SLS_ORDERS",
   "systemMessageRemoteId": "D365_HotWax_Sandbox",
-  "statusId": "SmsgProduced",
+  "statusId": "SmsgSent",
   "isOutgoing": "Y",
   "remoteMessageId": "D365 executionId returned by ImportFromPackage"
 }
@@ -594,10 +594,12 @@ After OMS confirms the remote execution and completes follow-up processing, the 
 - **Purpose**: Poll D365 for the execution status of sales order import packages submitted by `d365_ImportSalesOrders`.
 - **Execution id source**: The current sales-order import flow stores the D365 execution id returned by `ImportFromPackage` in `SystemMessage.remoteMessageId`.
 - **Polling behavior**:
-    - The poll job reads `D365_IMP_SLS_ORDERS` `SystemMessage` records in `SmsgProduced`.
-    - For each record, it calls `check#ImportDataPackageStatus`.
+    - The import service creates a tracking `SystemMessage` in `SmsgSent` only after D365 accepts `ImportFromPackage` and returns `executionId`.
+    - The poll job reads `D365_IMP_SLS_ORDERS` `SystemMessage` records in `SmsgSent`.
+    - It applies `retryMinutes` / `limit` filtering through the shared poll service, using `lastAttemptDate` to space out retries.
+    - For each eligible record, it calls `check#ImportDataPackageStatus` in its own transaction.
     - The checker calls D365 `GetExecutionSummaryStatus`.
-    - If D365 returns `Succeeded` or `PartiallySucceeded`, the current implementation moves the `SystemMessage` to `SmsgSent`.
+    - If D365 returns `Succeeded` or `PartiallySucceeded`, the current implementation moves the `SystemMessage` to `SmsgConfirmed`.
     - If D365 returns `Failed`, `Unknown`, or `Canceled`, the checker calls `get#ExecutionErrors` and then moves the `SystemMessage` to `SmsgError`.
 - **Current limitation**: For the Sales Orders Data Package import using the `Sales orders composite V4` composite entity, D365 can return `Failed` from `GetExecutionSummaryStatus`, but `GetExecutionErrors` does not return detailed execution errors through the API.
 - **Operational handling for now**: If a sales order import package fails, OMS records the failed state by moving the `SystemMessage` to `SmsgError`; the detailed import errors may need to be checked manually in D365 Data Management until API-based retrieval is figured out.
@@ -781,7 +783,7 @@ This export reconciles the D365-assigned `SalesOrderNumber` back to the OMS orde
 ###### OMS Persistence
 - **Entity**: `co.hotwax.order.OrderIdentification`
 - **Type**: `D365_SLS_ORD_NUM`
-- **Purpose**: downstream D365 cross-reference for payments, line export reconciliation, and brokered order item updates
+- **Purpose**: downstream D365 cross-reference for payments, line export reconciliation, and later brokered / fulfilled order item warehouse updates
 
 ### 2.1 Export of Sales Order Lines from D365 to OMS
 
@@ -789,7 +791,7 @@ This flow returns the D365-generated `InventoryLotId` back into OMS after the OM
 
 #### Objective
 - Store the D365 `InventoryLotId` against the originating OMS order item.
-- Make the D365 sales order line identifier available for brokered order item warehouse updates back to D365.
+- Make the D365 sales order line identifier available for brokered and fulfilled order item warehouse updates back to D365.
 
 #### D365 Export Project Prerequisites
 - **Sales order line export project**: `HotWax_Export_Sales_Order_Lines`
@@ -844,7 +846,7 @@ This export reconciles the D365-assigned `InventoryLotId` back to the OMS order 
 1. OMS imports the sales order to D365.
 2. D365 sales order header export stores `D365_SLS_ORD_NUM` in OMS.
 3. D365 sales order line export stores `D365SalesOrderItemInventoryLotId` in OMS.
-4. OMS uses those stored identifiers to drive later brokered warehouse updates back into D365.
+4. OMS uses those stored identifiers to drive later brokered and fulfilled warehouse updates back into D365.
 
 #### Current Design Notes
 - The connector now uses the generic `queue#ExportDataPackage` -> `send#ExportDataPackage` -> `poll#ExportDataPackageStatus` pattern for both header and line exports.
@@ -906,10 +908,68 @@ INVENTORYLOTID,SHIPPINGWAREHOUSEID
 - **TODO**: replace the temporary `WH_ONLY_FULFILLMENT` facility-group rule with a dedicated D365 brokered fulfillment grouping later.
 
 #### OMS Tracking Behavior
-- After D365 accepts the import package and returns an execution id, OMS creates a `SystemMessage` record in `SmsgProduced` for `D365_IMP_BRKRD_ITEMS`.
+- After D365 accepts the import package and returns an execution id, OMS creates a `SystemMessage` record in `SmsgSent` for `D365_IMP_BRKRD_ITEMS`.
 - OMS also creates or updates `ExternalFulfillmentOrderItem` with `fulfillmentStatus = Sent` for each packaged order item.
-- `Sent` means OMS has successfully submitted the brokered location update package to D365. Final D365 completion is still confirmed later by the poll job.
+- `Sent` on `ExternalFulfillmentOrderItem` means OMS has successfully submitted the brokered location update package to D365. Final D365 completion is confirmed separately through the import `SystemMessage`, which later moves to `SmsgConfirmed` or `SmsgError`.
 - Because reservation is currently manual in the tested D365 setup, this location update is expected to be safe before reservation. If D365 reservation behavior changes to automatic, this assumption must be retested.
+
+### 3.1 Fulfilled Order Items Update from OMS to D365
+
+Once OMS has physically fulfilled a store-owned line, it can update the D365 sales order line with the final shipping warehouse used for that fulfilled line.
+
+- The connector implements this as a DMF / Data Package import using the D365 project `HotWax_Import_Fulfilled_Order_Items`.
+- The feed shape is intentionally the same as the brokered warehouse update flow and updates the same D365 target entity, `Sales order lines V3`.
+- This flow also depends on the two prior export reconciliations:
+  - section 2 must already have stored `D365_SLS_ORD_NUM`
+  - section 2.1 must already have stored `D365SalesOrderItemInventoryLotId`
+- OMS uses `OrderFulfillmentHistory` as the local sent marker for this fulfilled-item update flow.
+
+#### Implemented OMS Components
+- **Eligible view**: `D365EligibleFulfilledOrderItems`
+- **Tracking entity**: `OrderFulfillmentHistory`
+- **Import service**: `co.hotwax.d365.D365OrderServices.import#FulfilledOrderItemsDataPackage`
+- **System message type**: `D365_IMP_FLFLD_ITEMS`
+- **Queue job**: `d365_ImportFulfilledOrderItems`
+- **Poll job**: `d365_PollFulfilledOrderItemsImportStatus`
+
+#### D365 Import Project
+- **Project name**: `HotWax_Import_Fulfilled_Order_Items`
+- **Entity**: `Sales order lines V3`
+- **Package settings**:
+  - `SourceFormat = CSV`
+  - `DefaultRefreshType = IncrementalPush`
+- The generated package currently uses UTF-8 encoded files (`PackageHeader.xml`, `Manifest.xml`, and `Sales order lines V3.csv`).
+- **Validated file shape**:
+
+```csv
+INVENTORYLOTID,SHIPPINGWAREHOUSEID
+479494,100
+479495,13
+```
+
+- `DATAAREAID` is intentionally not included in the file. The OMS service requires `dataAreaId` as an input parameter and passes it to D365 as `legalEntityId` in the `ImportFromPackage` request.
+
+#### Eligibility Rules in OMS
+- OMS includes an item in the fulfilled-items feed only when:
+  - the order already has `OrderIdentification` type `D365_SLS_ORD_NUM`
+  - the order item already has `OrderItemAttribute` `D365SalesOrderItemInventoryLotId`
+  - the item is in `ITEM_COMPLETED`
+  - the facility currently belongs to `OMS_FULFILLMENT`
+  - the ship group shipment method is not `POS_COMPLETED`
+  - there is no prior `OrderFulfillmentHistory` row for the same `orderId + orderItemSeqId`
+
+#### OMS Tracking Behavior
+- After D365 accepts the import package and returns an execution id, OMS creates a `SystemMessage` record in `SmsgSent` for `D365_IMP_FLFLD_ITEMS`.
+- OMS also creates one `OrderFulfillmentHistory` row per packaged `orderId + orderItemSeqId` with:
+  - `createdDate`
+  - `externalConfigId = systemMessageRemoteId`
+  - `externalFulfillmentId = '_NA_'`
+  - `comments` noting the D365 fulfilled-item import execution
+- The D365 execution id is stored in `SystemMessage.remoteMessageId`.
+- Final D365 completion is tracked through the import `SystemMessage`; on successful polling it remains `SmsgSent`, and on failure it moves to `SmsgError`.
+- `OrderFulfillmentHistory` is used only as a sent marker here; the full D365 execution id is not stored on that entity because the value can exceed the local field length.
+- If a fulfilled-item package fails in D365 and the same item needs to be re-sent, the corresponding `OrderFulfillmentHistory` row must be removed or otherwise cleared for retry.
+- Because reservation is currently manual in the tested D365 setup, this fulfilled-location update is expected to be safe before downstream D365 posting. If D365 reservation or posting behavior changes, this assumption must be retested.
 
 ## Customer Payment Integration
 
