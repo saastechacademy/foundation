@@ -24,13 +24,13 @@ The Data Import Package API follows these core steps:
 The connector currently has the following generic implemented services over the D365 Data Package import APIs:
 
 - **Generic poll service for import execution**
-  - Service: [D365DataPackageServices.poll#ImportDataPackageStatus](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml:216)
+  - Service: [D365DataPackageServices.poll#ImportDataPackageStatus](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml:348)
   - Used by import polling service jobs to monitor D365 import execution ids stored as `SystemMessage` entity records
 - **Generic single-execution checker**
-  - Service: [D365DataPackageServices.check#ImportDataPackageStatus](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml:324)
+  - Service: [D365DataPackageServices.check#ImportDataPackageStatus](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml:384)
   - Checks one import execution id and updates the related `SystemMessage` entity record
 - **Generic execution error reader**
-  - Service: [D365DataPackageServices.get#ExecutionErrors](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml:372)
+  - Service: [D365DataPackageServices.get#ExecutionErrors](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml:446)
   - Retrieves D365 DMF execution errors for a given import execution id
   - Called by `check#ImportDataPackageStatus` when D365 reports a terminal failure status
 
@@ -41,13 +41,15 @@ The connector currently has the following generic implemented services over the 
 - `GetExecutionSummaryStatus` API
 - `GetExecutionErrors` API
 
-### 4.2 Import Failure Error Handling
+### 4.2 Import Tracking and Failure Handling
 
-- Import status jobs should call `D365DataPackageServices.poll#ImportDataPackageStatus` with the stream-specific `systemMessageTypeId`.
-- The poller finds matching `SystemMessage` records in `SmsgProduced` and calls `D365DataPackageServices.check#ImportDataPackageStatus`.
-- The checker calls D365 `GetExecutionSummaryStatus` using the execution id stored in `SystemMessage.remoteMessageId`.
-- If D365 returns `Failed`, `Unknown`, or `Canceled`, the checker calls `D365DataPackageServices.get#ExecutionErrors`, which invokes D365 `GetExecutionErrors`.
-- After the terminal failure is detected, the `SystemMessage` is updated to `SmsgError`.
+- After D365 accepts an import package and returns an execution id, the producer flow creates a `SystemMessage` tracking row in `SmsgSent` and stores the D365 execution id in `SystemMessage.remoteMessageId`.
+- Import status jobs should call `D365DataPackageServices.poll#ImportDataPackageStatus` with the stream-specific `systemMessageTypeId`, and may override `retryMinutes` and `limit` from the service job.
+- The poller selects matching `SystemMessage` records in `SmsgSent` whose `lastAttemptDate` is older than the retry cutoff, then calls `D365DataPackageServices.check#ImportDataPackageStatus`.
+- Each execution is checked in its own transaction using `transaction="force-new" ignore-error="true"` so one failed D365 status check does not block the rest of the batch.
+- The checker updates `lastAttemptDate`, calls D365 `GetExecutionSummaryStatus` using the execution id stored in `SystemMessage.remoteMessageId`, and:
+  - moves the message to `SmsgConfirmed` when D365 returns `Succeeded` or `PartiallySucceeded`
+  - calls `D365DataPackageServices.get#ExecutionErrors` and moves the message to `SmsgError` when D365 returns `Failed`, `Unknown`, or `Canceled`
 - Known D365 limitation observed with composite entity imports: for the Sales Orders Data Package import using `Sales orders composite V4`, D365 returns `Failed` from `GetExecutionSummaryStatus`, but `GetExecutionErrors` does not return the detailed execution errors through the API.
 - Until this is resolved, failed composite imports may need to be reviewed manually in D365 Data Management.
 - **TODO**: revisit error retrieval for failed composite imports and identify an API or exportable log source that returns detailed D365 execution errors.
