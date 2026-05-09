@@ -1,0 +1,1198 @@
+# =============================================================================
+# DOMAIN KNOWLEDGE — HOTWAX COMMERCE ORDER ROUTING ENGINE
+# =============================================================================
+# Purpose   : Ontology + Rules + Constraints for an Order Routing Configurator
+#             AI Agent
+# Source    : docs.hotwax.co/documents/retail-operations/orders/order-routing
+#             (fetched via github.com/hotwax/oms-documentation, branch:
+#             user-guides-pub, May 2026)
+# Layers    : 1-Ontology  2-Rules & Constraints  3-Goals & Preferences
+# =============================================================================
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# LAYER 1 · ONTOLOGY
+# What exists, what it means, and how concepts relate
+# ─────────────────────────────────────────────────────────────────────────────
+
+ontology:
+
+  domain: "HotWax Commerce — Order Routing Engine"
+
+  purpose: >
+    The Order Routing Engine (also called the Brokering Engine) automatically
+    assigns orders from the brokering queue to fulfillment facilities. It
+    operates on a three-level hierarchy: Brokering Run → Routing Rule →
+    Inventory Rule. Each level answers a distinct question:
+      - "Brokering Run: When does routing happen?"
+      - "Routing Rule: Which orders are in this batch?"
+      - "Inventory Rule: Which facility fulfills each order?"
+
+  # ── ENTITIES ────────────────────────────────────────────────────────────────
+
+  entities:
+
+    BrokeringRun:
+      definition: >
+        The highest-level organizational unit in order routing. Controls the
+        schedule and frequency at which the brokering engine executes.
+        Each run can have a unique frequency. Multiple runs can coexist for
+        different order priorities. Runs can be in Draft (inactive) or Active
+        (executing on schedule) state.
+      ui_label: "Brokering Run"
+      attributes:
+        name:
+          type: string
+          required: true
+          description: "Human-readable identifier, e.g. 'High Priority Orders'"
+        description:
+          type: string
+          required: false
+          description: "Clarifies intent for team members"
+        status:
+          type: enum
+          values: [Draft, Active]
+          default: Draft
+          constraint: "Must be set to Active before the run processes any orders"
+        schedule:
+          type: cron_expression_or_preset
+          description: >
+            Frequency of execution. Can be a preset (Every 5 Minutes, Hourly,
+            Daily) or a custom cron expression.
+          examples:
+            - label: "Every 5 minutes"
+              cron: "*/5 * * * *"
+            - label: "Every hour"
+              cron: "0 * * * *"
+            - label: "Every hour between 8 AM and 2 PM"
+              cron: "0 8-14 * * *"
+            - label: "Every day at 7 AM"
+              cron: "0 7 * * *"
+            - label: "Every 15 minutes between 6 AM and 6 PM"
+              cron: "*/15 6-18 * * *"
+        product_store_id:
+          type: string
+          description: "Which product store this run belongs to (multi-store support)"
+      relationships:
+        contains: "RoutingRule (1..N, ordered by sequence)"
+      lifecycle:
+        - "Created in Draft"
+        - "Routing rules configured"
+        - "Inventory rules configured"
+        - "All rules set to Active"
+        - "Run set to Active — begins executing on schedule"
+
+    RoutingRule:
+      definition: >
+        Also called an "Order Batch" in the UI. The mid-level unit that defines
+        WHICH orders are included in a batch for routing. Uses order filters
+        to group orders and order sorting to sequence them within the batch.
+        Multiple routing rules within one run are evaluated in sequence —
+        first match wins. If an order matches a routing rule's filters AND an
+        inventory rule within it successfully allocates a facility, the order
+        exits the brokering queue. The routing rule does NOT select facilities —
+        that is the job of its child Inventory Rules.
+      ui_label: '"Order Batch" in UI, "Routing Rule" in documentation'
+      attributes:
+        name:
+          type: string
+          required: true
+          description: "e.g. 'Same-day/Next-day orders', 'Standard orders'"
+        status:
+          type: enum
+          values: [Draft, Active, Archived]
+          default: Draft
+        sequence:
+          type: integer
+          description: >
+            Determines evaluation order within the parent run. Lower number =
+            evaluated first. Configurable via drag-and-drop in UI.
+        order_filters:
+          type: list[OrderFilter]
+          description: "Zero or more filters. No filters = all orders from all queues."
+        order_sorting:
+          type: list[OrderSortOption]
+          description: "Zero or more sort criteria. No sorting = order by order date (FIFO)."
+      relationships:
+        parent: "BrokeringRun (1)"
+        contains: "InventoryRule (1..N, ordered by sequence)"
+      constraint: >
+        An order is processed by the FIRST routing rule whose filters it matches.
+        Remaining rules are not evaluated for that order in that batch run.
+
+    InventoryRule:
+      definition: >
+        The innermost level. Defines HOW to find the best fulfillment facility
+        for orders in a batch. A three-step process: Filter (which facilities
+        are eligible?) → Sort (which eligible facility is best?) → Action
+        (what happens if allocation fails?). Multiple inventory rules within
+        one routing rule are tried in sequence. If rule N cannot allocate
+        inventory to an order, rule N+1 is tried.
+      ui_label: "Inventory Rule"
+      attributes:
+        name:
+          type: string
+          required: true
+          description: "e.g. 'Check all warehouses in 100 miles'"
+        status:
+          type: enum
+          values: [Draft, Active, Archived]
+          default: Draft
+        sequence:
+          type: integer
+          description: "Evaluation order within parent routing rule. Configurable via drag-and-drop."
+        inventory_filters:
+          type: list[InventoryFilter]
+          description: "Zero or more filters. No filters = all online-fulfillment-enabled facilities."
+        facility_sorting:
+          type: list[FacilitySortOption]
+          description: "Zero or more sort criteria. No sorting = sort by facility creation date."
+        actions:
+          type: AfterActionConfig
+          description: "Defines behaviour for partially-available and fully-unavailable items."
+      relationships:
+        parent: "RoutingRule (1)"
+      default_behaviour:
+        no_filter: "All facilities enabled for online fulfillment are considered"
+        no_sort: "Facilities sorted by creation date"
+        partial_allocation: "Disabled by default"
+        unavailable_action: "Move to next rule (default)"
+
+    Facility:
+      definition: >
+        A physical or logical location that stores inventory and/or fulfills
+        orders. Both retail stores and warehouses are Facility entities.
+        Virtual facilities (no physical location) are used for parking queues.
+      attributes:
+        facilityId: { type: string, example: "STORE_101, WAREHOUSE_EAST" }
+        facilityTypeId:
+          type: enum
+          values: [RETAIL_STORE, WAREHOUSE, VIRTUAL_FACILITY]
+        maximumOrderLimit:
+          type: integer
+          description: >
+            Maximum number of orders the brokering engine may assign per day.
+            Options: Unlimited, No Capacity (blocks all SFS), Custom integer.
+            Configurable in Facility App, Fulfillment App, or ATP App.
+        lat_long:
+          type: geo_coordinates
+          description: "Automatically stored when a facility address is added. Used for proximity calculations."
+      relationships:
+        member_of: "FacilityGroup (0..N)"
+        typed_by: "FacilityType (1)"
+
+    FacilityGroup:
+      definition: >
+        A named, logical set of Facilities. Inventory rules reference facility
+        groups rather than individual facilities. A facility can belong to
+        multiple groups. Groups must be created with the Brokering_Group subtype
+        to be usable in inventory rules.
+      attributes:
+        facilityGroupId: { type: string, example: "WAREHOUSES, EAST_COAST_STORES" }
+        facilityGroupTypeId:
+          type: enum
+          values: [Brokering_Group, Pickup_Group]
+          constraint: "Must be Brokering_Group subtype to appear in inventory rule filters"
+      relationships:
+        contains: "Facility (1..N, many-to-many)"
+
+    Order:
+      definition: >
+        A customer purchase request synced from Shopify (or another channel).
+        Carries a full lifecycle from creation through brokering, fulfillment,
+        and completion.
+      attributes:
+        orderId: { type: string }
+        statusId:
+          type: enum
+          values: [ORDER_CREATED, ORDER_APPROVED, ORDER_COMPLETED]
+        orderPriority:
+          type: enum
+          values: [high, medium, low]
+          default: medium
+        shipmentMethodTypeId:
+          type: string
+          examples: [SAME_DAY, NEXT_DAY, TWO_DAY, STANDARD]
+          note: >
+            HotWax maps delivery days: Same-Day=0, Next-Day=1, Two-Day=2.
+            Used for order sorting by shipping method.
+        salesChannel: { type: string, examples: [eCommerce, Marketplace, Facebook_Marketplace] }
+        promiseDate: { type: date, description: "Relevant for pre-orders and backorders" }
+        originFacilityId:
+          type: string
+          description: "Facility where order originated. Relevant for Send Sale orders."
+        customerShippingAddress:
+          type: geo_coordinates
+          description: "Automatically stored. Used for proximity calculations in inventory rules."
+      queue_states:
+        Brokering_Queue:
+          description: "Orders approved and waiting for inventory allocation. Default queue."
+        Preorder_Backorder_Parking:
+          description: "Orders for future-release or out-of-stock products. Released when trigger met."
+        Rejected_Parking:
+          description: "Orders rejected by a facility. Awaiting re-routing."
+        Unfillable_Parking:
+          description: "Orders that exhausted all routing rules. Require manual action or re-routing."
+
+    # Inventory concepts (from Layer 1 Ontology)
+    InventoryConcepts:
+      QOH:
+        definition: "Quantity On Hand — raw physical count at a facility per product variant."
+      ATP:
+        definition: "Available To Promise = QOH minus open order reservations."
+        formula: "ATP = QOH - reservations"
+      OnlineATP:
+        definition: "What is published to Shopify. Floor is 0 (never negative)."
+        formula: "Online ATP = MAX(ATP - safety_stock - threshold, 0)"
+      BrokeringSafetyStock:
+        definition: >
+          DISTINCT from online ATP safety stock. The minimum number of units
+          a facility must have in stock for it to be eligible to receive a
+          brokering allocation. Does not affect what Shopify sees — only
+          affects facility eligibility during inventory rule evaluation.
+        example: >
+          If brokering_safety_stock = 10, only facilities with ≥ 10 units
+          of the item are eligible. Protects walk-in customer inventory.
+      OnlineATPSafetyStock:
+        definition: >
+          Per-facility, per-product buffer subtracted from ATP before
+          publishing Online ATP to Shopify. Separate from BrokeringSafetyStock.
+
+
+  # ── FILTERS ─────────────────────────────────────────────────────────────────
+
+  filters:
+
+    order_filters:
+      description: "Applied at the RoutingRule level to define which orders enter a batch."
+
+      Queue:
+        type: multi_select
+        description: "Selects which parking queue(s) to pull orders from."
+        values:
+          Brokering_Queue: "Standard approved orders awaiting allocation. Most common choice."
+          Preorder_Backorder_Parking: "Orders for future-release or OOS products."
+          Rejected_Parking: "Orders rejected by a facility, needing re-routing."
+          Unfillable_Parking: "Orders that failed all routing rules."
+        default_behaviour: "No filter = orders from ALL queues are included."
+        agent_guidance: >
+          In almost every routing rule, the Queue filter should be set to
+          Brokering_Queue unless the rule is specifically for rejected or
+          parked orders.
+
+      ShipmentMethodType:
+        type: multi_select
+        description: "Filters by SLA promised to customer at checkout."
+        values: [Same_Day, Next_Day, Two_Day, Standard]
+        use_case: "Creates urgency-separated batches. Same-day/Next-day in one rule, Standard in another."
+        note: "Supports Exclude tab — e.g. all methods except Standard."
+
+      SalesChannel:
+        type: multi_select
+        description: "Filters by order capture channel."
+        values: [eCommerce, Marketplace, and any custom-mapped channel]
+        use_case: >
+          Route marketplace orders to warehouses only (contractual obligation).
+          Separate eCommerce from marketplace routing strategies.
+        prerequisite: "Marketplace_sales_channel must be created and mapped in HotWax Commerce."
+        supports_exclude: true
+
+      OrderPriority:
+        type: multi_select
+        description: "Filters by HotWax-assigned priority level."
+        values: [high, medium, low]
+        default: medium
+        note: "Priority is set in HotWax Commerce, not automatically synced from Shopify."
+
+      PromiseDate:
+        type: date_filter
+        description: "Filters pre-orders/backorders by their promise date."
+        use_case: "Route overdue promise-date orders first for SLA compliance."
+        applicable_queues: [Preorder_Backorder_Parking]
+
+      OriginFacilityGroup:
+        type: facility_group_select
+        description: "Filters by the facility group where the order originated."
+        use_case: >
+          Route 'Send Sale' orders (placed by store associates on behalf of
+          walk-in customers) differently from standard online orders.
+
+      ExcludeTab:
+        type: modifier
+        description: "Applied to any filter. Inverts selection — excludes specified values, includes all others."
+        example: "Exclude Facebook_Marketplace → includes all other sales channels."
+
+    inventory_filters:
+      description: "Applied at the InventoryRule level to determine facility eligibility."
+
+      FacilityGroup:
+        type: facility_group_select
+        description: "Restricts brokering to facilities that are members of a named FacilityGroup."
+        constraint: "Group must have Brokering_Group subtype."
+        default_behaviour: "No filter = all online-fulfillment-enabled facilities considered."
+        use_case: "Rule 1: Warehouses only. Rule 2: Stores + Warehouses. Rule 3: no filter (all)."
+        agent_guidance: >
+          This is the primary mechanism for tiered facility lookup. Always
+          ask the merchant what FacilityGroups they have configured before
+          recommending inventory rule filters.
+
+      Proximity:
+        type: distance_miles
+        description: >
+          Restricts to facilities within N miles of the customer's delivery
+          address. Both facility and customer lat/long are stored automatically
+          by HotWax when addresses are saved.
+        use_case: "100-mile radius for same-day SLA; 250 miles for next-day."
+        behaviour_on_miss: >
+          If no facility within the radius has sufficient ATP, this inventory
+          rule returns zero candidates → the order falls through to the next
+          inventory rule.
+
+      BrokeringSafetyStock:
+        type: integer_threshold
+        description: >
+          Only considers facilities with ≥ N units in stock. Protects
+          walk-in inventory. DISTINCT from online ATP safety stock.
+        example: "BrokeringSafetyStock > 10 → only facilities with 11+ units eligible."
+
+      ExcludeFacilityGroup:
+        type: facility_group_select
+        description: "Exclude a specific group rather than selecting all valid groups individually."
+        use_case: "Include all facilities except outlet stores."
+
+      AllItemsAvailableAnywhere:
+        type: boolean
+        description: >
+          Only allocate a shipgroup if ALL items in it are available — not
+          necessarily at the same location, just available simultaneously.
+          Prevents partial shipgroup allocation.
+        default: false
+
+      TurnOffFacilityOrderLimitCheck:
+        type: boolean
+        description: >
+          Bypasses the maximumOrderLimit constraint for this inventory rule.
+          Useful during peak seasons or flash sales when capacity should
+          temporarily be ignored.
+        default: false
+        warning: "Can overload store associates if not managed with other controls."
+
+      ShipmentThresholdValueCheck:
+        type: boolean
+        description: >
+          Only allocate if the item value exceeds the globally-configured
+          Brokering Shipment Threshold. Works with partial allocation.
+          Threshold is set at Product Store level, not per inventory rule.
+        default: false
+
+
+  # ── SORT OPTIONS ─────────────────────────────────────────────────────────────
+
+  sort_options:
+
+    order_sorting:
+      description: "Applied at RoutingRule level. Sequences orders within a batch before facility lookup."
+      default_behaviour: "Orders sorted by order date (FIFO) if no sorting specified."
+
+      OrderDate:
+        direction: ASC
+        effect: "FIFO — oldest orders processed first."
+        recommended_for: "Most routing rules as default."
+
+      OrderPriority:
+        direction: "High → Medium → Low"
+        effect: "Most urgent orders receive inventory allocation first."
+
+      ShippingMethod:
+        direction: "By delivery_days ASC (0=Same-Day first)"
+        effect: "Tightest SLA gets inventory first within a mixed batch."
+        note: >
+          Unnecessary when all orders in a batch use the same shipping method.
+          e.g. A Standard-only batch does not need shipping method sorting.
+
+      ShipBy: { type: date_asc, description: "Sort by promised ship-by date." }
+      ShipAfter: { type: date_asc, description: "Sort by ship-after date." }
+
+    facility_sorting:
+      description: "Applied at InventoryRule level. Ranks eligible facilities to pick the best one."
+      default_behaviour: "Facilities sorted by creation date if no sorting specified."
+
+      Proximity:
+        direction: ASC
+        effect: "Closest facility to customer address first. Minimises transit time and cost."
+        recommended_for: "Same-day, next-day, and any proximity-sensitive orders."
+        prerequisite: "Lat/long stored on both facility and customer address."
+
+      InventoryBalance:
+        direction: DESC
+        effect: "Facility with highest ATP first. Prevents stockouts, promotes stock rotation."
+        recommended_for: "Standard orders where proximity is less critical."
+
+      FacilityOrderLimit:
+        direction: "Most remaining capacity first"
+        effect: "Distributes fulfillment workload evenly across facilities."
+
+      CustomSequence:
+        type: manual_ordered_list
+        effect: >
+          Full manual override. Retailer defines exact facility priority order.
+          Useful for underperforming stores, regional routing, seasonal inventory.
+        maintenance: "Requires manual updates as facility mix changes."
+
+
+  # ── AFTER-ACTIONS ─────────────────────────────────────────────────────────────
+
+  after_actions:
+    description: >
+      Defined at the InventoryRule level. Specify behaviour when allocation
+      fails — either partially (some items available) or fully (no items).
+
+    partially_available:
+
+      AllowPartialAllocation:
+        type: boolean
+        default: false
+        description: >
+          Allows an order to be split across multiple facilities if full
+          allocation at one location is not possible.
+        trade_off: "Enables faster partial fulfillment but increases shipping costs."
+        interaction: >
+          Works with Brokering Shipment Threshold — splitting only occurs if
+          item value exceeds the threshold.
+        recommended_placement: "Final inventory rule only."
+
+      PartiallyAllocateGroupedItems:
+        type: boolean
+        default: false
+        description: >
+          Controls whether grouped items (kits, gift sets) can be split across
+          facilities. Can be toggled independently from AllowPartialAllocation.
+        use_case: >
+          Enable partial allocation for regular items (toggle ON), but keep
+          grouped items together (toggle OFF). Ensures kits ship complete.
+
+    unavailable_items:
+
+      NextRule:
+        type: action
+        is_default: true
+        description: >
+          Move unallocated items to the next inventory rule in sequence.
+          Default action when multiple inventory rules exist.
+        recommended_for: "All inventory rules except the final one."
+
+      MoveItemsToQueue:
+        type: action_with_parameter
+        parameter: queue_name
+        values: [Unfillable_Parking, Backorder_Parking, Custom_Queue]
+        description: >
+          Transfer unallocated items to a named parking queue. No further
+          allocation attempts will be made.
+        recommended_for: "Final inventory rule."
+
+      AutoCancelDays:
+        type: integer
+        description: >
+          Automatically cancel unallocated orders after N days. Prevents
+          orders lingering indefinitely in the fulfillment pipeline.
+        recommended_for: "Final inventory rule alongside MoveItemsToQueue."
+        note: >
+          Applies to ALL unfillable orders in the batch. For per-order
+          exceptions, manage directly in HotWax OMS.
+
+      ClearAutoCancelDays:
+        type: action
+        description: >
+          Removes an existing auto-cancel date from unallocated orders.
+          Used when incoming inventory is expected — prevents cancellation
+          so the order can be re-brokered when stock arrives.
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# LAYER 2 · RULES & CONSTRAINTS
+# What is allowed, what is enforced, and what are the consequences
+# ─────────────────────────────────────────────────────────────────────────────
+
+rules_and_constraints:
+
+  # ── HARD CONSTRAINTS (non-negotiable, always enforced) ──────────────────────
+
+  hard_constraints:
+
+    ApprovalGate:
+      statement: >
+        An order cannot enter the brokering queue until it reaches
+        ORDER_APPROVED status.
+      enforced_by: "Order lifecycle state machine"
+      violation_consequence: >
+        Routing a payment-pending order would reserve inventory that may
+        never be needed, corrupting ATP figures.
+
+    ATPFloor:
+      statement: >
+        Online ATP published to Shopify can never be negative.
+        If formula produces a value < 0, HotWax publishes 0.
+      formula: "published_online_atp = MAX(QOH - reservations - safety_stock - threshold, 0)"
+      violation_consequence: >
+        Negative ATP would allow Shopify to accept purchases for phantom
+        inventory — guaranteed oversell.
+
+    SafetyStockPriority:
+      statement: >
+        Brokering safety stock is subtracted before a facility is considered
+        eligible. A facility with allocatable ATP < order quantity is excluded
+        regardless of QOH.
+      formula: "allocatable_atp = QOH - reservations - brokering_safety_stock"
+      violation_consequence: "Walk-in customer finds empty shelf."
+
+    FirstMatchSequence:
+      statement: >
+        Routing rules and inventory rules are evaluated in strict priority
+        sequence. The FIRST rule that matches and successfully allocates wins.
+        Remaining rules are not evaluated for that order in that run.
+      implication: "Rule ordering is semantically critical — not cosmetic."
+      violation_consequence: >
+        Misplaced catch-all rule captures all orders, specific rules never fire.
+
+    BOPISFacilityLock:
+      statement: >
+        For BOPIS orders, the fulfillment facility is the customer-selected
+        store. The brokering engine must NOT substitute an alternative facility.
+        If the customer's store cannot fulfill, the order is flagged for
+        manual review — not silently rerouted.
+      violation_consequence: >
+        Customer drives to their chosen store and finds nothing waiting.
+        Severe trust and experience failure.
+
+    MaximumOrderLimitGuard:
+      statement: >
+        A facility that has reached its maximumOrderLimit is excluded from
+        brokering, regardless of ATP availability.
+      override: >
+        The TurnOffFacilityOrderLimitCheck inventory filter can bypass this
+        for a specific inventory rule (e.g. during peak season).
+      violation_consequence: "Store overwhelmed — delayed fulfillment, associate overload."
+
+    BORISQOHUpdateOnAcceptance:
+      statement: >
+        A BORIS return updates facility QOH only when the store associate
+        ACCEPTS the return — not when the customer initiates it.
+      violation_consequence: >
+        Routing orders against inventory that hasn't physically arrived yet.
+
+    BatchScopeAtomicity:
+      statement: >
+        The brokering engine processes all orders in the queue at the moment
+        a batch starts. Orders that arrive after the batch starts wait for
+        the next scheduled run.
+      agent_implication: >
+        An order just approved will not be brokered until the next batch.
+        Do not tell a user their order will be brokered immediately.
+
+    RunMustBeActiveToProcess:
+      statement: >
+        A BrokeringRun, RoutingRule, and InventoryRule must each be individually
+        set to Active status before they participate in brokering. Draft status
+        means configured but not executing.
+      activation_order: "Configure all rules → activate inventory rules → activate routing rules → activate run."
+
+  # ── SOFT CONSTRAINTS (configurable preferences, can be overridden) ──────────
+
+  soft_constraints:
+
+    InventorySyncLag:
+      type: epistemic_constraint
+      statement: >
+        HotWax does not maintain real-time inventory sync with Shopify.
+        ATP and QOH values are pushed on a scheduled basis (typically every
+        15 minutes). All inventory readings are stale by up to N minutes
+        where N is the sync interval.
+      agent_behaviour: >
+        When reporting inventory figures, always caveat with sync timing.
+        Example: "As of the last sync (approx. 8 minutes ago), ATP was 12."
+        Never present inventory as exact real-time truth.
+
+    ProximityVsInventoryBalance:
+      type: trade_off
+      statement: >
+        Proximity sorting minimises delivery time and cost but may deplete
+        nearby facilities faster. Inventory balance sorting distributes stock
+        more evenly but may increase average shipping distance.
+      resolution: >
+        Use Proximity for urgent SLA orders. Use Inventory Balance for
+        standard orders where delivery speed is less critical.
+
+    PartialAllocationTradeOff:
+      type: trade_off
+      statement: >
+        Allowing partial allocation fulfills items faster but increases
+        per-order shipping cost (multiple shipments). Disabling it keeps
+        orders together but risks more unfillable outcomes.
+      mitigation: >
+        Use Brokering Shipment Threshold to only allow splitting for
+        orders whose item value exceeds a minimum. Configured at Product
+        Store level.
+
+    SingleVsMultipleRuns:
+      type: design_decision
+      statement: >
+        A single brokering run with multiple routing rules is sufficient when
+        all order types need the same frequency. Use multiple runs only when
+        different order types require different execution frequencies.
+      agent_guidance: >
+        Ask: "Do your high-priority and standard orders need to be brokered
+        at different frequencies?" If yes → multiple runs. If no → single run
+        with multiple routing rules.
+
+    FacilityGroupDesignDependency:
+      type: prerequisite_constraint
+      statement: >
+        Inventory rule facility filters depend on FacilityGroups being
+        pre-configured in the Facility App with Brokering_Group subtype.
+        The AI agent cannot configure routing rules that reference
+        FacilityGroups that don't exist.
+      agent_guidance: >
+        Before recommending inventory rule configurations, confirm which
+        FacilityGroups the merchant has already created. Do not assume
+        standard groups (Warehouses, Stores) exist.
+
+  # ── INVENTORY RULE SEQUENCING PATTERNS ─────────────────────────────────────
+
+  sequencing_patterns:
+
+    description: >
+      The documented best-practice pattern for structuring multiple inventory
+      rules within a routing rule is a progressive expansion of the facility
+      search space, with partial allocation enabled only in the final rule.
+
+    canonical_pattern:
+      - sequence: 1
+        label: "Tightest constraint"
+        example: "Warehouses within 100 miles"
+        partial_allocation: false
+        unavailable_action: next_rule
+
+      - sequence: 2
+        label: "Expanded facility type"
+        example: "All facilities within 100 miles"
+        partial_allocation: false
+        unavailable_action: next_rule
+
+      - sequence: 3
+        label: "Expanded distance"
+        example: "All facilities within 250 miles"
+        partial_allocation: false
+        unavailable_action: next_rule
+
+      - sequence: 4
+        label: "No distance constraint"
+        example: "All facilities, no proximity filter"
+        partial_allocation: false
+        unavailable_action: next_rule
+
+      - sequence: 5
+        label: "Final rule — enable splitting"
+        example: "All facilities, allow partial allocation"
+        partial_allocation: true
+        unavailable_action: "Move to Unfillable Queue + set auto_cancel_days"
+
+    standard_orders_pattern:
+      description: >
+        For standard orders, warehouses are preferred over stores to preserve
+        in-store stock for higher-priority and walk-in customer needs.
+        Inventory balance is prioritised over proximity.
+      rules:
+        - sequence: 1
+          facility_filter: "Warehouse group + Proximity 250 miles"
+          sort: inventory_balance
+          action: next_rule
+        - sequence: 2
+          facility_filter: "Warehouse group + Proximity 500 miles"
+          sort: inventory_balance
+          action: next_rule
+        - sequence: 3
+          facility_filter: "Warehouse group, no proximity"
+          sort: inventory_balance
+          action: "Move to Unfillable Queue + auto_cancel_days: 7"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# LAYER 3 · GOALS & PREFERENCES
+# What retailers are trying to optimise — the "why" behind configurations
+# ─────────────────────────────────────────────────────────────────────────────
+
+goals_and_preferences:
+
+  primary_goals:
+
+    MeetDeliverySLA:
+      description: "Fulfil orders from the location most likely to deliver within the promised window."
+      signals:
+        - merchant_mentions: ["same-day", "next-day", "SLA", "delivery promise", "expedited"]
+      configuration_implications:
+        - Use separate routing rules per shipment method type
+        - Use Proximity filter and sort for tight SLAs
+        - Use higher-frequency brokering runs for urgent orders
+        - Place urgent routing rules at lower sequence numbers (higher priority)
+
+    MinimiseShippingCost:
+      description: "Reduce carrier cost by fulfilling from nearby locations and avoiding unnecessary splits."
+      signals:
+        - merchant_mentions: ["shipping cost", "freight", "split shipments", "cost-effective"]
+      configuration_implications:
+        - Proximity sort on inventory rules
+        - Disable partial allocation in early rules; enable only in final rule
+        - Enable Brokering Shipment Threshold to guard against low-value splits
+        - Prefer warehouse fulfillment (larger volumes = better carrier rates)
+
+    BalanceInventoryAcrossNetwork:
+      description: "Prevent stockouts at key locations by distributing fulfillment load evenly."
+      signals:
+        - merchant_mentions: ["inventory balance", "stock rotation", "prevent stockout", "overstock"]
+      configuration_implications:
+        - Inventory Balance sort on facility sorting
+        - Custom sequence to route toward high-stock locations
+        - Avoid always routing to the same (nearest) warehouse
+
+    ProtectInStoreInventory:
+      description: "Preserve walk-in customer inventory at retail stores by limiting online order allocation."
+      signals:
+        - merchant_mentions: ["walk-in customers", "store inventory", "BOPIS capacity", "in-store stock"]
+      configuration_implications:
+        - Set maximumOrderLimit on RETAIL_STORE facilities
+        - Use Brokering Safety Stock filter on inventory rules for store locations
+        - Prefer warehouses over stores in inventory rule sequence
+        - Reserve stores as fallback (later in sequence), not primary
+
+    MaximiseFulfillmentRate:
+      description: "Fulfil as many orders as possible without cancellation."
+      signals:
+        - merchant_mentions: ["unfillable orders", "cancellation rate", "fulfillment rate", "backlog"]
+      configuration_implications:
+        - Use multiple inventory rules with progressive expansion
+        - Enable partial allocation in final inventory rule
+        - Configure MoveItemsToQueue → Unfillable Queue (not auto-cancel) so orders can be re-brokered
+        - Clear auto-cancel dates when incoming inventory is expected
+
+    ReduceOperationalOverhead:
+      description: "Minimise manual intervention by automating edge-case handling."
+      signals:
+        - merchant_mentions: ["manual work", "operations team", "automation", "hands-off"]
+      configuration_implications:
+        - Set auto_cancel_days on final inventory rule
+        - Configure rejected order re-routing run (Queue = Rejected_Parking)
+        - Use ClearAutoCancelDays action when PO is received
+
+    OptimiseFulfillmentCostByRentAgreement:
+      description: "Route orders to stores with fixed rent first to avoid mall commission fees."
+      signals:
+        - merchant_mentions: ["mall rent", "commission", "rent agreement", "revenue sharing"]
+      configuration_implications:
+        - Create FacilityGroup for fixed-rent stores
+        - "Rule 1: Fixed-rent stores | Rule 2: All stores as fallback"
+        - "Sort: Inventory Balance (both rules)"
+
+    ManageSeasonalDemandSpikes:
+      description: "Handle holiday or peak season surges without degrading SLA."
+      signals:
+        - merchant_mentions: ["holiday", "peak season", "Black Friday", "surge", "high volume"]
+      configuration_implications:
+        - Create dedicated seasonal BrokeringRun kept in Draft off-peak
+        - "Activate during peak: high-frequency schedule (every 5 min)"
+        - Optionally turn off daily routing run to avoid double-processing
+        - Optionally enable order limits on stores as SFS fallback
+
+
+  # ── CONTEXTUAL STATE ─────────────────────────────────────────────────────────
+
+  context_and_state:
+
+    description: >
+      The AI agent must be aware of the following runtime context before making
+      recommendations. This is the "current state" layer — what is actually
+      configured and active right now in the merchant's HotWax instance.
+
+    required_context:
+      product_store:
+        description: "Which product store is being configured. Routing is per-store."
+        why: "Multi-store retailers have separate routing configurations per store."
+
+      existing_facility_groups:
+        description: "Which FacilityGroups exist with Brokering_Group subtype."
+        why: "Inventory rule filters can only reference groups that already exist."
+        agent_must_ask: >
+          "Which facility groups do you currently have set up for brokering?
+          For example, do you have a 'Warehouses' group, a 'Stores' group,
+          or any regional groups?"
+
+      existing_brokering_runs:
+        description: "Are any runs currently Active? What is their schedule?"
+        why: >
+          Recommending a new run may create duplicate processing.
+          New routing rules may be addable to an existing run.
+
+      facility_order_limits:
+        description: "Which facilities have maximumOrderLimit configured and at what value?"
+        why: "Affects whether TurnOffFacilityOrderLimitCheck is needed."
+
+      brokering_shipment_threshold:
+        description: "Has a Brokering Shipment Threshold been set at the Product Store level?"
+        why: "Affects partial allocation behaviour across all inventory rules."
+
+      inventory_sync_interval:
+        description: "How frequently does HotWax sync inventory to Shopify?"
+        why: "Determines staleness window for all inventory readings."
+        default_assumption: "~15 minutes unless merchant confirms otherwise."
+
+    epistemic_freshness:
+      description: >
+        The agent must track when it last read each piece of configuration data
+        and communicate confidence accordingly.
+      rules:
+        - "Inventory values (QOH, ATP): stale after sync_interval minutes."
+        - "Configuration values (FacilityGroups, routing rules): stable unless merchant reports a change."
+        - "Order queue state: changes with every brokering run execution."
+      agent_communication_pattern: >
+        "Based on your current configuration [confidence: high — just confirmed],
+        the next brokering run will process approximately N orders from the
+        Brokering Queue. ATP at Warehouse East was 47 as of the last sync
+        (~12 minutes ago)."
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# DOCUMENTED USE CASES
+# Source: use-cases.md — 9 scenarios with exact configurations
+# ─────────────────────────────────────────────────────────────────────────────
+
+use_cases:
+
+  "1_marketplace_orders_warehouse_only":
+    title: "Fulfilling marketplace orders from warehouse only"
+    business_goal: "Route all marketplace orders exclusively to warehouses (contractual/logistical obligation)"
+    prerequisites:
+      - "Marketplace_sales_channel created and mapped in HotWax"
+      - "FacilityGroup with Brokering_Group subtype containing all warehouses"
+    routing_rule:
+      order_filter: { SalesChannel: Marketplace }
+      order_sort: OrderDate
+    inventory_rule:
+      inventory_filter: { FacilityGroup: Warehouses }
+      facility_sort: Proximity
+      actions:
+        partial_allocation: true
+        unavailable: "Move to Unfillable Queue"
+
+  "2_ecommerce_warehouse_then_stores":
+    title: "eCommerce orders: warehouse first, stores as fallback"
+    business_goal: "Prioritise warehouse fulfillment; use stores only when warehouses cannot fulfil"
+    prerequisites:
+      - "FacilityGroup: Warehouses (Brokering_Group)"
+      - "FacilityGroup: Stores (Brokering_Group)"
+    routing_rule:
+      order_filter: { SalesChannel: eCommerce }
+      order_sort: OrderDate
+    inventory_rules:
+      - sequence: 1
+        name: "Warehouses first"
+        inventory_filter: { FacilityGroup: Warehouses }
+        facility_sort: Proximity
+        actions: { partial_allocation: optional, unavailable: next_rule }
+      - sequence: 2
+        name: "Stores fallback"
+        inventory_filter: { FacilityGroup: Stores }
+        facility_sort: Proximity
+        actions: { partial_allocation: true, unavailable: "Unfillable Queue" }
+
+  "3_reroute_rejected_orders":
+    title: "Re-routing rejected orders"
+    business_goal: "Automatically re-route orders rejected by a facility to the next best available location"
+    routing_rule:
+      order_filter: { Queue: Rejected_Parking }
+      order_sort: OrderDate
+    inventory_rule:
+      inventory_filter: none
+      facility_sort: Proximity
+      actions:
+        partial_allocation: optional
+        unavailable: "Next Rule or Unfillable Queue"
+
+  "4_proximity_based_routing":
+    title: "Proximity-based order routing"
+    business_goal: "Fulfil all orders from the location closest to the customer"
+    routing_rule:
+      order_filter: { Queue: Brokering_Queue }
+      order_sort: OrderDate
+    inventory_rule:
+      inventory_filter: { Proximity: 50_miles }
+      facility_sort: Proximity
+      actions:
+        partial_allocation: optional
+        unavailable: "Next Rule (broaden radius) or Unfillable Queue"
+
+  "5_minimum_stock_availability":
+    title: "Minimum stock availability (brokering safety stock)"
+    business_goal: "Only route to locations with sufficient stock to protect walk-in inventory"
+    routing_rule:
+      order_filter: { Queue: Brokering_Queue }
+      order_sort: OrderDate
+    inventory_rules:
+      - sequence: 1
+        inventory_filter: { BrokeringSafetyStock: ">10" }
+        facility_sort: InventoryBalance
+        actions: { unavailable: next_rule }
+      - sequence: 2
+        inventory_filter: none
+        facility_sort: InventoryBalance
+        actions: { partial_allocation: true, unavailable: "Unfillable Queue" }
+
+  "6_store_fulfillment_by_rent_agreement":
+    title: "Managing store fulfillment by rent agreements"
+    business_goal: "Route to fixed-rent stores first to avoid mall commission fees"
+    prerequisites:
+      - "FacilityGroup: Fixed_Rent_Stores"
+      - "FacilityGroup: All_Stores"
+    routing_rule:
+      order_filter: { Queue: Brokering_Queue }
+      order_sort: OrderDate
+    inventory_rules:
+      - sequence: 1
+        inventory_filter: { FacilityGroup: Fixed_Rent_Stores }
+        facility_sort: InventoryBalance
+        actions: { unavailable: next_rule }
+      - sequence: 2
+        inventory_filter: { FacilityGroup: All_Stores }
+        facility_sort: InventoryBalance
+        actions: { partial_allocation: true, unavailable: "Unfillable Queue" }
+
+  "7_balance_shipping_cost_and_distance":
+    title: "Balancing shipping cost and distance with split shipments"
+    business_goal: >
+      Minimise cost by preferring nearby single-location fulfillment;
+      fall back to splits only when necessary
+    routing_rule:
+      order_filter: { Queue: Brokering_Queue }
+      order_sort: OrderDate
+    inventory_rules:
+      - sequence: 1
+        inventory_filter: { Proximity: 100_miles }
+        facility_sort: Proximity
+        actions: { partial_allocation: false, unavailable: next_rule }
+      - sequence: 2
+        inventory_filter: { Proximity: 100_miles }
+        facility_sort: Proximity
+        actions: { partial_allocation: true, unavailable: next_rule }
+      - sequence: 3
+        inventory_filter: none
+        facility_sort: Proximity
+        actions: { partial_allocation: false, unavailable: next_rule }
+      - sequence: 4
+        inventory_filter: none
+        facility_sort: Proximity
+        actions: { partial_allocation: true, unavailable: "Unfillable Queue" }
+    note: >
+      Pair with Brokering Shipment Threshold to prevent splitting low-value items.
+
+  "8_grouped_items_kit_management":
+    title: "Managing order splitting for grouped items (kits and gift items)"
+    business_goal: "Split regular items freely but keep grouped items (kits, gift sets) together"
+    routing_rule:
+      order_filter: { Queue: Brokering_Queue }
+      order_sort: OrderDate
+    inventory_rules:
+      - sequence: 1
+        inventory_filter: none
+        facility_sort: Proximity
+        actions:
+          partial_allocation: false
+          partial_allocation_grouped_items: false
+          unavailable: next_rule
+      - sequence: 2
+        inventory_filter: none
+        facility_sort: Proximity
+        actions:
+          partial_allocation: true
+          partial_allocation_grouped_items: false
+          unavailable: next_rule
+      - sequence: 3
+        inventory_filter: none
+        facility_sort: Proximity
+        actions:
+          partial_allocation: true
+          partial_allocation_grouped_items: true
+          unavailable: "Unfillable Queue"
+
+  "9_holiday_season_routing":
+    title: "Routing online orders during holiday season"
+    business_goal: >
+      Protect stores from fulfillment overload during high foot-traffic periods;
+      route all online orders to warehouses first with selected stores as fallback
+    prerequisites:
+      - "Daily routing run turned off or paused before activating this run"
+      - "FacilityGroup: Warehouse"
+      - "FacilityGroup: Fallback_Locations (selected stores only)"
+      - "Optional: order limits set on fallback stores"
+    routing_rule:
+      order_filter: { Queue: Brokering_Queue }
+      order_sort: OrderDate
+    inventory_rules:
+      - sequence: 1
+        inventory_filter: { FacilityGroup: Warehouse }
+        facility_sort: Proximity
+        actions: { partial_allocation: optional, unavailable: next_rule }
+      - sequence: 2
+        inventory_filter: { FacilityGroup: Fallback_Locations }
+        facility_sort: Proximity
+        actions: { partial_allocation: true, unavailable: "Unfillable Queue" }
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ADDITIONAL SETTINGS
+# Configuration outside the Order Routing App that affects brokering
+# ─────────────────────────────────────────────────────────────────────────────
+
+additional_settings:
+
+  MaximumOrderCapacity:
+    scope: "Per facility"
+    configured_in: [Facility App, Fulfillment App, ATP App]
+    options:
+      UnlimitedCapacity: "No cap — facility accepts unlimited online orders"
+      NoCapacity: "Blocks all SFS orders. Used during peak walk-in hours."
+      CustomCapacity: "Integer limit per day, e.g. 10 orders/day"
+    interaction_with_routing: >
+      When a facility reaches its daily cap, the brokering engine excludes it
+      automatically. Can be bypassed per-inventory-rule via
+      TurnOffFacilityOrderLimitCheck filter.
+
+  BrokeringShipmentThreshold:
+    scope: "Per product store (global)"
+    configured_in: "HotWax OMS → Product Store → Store Settings → Brokering Shipment Threshold"
+    behaviour: >
+      Orders will only be split if ALL items in the split have a value
+      exceeding the threshold. Prevents high shipping cost for low-value splits.
+    examples:
+      - items: ["Black Belt $80", "Brown Wallet $160"]
+        threshold: 100
+        result: "NOT split — Black Belt ($80) is below threshold"
+      - items: ["Black Belt $80", "Black Wallet $80"]
+        threshold: 100
+        result: "NOT split — both below threshold"
+      - items: ["Brown Belt $160", "Brown Wallet $160"]
+        threshold: 100
+        result: "SPLIT allowed — both above threshold"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TEST DRIVE
+# Simulation capability for verifying routing configuration
+# ─────────────────────────────────────────────────────────────────────────────
+
+test_drive:
+
+  purpose: "Verify routing logic against real orders without processing live transactions."
+
+  what_can_be_tested:
+    - BrokeringRun: "Tests full group of routing and inventory rules"
+    - RoutingRule: "Tests one order batch and its inventory rules"
+    - InventoryRule: "Tests individual facility selection logic; shows ATP and QOH at each facility"
+
+  behaviour:
+    pauses_scheduled_brokering: true
+    shows_active_sessions: true
+    reset_order:
+      description: "Moves a brokered test order back to its original parking queue"
+      rejection_reason_recorded: "Brokering test drive"
+      variance_recorded: false
+
+  agent_guidance: >
+    When a merchant reports unexpected routing outcomes, recommend Test Drive
+    as the first diagnostic step. It will highlight which filter is blocking
+    an order and show the exact ATP/QOH at each facility that was evaluated.
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# REPORTS
+# Monitoring brokering outcomes
+# ─────────────────────────────────────────────────────────────────────────────
+
+reports:
+
+  BrokeredItemsReport:
+    user: Operations team
+    purpose: "Understand which items were brokered to which facilities"
+    fields:
+      HC_Order_ID: "Order ID in HotWax Commerce"
+      SHOPIFY_ORDER_NAME: "Order ID in Shopify"
+      UPCA: "Unique product identifier"
+      FACILITY_ID: "Fulfillment facility"
+      BROKERED_DATE: "Date order was brokered"
+      PRODUCT_STORE_ID: "Product store"
+    diagnostic_use: >
+      Discrepancy between new eCommerce orders and entries here indicates
+      orders not progressing to fulfillment — investigate routing rules or
+      integration issues.
+
+  BrokeredCountReport:
+    user: Operations team
+    purpose: "High-level count of brokered orders per store per date"
+    fields:
+      STORE: "Product store name"
+      BROKERED_DATE: "Date"
+      BROKERED_COUNT: "Number of orders brokered"
+    diagnostic_use: >
+      If brokered count significantly lags new order count, investigate
+      unfillable reports and check routing rule configurations.
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# AGENT INTERACTION PATTERNS
+# How the AI agent should reason and communicate in this domain
+# ─────────────────────────────────────────────────────────────────────────────
+
+agent_interaction_patterns:
+
+  configuration_intent_mapping:
+    description: >
+      When a merchant describes a business need, the agent should map it to
+      the corresponding configuration pattern before asking clarifying questions.
+    examples:
+      - merchant_says: "We want to fulfil same-day orders from the nearest store or warehouse"
+        maps_to:
+          routing_rule_filter: "Queue=Brokering_Queue, ShipmentMethodType=Same_Day"
+          routing_rule_sort: ShippingMethod
+          inventory_rule_filter: Proximity
+          inventory_rule_sort: Proximity
+          clarification_needed: "What proximity radius? Do you have separate warehouse/store groups?"
+
+      - merchant_says: "Amazon orders must only go to our warehouse"
+        maps_to:
+          routing_rule_filter: "SalesChannel=Marketplace (or specific Amazon channel)"
+          inventory_rule_filter: "FacilityGroup=Warehouses"
+          prerequisite_check: "Is Marketplace_sales_channel mapped? Does Warehouses group exist?"
+
+      - merchant_says: "We don't want to overwhelm our stores during the holidays"
+        maps_to:
+          goal: ManageSeasonalDemandSpikes + ProtectInStoreInventory
+          configuration: use_case_9_holiday_season_routing
+          prerequisite_check: "Should we pause the existing daily run or run them in parallel?"
+
+  clarification_protocol:
+    description: >
+      Before recommending a configuration, the agent must confirm prerequisite
+      entities exist. Ask one question at a time. Do not assume defaults exist.
+    required_confirmations:
+      - "Which FacilityGroups are configured with Brokering_Group subtype?"
+      - "Is there an existing brokering run, or should we create a new one?"
+      - "What shipment methods are used and what SLA is promised for each?"
+      - "Are maximumOrderLimit values set on any facilities?"
+      - "Is a Brokering Shipment Threshold set at the product store level?"
+
+  confidence_and_epistemic_caveats:
+    inventory_readings: >
+      Always qualify: "As of the last sync (~N minutes ago), ATP was X."
+      Never present as exact real-time truth.
+    configuration_readings: >
+      Configuration values are stable. High confidence unless merchant reports a change.
+    routing_outcomes: >
+      Predicted routing outcomes are based on current configuration and
+      last-known inventory. Actual outcomes depend on live ATP at batch time.
