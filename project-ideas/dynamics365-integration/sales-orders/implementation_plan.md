@@ -1,0 +1,1082 @@
+# D365 Sales Orders Integration Implementation Plan
+
+This document outlines the technical design and implementation steps for integrating HotWax OMS with Microsoft Dynamics 365 Finance & Operations (D365 F&O).
+
+## 1. Technical Architecture
+- Sales-order integration uses the generic D365 connector foundation documented in [connector_foundation.md](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/foundation/project-ideas/dynamics365-integration/foundation/connector_foundation.md).
+- **Sales-order specific interfaces**:
+    - OData v4 (REST) for direct entity-based sync
+    - Data Management Framework (DMF) / Data Package API for composite package import
+
+---
+
+## Technical Reference: OData Metadata
+| Term | Meaning |
+| :--- | :--- |
+| **EntitySet** | The URL collection or endpoint (e.g., `CustomersV3`). |
+| **EntityType** | The schema definition and structure of the data object (e.g., `CustomerV3`). |
+| **Key** | Defines the Primary Key fields (e.g., `dataAreaId`, `CustomerAccount`). |
+| **Nullable="false"** | Indicates a **Required Field** that cannot be empty. |
+
+---
+
+## Data Model (D365 Specific)
+Implementation site: `runtime/component/hotwax-d365/entity/D365Entities.xml`
+
+To track synchronization events and map D365 external identifiers back to Moqui entities without cluttering core tables, we use specific history entities.
+
+### Order Sync History
+Used to store the D365 Sales Order Number against the OMS Order ID upon successful creation in D365.
+
+
+```xml
+<entity entity-name="D365SalesOrderImportHistory" package="co.hotwax.d365.order">
+    <field name="orderSyncHistoryId" type="id" is-pk="true"/>
+    <field name="orderId" type="id"/>
+    <field name="d365SalesOrderNumber" type="id"/>
+    <field name="dataAreaId" type="id"/>
+    <field name="createdDate" type="date-time"/>
+    <relationship type="one" related="org.apache.ofbiz.order.order.OrderHeader">
+        <key-map field-name="orderId"/>
+    </relationship>
+</entity>
+```
+
+---
+
+## Foundation
+
+The generic connector foundation for authentication, credentials storage, legal-entity mapping, token management, and common OData request handling is documented in [connector_foundation.md](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/foundation/project-ideas/dynamics365-integration/foundation/connector_foundation.md).
+
+This sales-order implementation plan focuses on the sales-order-specific services, entities, views, and orchestration built on top of that shared connector layer.
+
+## Customer Synchronization
+### Sync Service Logic (`sync#Customer`)
+1. **Remote Lookup**: Call `GET /data/CustomersV3` with `$filter` by `CustomerAccount eq 'HW-partyId'`.
+2. **Creation**: If not found, `POST /data/CustomersV3`.
+    - Map `'HW-' + partyId` -> `CustomerAccount`.
+    - Provide mandatory fields: `dataAreaId`, `PartyType`, `CustomerGroupId`, `SalesCurrencyCode`.
+3. **Outcome**: The `HW-partyId` is used directly as the `CustomerAccount` in D365. No local identification record is required.
+   - **TODO** Check to send the Shopify Customer Id here, and decide if we should have CustomerAccount field as auto created in D365 or we can continue to send unique identifier from OMS.
+
+### Mapping (`CustomersV3`)
+| D365 Field | Moqui Field               | Usage / Notes |
+| :--- |:--------------------------| :--- |
+| `CustomerAccount` | `'HW-' + partyId`         | Primary identifier in D365. Prefixed with `HW-`. |
+| `dataAreaId` | `usmf`                    | Legal entity context. **TODO**: Currently hardcoded to `usmf` for demo; should map to `ProductStore.externalId`. |
+| `PersonFirstName` | `Person.firstName`        | Only for `PartyType` = `Person`. |
+| `PersonLastName` | `Person.lastName`         | Only for `PartyType` = `Person`. |
+| `PrimaryContactEmail`| `ContactMech.infoString` | Joined via `PartyContactMechPurpose` (PRIMARY_EMAIL). |
+| `PrimaryContactPhone`| `TelecomNumber`           | Joined via `PartyContactMechPurpose` (PRIMARY_PHONE). Formatted as: `[countryCode] [areaCode] [contactNumber]`. |
+| `SalesCurrencyCode` | `ProductStore.defaultCurrencyUomId` | Abbreviation of the default currency UOM for the `ProductStore`. Defaults to `USD` if not found. |
+| `CustomerGroupId` | `'30'`                    | **TODO**: Needs discussion. Currently hardcoded to `30` as it's not yet mapped in OMS. |
+| `SalesTaxGroup`   | `''` (Empty String)       | **TODO**: Needs mapping. Expected to be something like `AVATAX`. |
+
+
+## Sales Order Flows
+
+### 1. Import of Sales Orders from OMS to D365
+
+This flow covers outbound sales order creation from HotWax OMS into D365.
+
+#### 1.1 Eligible Orders Views
+
+Two separate eligibility views are used so OData and DMF can evolve independently.
+
+- **OData View**: `D365EligibleSalesOrdersOData`
+  - Shopify order id exists
+  - `D365SalesOrderHeaderHistory` is missing, or header status is not `D365_ORD_SYNCED`
+- **DMF View**: `D365EligibleSalesOrdersDMF`
+  - Shopify order id exists
+  - `D365SalesOrderImportHistory` record is missing
+
+- **Shared aliases**: `orderId`, `partyId` (BILL_TO_CUSTOMER), `productStoreId`, `dataAreaId`
+
+#### 1.2 Supported Import Approaches
+
+The connector currently supports two separate technical approaches for sales order synchronization:
+
+1. **Approach 1.2.1: OData Pattern**
+   - Service name: `co.hotwax.d365.D365OrderServices.sync#SalesOrders`
+   - D365 model: `SalesOrderHeadersV4` + `SalesOrderLinesV3`
+   - Processing style: Direct, request-driven entity sync
+   - OMS tracking entity names: `D365SalesOrderHeaderHistory`, `D365SalesOrderLineHistory`
+
+2. **Approach 1.2.2: DMF / Data Package Pattern**
+   - Service name: `co.hotwax.d365.D365OrderServices.import#SalesOrdersDataPackage`
+   - D365 model: `Sales orders composite V4`
+   - Processing style: Package-based batch import via DMF
+   - OMS tracking entity name: `D365SalesOrderImportHistory`
+
+##### 1.2.1 OData Import Implementation
+
+##### Current Implementation Summary
+This is a fully implemented direct-sync path that creates a sales order header and then creates individual order lines using standard OData entities.
+
+##### Service Flow
+1. **Fetch Eligible Orders**: Query the view-entity `D365EligibleSalesOrdersOData`.
+2. **Customer Sync**: Call the service `sync#Customer` for the order's `partyId`.
+3. **Initialize/Read Local OData History**:
+    - Read the entity `D365SalesOrderHeaderHistory`
+    - Read the entity `D365SalesOrderLineHistory`
+    - Mark header history as `D365_ORD_PENDING`
+4. **Prepare Header Context**:
+    - Load the view-entity `D365SalesOrderDetail`
+    - Normalize state code
+    - Build concatenated street address
+5. **Idempotent Header Check**:
+    - Query `SalesOrderHeadersV4`
+    - Filter by `CustomersOrderReference eq '<orderId>'`
+    - If found, reuse returned `SalesOrderNumber`
+6. **Header Create**:
+    - If not found, `POST /data/SalesOrderHeadersV4`
+    - Store HotWax `orderId` in `CustomersOrderReference`
+7. **Idempotent Line Check**:
+    - Query `SalesOrderLinesV3`
+    - Filter by `SalesOrderNumber`
+    - Collect existing `ExternalItemNumber` values
+8. **Line Create**:
+    - Iterate eligible order items
+    - Skip cancelled items
+    - Skip any line already marked `D365_ORD_SYNCED` in line history
+    - Reconcile any line already present in D365 into local line history
+    - `POST /data/SalesOrderLinesV3` for missing lines
+9. **Local Persistence**:
+    - Update line history per order item as `D365_ORD_SYNCED` or `D365_ORD_ERROR`
+    - Update header history as `D365_ORD_SYNCED`, `D365_ORD_PARTIAL`, or `D365_ORD_ERROR`
+    - Only after header reaches `D365_ORD_SYNCED`, create `OrderIdentification` with type `D365_SLS_ORD_NUM`
+
+##### OData Tracking Entities
+
+- **Header history**: `D365SalesOrderHeaderHistory`
+  - Tracks aggregate order-level OData status
+  - Stores `d365SalesOrderNumber`, `syncStatusId`, `syncedDate`, and `logText`
+- **Line history**: `D365SalesOrderLineHistory`
+  - Tracks per-line OData result for retry-safe resumption
+  - Stores `orderItemSeqId`, `d365SalesOrderNumber`, `syncStatusId`, `syncedDate`, `lastAttemptDate`, and `logText`
+
+##### OData Entity Mappings
+
+###### Header (`SalesOrderHeadersV4`)
+| D365 Field | Moqui Field | Usage / Notes |
+| :--- | :--- | :--- |
+| `dataAreaId` | `order.dataAreaId` | Legal entity context from eligible order view. |
+| `CustomersOrderReference` | `OrderHeader.orderId` | OMS order reference used for idempotent lookup. |
+| `SalesOrderOriginCode` | `salesChannelEnumId` -> `IntegrationTypeMapping(D365_SALES_CHNL)` | Uses the mapped D365 Sales Origin code. Falls back to `Ecom` if no mapping row exists. |
+| `DeliveryModeCode` | Selected `shipmentMethodTypeId` -> `IntegrationTypeMapping(D365_SHP_MTHD)` | Uses the mapped D365 Mode of Delivery. Falls back to `Standard` if no mapping row exists. |
+| `OrderingCustomerAccountNumber` | Resolved D365 customer account | Returned by customer sync. |
+| `InvoiceCustomerAccountNumber` | Resolved D365 customer account | Same as ordering customer account. |
+| `CurrencyCode` | `orderDetail.currencyCode` | Defaults to `USD` if missing. |
+| `IsDeliveryAddressOrderSpecific` | Hardcoded `'Yes'` | Uses order-scoped delivery address. |
+| `DeliveryAddressName` | `orderDetail.toName` | Ship-to name. |
+| `DeliveryAddressDescription` | Hardcoded `'OMS Ship To'` | Fixed value. |
+| `DeliveryAddressStreet` | `address1 + address2` | Concatenated address lines. |
+| `DeliveryAddressCity` | `orderDetail.city` | |
+| `DeliveryAddressStateId` | Normalized `stateProvinceGeoId` | Strips OMS prefixes when present. |
+| `DeliveryAddressZipCode` | `orderDetail.postalCode` | |
+| `DeliveryAddressCountryRegionId` | `orderDetail.countryGeoId` | |
+| `DefaultShippingWarehouseId` | Hardcoded `'NA'` | Temporary testing value. **TODO**: revisit before production. |
+| `Email` | `orderDetail.email` | Contact email on order header. |
+
+###### Line (`SalesOrderLinesV3`)
+| D365 Field | Moqui Field | Usage / Notes |
+| :--- | :--- | :--- |
+| `dataAreaId` | `order.dataAreaId` | Legal entity context. |
+| `SalesOrderNumber` | Resolved D365 `SalesOrderNumber` | Linked to created/found header. |
+| `ExternalItemNumber` | `orderItemSeqId` | OMS order item sequence id sent as a string and used for idempotency and later line-level reconciliation. |
+| `ItemNumber` | Resolved parent product identifier | Current implementation derives this from the OMS parent Shopify product id. **TODO**: confirm final D365 product identifier strategy. |
+| `OrderedSalesQuantity` | `item.quantity` | |
+| `SalesPrice` | `item.unitPrice` | |
+| `LineDiscountAmount` | `getItemDiscountAmount()` | Derived from OMS discounts. |
+| `ProductSizeId` | `ProductFeature(SIZE)` | Sent when the OMS item exposes a size feature. |
+| `ProductColorId` | `ProductFeature(COLOR)` | Sent when the OMS item exposes a color feature. |
+| `shipmentMethodTypeId` | `OrderItemShipGroup.shipmentMethodTypeId` | Used to derive the order-level `DeliveryModeCode`. |
+| `ShippingWarehouseId` | `item.shippingWarehouseId` | Sent only for `WH_ONLY_FULFILLMENT` items. |
+
+##### OData Idempotency and Failure Behavior
+- **Header idempotency key**: `CustomersOrderReference`
+- **Line idempotency key**: `ExternalItemNumber`
+- **Failure behavior**: Partial orders are possible because header and lines are separate API calls.
+- **Mitigation**:
+    - Re-query header before create
+    - Re-query existing lines before line POST
+    - Persist `D365_SLS_ORD_NUM` only after all lines succeed
+
+##### OData Shipment Method Handling
+- The eligible-order view also exposes `isMixCartOrder` so order-level delivery mode can be derived consistently.
+- For non-mixed-cart orders, use the first non-empty `shipmentMethodTypeId` from the order items.
+- For mixed-cart orders, select the first shipment method that is not:
+  - `STOREPICKUP`
+  - `POS_COMPLETED`
+- If every shipment method is excluded by that rule, fall back to the first non-empty shipment method on the order.
+- The selected shipment method is then mapped through `IntegrationTypeMapping(D365_SHP_MTHD)` to populate `DeliveryModeCode`.
+
+##### OData Warehouse / Site Behavior
+- In the target D365 setup, **Site** is mandatory for sales order lines.
+- **Warehouse** is effectively required for OMS integration because D365 derives the mandatory Site from the provided warehouse configuration.
+- If OMS sends a sales order line without `ShippingWarehouseId`, D365 can reject the line with an error similar to:
+
+```json
+{
+  "message": "Write failed for table row of type 'SalesOrderLineV3Entity'. Infolog: Warning: Inventory dimension Site is mandatory and must consequently be specified.; Error: Update has been canceled.."
+}
+```
+
+- Observation from integration testing:
+  - sending `ShippingWarehouseId` allows D365 to populate the required inventory site context
+  - omitting it causes order-line creation to fail for products where the storage/inventory dimension setup requires Site
+
+##### OData Inventory Behavior Observation
+- Creating a sales order in the tested D365 environment:
+  - creates demand
+  - does **not** reserve inventory
+  - does **not** reduce physical stock
+- Inventory is reserved later, when reservation is explicitly performed, for example through the `Reserve Lot` action or another downstream process.
+- This means order creation alone is not the commitment step for inventory.
+- In the tested setup, reservation is the actual commitment point.
+- The current D365 setting in `Accounts receivable > Setup > Accounts receivable parameters > General > Sales default values` is:
+  - `Reservation = Manual`
+- Based on this setting, OMS should send the intended warehouse/location context to D365, but OMS should not trigger reservation as part of order export.
+- Reservation remains an ERP-side operational step and should be handled later in D365 according to warehouse fulfillment workflow.
+
+##### OData TODOs / Gaps
+- Confirm the final D365 `ItemNumber` strategy used for OMS parent product identifiers
+- Add support for additional D365 variant dimension fields beyond the current size/color handling if required
+- Revisit missing header fields such as order date, Shopify order identity, and ship-to phone
+
+##### OData Sample Requests
+
+###### Customer Creation (`CustomersV3`)
+```json
+{
+  "dataAreaId": "usmf",
+  "CustomerAccount": "HW-02",
+  "PartyType": "Person",
+  "PersonFirstName": "Steve",
+  "PersonLastName": "Rogers",
+  "CustomerGroupId": "30",
+  "SalesCurrencyCode": "USD"
+}
+```
+
+###### Sales Order Header (`SalesOrderHeadersV4`)
+```json
+ {
+  "dataAreaId": "usmf",
+  "CustomersOrderReference": "OMS-12345",
+  "OrderingCustomerAccountNumber": "HW-02",
+  "InvoiceCustomerAccountNumber": "HW-02",
+  "CurrencyCode": "USD",
+  "IsDeliveryAddressOrderSpecific": "Yes",
+  "DeliveryAddressName": "Steve Rogers",
+  "DeliveryAddressDescription": "OMS Ship To",
+  "DeliveryAddressStreet": "221B Olive Street",
+  "DeliveryAddressCity": "Mountain View",
+  "DeliveryAddressStateId": "CA",
+  "DeliveryAddressZipCode": "94086",
+  "DeliveryAddressCountryRegionId": "USA"
+ }
+```
+
+###### Sales Order Line (`SalesOrderLinesV3`)
+```json
+ {
+  "dataAreaId": "usmf",
+  "SalesOrderNumber": "000891",
+  "ExternalItemNumber": "00101",
+  "ItemNumber": "SHOPIFY_PARENT_PRODUCT_ID",
+  "OrderedSalesQuantity": 1,
+  "SalesPrice": 100,
+  "LineDiscountAmount": 20,
+  "ProductSizeId": "M",
+  "ProductColorId": "Blue",
+  "ShippingWarehouseId": "13"
+ }
+```
+
+##### 1.2.2 DMF / Data Package Import Implementation
+
+This section documents two approaches for the DMF / Data Package path:
+
+- **Approach 1**: execution tracking using `SystemMessage` records after the remote D365 trigger call
+- **Approach 2**: a Moqui-native `SystemMessage` send lifecycle using `SmsgProduced` -> `SmsgSending` -> `SmsgSent` -> `SmsgConfirmed`
+
+See the shared Data Package API reference: [data_import_package_api.md](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/foundation/project-ideas/dynamics365-integration/data-package-api/data_import_package_api.md). That document describes only the generic D365 package API services; the sales-order-specific job, packaging, and submission details remain in this implementation plan.
+
+##### Approach 1 - Execution Tracking Using `SystemMessage` Records
+
+###### Summary
+This approach builds a `Sales orders composite V4` XML file in memory, wraps it in a DMF package, uploads it to Azure Blob storage, and triggers D365 import automation.
+
+This approach uses `SystemMessage` primarily as an execution-tracking record after the remote D365 API call has already happened. In other words, the `SystemMessage` row is used to persist the returned execution identifier and provide a poll target, but the standard Moqui `SystemMessageType.sendServiceName` flow is not the primary orchestration mechanism for the initial trigger.
+
+This means the pattern is operationally useful, but it behaves more like a lightweight async tracker than a fully native Moqui outgoing message flow.
+
+###### Service Flow
+1. **Fetch Eligible Orders**: Query the view-entity `D365EligibleSalesOrdersDMF` with a batch limit.
+2. **Create DMF submission tracking record**:
+    - Persist the entity `D365SalesOrderImportHistory` during packaging so the same order is not packaged again immediately
+3. **Customer Sync**: Create or verify customers synchronously via OData before packaging orders.
+4. **Load Order Context**:
+    - Load the view-entity `D365SalesOrderDetail`
+    - Load non-cancelled records from the view-entity `D365SalesOrderItemDetail`
+    - Compute shipping charge amount
+5. **Build Composite Payload**:
+    - Create header map for `SALESORDERHEADERV3ENTITY`
+    - Create line maps for `SALESORDERLINEV2ENTITY`
+    - Create charge map for `SALESORDERHEADERCHARGEV2ENTITY`
+6. **Create XML**:
+    - Generate `Sales orders composite V4.xml`
+    - Nest lines and charges under each header record
+7. **Create Package Metadata**:
+    - Generate `Manifest.xml`
+    - Generate `PackageHeader.xml`
+8. **Create ZIP Package**:
+    - Bundle XML + manifests into a single ZIP in memory
+9. **Obtain Upload URL**:
+    - Call the `GetAzureWriteUrl` API
+10. **Upload Package**:
+    - PUT the ZIP file to Azure Blob storage
+11. **Trigger Import**:
+    - Call the `ImportFromPackage` API with `definitionGroupId` and `BlobId`
+12. **Persist Execution Tracking**:
+    - After D365 accepts the package and returns `executionId`, create a `SystemMessage` entity record in `SmsgSent` with `remoteMessageId = executionId`
+    - Poll later using the generic import-status services
+13. **Local Persistence**:
+    - The entity `D365SalesOrderImportHistory` remains the DMF submission marker
+    - Final mapping back to the entity `OrderIdentification` is handled asynchronously by the sales order header export flow described in section 2
+
+###### Why this design feels transitional
+- The remote D365 import trigger has already been executed before the `SystemMessage` entity record is queued.
+- `queue#SystemMessage(sendNow=false)` is therefore used mainly as durable tracking state, not as a true outgoing send pipeline.
+- The `SystemMessageType` exists and categorizes the flow, but its `sendServiceName` is not the primary initiator of the remote work.
+- This is functionally valid, but it does not fully align with the usual Moqui pattern where a produced outgoing message is later sent by `send#ProducedSystemMessage`.
+
+###### Example Tracking Record Shape
+
+In this approach, the effective tracking payload is close to:
+
+```json
+{
+  "systemMessageTypeId": "D365_IMP_SLS_ORDERS",
+  "systemMessageRemoteId": "D365_HotWax_Sandbox",
+  "statusId": "SmsgSent",
+  "isOutgoing": "Y",
+  "remoteMessageId": "D365 executionId returned by ImportFromPackage"
+}
+```
+
+The key point is that `remoteMessageId` is the execution-id storage field.
+
+##### Approach 2 - Moqui-Native `SystemMessage` Send Flow
+
+###### Summary
+This approach uses a single outgoing `SystemMessageType` and maps the D365 DMF lifecycle onto native Moqui `SystemMessage` statuses:
+
+- `SmsgProduced`: export/import request has been queued locally
+- `SmsgSending`: the configured `sendServiceName` is currently triggering the remote D365 package API
+- `SmsgSent`: D365 accepted the request and returned an execution id
+- `SmsgConfirmed`: OMS later confirmed that D365 finished successfully and OMS completed its follow-up processing
+
+This design treats the `SystemMessage` entity as the canonical record of one remote D365 package execution from initial queueing through final confirmation.
+
+###### Status Flow
+
+The intended lifecycle is:
+
+```json
+{
+  "statusFlow": [
+    "SmsgProduced",
+    "SmsgSending",
+    "SmsgSent",
+    "SmsgConfirmed"
+  ]
+}
+```
+
+This is valid against the Moqui `SystemMessage` status transitions:
+- `SmsgProduced -> SmsgSending`
+- `SmsgSending -> SmsgSent`
+- `SmsgSent -> SmsgConfirmed`
+
+###### Proposed Processing Flow
+1. **Producer Job**:
+    - Create one outgoing `SystemMessage` entity record in `SmsgProduced`
+    - Set `sendNow = false`
+    - Store all D365 trigger metadata needed by the send and poll stages
+2. **Send Job**:
+    - Run `org.moqui.impl.SystemMessageServices.send#AllProducedSystemMessages`
+    - This invokes `SystemMessageType.sendServiceName`
+3. **Configured Send Service**:
+    - Load the `SystemMessage` entity record by `systemMessageId`
+    - Read package metadata from `messageText`
+    - Trigger the remote D365 package API
+    - Return `remoteMessageId = executionId`
+4. **Framework Status Update**:
+    - Moqui updates the message from `SmsgSending` to `SmsgSent`
+    - The returned D365 `executionId` is stored in `remoteMessageId`
+5. **Poll/Confirm Job**:
+    - A custom scheduled service reads messages in `SmsgSent`
+    - Use `remoteMessageId` as the D365 `executionId`
+    - Check completion status in D365
+6. **Confirmation Processing**:
+    - If still running, leave the message in `SmsgSent`
+    - If successful, complete the downstream OMS follow-up work and update the message to `SmsgConfirmed`
+    - If unrecoverable, update the message to `SmsgError`
+
+###### Why this design is stronger
+- It uses `sendServiceName` for the actual remote trigger, which matches the Moqui outgoing message model.
+- `remoteMessageId` becomes the natural home for the D365 `executionId`.
+- `SmsgSent` gets a precise meaning: D365 accepted the request, but OMS has not yet confirmed remote completion.
+- `SmsgConfirmed` gets a precise meaning: remote execution completed successfully and OMS completed the follow-up processing.
+- The trigger phase benefits from the standard Moqui send/retry lifecycle for messages in `SmsgProduced` / `SmsgError`.
+
+###### Proposed `SystemMessage` Shape
+
+The queued message should carry all metadata needed for the send and confirm phases. One reasonable shape is:
+
+```json
+{
+  "systemMessageTypeId": "D365_IMP_SLS_ORDERS",
+  "systemMessageRemoteId": "D365_HotWax_Sandbox",
+  "statusId": "SmsgProduced",
+  "isOutgoing": "Y",
+  "messageText": {
+    "definitionGroupId": "HotWax_Import_SalesOrders_Composite",
+    "packageName": "Sales orders composite V4",
+    "legalEntityId": "USMF",
+    "fileName": "Sales orders composite V4.xml",
+    "orderIds": [
+      "OMS10001",
+      "OMS10002"
+    ]
+  },
+  "remoteMessageId": null
+}
+```
+
+After the send service succeeds, the same message would effectively look like:
+
+```json
+{
+  "systemMessageTypeId": "D365_IMP_SLS_ORDERS",
+  "systemMessageRemoteId": "D365_HotWax_Sandbox",
+  "statusId": "SmsgSent",
+  "isOutgoing": "Y",
+  "messageText": {
+    "definitionGroupId": "HotWax_Import_SalesOrders_Composite",
+    "packageName": "Sales orders composite V4",
+    "legalEntityId": "USMF",
+    "fileName": "Sales orders composite V4.xml",
+    "orderIds": [
+      "OMS10001",
+      "OMS10002"
+    ]
+  },
+  "remoteMessageId": "D365 executionId returned by ImportFromPackage"
+}
+```
+
+After OMS confirms the remote execution and completes follow-up processing, the message would move to:
+
+```json
+{
+  "systemMessageTypeId": "D365_IMP_SLS_ORDERS",
+  "systemMessageRemoteId": "D365_HotWax_Sandbox",
+  "statusId": "SmsgConfirmed",
+  "isOutgoing": "Y",
+  "remoteMessageId": "D365 executionId returned by ImportFromPackage"
+}
+```
+
+###### Responsibilities by Field
+- `systemMessageTypeId`: identifies the integration stream
+- `systemMessageRemoteId`: identifies the D365 remote configuration
+- `messageText`: stores the business metadata needed to trigger and later confirm the request
+- `remoteMessageId`: stores the D365 `executionId`
+
+###### Design Trade-offs
+- This design is cleaner from a Moqui messaging perspective.
+- It still needs a dedicated confirmation/poll job for messages already in `SmsgSent`, because `send#AllProducedSystemMessages` only handles `SmsgProduced`.
+- The proposed pattern is therefore:
+  - standard Moqui send/retry for the initial trigger
+  - custom scheduled confirmation loop for the remote completion phase
+
+###### Decision Note
+- We started with **Approach 1**, which helped validate the D365 DMF packaging, upload, and execution-tracking mechanics.
+- We will proceed with **Approach 2** for the next iteration so that the design aligns more closely with native Moqui `SystemMessage` semantics and gives clearer meaning to the statuses `SmsgProduced`, `SmsgSending`, `SmsgSent`, and `SmsgConfirmed`.
+
+##### DMF Composite Entity Mappings
+
+###### Header (`SALESORDERHEADERV3ENTITY`)
+| XML Attribute | Mapping from OMS | Usage / Notes |
+| :--- | :--- | :--- |
+| `CUSTOMERSORDERREFERENCE` | `orderId` | OMS order reference. |
+| `SALESORDERORIGINCODE` | `salesChannelEnumId` -> `IntegrationTypeMapping(D365_SALES_CHNL)` | Uses the mapped D365 Sales Origin code. Falls back to `Ecom` if no mapping row exists. |
+| `DELIVERYMODECODE` | Selected `shipmentMethodTypeId` -> `IntegrationTypeMapping(D365_SHP_MTHD)` | Uses the mapped D365 Mode of Delivery. Falls back to `Standard` if no mapping row exists. |
+| `ORDERINGCUSTOMERACCOUNTNUMBER` | Resolved D365 customer account | Returned by customer sync. |
+| `INVOICECUSTOMERACCOUNTNUMBER` | Resolved D365 customer account | Same as ordering customer account. |
+| `CURRENCYCODE` | `orderDetail.currencyCode` | Defaults to `USD`. |
+| `DELIVERYADDRESSNAME` | `orderDetail.toName` | |
+| `DELIVERYADDRESSDESCRIPTION` | Hardcoded `'OMS Ship To'` | Fixed value. |
+| `DELIVERYADDRESSSTREET` | `address1 + address2` | Concatenated address. |
+| `DELIVERYADDRESSCITY` | `orderDetail.city` | |
+| `DELIVERYADDRESSSTATEID` | Normalized `stateProvinceGeoId` | |
+| `DELIVERYADDRESSZIPCODE` | `orderDetail.postalCode` | |
+| `DELIVERYADDRESSCOUNTRYREGIONID` | `orderDetail.countryGeoId` | |
+| `DEFAULTSHIPPINGWAREHOUSEID` | Hardcoded `'NA'` | Temporary testing value. **TODO**: revisit before production. |
+| `EMAIL` | `orderDetail.email` | |
+
+###### Line (`SALESORDERLINEV2ENTITY`)
+| XML Attribute | Mapping from OMS | Usage / Notes |
+| :--- | :--- | :--- |
+| `ITEMNUMBER` | D365 item number / resolved parent product identifier | **TODO**: strict D365 product mapping needed. |
+| `EXTERNALITEMNUMBER` | `orderItemSeqId` | OMS order item sequence id sent as a string, preserving values such as `00101` for later line-level reconciliation. |
+| `LINEDISCOUNTAMOUNT` | Item discount amount | Computed from OMS adjustments. |
+| `LINENUMBER` | Not sent by OMS in the current DMF payload | D365 exposes this as decimal and should not be used to preserve OMS order item sequence ids with leading zeros. |
+| `ORDEREDSALESQUANTITY` | `quantity` | |
+| `SALESPRICE` | `unitPrice` | |
+| `PRODUCTSIZEID` | `ProductFeature(SIZE)` | Sent when the OMS item exposes a size feature. |
+| `PRODUCTCOLORID` | `ProductFeature(COLOR)` | Sent when the OMS item exposes a color feature. |
+| `shipmentMethodTypeId` | `OrderItemShipGroup.shipmentMethodTypeId` | Used to derive the order-level `DELIVERYMODECODE`. |
+| `SHIPPINGWAREHOUSEID` | `shippingWarehouseId` | Sent for D365 fulfillment warehouse use case. |
+
+###### DMF Shipment Method Handling
+- The eligible-order view also exposes `isMixCartOrder` so order-level delivery mode can be derived consistently.
+- For non-mixed-cart orders, use the first non-empty `shipmentMethodTypeId` from the order items.
+- For mixed-cart orders, select the first shipment method that is not:
+  - `STOREPICKUP`
+  - `POS_COMPLETED`
+- If every shipment method is excluded by that rule, fall back to the first non-empty shipment method on the order.
+- The selected shipment method is then mapped through `IntegrationTypeMapping(D365_SHP_MTHD)` to populate `DELIVERYMODECODE`.
+
+###### DMF Warehouse / Site Behavior
+- The same D365 inventory-dimension rule applies to DMF-imported order lines:
+  - **Site** is mandatory for the line in the tested D365 setup
+  - OMS must therefore provide a warehouse that lets D365 resolve the required site
+- This is particularly important for orders that are created in OMS before final warehouse assignment is complete.
+- If a line is imported without a warehouse and D365 cannot derive Site, import can fail for the same underlying reason observed through OData:
+  - `Inventory dimension Site is mandatory and must consequently be specified`
+
+###### DMF Inventory Behavior Observation
+- In the tested D365 setup, importing the sales order does not itself reserve inventory.
+- Inventory remains available until reservation is performed later, for example through `Reserve Lot` or another reservation process.
+- This means a warehouse placeholder strategy is operationally possible as long as final warehouse reassignment happens before reservation.
+- The current D365 setting in `Accounts receivable > Setup > Accounts receivable parameters > General > Sales default values` is:
+  - `Reservation = Manual`
+- Based on this setting, OMS should communicate warehouse/location to D365, while reservation timing and execution remain part of ERP-side fulfillment processing.
+
+###### Header Charge (`SALESORDERHEADERCHARGEV2ENTITY`)
+| XML Attribute | Mapping from OMS | Usage / Notes |
+| :--- | :--- | :--- |
+| `FIXEDCHARGEAMOUNT` | Calculated shipping charge | Defaults to `0` if missing. |
+| `SALESCHARGECODE` | Hardcoded `'FREIGHT'` | Fixed value in current implementation. |
+
+##### DMF Package and Import Details
+- **Generated files**:
+    - `Sales orders composite V4.xml`
+    - `Manifest.xml`
+    - `PackageHeader.xml`
+- **Definition group**: Defaults to `HotWax_Import_SalesOrders_Composite`
+- **D365 actions used**:
+    - `GetAzureWriteUrl` API
+    - `ImportFromPackage` API
+- **Import behavior**:
+    - Batch-oriented
+    - Asynchronous from OMS perspective
+    - Requires downstream monitoring / result correlation
+
+##### Poll Sales Order Import Package Status
+- **Job**: `d365_PollSalesOrderImportStatus`
+- **Service**: `co.hotwax.d365.D365DataPackageServices.poll#ImportDataPackageStatus`
+- **System message type**: `D365_IMP_SLS_ORDERS`
+- **Purpose**: Poll D365 for the execution status of sales order import packages submitted by `d365_ImportSalesOrders`.
+- **Execution id source**: The current sales-order import flow stores the D365 execution id returned by `ImportFromPackage` in `SystemMessage.remoteMessageId`.
+- **Polling behavior**:
+    - The import service creates a tracking `SystemMessage` in `SmsgSent` only after D365 accepts `ImportFromPackage` and returns `executionId`.
+    - The poll job reads `D365_IMP_SLS_ORDERS` `SystemMessage` records in `SmsgSent`.
+    - It applies `retryMinutes` / `limit` filtering through the shared poll service, using `lastAttemptDate` to space out retries.
+    - For each eligible record, it calls `check#ImportDataPackageStatus` in its own transaction.
+    - The checker calls D365 `GetExecutionSummaryStatus`.
+    - If D365 returns `Succeeded` or `PartiallySucceeded`, the current implementation moves the `SystemMessage` to `SmsgConfirmed`.
+    - If D365 returns `Failed`, `Unknown`, or `Canceled`, the checker calls `get#ExecutionErrors` and then moves the `SystemMessage` to `SmsgError`.
+- **Current limitation**: For the Sales Orders Data Package import using the `Sales orders composite V4` composite entity, D365 can return `Failed` from `GetExecutionSummaryStatus`, but `GetExecutionErrors` does not return detailed execution errors through the API.
+- **Operational handling for now**: If a sales order import package fails, OMS records the failed state by moving the `SystemMessage` to `SmsgError`; the detailed import errors may need to be checked manually in D365 Data Management until API-based retrieval is figured out.
+- **TODO**: revisit failed sales order import error retrieval and confirm whether another D365 API, exported log, or DMF artifact can provide the detailed execution errors for composite entity imports.
+
+For generic package upload/import mechanics and API sequencing, refer to [data_import_package_api.md](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/foundation/project-ideas/dynamics365-integration/data-package-api/data_import_package_api.md).
+
+##### DMF TODOs / Gaps
+- Resolve `ITEMNUMBER` from OMS-to-D365 product mapping
+- Add support for additional D365 variant dimension fields beyond the current size/color handling if required
+- Validate whether shipping charge handling through `SALESORDERHEADERCHARGEV2ENTITY` is sufficient for all order scenarios
+
+#### 1.3 Mixed Cart Order Handling
+
+This section captures the current integration understanding for mixed-cart sales orders and should be treated as a working design until end-to-end validation is complete.
+
+##### Overview
+- A single D365 sales order can contain lines with different fulfillment ownership.
+- Each line is processed independently based on whether fulfillment is owned by OMS or by D365.
+- Mixed-cart handling is therefore a line-level integration concern rather than an order-level completion rule.
+
+##### Fulfillment Ownership
+
+###### Store-Fulfilled Lines
+- Physical fulfillment is executed in OMS.
+- D365 remains the inventory and financial system of record.
+- After fulfillment is completed in OMS, OMS updates D365 so those lines can be completed financially in ERP.
+
+###### Warehouse-Fulfilled Lines
+- Fulfillment is executed in D365.
+- D365 handles the operational lifecycle for those lines, including:
+  - reservation
+  - picking
+  - packing slip posting
+  - invoice posting
+
+##### Working Integration Flow
+1. **Order creation**
+   - OMS sends the sales order to D365.
+   - If final warehouse assignment is not yet known, OMS may send a placeholder warehouse/site context so the order can still be created.
+   - Reservation is not triggered at order creation time.
+2. **Fulfillment decision**
+   - OMS determines fulfillment ownership per line:
+     - store-fulfilled
+     - warehouse-fulfilled
+3. **Warehouse-fulfilled lines**
+   - OMS sends or updates warehouse context when required by the integration design.
+   - D365 then performs operational execution for those lines.
+4. **Store-fulfilled lines**
+   - OMS completes physical fulfillment outside D365.
+   - After fulfillment, OMS updates D365 with the final fulfillment location context for those lines.
+   - D365 is then used for downstream financial completion based on the approved posting sequence.
+
+##### Inventory and Reservation
+- In the tested D365 setup, reservation is configured as `Manual` under:
+  - `Accounts receivable > Setup > Accounts receivable parameters > General > Sales default values`
+- Order creation alone creates demand but does not reserve inventory.
+- Reservation is the actual inventory commitment step.
+- For warehouse-fulfilled lines, reservation timing should remain part of ERP-side fulfillment processing.
+- OMS should not trigger reservation during order export.
+- Warehouse/site context should be finalized before any reservation process is executed in D365.
+
+##### Brokered Warehouse Update
+- The implemented brokered order item warehouse update flow is documented separately in section 3.
+- That separation is intentional because the flow depends on the sales order and sales order line export reconciliations, even though the business use case originates from mixed-cart order handling.
+
+##### Invoicing Implication
+- D365 can generate multiple invoices from a single sales order.
+- Because fulfillment is line-driven, a mixed-cart order may result in separate invoices based on fulfillment and posting events.
+- Example outcomes:
+  - store-fulfilled lines posted in one invoice
+  - warehouse-fulfilled lines posted in another invoice
+  - partial shipments creating multiple invoices over time
+
+##### Key Considerations
+- Fulfillment ownership is line-driven, not order-driven.
+- OMS should not model order completion as a single direct action in D365.
+- In D365, completion is driven by operational posting events such as packing slip and invoice.
+- Stores used for store-fulfilled completion must exist in D365 in a valid warehouse/location model.
+- Warehouse-fulfilled lines should avoid early reservation if final brokering is still pending.
+
+##### Design Principle
+- OMS = fulfillment decision and store execution
+- D365 = inventory control, warehouse execution, and financial posting
+
+#### 1.4 Custom Service / SysOperation Import (Future)
+**TODO:** This approach is not yet implemented.
+
+Designed for high-volume and guaranteed document atomicity.
+
+1. **Atomic Request**: Send a single nested JSON document (Header + Lines) to a custom X++ service.
+2. **Transactional Commit**: D365 creates the entire order within a single database transaction.
+3. **Efficiency**: Reduces network overhead from `1 + N` requests to `1` request per order.
+
+#### 1.5 Import Prerequisites & TODOs
+> [!IMPORTANT]
+> - Customer must exist and not be on hold.
+> - Products must be "Released" to the Legal Entity.
+> - Warehouse/site validation must be confirmed against the target D365 setup for both OData and DMF paths.
+
+- **Current observation from testing**:
+  - D365 order creation requires valid inventory site context on the order line.
+  - In the tested setup, OMS satisfies this by sending a warehouse that allows D365 to derive Site.
+  - Order creation itself does not reserve inventory; reservation happens later.
+  - D365 `Reservation` is currently configured as `Manual` in Accounts Receivable parameters.
+- **Integration implication**:
+  - OMS may need a placeholder D365 warehouse/site mapping for orders that have been placed but are not yet brokered to a final OMS fulfillment location.
+  - This allows the sale to flow to D365 immediately without waiting for final brokering, while still allowing warehouse reassignment before reservation.
+  - For warehouse-fulfilled orders, OMS should assign location context to D365, but reservation should remain an ERP-side activity rather than being triggered from OMS.
+- **TODO**: [Mapping] Define `facilityId` to D365 warehouse/site mapping, including the strategy for unbrokered OMS orders.
+- **TODO**: [Mapping] Create mapping table for `TaxCategory` -> `ItemSalesTaxGroup`.
+
+## Integration Type Mappings
+To avoid hardcoding values like `SalesOrderOriginCode` and `DeliveryModeCode` in service logic, we use the `IntegrationTypeMapping` entity to translate OMS identifiers into D365 codes.
+
+### Configuration Structure
+Add records to the entity `co.hotwax.integration.IntegrationTypeMapping` for the target system:
+
+| Mapping Category | OMS Internal ID (`mappingKey`) | D365 Code (`mappingValue`) | Enum Type (`integrationTypeId`) |
+| :--- | :--- | :--- | :--- |
+| **Sales Order Origin** | OMS Sales Channel (for example `WEB_SALES_CHANNEL`) | D365 Sales Origin (for example `Ecom`) | `D365_SALES_CHNL` |
+| **Delivery Mode** | OMS Shipment Method (for example `STANDARD`) | D365 Mode of Delivery (for example `Standard`) | `D365_SHP_MTHD` |
+
+### Mapping Details
+- **Sales Order Origin**: Maps the OMS `salesChannelEnumId` (from `OrderHeader`) to the D365 Sales Origin. In D365, this is the 'Sales Origin' field.
+- **Delivery Mode**: Maps the OMS `shipmentMethodTypeId` (from `OrderItemShipGroup`) to the D365 Mode of Delivery. In D365, this is the 'Mode of delivery' field. For mixed-cart orders, first select the shipment method that is not `STOREPICKUP` or `POS_COMPLETED`, and if none exists, fall back to the first non-empty shipment method on the order.
+
+### Setup Steps
+1. **Define Enumerations**: Add the mapping category IDs (for example `D365_SALES_CHNL`, `D365_SHP_MTHD`) to `moqui.basic.Enumeration`.
+2. **Populate Mappings**: Provide the specific mapping records:
+   - `integrationTypeId`: The category ID.
+   - `mappingKey`: The internal Moqui ID.
+   - `mappingValue`: The external D365 value.
+   - `integrationRefId`: Set to the same value as `mappingKey` for referential integrity.
+
+### 2. Export of Sales Orders from D365 to OMS
+
+This flow returns the D365-generated `SalesOrderNumber` back into OMS after the OMS-to-D365 sales order import completes. The generic Data Package queue/send/poll services remain documented in [data_export_package_api.md](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/foundation/project-ideas/dynamics365-integration/data-package-api/data_export_package_api.md); this section covers the sales-order-header-specific D365 project, jobs, row mappings, and OMS persistence.
+
+#### Objective
+- Store the D365 `SalesOrderNumber` against the originating OMS order.
+- Make the D365 sales order identifier available for downstream OMS flows, especially payment synchronization and sales order line reconciliation.
+
+#### D365 Export Project Prerequisites
+- **Sales order header export project**: `HotWax_Export_Sales_Orders`
+  - Entity: `SalesOrderHeadersV4`
+- In the D365 UI, `Enable Change Tracking` is enabled for the `SalesOrderHeadersV4` export entity. The current connector relies on D365 change tracking to export changed OMS-created records.
+- The D365 export project should run in `Incremental Push` mode along with change tracking so changed OMS-created rows are picked up correctly.
+- Change tracking only controls incremental selection. The project filters still determine which D365 records are considered eligible for the export.
+- **Future option**: if change tracking proves too broad operationally, introduce an explicit D365 field such as `HcOrderExported` and use that to drive export selection instead.
+
+#### Implemented Flow
+
+This export reconciles the D365-assigned `SalesOrderNumber` back to the OMS order.
+
+###### D365 / OMS Components
+- **System message type**: `D365_EXP_SALES_ORDERS`
+- **Queue job**: `d365_QueueSalesOrderExport`
+- **Poll job**: `d365_ExportSalesOrdersPoll`
+- **Definition group**: `HotWax_Export_Sales_Orders`
+- **Package name**: `SalesOrderHeadersV4`
+- **CSV file**: `Sales order headers V4.csv`
+- **DataManager config**: `D365_IMP_SALES_ORD`
+- **Row-storage service**: `co.hotwax.d365.D365OrderServices.store#D365SalesOrderNumber`
+
+###### Implemented Processing Sequence
+1. The queue job `d365_QueueSalesOrderExport` calls `D365DataPackageServices.queue#ExportDataPackage`.
+2. The generic queue service creates a `SystemMessage` record with the sales-order export payload and invokes the configured `sendServiceName`.
+3. `D365DataPackageServices.send#ExportDataPackage` calls D365 `ExportToPackage`.
+4. D365 returns an `executionId`, which OMS stores in `SystemMessage.remoteMessageId`.
+5. The poll job `d365_ExportSalesOrdersPoll` calls `D365DataPackageServices.poll#ExportDataPackageStatus`.
+6. On success, the checker downloads the exported ZIP, extracts `Sales order headers V4.csv`, and hands it to the DataManager config `D365_IMP_SALES_ORD`.
+7. DataManager invokes `store#D365SalesOrderNumber` for each CSV row.
+
+###### Exported Fields Used by OMS
+| D365 CSV field | OMS usage |
+| :--- | :--- |
+| `CUSTOMERSORDERREFERENCE` | OMS `orderId` |
+| `SALESORDERNUMBER` | Stored as `OrderIdentification.idValue` for type `D365_SLS_ORD_NUM` |
+
+###### OMS Persistence
+- **Entity**: `co.hotwax.order.OrderIdentification`
+- **Type**: `D365_SLS_ORD_NUM`
+- **Purpose**: downstream D365 cross-reference for payments, line export reconciliation, and later brokered / fulfilled order item warehouse updates
+
+### 2.1 Export of Sales Order Lines from D365 to OMS
+
+This flow returns the D365-generated `InventoryLotId` back into OMS after the OMS-to-D365 sales order import completes.
+
+#### Objective
+- Store the D365 `InventoryLotId` against the originating OMS order item.
+- Make the D365 sales order line identifier available for brokered and fulfilled order item warehouse updates back to D365.
+
+#### D365 Export Project Prerequisites
+- **Sales order line export project**: `HotWax_Export_Sales_Order_Lines`
+  - Entity: `SalesOrderLinesV3`
+  - Current filter: `ExternalItemNumber != ""`
+- In the D365 UI, `Enable Change Tracking` is enabled for the `SalesOrderLinesV3` export entity. The current connector relies on D365 change tracking to export changed OMS-created records.
+- The D365 export project should run in `Incremental Push` mode along with change tracking so changed OMS-created rows are picked up correctly.
+- Change tracking only controls incremental selection. The project filters still determine which D365 records are considered eligible for the export.
+- **Future option**: if change tracking proves too broad operationally, introduce an explicit D365 field such as `HcOrderLineExported` and use that to drive export selection instead.
+
+#### Implemented Flow
+
+This export reconciles the D365-assigned `InventoryLotId` back to the OMS order item.
+
+###### D365 / OMS Components
+- **System message type**: `D365_EXP_SLS_ORD_LN`
+- **Queue job**: `d365_QueueSalesOrderLinesExport`
+- **Poll job**: `d365_ExportSalesOrderLinesPoll`
+- **Definition group**: `HotWax_Export_Sales_Order_Lines`
+- **Package name**: `SalesOrderLinesV3`
+- **CSV file**: `Sales order lines V3.csv`
+- **DataManager config**: `D365_IMP_SLS_ORD_LN`
+- **Row-storage service**: `co.hotwax.d365.D365OrderServices.store#D365SalesOrderLineInventoryLotId`
+
+###### Implemented Processing Sequence
+1. The queue job `d365_QueueSalesOrderLinesExport` calls `D365DataPackageServices.queue#ExportDataPackage`.
+2. The generic queue service creates a `SystemMessage` record for the sales-order-line export flow and invokes the configured `sendServiceName`.
+3. `D365DataPackageServices.send#ExportDataPackage` calls D365 `ExportToPackage`.
+4. D365 returns an `executionId`, which OMS stores in `SystemMessage.remoteMessageId`.
+5. The poll job `d365_ExportSalesOrderLinesPoll` calls `D365DataPackageServices.poll#ExportDataPackageStatus`.
+6. On success, the checker downloads the exported ZIP, extracts `Sales order lines V3.csv`, and hands it to the DataManager config `D365_IMP_SLS_ORD_LN`.
+7. DataManager invokes `store#D365SalesOrderLineInventoryLotId` for each CSV row.
+
+###### Exported Fields Used by OMS
+| D365 CSV field | OMS usage |
+| :--- | :--- |
+| `SALESORDERNUMBER` | Used to resolve the OMS order through `OrderIdentification` type `D365_SLS_ORD_NUM` |
+| `EXTERNALITEMNUMBER` | Used to resolve the OMS `orderItemSeqId` exactly as sent from OMS |
+| `INVENTORYLOTID` | Stored on the OMS order item as the D365 sales-order-line identifier |
+
+###### OMS Matching and Persistence Rules
+- OMS must run the sales order header export before the sales order line export, because the line-storage service first resolves the OMS order through `D365_SLS_ORD_NUM`.
+- OMS sends `orderItemSeqId` to D365 in `EXTERNALITEMNUMBER` during the sales order import.
+- Values such as `00101` must be sent to D365 as-is and matched back as-is in OMS.
+- `LineNumber` is not used for reconciliation because D365 exposes it as a decimal field and it is not the right place to preserve OMS item sequence ids with leading zeros.
+- The line-storage service creates or updates `OrderItemAttribute` with:
+  - `attrName = D365SalesOrderItemInventoryLotId`
+  - `attrValue = INVENTORYLOTID`
+- Re-exported values can overwrite the previously stored OMS `InventoryLotId`. That is acceptable in the current design because the line identifier is expected to remain stable after order creation.
+
+#### End-to-End Dependency Chain
+1. OMS imports the sales order to D365.
+2. D365 sales order header export stores `D365_SLS_ORD_NUM` in OMS.
+3. D365 sales order line export stores `D365SalesOrderItemInventoryLotId` in OMS.
+4. OMS uses those stored identifiers to drive later brokered and fulfilled warehouse updates back into D365.
+
+#### Current Design Notes
+- The connector now uses the generic `queue#ExportDataPackage` -> `send#ExportDataPackage` -> `poll#ExportDataPackageStatus` pattern for both header and line exports.
+- The D365 execution id is stored in `SystemMessage.remoteMessageId`.
+- The export jobs are currently polling based.
+- Duplicate or ambiguous exported rows should be treated as operational issues:
+  - sales order header export expects one OMS order per `CUSTOMERSORDERREFERENCE`
+  - sales order line export expects one OMS item per `SalesOrderNumber + ExternalItemNumber`
+
+#### Export TODOs / Future Refinements
+- tune retry/backoff behavior for delayed D365 export completion
+- tighten D365 export project filters further if change tracking alone proves noisy
+- evaluate whether explicit D365 flags such as `HcOrderExported` and `HcOrderLineExported` should replace or supplement change tracking
+- revisit whether polling should remain the only reconciliation mechanism or whether D365 events can assist later
+
+### 3. Brokered Order Items Update from OMS to D365
+
+Once OMS has final brokered fulfillment location information, it can update the D365 sales order line warehouse before reservation or downstream posting.
+
+- The connector implements this as a DMF / Data Package import using the D365 project `HotWax_Import_Brokered_Order_Items`.
+- The earlier OData `PATCH SalesOrderLinesV3(dataAreaId, InventoryLotId)` shape was verified manually and remains a useful reference for troubleshooting, but the implemented connector path is the Data Package import.
+- This flow depends on the two prior export reconciliations:
+  - section 2 must already have stored `D365_SLS_ORD_NUM`
+  - section 2.1 must already have stored `D365SalesOrderItemInventoryLotId`
+
+#### Implemented OMS Components
+- **Eligible view**: `D365EligibleBrokeredOrderItems`
+- **Import service**: `co.hotwax.d365.D365OrderServices.import#BrokeredOrderItemsDataPackage`
+- **System message type**: `D365_IMP_BRKRD_ITEMS`
+- **Queue job**: `d365_ImportBrokeredOrderItems`
+- **Poll job**: `d365_PollBrokeredOrderItemsImportStatus`
+
+#### D365 Import Project
+- **Project name**: `HotWax_Import_Brokered_Order_Items`
+- **Entity**: `Sales order lines V3`
+- **Package settings**:
+  - `SourceFormat = CSV`
+  - `DefaultRefreshType = IncrementalPush`
+- The generated package currently uses UTF-8 encoded files (`PackageHeader.xml`, `Manifest.xml`, and `Sales order lines V3.csv`).
+- **Validated file shape**:
+
+```csv
+INVENTORYLOTID,SHIPPINGWAREHOUSEID
+479494,100
+479495,13
+```
+
+- `DATAAREAID` is intentionally not included in the file. The OMS service requires `dataAreaId` as an input parameter and passes it to D365 as `legalEntityId` in the `ImportFromPackage` request.
+
+#### Eligibility Rules in OMS
+- OMS includes an item in the brokered-items feed only when:
+  - the order already has `OrderIdentification` type `D365_SLS_ORD_NUM`
+  - the order item already has `OrderItemAttribute` `D365SalesOrderItemInventoryLotId`
+  - the item is in `ITEM_APPROVED`
+  - the selected facility has a D365 warehouse id in `Facility.externalId`
+  - the facility is not virtual
+  - the facility currently belongs to `WH_ONLY_FULFILLMENT`
+  - there is no prior `ExternalFulfillmentOrderItem` row, or the existing row is in `REJECT`
+- **TODO**: replace the temporary `WH_ONLY_FULFILLMENT` facility-group rule with a dedicated D365 brokered fulfillment grouping later.
+
+#### OMS Tracking Behavior
+- After D365 accepts the import package and returns an execution id, OMS creates a `SystemMessage` record in `SmsgSent` for `D365_IMP_BRKRD_ITEMS`.
+- OMS also creates or updates `ExternalFulfillmentOrderItem` with `fulfillmentStatus = Sent` for each packaged order item.
+- `Sent` on `ExternalFulfillmentOrderItem` means OMS has successfully submitted the brokered location update package to D365. Final D365 completion is confirmed separately through the import `SystemMessage`, which later moves to `SmsgConfirmed` or `SmsgError`.
+- Because reservation is currently manual in the tested D365 setup, this location update is expected to be safe before reservation. If D365 reservation behavior changes to automatic, this assumption must be retested.
+
+### 3.1 Fulfilled Order Items Update from OMS to D365
+
+Once OMS has physically fulfilled a store-owned line, it can update the D365 sales order line with the final shipping warehouse used for that fulfilled line.
+
+- The connector implements this as a DMF / Data Package import using the D365 project `HotWax_Import_Fulfilled_Order_Items`.
+- The feed shape is intentionally the same as the brokered warehouse update flow and updates the same D365 target entity, `Sales order lines V3`.
+- This flow also depends on the two prior export reconciliations:
+  - section 2 must already have stored `D365_SLS_ORD_NUM`
+  - section 2.1 must already have stored `D365SalesOrderItemInventoryLotId`
+- OMS uses `OrderFulfillmentHistory` as the local sent marker for this fulfilled-item update flow.
+
+#### Implemented OMS Components
+- **Eligible view**: `D365EligibleFulfilledOrderItems`
+- **Tracking entity**: `OrderFulfillmentHistory`
+- **Import service**: `co.hotwax.d365.D365OrderServices.import#FulfilledOrderItemsDataPackage`
+- **System message type**: `D365_IMP_FLFLD_ITEMS`
+- **Queue job**: `d365_ImportFulfilledOrderItems`
+- **Poll job**: `d365_PollFulfilledOrderItemsImportStatus`
+
+#### D365 Import Project
+- **Project name**: `HotWax_Import_Fulfilled_Order_Items`
+- **Entity**: `Sales order lines V3`
+- **Package settings**:
+  - `SourceFormat = CSV`
+  - `DefaultRefreshType = IncrementalPush`
+- The generated package currently uses UTF-8 encoded files (`PackageHeader.xml`, `Manifest.xml`, and `Sales order lines V3.csv`).
+- **Validated file shape**:
+
+```csv
+INVENTORYLOTID,SHIPPINGWAREHOUSEID
+479494,100
+479495,13
+```
+
+- `DATAAREAID` is intentionally not included in the file. The OMS service requires `dataAreaId` as an input parameter and passes it to D365 as `legalEntityId` in the `ImportFromPackage` request.
+
+#### Eligibility Rules in OMS
+- OMS includes an item in the fulfilled-items feed only when:
+  - the order already has `OrderIdentification` type `D365_SLS_ORD_NUM`
+  - the order item already has `OrderItemAttribute` `D365SalesOrderItemInventoryLotId`
+  - the item is in `ITEM_COMPLETED`
+  - the facility currently belongs to `OMS_FULFILLMENT`
+  - the ship group shipment method is not `POS_COMPLETED`
+  - there is no prior `OrderFulfillmentHistory` row for the same `orderId + orderItemSeqId`
+
+#### OMS Tracking Behavior
+- After D365 accepts the import package and returns an execution id, OMS creates a `SystemMessage` record in `SmsgSent` for `D365_IMP_FLFLD_ITEMS`.
+- OMS also creates one `OrderFulfillmentHistory` row per packaged `orderId + orderItemSeqId` with:
+  - `createdDate`
+  - `externalConfigId = systemMessageRemoteId`
+  - `externalFulfillmentId = '_NA_'`
+  - `comments` noting the D365 fulfilled-item import execution
+- The D365 execution id is stored in `SystemMessage.remoteMessageId`.
+- Final D365 completion is tracked through the import `SystemMessage`; on successful polling it remains `SmsgSent`, and on failure it moves to `SmsgError`.
+- `OrderFulfillmentHistory` is used only as a sent marker here; the full D365 execution id is not stored on that entity because the value can exceed the local field length.
+- If a fulfilled-item package fails in D365 and the same item needs to be re-sent, the corresponding `OrderFulfillmentHistory` row must be removed or otherwise cleared for retry.
+- Because reservation is currently manual in the tested D365 setup, this fulfilled-location update is expected to be safe before downstream D365 posting. If D365 reservation or posting behavior changes, this assumption must be retested.
+
+## Customer Payment Integration
+
+### Sync Flow & Posting Strategy
+1.  **Draft Creation**: OMS POSTs `CustomerPaymentJournalHeaders` then `CustomerPaymentJournalLines`.
+2.  **Unposted State**: Journals created via OData are initially **Unposted** (`IsPosted = No`).
+3.  **Batch Posting**: A scheduled D365 batch job (standard or custom) identifies these unposted journals and executes the "Post" business logic to move them to the subledger.
+
+### Mappings
+#### Header (`CustomerPaymentJournalHeaders`)
+| D365 Field | Moqui Field | Usage / Notes |
+| :--- | :--- | :--- |
+| `dataAreaId` | `ProductStore.externalId` | Legal entity context. |
+| `JournalName` | "CUSTPAY" | Fixed mapping for payment journals. |
+| `Description` | "OMS Payment - SO [id]" | Reference for identifying the batch. |
+
+#### Line (`CustomerPaymentJournalLines`)
+| D365 Field | Moqui Field | Usage / Notes |
+| :--- | :--- | :--- |
+| `dataAreaId` | `ProductStore.externalId` | Legal entity context. |
+| `JournalBatchNumber` | `JournalBatchNumber` | Linked from Header. |
+| `AccountDisplayValue` | `partyId` | Customer Account (e.g., `HW-10001`). Must be escaped if needed. |
+| `AccountType` | "Cust" | Fixed value. |
+| `CreditAmount` | `OPP.maxAmount` | The settled amount. |
+| `PaymentReference` | `d365SalesOrderNumber` | Links payment back to SO in D365. |
+| `IsPrepayment` | "No" | Standard payment flow. |
+| `OffsetAccountType` | `paymentMethodTypeId` | Typically "Bank". |
+| `OffsetAccountDisplayValue` | `paymentMethodTypeId` | Bank account code (e.g., `USMF OPER`). |
+
+
+### Implementation Steps
+1. **View Entity**: `D365EligiblePaymentJournals`
+    - Members: the entities `OrderHeader`, `OrderIdentification` (`D365_SLS_ORD_NUM`), `OrderPaymentPreference` (`PAYMENT_SETTLED`), and `ProductStore` (for `dataAreaId`).
+    - Aliases: `orderId`, `d365SalesOrderNumber`, `orderPaymentPreferenceId`, `amount`, `paymentMethodTypeId`, `dataAreaId`, `partyId`.
+2. **Service**: the service `sync#CustomerPayments`
+    - Group eligible payments by `orderId`.
+    - For each group:
+        - POST `CustomerPaymentJournalHeaders` -> get `JournalBatchNumber`.
+        - For each payment in group:
+            - POST `CustomerPaymentJournalLines`.
+            - TODO: Implement persistence for synced payments (e.g., `D365PaymentSyncHistory`).
+
+### Sample Payload
+
+#### POST Header
+```json
+{
+ "dataAreaId": "usmf",
+ "JournalName": "CUSTPAY",
+ "Description": "OMS Payment Journal - SO 000887"
+}
+```
+
+#### POST Line
+```json
+{
+ "dataAreaId": "usmf",
+ "JournalBatchNumber": "25135",
+ "LineNumber": 1,
+ "AccountType": "Cust",
+ "AccountDisplayValue": "HW\\-02",
+ "CurrencyCode": "USD",
+ "CreditAmount": 80.00,
+ "IsPrepayment": "No",
+ "PaymentReference": "000887",
+ "PaymentMethodName": "CASH",
+ "OffsetAccountType": "Bank",
+ "OffsetAccountDisplayValue": "USMF OPER"
+}
+```
+
+---
+
+## Outbound Integration (Business Events) TODO 
+- [ ] **Endpoint Setup**: Create a REST service in Moqui to receive and validate Business Event notifications.
+- [ ] **D365 Configuration**:
+    - Register the Moqui endpoint in D365 (`System administration > Setup > Business events > Endpoints`).
+    - Activate required events (e.g., `SalesOrderInvoicedBusinessEvent`).
+- [ ] **Event Handling**: Implement logic in Moqui to process incoming events and trigger corresponding status updates or data pulls.
+
+- [ ] Test connectivity with D365 Sandbox.
+- [ ] Validate data integrity in D365.
+- [ ] Verify outbound notification flow (D365 -> OMS).
+
+---
+
+## POS Completed Orders Sync
+
+The order will be sent to D365 as part of the [Sales Order Sync](#sales-order-sync). Once the order is created, the following steps are performed to complete the lifecycle of a POS carry-out order:
+
+1.  **Automated Packing Slip Posting**: Posts the packing slip to deduct inventory.
+2.  **Automated Invoice Posting**: Programmatically posts the invoice to finalize the financial record for the sale.
+3.  **Customer Payments Sync**: Synchronizes the payment details and creates payment journals (see [Customer Payment Integration](#customer-payment-integration)).
+4.  **Automated Payment Posting & Settlement**: Posts the payment journal and settles it against the invoice.
+
+### Implementation Strategy: OOTB vs. Custom Code
+
+Many of these automated steps can be configured Out-Of-The-Box (OOTB) in Dynamics 365 using standard functionalities like Batch Jobs without requiring custom X++ development:
+
+- **Automated Packing Slip Publishing**: Can be scheduled OOTB using standard D365 batch processing for eligible POS orders.
+- **Automated Invoice Posting**: Can also be scheduled OOTB to automatically invoice orders that have been packing-slip updated.
+
+**Custom Implementation Evaluation**
+For processes that cannot be easily fully automated via standard OOTB batch jobs, we maintain a separate repository for custom D365 code: `/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/dynamics365-integration`.
+
+Currently, we are evaluating if custom X++ logic (e.g., SysOperation jobs) is the **only way** to reliably automate:
+- **Auto Post Payments**: Posting the Customer Payment Journals as soon as they are synced from the OMS.
+- **Auto Settle Transactions**: Automatically settling the posted payment against the posted invoice for the POS order.
+
+If OOTB configurations fall short for payments and settlements, custom services will be developed in the `dynamics365-integration` repository to handle these specific automated closures.
