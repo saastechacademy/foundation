@@ -14,6 +14,8 @@ The goal of this integration is to synchronize critical business data, specifica
     *   Technical research on available D365 integration patterns (OData, DIXF, Business Events).
 3.  **[Implementation Plan](sales-orders/implementation_plan.md)**
     *   Specific technical design, sequence flows, and step-by-step roadmap for development.
+4.  **[Shipment Export Exploration](sales-orders/shipment_export_exploration.md)**
+    *   Exploration notes for outbound shipment synchronization patterns from D365 to OMS.
 
 ### Sales Returns
 1.  **[D365 Return & Exchange Accounting Model](sales-returns/d365_return_exchange_accounting_model.md)**
