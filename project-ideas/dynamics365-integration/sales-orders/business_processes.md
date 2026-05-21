@@ -241,12 +241,17 @@ The following questions should be clarified with the D365 Finance/Functional tea
 
 ## 7. Outbound Notifications (D365 -> OMS)
 
-This section is retained as a future-state exploration area. I did not find corresponding outbound event handling implementation in the current `hotwax-d365` connector code reviewed for this pass.
+Outbound integration from D365 to OMS can be implemented through either event-driven notifications or data export patterns, depending on payload and filtering requirements.
 
 ### 7.1 Fulfillment Updates (Packing Slip)
 - **D365 Event**: `SalesOrderPackingSlipPostBusinessEvent` (or similar).
 - **Trigger**: When a packing slip is posted in D365.
 - **OMS Action**: Update shipment status to "Shipped" and record tracking information.
+- **Implementation options**:
+  - Business Event -> Logic App
+  - Business Event -> Azure Service Bus Queue -> Azure Function
+  - Custom shipment export entity -> DMF recurring export -> Azure Function
+- **Selection driver**: Choose the pattern based on payload completeness, filtering requirements, operational controls, and downstream transformation complexity.
 
 ### 7.2 Financial Updates (Invoice)
 - **D365 Event**: `SalesOrderInvoicedBusinessEvent`.
@@ -257,5 +262,14 @@ This section is retained as a future-state exploration area. I did not find corr
 - **Method**: D365 pushes a JSON payload to a Moqui REST endpoint via an HTTPS Webhook or Azure Power Automate.
 - **Payload**: Minimal event data (Event ID, Company, SalesOrderNumber) used by Moqui to then pull detailed data via OData if necessary.
 
-> [!TODO]
-> Confirm which D365 business events are actually available and intended for use in this project, then document the implementation path separately from the currently shipped connector behavior.
+### 7.4 Shipment Export Pattern (Data Entity + DMF)
+When outbound integration requires line-level filtering and combined header/line/tracking data, a custom flat export entity can be used.
+
+- **Requirement pattern**: Sync only a subset of shipment lines based on fulfillment source/business criteria.
+- **Entity composition**:
+  - `CustPackingSlipJourBiEntities` for header fields
+  - `CustPackingSlipTransBiEntities` for line fields
+  - `PackingSlipTrackingInformation` for tracking/carrier fields
+- **Export model**: Flat rows via DMF recurring integration.
+- **Transformation model**: Integration middleware polls recurring integration (`dequeue`/`ack`), groups rows by shipment key, and constructs OMS shipment JSON.
+- **Exploration details**: See [shipment_export_exploration.md](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/foundation/project-ideas/dynamics365-integration/sales-orders/shipment_export_exploration.md).

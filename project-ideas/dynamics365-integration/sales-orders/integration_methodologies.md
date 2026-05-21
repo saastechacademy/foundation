@@ -1,4 +1,4 @@
-d# Technical Integration Methodologies
+# Technical Integration Methodologies
 
 This document explores the various technical patterns available for integrating with Dynamics 365 Finance & Operations.
 
@@ -106,3 +106,16 @@ Business events can be consumed through various endpoints:
 ### 4.3 Comparison: OData vs. Business Events
 - **OData (Pull)**: Best for synchronous CRUD or batch data retrieval where the OMS initiates the request.
 - **Business Events (Push)**: Best for reactive workflows where D365 must notify the OMS of a state change (e.g., fulfillment complete).
+
+---
+
+## 5. Shipment Export via Data Entities
+- **Goal**: Export shipment details with source-side filtering so only required fulfillment lines are synchronized to OMS.
+- **Source entities**:
+  - `CustPackingSlipJourBiEntities` (packing slip header)
+  - `CustPackingSlipTransBiEntities` (packing slip lines)
+  - `PackingSlipTrackingInformation` (tracking and carrier details)
+- **Entity grain**: One export row per shipment line (or per shipment line + tracking number, based on tracking cardinality).
+- **Export mechanism**: Data Management Framework (DMF) recurring export.
+- **Consumption mechanism**: Middleware polls recurring integration dequeue APIs, processes export packages, and acknowledges consumption.
+- **Payload shaping**: DMF exports tabular records; middleware groups rows (for example by `packingSlipId`) to construct nested OMS shipment payloads.
