@@ -18,9 +18,23 @@ This document captures the generic connector-level modeling used across the `hot
 - Suggested fields:
   - `username` for Azure client id
   - `password` for Azure client secret
-  - `sharedSecret` for Azure tenant id
-  - `sendUrl` for token endpoint
+  - `sendUrl` for Azure token endpoint (tenant-specific)
   - `receiveUrl` for D365 instance base URL
+  - `systemMessageRemoteId` as the connector key (for example `D365_HotWax_Dev`)
+  - `description` for environment context
+
+```json
+{
+  "systemMessageRemoteId": "D365_HotWax_Dev",
+  "username": "YOUR_CLIENT_ID",
+  "password": "YOUR_CLIENT_SECRET",
+  "sendUrl": "https://login.microsoftonline.com/YOUR_TENANT_ID/oauth2/v2.0/token",
+  "receiveUrl": "YOUR_D365_INSTANCE_URL",
+  "description": "Dynamics 365 Finance & Operations Remote for HotWax Dev Environment",
+  "_entity": "moqui.service.message.SystemMessageRemote",
+  "lastUpdatedStamp": "2026-03-12T09:15:41+0000"
+}
+```
 
 ### 2.2 Legal Entity Mapping
 - Use `ProductStore.externalId` to store the mapping from Moqui `ProductStore` to D365 `dataAreaId`.

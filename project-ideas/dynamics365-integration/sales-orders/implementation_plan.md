@@ -21,13 +21,48 @@ This document outlines the technical design and implementation steps for integra
 ---
 
 ## Data Model (D365 Specific)
-Implementation site: `runtime/component/hotwax-d365/entity/D365Entities.xml`
+Implementation site: `runtime/component/hotwax-d365/entity/D365OrderEntities.xml`
 
-To track synchronization events and map D365 external identifiers back to Moqui entities without cluttering core tables, we use specific history entities.
+To track synchronization events, manage retries, and map D365 external identifiers back to Moqui entities without cluttering core tables, we use specific history entities.
 
-### Order Sync History
-Used to store the D365 Sales Order Number against the OMS Order ID upon successful creation in D365.
+### OData Sync History Entities
+These entities are used exclusively by the OData near-real-time synchronization flow (`sync#SalesOrders`) to track partial progress and handle retries defensively due to the non-atomic nature of sequential OData REST calls.
 
+#### 1. Order Header History (`D365SalesOrderHeaderHistory`)
+Tracks the aggregate order-level OData status and stores the successfully resolved D365 sales order identifier.
+- *Reasoning:* Prevents duplicate order header creation in D365 on retry, stores the resulting D365 Sales Order Number, and records detailed execution logs on failure.
+
+```xml
+<entity entity-name="D365SalesOrderHeaderHistory" package="co.hotwax.d365.order">
+    <field name="orderId" type="id" is-pk="true"/>
+    <field name="d365SalesOrderNumber" type="id"/>
+    <field name="syncStatusId" type="id" default="D365_ORD_PENDING"/>
+    <field name="syncedDate" type="date-time"/>
+    <field name="logText" type="text-long"/>
+</entity>
+```
+
+#### 2. Order Line History (`D365SalesOrderLineHistory`)
+Tracks the OData synchronization outcome for individual order items.
+- *Reasoning:* Enables granular, retry-safe resumption of interrupted syncs. If an order with 10 lines fails on line 5, the next attempt reads this history to skip lines 1-4 and resume directly at line 5, avoiding duplicate item charges or validation errors in D365.
+
+```xml
+<entity entity-name="D365SalesOrderLineHistory" package="co.hotwax.d365.order">
+    <field name="orderId" type="id" is-pk="true"/>
+    <field name="orderItemSeqId" type="id" is-pk="true"/>
+    <field name="d365SalesOrderNumber" type="id"/>
+    <field name="syncStatusId" type="id" default="D365_ORD_PENDING"/>
+    <field name="syncedDate" type="date-time"/>
+    <field name="lastAttemptDate" type="date-time"/>
+    <field name="logText" type="text-long"/>
+</entity>
+```
+
+### DMF / Data Package Sync History Entity
+This entity is used by the batch DMF import pattern (`import#SalesOrdersDataPackage`).
+
+#### 3. Data Package Import History (`D365SalesOrderImportHistory`)
+- *Reasoning:* Records that an order has been successfully processed, mapped, and bundled into an outgoing ZIP package for D365 Data Management Framework submission. This ensures that packaged orders are immediately removed from the eligibility view (`D365EligibleSalesOrdersDMF`) so they are not bundled into subsequent outgoing packages during polling delays.
 
 ```xml
 <entity entity-name="D365SalesOrderImportHistory" package="co.hotwax.d365.order">
@@ -36,9 +71,6 @@ Used to store the D365 Sales Order Number against the OMS Order ID upon successf
     <field name="d365SalesOrderNumber" type="id"/>
     <field name="dataAreaId" type="id"/>
     <field name="createdDate" type="date-time"/>
-    <relationship type="one" related="org.apache.ofbiz.order.order.OrderHeader">
-        <key-map field-name="orderId"/>
-    </relationship>
 </entity>
 ```
 
@@ -115,11 +147,13 @@ This is a fully implemented direct-sync path that creates a sales order header a
 
 ##### Service Flow
 1. **Fetch Eligible Orders**: Query the view-entity `D365EligibleSalesOrdersOData`.
-2. **Customer Sync**: Call the service `sync#Customer` for the order's `partyId`.
-3. **Initialize/Read Local OData History**:
-    - Read the entity `D365SalesOrderHeaderHistory`
-    - Read the entity `D365SalesOrderLineHistory`
-    - Mark header history as `D365_ORD_PENDING`
+2. **Prerequisite Customer Sync**: Call the service `sync#Customer` for the order's `partyId` (via the bill-to customer).
+    - *Why:* D365 strictly requires the customer profile to exist in the database (with a valid `CustomerAccount`) before the order header can be successfully created.
+    - *Blocking Failure Behavior:* If the `customerAccount` cannot be resolved or created, the sync process blocks subsequent order-creation API calls, updates the local header history to `D365_ORD_ERROR`, logs the failure, and skips the order.
+3. **Read/Initialize Local OData History**:
+    - **Implicit Header History Lookup:** The `D365SalesOrderHeaderHistory` record is not queried separately; instead, it is read implicitly in Step 1 via the outer-joined view-entity `D365EligibleSalesOrdersOData` (exposing fields like `order.syncStatusId` and `order.d365SalesOrderNumber` if a sync was previously attempted).
+    - **Explicit Line History Lookup:** Query the entity `D365SalesOrderLineHistory` for the `orderId` to build a local tracking lookup map (`existingLineHistoryBySeqId`), allowing the service to skip or reconcile individual lines during a retry.
+    - **Initialize Execution State:** Write/Update the `D365SalesOrderHeaderHistory` record, marking the current sync attempt status as `D365_ORD_PENDING`.
 4. **Prepare Header Context**:
     - Load the view-entity `D365SalesOrderDetail`
     - Normalize state code
@@ -244,6 +278,11 @@ This is a fully implemented direct-sync path that creates a sales order header a
 - Add support for additional D365 variant dimension fields beyond the current size/color handling if required
 - Revisit missing header fields such as order date, Shopify order identity, and ship-to phone
 
+##### OData Limitations
+- **Lack of Transactional Atomicity (Partial Orders):** Because OData requires separate HTTP requests to sync headers and lines (`1 + N` requests), network drops or validation failures midway can result in incomplete "partial orders" in D365 that require manual cleanup or reconciliation.
+- **Header-Level Charge Support:** Standard OData mapping in the current sync path does not support a dedicated header-level charge entity. Consequently, flat checkout shipping fees (such as Freight) cannot be synchronized at the header level via OData, unlike the DMF pattern which utilizes `SALESORDERHEADERCHARGEV2ENTITY`.
+- **Performance Overhead:** Sequential OData REST calls for every individual order line create significant network roundtrip latency and API limit consumption. This makes OData less suitable for high-volume sales order exports compared to composite data packages or custom bulk services.
+
 ##### OData Sample Requests
 
 ###### Customer Creation (`CustomersV3`)
@@ -331,6 +370,8 @@ This means the pattern is operationally useful, but it behaves more like a light
 7. **Create Package Metadata**:
     - Generate `Manifest.xml`
     - Generate `PackageHeader.xml`
+    - These additional documents are used when importing to add the data files to the correct data entities and sequence the import process.
+    - PackageHeader contains information about definition group and manifest contains information (metadata mapping,entity sequence,entity name etc.) for entities.
 8. **Create ZIP Package**:
     - Bundle XML + manifests into a single ZIP in memory
 9. **Obtain Upload URL**:
@@ -352,6 +393,37 @@ This means the pattern is operationally useful, but it behaves more like a light
 - The `SystemMessageType` exists and categorizes the flow, but its `sendServiceName` is not the primary initiator of the remote work.
 - This is functionally valid, but it does not fully align with the usual Moqui pattern where a produced outgoing message is later sent by `send#ProducedSystemMessage`.
 
+###### Data Package / DMF Limitations
+1. **Omitted Line-Level Execution Errors via API:**
+   - When a composite entity import (such as `Sales orders composite V4`) fails, D365's standard `GetExecutionErrors` API does not return the detailed line-level validation errors. This makes programmatic debugging within Moqui highly restricted; failed imports often require manual inspection within the D365 Data Management workspace.
+
+2. **Batch Outcome Ambiguity (Partially Succeeded Batches):**
+   - *The Problem:* D365 imports are batch-oriented. If a batch of 100 orders contains 5 failures, D365 returns the execution status `PartiallySucceeded`. If the poller immediately marks that `SystemMessage` as `SmsgConfirmed`, those 5 failed orders will get lost in a "limbo" state in OMS because they are marked with `D365SalesOrderImportHistory` and cannot be re-packaged.
+   - *Proposed Solution (TODO - Option B: Reconciliation via Export):* To prevent limbo states without resorting to complex line-level API log parsing, decouple the import package poller from final order sync confirmation. 
+    
+    This approach introduces a relational link by adding the field `systemMessageId` directly to the `D365SalesOrderImportHistory` entity to associate each order in a batch with its outgoing `SystemMessage` record.
+    
+    **Duplicate Order Prevention & Reconciliation Sequence Example:**
+    
+    1. **Packaging & Locking State:**
+       - The exporter service prepares a batch of 100 orders and creates a `SystemMessage` (e.g., `systemMessageId = "10050"`) in `SmsgProduced` status.
+       - It writes records to `D365SalesOrderImportHistory` for all 100 orders, linking them to `systemMessageId = "10050"`.
+       - These 100 orders are immediately **excluded** from `D365EligibleSalesOrdersDMF`, locking them so they cannot be duplicate-packaged.
+       - Moqui triggers the import and updates the tracking `SystemMessage("10050")` status to `SmsgSent` while D365 processes the batch.
+       
+    2. **The Safety Lock (While Import is In-Flight):**
+       - If the D365 import takes a long time, `SystemMessage("10050")` remains in `SmsgSent` status.
+       - When the **OMS Reconciliation Job** runs, it scans history records, joining `D365SalesOrderImportHistory` with `SystemMessage` on `systemMessageId`.
+       - It detects that `SystemMessage("10050")` status is still **`SmsgSent`** (in-flight).
+       - **Action:** The job **ignores and skips** these records. Their history markers are left intact, preserving the lock. **Result: Duplicate order creation is completely prevented while the batch is in flight.**
+       
+    3. **Resolving Closed Batches (Reconciliation Phase):**
+       - Once the D365 batch finishes execution, the poller updates `SystemMessage("10050")` status to a finished state. The Reconciliation Job evaluates:
+         - **Scenario A (Full Batch Failure - `SmsgError`):** The job sees the parent batch is closed as failed. Since there is no risk of these orders succeeding, it **deletes** the `D365SalesOrderImportHistory` records for all 100 orders, safely releasing them back to the eligibility view for retry.
+         - **Scenario B (Partial Batch Success - `SmsgConfirmed`):** The job sees `statusId = "SmsgConfirmed"`. It left-joins with `OrderIdentification`:
+           - For the **95 successful orders** (which received their `D365_SLS_ORD_NUM` identifier from D365's header export), the job does **nothing** (keeps them locked).
+           - For the **5 failed orders** (which have no `D365_SLS_ORD_NUM` identification in OMS), the job **deletes** their `D365SalesOrderImportHistory` records, releasing only the failed items back to the eligibility view for retry.
+
 ###### Example Tracking Record Shape
 
 In this approach, the effective tracking payload is close to:
@@ -362,7 +434,7 @@ In this approach, the effective tracking payload is close to:
   "systemMessageRemoteId": "D365_HotWax_Sandbox",
   "statusId": "SmsgSent",
   "isOutgoing": "Y",
-  "remoteMessageId": "D365 executionId returned by ImportFromPackage"
+  "remoteMessageId": "HotWax_Import_SalesOrders_Composite-2026-05-04T07:14:36-E7A474D0BE854F79860E65F451DC221F" //D365 executionId returned by ImportFromPackage
 }
 ```
 
@@ -446,11 +518,7 @@ The queued message should carry all metadata needed for the send and confirm pha
     "definitionGroupId": "HotWax_Import_SalesOrders_Composite",
     "packageName": "Sales orders composite V4",
     "legalEntityId": "USMF",
-    "fileName": "Sales orders composite V4.xml",
-    "orderIds": [
-      "OMS10001",
-      "OMS10002"
-    ]
+    "fileName": "Sales orders composite V4.xml"
   },
   "remoteMessageId": null
 }
@@ -468,11 +536,7 @@ After the send service succeeds, the same message would effectively look like:
     "definitionGroupId": "HotWax_Import_SalesOrders_Composite",
     "packageName": "Sales orders composite V4",
     "legalEntityId": "USMF",
-    "fileName": "Sales orders composite V4.xml",
-    "orderIds": [
-      "OMS10001",
-      "OMS10002"
-    ]
+    "fileName": "Sales orders composite V4.xml"
   },
   "remoteMessageId": "D365 executionId returned by ImportFromPackage"
 }
@@ -765,14 +829,52 @@ This export reconciles the D365-assigned `SalesOrderNumber` back to the OMS orde
 - **DataManager config**: `D365_IMP_SALES_ORD`
 - **Row-storage service**: `co.hotwax.d365.D365OrderServices.store#D365SalesOrderNumber`
 
+###### Example System Message Type Configuration
+Below is the corresponding `SystemMessageType` database record shape that enables this export stream:
+
+```json
+{
+  "systemMessageTypeId": "D365_EXP_SALES_ORDERS",
+  "description": "D365 Sales Order Number Export",
+  "sendServiceName": "co.hotwax.d365.D365DataPackageServices.send#ExportDataPackage",
+  "_entity": "moqui.service.message.SystemMessageType",
+  "lastUpdatedStamp": "2026-04-30T09:18:18+0000"
+}
+```
+
+###### Example Export Tracking Record Shape
+Below is an example of a processed export `SystemMessage` record:
+
+```json
+{
+  "systemMessageTypeId": "D365_EXP_SALES_ORDERS",
+  "systemMessageId": "M102755",
+  "_entity": "systemMessages",
+  "processedDate": "2026-05-05T09:21:15+0000",
+  "isOutgoing": "Y",
+  "messageText": "{\"definitionGroupId\":\"HotWax_Export_Sales_Orders\",\"packageName\":\"SalesOrderHeadersV4\",\"legalEntityId\":\"usmf\",\"fileName\":\"Sales order headers V4.csv\",\"dataManagerConfigId\":\"D365_IMP_SALES_ORD\",\"targetDirectory\":null,\"systemMessageRemoteId\":\"D365_HotWax_Dev\"}",
+  "lastUpdatedStamp": "2026-05-05T09:21:15+0000",
+  "remoteMessageId": "ExportPackage-5/5/2026 09:19:44 am",
+  "initDate": "2026-05-05T09:19:42+0000",
+  "systemMessageRemoteId": "D365_HotWax_Dev",
+  "lastAttemptDate": "2026-05-05T09:21:15+0000",
+  "statusId": "SmsgConfirmed"
+}
+```
+
 ###### Implemented Processing Sequence
-1. The queue job `d365_QueueSalesOrderExport` calls `D365DataPackageServices.queue#ExportDataPackage`.
-2. The generic queue service creates a `SystemMessage` record with the sales-order export payload and invokes the configured `sendServiceName`.
-3. `D365DataPackageServices.send#ExportDataPackage` calls D365 `ExportToPackage`.
-4. D365 returns an `executionId`, which OMS stores in `SystemMessage.remoteMessageId`.
-5. The poll job `d365_ExportSalesOrdersPoll` calls `D365DataPackageServices.poll#ExportDataPackageStatus`.
-6. On success, the checker downloads the exported ZIP, extracts `Sales order headers V4.csv`, and hands it to the DataManager config `D365_IMP_SALES_ORD`.
-7. DataManager invokes `store#D365SalesOrderNumber` for each CSV row.
+1. **The Queue Job (`d365_QueueSalesOrderExport`):**
+   - Initiates the export by calling `D365DataPackageServices.queue#ExportDataPackage`.
+   - The service queues an outgoing `SystemMessage` in the `SmsgProduced` status carrying the D365 project configuration metadata.
+   - The message is sent immediately, invoking `D365DataPackageServices.send#ExportDataPackage` which makes an OData POST call to D365 `ExportToPackage` for the project `HotWax_Export_Sales_Orders`.
+   - D365 registers the export job and returns an `executionId`. OMS stores this in `SystemMessage.remoteMessageId` and moves the message status to `SmsgSent`.
+   
+2. **The Poll Job (`d365_ExportSalesOrdersPoll`):**
+   - Regularly queries active messages via `D365DataPackageServices.poll#ExportDataPackageStatus`.
+   - For each message, it calls D365 `GetExecutionSummaryStatus` using the stored `executionId`.
+   - Upon successful completion (`Succeeded` or `PartiallySucceeded`), the poller calls `GetExportedPackageUrl` to obtain the secure D365 package location, downloads the ZIP, and extracts `Sales order headers V4.csv`.
+   - Hands off the CSV payload directly to MaargDataManager config **`D365_IMP_SALES_ORD`**, which invokes `store#D365SalesOrderNumber` for each row to create or update the `OrderIdentification` (`D365_SLS_ORD_NUM`) record in OMS.
+   - **Status Update:** Upon successful download, parsing, and data loading into the DataManager, the poller updates the tracking `SystemMessage` status from `SmsgSent` to **`SmsgConfirmed`** to mark the entire export transaction as fully complete.
 
 ###### Exported Fields Used by OMS
 | D365 CSV field | OMS usage |
@@ -784,6 +886,20 @@ This export reconciles the D365-assigned `SalesOrderNumber` back to the OMS orde
 - **Entity**: `co.hotwax.order.OrderIdentification`
 - **Type**: `D365_SLS_ORD_NUM`
 - **Purpose**: downstream D365 cross-reference for payments, line export reconciliation, and later brokered / fulfilled order item warehouse updates
+
+###### Export Limitations & Partially Succeeded Edge Case
+During the polling of D365 exports, the status `PartiallySucceeded` is treated as a success state by Moqui. This is necessary because Moqui must download the CSV file to reconcile the successful records within the batch. However, this introduces a critical integration edge case:
+
+1. **What PartiallySucceeded Means for Exports:**
+   D365 successfully serialized and exported some records, but skipped others due to row-level serialization errors, invalid character sets, or X++ virtual field calculation exceptions. For example, in a batch of 1,000 orders, 998 successfully export while 2 rows fail.
+2. **The "Limbo & Duplicate" Trap:**
+   - The 998 successful orders are reconciled in OMS (receiving their `D365_SLS_ORD_NUM`).
+   - The 2 failed rows are omitted from the downloaded CSV. Therefore, these 2 orders will have `D365SalesOrderImportHistory` but **no** `D365_SLS_ORD_NUM` in OMS, despite actually being successfully created in D365 during the import stage.
+   - When the scheduled **OMS Reconciliation Job** runs, it will find these 2 orders, see their parent import batch is completed, and **delete their import history markers**, assuming they failed to import.
+   - During the next import cycle, OMS will re-package and re-submit these 2 orders, **creating duplicate orders in D365**.
+3. **Mitigation Strategy:**
+   - **D365-Side Alerts:** Any `PartiallySucceeded` export job in D365 must trigger an immediate IT alert. The D365 administrator must manually inspect the staging logs, fix the data/validation error, and re-run the export project so the skipped records are sent in a subsequent CSV.
+   - **Conservative Reconciliation Window:** The OMS Reconciliation Job's timeout threshold should be sufficiently long (e.g., 24 hours) to allow D365 administrators time to fix and re-export failed records before OMS prunes history and retries.
 
 ### 2.1 Export of Sales Order Lines from D365 to OMS
 
@@ -817,13 +933,18 @@ This export reconciles the D365-assigned `InventoryLotId` back to the OMS order 
 - **Row-storage service**: `co.hotwax.d365.D365OrderServices.store#D365SalesOrderLineInventoryLotId`
 
 ###### Implemented Processing Sequence
-1. The queue job `d365_QueueSalesOrderLinesExport` calls `D365DataPackageServices.queue#ExportDataPackage`.
-2. The generic queue service creates a `SystemMessage` record for the sales-order-line export flow and invokes the configured `sendServiceName`.
-3. `D365DataPackageServices.send#ExportDataPackage` calls D365 `ExportToPackage`.
-4. D365 returns an `executionId`, which OMS stores in `SystemMessage.remoteMessageId`.
-5. The poll job `d365_ExportSalesOrderLinesPoll` calls `D365DataPackageServices.poll#ExportDataPackageStatus`.
-6. On success, the checker downloads the exported ZIP, extracts `Sales order lines V3.csv`, and hands it to the DataManager config `D365_IMP_SLS_ORD_LN`.
-7. DataManager invokes `store#D365SalesOrderLineInventoryLotId` for each CSV row.
+1. **The Queue Job (`d365_QueueSalesOrderLinesExport`):**
+   - Initiates the export by calling `D365DataPackageServices.queue#ExportDataPackage`.
+   - The service queues an outgoing `SystemMessage` in the `SmsgProduced` status carrying the D365 project configuration metadata.
+   - The message is sent immediately, invoking `D365DataPackageServices.send#ExportDataPackage` which makes an OData POST call to D365 `ExportToPackage` for the project `HotWax_Export_Sales_Order_Lines`.
+   - D365 registers the export job and returns an `executionId`. OMS stores this in `SystemMessage.remoteMessageId` and moves the message status to `SmsgSent`.
+   
+2. **The Poll Job (`d365_ExportSalesOrderLinesPoll`):**
+   - Regularly queries active messages via `D365DataPackageServices.poll#ExportDataPackageStatus`.
+   - For each message, it calls D365 `GetExecutionSummaryStatus` using the stored `executionId`.
+   - Upon successful completion (`Succeeded` or `PartiallySucceeded`), the poller calls `GetExportedPackageUrl` to obtain the secure D365 package location, downloads the ZIP, and extracts `Sales order lines V3.csv`.
+   - Hand off the CSV payload directly to MaargDataManager config **`D365_IMP_SLS_ORD_LN`**, which invokes `store#D365SalesOrderLineInventoryLotId` for each row to update the `D365SalesOrderItemInventoryLotId` attribute on the corresponding OMS order items.
+   - **Status Update:** Upon successful download, parsing, and data loading into the DataManager, the poller updates the tracking `SystemMessage` status from `SmsgSent` to **`SmsgConfirmed`** to mark the entire export transaction as fully complete.
 
 ###### Exported Fields Used by OMS
 | D365 CSV field | OMS usage |
@@ -862,7 +983,12 @@ This export reconciles the D365-assigned `InventoryLotId` back to the OMS order 
 - evaluate whether explicit D365 flags such as `HcOrderExported` and `HcOrderLineExported` should replace or supplement change tracking
 - revisit whether polling should remain the only reconciliation mechanism or whether D365 events can assist later
 
+### 2.2 Export of Packing Slips (Outbound Shipments) from D365 to OMS
+
+*For complete implementation specifications, architectural decisions, and step-by-step development instructions for synchronizing outbound shipments/packing slips from D365 SCM to OMS, see the [Shipment Export Exploration Notes](file:///Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/foundation/project-ideas/dynamics365-integration/sales-orders/shipment_export_exploration.md).*
+
 ### 3. Brokered Order Items Update from OMS to D365
+
 
 Once OMS has final brokered fulfillment location information, it can update the D365 sales order line warehouse before reservation or downstream posting.
 
