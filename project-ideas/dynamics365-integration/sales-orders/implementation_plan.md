@@ -126,7 +126,7 @@ Two separate eligibility views are used so OData and DMF can evolve independentl
 
 #### 1.2 Supported Import Approaches
 
-The connector currently supports two separate technical approaches for sales order synchronization:
+The connector currently supports three separate technical approaches for sales order synchronization:
 
 1. **Approach 1.2.1: OData Pattern**
    - Service name: `co.hotwax.d365.D365OrderServices.sync#SalesOrders`
@@ -138,6 +138,12 @@ The connector currently supports two separate technical approaches for sales ord
    - Service name: `co.hotwax.d365.D365OrderServices.import#SalesOrdersDataPackage`
    - D365 model: `Sales orders composite V4`
    - Processing style: Package-based batch import via DMF
+   - OMS tracking entity name: `D365SalesOrderImportHistory`
+
+3. **Approach 1.2.3: DMF / Recurring Integrations Pattern (Queue-Based Enqueue)**
+   - Service name: `co.hotwax.d365.D365RecurringImportServices.queue#RecurringSalesOrders`
+   - D365 model: `Sales orders composite V4`
+   - Processing style: Queue-based package upload and automatic background import
    - OMS tracking entity name: `D365SalesOrderImportHistory`
 
 ##### 1.2.1 OData Import Implementation
@@ -675,6 +681,65 @@ For generic package upload/import mechanics and API sequencing, refer to [data_i
 - Resolve `ITEMNUMBER` from OMS-to-D365 product mapping
 - Add support for additional D365 variant dimension fields beyond the current size/color handling if required
 - Validate whether shipping charge handling through `SALESORDERHEADERCHARGEV2ENTITY` is sufficient for all order scenarios
+
+##### 1.2.3 DMF / Recurring Integrations Pattern (Queue-Based Enqueue) [POC IMPLEMENTED]
+
+This approach wraps the hierarchical `Sales orders composite V4` package and sends it directly via the **D365 Recurring Integrations Enqueue API**, streamlining the transmission and solving programmatic error visibility for composite entities.
+
+###### POC Component Configuration
+
+* **Outgoing `SystemMessageType`**: `D365_REC_IMP_SLS_ORDERS`
+* **Scheduled Service Jobs**:
+  * `d365_QueueRecurringSalesOrders` (schedules the queuing service with `sendNow="true"`)
+  * `d365_PollRecurringSalesOrdersImportStatus` (orchestrates background polling)
+
+###### Detailed Service Flow
+
+1. **The Queue Job (`queue#RecurringSalesOrders`):**
+   - Queries the eligible order lines using the `D365EligibleSalesOrdersDMF` view.
+   - Compiles a standard hierarchical XML file containing `SALESORDERHEADERV3ENTITY`, `SALESORDERLINEV2ENTITY`, and `SALESORDERHEADERCHARGEV2ENTITY` elements.
+   - Generates the matching `Manifest.xml` and `PackageHeader.xml` package schemas.
+   - Compresses these items in memory into a ZIP package byte-stream.
+   - **Database Size Safety Rule:** Caches the binary ZIP file directly onto the local filesystem under `runtime/tmp/d365_recurring_import/` and only saves its absolute path, definition group, and activity ID inside a lightweight JSON metadata string in the database `SystemMessage.messageText` field, preventing database record bloat.
+   - Persists execution markers to `D365SalesOrderImportHistory` so packaged orders are removed from eligibility immediately.
+   - Queues a `SystemMessage` record in `SmsgProduced` status.
+
+2. **The Send Service (`send#RecurringSalesOrderImport`):**
+   - Invoked dynamically by the framework because `sendNow="true"` is enabled.
+   - Resolves the Azure AD OAuth access token.
+   - Reads the binary cached ZIP package from the filesystem.
+   - **Binary Transmission Safety:** Uses standard Java `HttpURLConnection` to execute a direct binary `POST` payload transfer to the D365 Enqueuer endpoint (`/api/connector/enqueue/<activity-id>`) with `Content-Type: application/zip`, bypassing the Moqui `RestClient` limitation (which lacks binary-stream body method helpers).
+   - Receives the D365 **Queue Message ID GUID** response, parses it cleanly to standard UTF-8 string format, deletes the temporary file from the disk to free up space, saves the Queue GUID as the `remoteMessageId` on the message tracking row, and moves the status to `SmsgSent`.
+
+3. **The Poller Orchestration (`pollAndConfirm#RecurringSalesOrderImport`):**
+   - Regularly finds all `D365_REC_IMP_SLS_ORDERS` messages in the `SmsgSent` state.
+   - Loops and triggers the custom status checker (`check#RecurringSalesOrderImport`) in individual transactions.
+
+4. **The Custom Status Checker (`check#RecurringSalesOrderImport`):**
+   - Extracts the enqueued Queue Message ID GUID from `SystemMessage.remoteMessageId`.
+   - Sends a POST request to OData action `/data/DataManagementDefinitionGroups/Microsoft.Dynamics.DataEntities.GetExecutionIdByMessageId` with payload `{"_messageId": "<messageId>"}`.
+   - **Handling Queue Delays:** If D365 has not yet scheduled/processed the queue item, it returns the empty GUID `'00000000-0000-0000-0000-000000000000'`. The service logs this pending status, updates the `lastAttemptDate` to space out subsequent checks, and returns early keeping the message in `SmsgSent` status.
+   - **DMF Delegation:** If a valid non-zero DMF Execution ID GUID is returned, the checker dynamically updates `SystemMessage.remoteMessageId` to this Execution ID in the database and immediately delegates downstream checking to the standard package status service:
+     `co.hotwax.d365.D365DataPackageServices.check#ImportDataPackageStatus`
+
+5. **Detailed Error Resolution:**
+   - Standard `ImportFromPackage` API fails to return composite errors programmatically.
+   - In contrast, our queue-based checking sequence resolves standard composite failures successfully!
+   - If the delegated checker discovers that the DMF Execution ID has failed (`GetExecutionSummaryStatus` returns `Failed`, `Unknown`, or `Canceled`), it invokes `co.hotwax.d365.D365DataPackageServices.get#ExecutionErrors` which calls OData action `/data/DataManagementDefinitionGroups/Microsoft.Dynamics.DataEntities.GetExecutionErrors` to extract the raw staging table execution logs, parses the detailed JSON list of entity/record validation failures (such as missing product variant colors or storage dimension requirements), prints them in Moqui logs, and changes status to `SmsgError`.
+
+###### D365 SCM Configuration Setup
+To enable Recurring Integration on the existing Sales Orders Import project:
+1. Open the **Data management** workspace in D365 SCM.
+2. Select the existing data import project: **`HotWax_Import_SalesOrders_Composite`**.
+3. In the top action pane, click **Create recurring data job**.
+4. Configure the following parameters:
+   - **Name:** `HotWax Recurring Sales Orders Import`
+   - **Application ID:** Select the App Registration Application ID used by Moqui OMS to authorize incoming enqueue payloads.
+   - **Supported Data Format:** Select **`Package`** (required for composite entity processing).
+5. Click **Set scheduled processing** to define the background import recurrence pattern (e.g. every 5 minutes).
+6. Click **Save** and copy the generated **`Activity ID`** GUID (e.g., `BC384DF1-78B3-473B-AA18-4EE5102D4717`).
+
+For detailed architectural specifications, refer to [recurring_integrations_api.md](../recurring-integrations/recurring_integrations_api.md).
 
 #### 1.3 Mixed Cart Order Handling
 
