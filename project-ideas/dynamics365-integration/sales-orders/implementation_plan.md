@@ -408,16 +408,16 @@ Both the Data Package API and the Recurring Integrations API run on the exact sa
    - *Behavior:* DMF tries to write validated staging rows to the ledger tables. F&O executes business logic checking (e.g., customer credit limits).
    - *Programmatic Visibility:* If the ledger validation propagates logs to the staging error table, they appear in the OData response. If they are stored only in F&O's global System InfoLog, `GetExecutionErrors` may return an empty list.
 
-3. **Phase 0: SSIS Package & Schema Mismatches (Returns Empty)**
-   - *Behavior:* SSIS (SQL Server Integration Services) performs strict mapping validations. If you omit a mapped XML element entirely from your payload (e.g. removing `SHIPPINGWAREHOUSEID` from the XML lines entirely when it is mapped in the data project), SSIS crashes immediately during file ingestion:
+3. **Phase 0: Import Engine & Schema Mismatches (Returns Empty)**
+   - *Behavior:* The D365 Import Engine performs strict mapping validations. If you omit a mapped XML element entirely from your payload (e.g. removing `SHIPPINGWAREHOUSEID` from the XML lines entirely when it is mapped in the data project), the Import Engine crashes immediately during file ingestion:
      `Exception from HRESULT: 0xC0010009 ... '0' records inserted in staging.`
-   - *Programmatic Visibility:* Because SSIS crashed before inserting any data, **no staging error logs exist** in the database. Consequently, the OData `GetExecutionErrors` API returns a completely empty list.
+   - *Programmatic Visibility:* Because the Import Engine crashed before inserting any data, **no staging error logs exist** in the database. Consequently, the OData `GetExecutionErrors` API returns a completely empty list.
 
 4. **Staging Clean-up Purge Rules (Returns Empty)**
    - *Behavior:* D365 standard periodic jobs run "Staging clean-up" batches to delete staging rows and their logs to avoid database bloat.
    - *Programmatic Visibility:* Once this clean-up job purges a historical execution's staging table data, `GetExecutionErrors` will return empty.
 
-*Integration Rule:* OMS status checkers must poll and log errors immediately upon discovering a `Failed` or `Canceled` status. If the error list is returned empty, OMS should record a fallback warning: *"D365 job failed, but no staging log errors were returned. This indicates an SSIS schema mismatch, a framework-level history key collision, or that the logs were already purged."*
+*Integration Rule:* OMS status checkers must poll and log errors immediately upon discovering a `Failed` or `Canceled` status. If the error list is returned empty, OMS should record a fallback warning: *"D365 job failed, but no staging log errors were returned. This indicates an import engine schema mismatch, a framework-level history key collision, or that the logs were already purged."*
 
 2. **Batch Outcome Ambiguity (Partially Succeeded Batches):**
    - *The Problem:* D365 imports are batch-oriented. If a batch of 100 orders contains 5 failures, D365 returns the execution status `PartiallySucceeded`. If the poller immediately marks that `SystemMessage` as `SmsgConfirmed`, those 5 failed orders will get lost in a "limbo" state in OMS because they are marked with `D365SalesOrderImportHistory` and cannot be re-packaged.
@@ -638,7 +638,7 @@ After OMS confirms the remote execution and completes follow-up processing, the 
 - The selected shipment method is then mapped through `IntegrationTypeMapping(D365_SHP_MTHD)` to populate `DELIVERYMODECODE`.
 
 ###### DMF Warehouse / Site Behavior
-- **Cascading Header Warehouse Default:** Similar to OData, F&O's DMF uses cascading defaults. If an order line `SALESORDERLINEV2ENTITY` is imported without `SHIPPINGWAREHOUSEID` (or if the attribute is empty), the SSIS/DMF import engine automatically inherits the `DEFAULTSHIPPINGWAREHOUSEID` mapped on the header `SALESORDERHEADERV3ENTITY`.
+- **Cascading Header Warehouse Default:** Similar to OData, F&O's DMF uses cascading defaults. If an order line `SALESORDERLINEV2ENTITY` is imported without `SHIPPINGWAREHOUSEID` (or if the attribute is empty), the DMF import engine automatically inherits the `DEFAULTSHIPPINGWAREHOUSEID` mapped on the header `SALESORDERHEADERV3ENTITY`.
 - **System Failure Scenario:** If **both** the header `DEFAULTSHIPPINGWAREHOUSEID` and the line `SHIPPINGWAREHOUSEID` are empty or omitted, the DMF import will fail during the target table writing phase with the same validation crash:
   `Inventory dimension Site is mandatory and must consequently be specified.`
 - *Mitigation:* Ensure that a standard warehouse default (such as `'NA'`) is mapped on the composite header to protect lines from crashing if they are sent without a specific warehouse context.
@@ -741,7 +741,7 @@ This approach wraps the hierarchical `Sales orders composite V4` package and sen
    - Programmatic error retrieval is fully supported across all package-based DMF integration patterns, utilizing OData action `/data/DataManagementDefinitionGroups/Microsoft.Dynamics.DataEntities.GetExecutionErrors`.
    - If the delegated checker discovers that the DMF Execution ID has failed (`GetExecutionSummaryStatus` returns `Failed`, `Unknown`, or `Canceled`), it invokes the standard execution error retriever service to pull raw staging log rows.
    - It parses the detailed JSON list of record/field validation failures (e.g. variant configuration or site/warehouse issues), prints them to Moqui logs, and transitions the tracking status to `SmsgError`.
-   - **Fallback for Schema/System Crashes:** If the status is `Failed` but the staging error list is returned empty, it indicates a Phase 0 SSIS schema mismatch (e.g., completely omitted columns) or framework crash, and Moqui logs a fallback warning pointing developers to the F&O Data Management UI.
+   - **Fallback for Schema/System Crashes:** If the status is `Failed` but the staging error list is returned empty, it indicates a Phase 0 file schema mismatch (e.g., completely omitted columns) or framework crash, and Moqui logs a fallback warning pointing developers to the F&O Data Management UI.
 
 ###### D365 SCM Configuration Setup
 To enable Recurring Integration on the existing Sales Orders Import project:

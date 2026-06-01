@@ -64,13 +64,13 @@ While programmatic retrieval is highly robust, calling `GetExecutionErrors` will
 
 * **Phase 1: File/Source $\rightarrow$ Staging Table (Fully Exposed)**
   - *Scenario:* The package is correctly formed, but the data fails staging validations (e.g. `PRODUCTCOLORID` value is invalid, or the customer profile does not exist in F&O).
-  - *Result:* SSIS successfully writes rows to the staging tables and records the validation constraints in the staging logs. `GetExecutionErrors` **successfully returns** the complete JSON list of failures.
+  - *Result:* The D365 Import Engine successfully writes rows to the staging tables and records the validation constraints in the staging logs. `GetExecutionErrors` **successfully returns** the complete JSON list of failures.
 * **Phase 2: Staging $\rightarrow$ Target Ledger Tables (Conditional Exposure)**
   - *Scenario:* The records pass staging checks but crash on ledger-specific target business logic (e.g., credit limit exceeded or posting period closed).
   - *Result:* If the target writing logic propagates errors back to the staging tables, they are visible. If they reside exclusively in F&O's global System InfoLogs, `GetExecutionErrors` might return an empty list.
-* **Phase 0: SSIS Package & Schema Mismatches (Returns Empty)**
+* **Phase 0: Import Engine Package & Schema Mismatches (Returns Empty)**
   - *Scenario:* The XML payload is malformed or completely omits a mapped element (e.g. commenting out the `SHIPPINGWAREHOUSEID` element when it has a defined column mapping in the data project).
-  - *Result:* The SSIS pipeline throws a mapping collection crash (`HRESULT: 0xC0010009`) and aborts immediately before writing *any* rows to the staging tables. Since F&O never created staging records, **no staging error logs exist**, and `GetExecutionErrors` **returns an empty list**.
+  - *Result:* The D365 Import Engine throws a mapping collection crash (`HRESULT: 0xC0010009`) and aborts immediately before writing *any* rows to the staging tables. Since F&O never created staging records, **no staging error logs exist**, and `GetExecutionErrors` **returns an empty list**.
 * **Staging Data Clean-up Purge Rules (Returns Empty)**
   - *Scenario:* D365 standard periodic jobs run "Staging clean-up" batches to physically purge staging rows and their logs to avoid database bloat.
   - *Result:* Once old staging logs are cleaned up, calling `GetExecutionErrors` for historical executions **returns an empty list**.
