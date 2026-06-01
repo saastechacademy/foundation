@@ -145,6 +145,21 @@ The connector currently supports three separate technical approaches for sales o
    - D365 model: `Sales orders composite V4`
    - Processing style: Queue-based package upload and automatic background import
    - OMS tracking entity name: `D365SalesOrderImportHistory`
+##### Comparison: Data Package API vs. Recurring Integrations API
+
+Below is an analytical comparison of the two package-based import and export patterns supported by the connector:
+
+| Feature | Data Package API (Request/Poll) | Recurring Integrations API (Queue-Based) |
+| :--- | :--- | :--- |
+| **Interface Complexity** | High (Requires multiple sequential API steps: request path, upload, and trigger execution) | Low (Single HTTP POST/GET request directly to/from a dedicated queue endpoint) |
+| **Execution Control** | Direct (OMS controls exactly when the import/export execution starts) | Managed (D365 background batch scheduler processes the queue asynchronously) |
+| **System Resource Impact** | High (Immediate trigger can lead to locking contentions during high concurrent usage) | Controlled (D365 manages queue ingestion sequentially, preventing load spikes) |
+| **Resilience to Downtime** | Low (If the ERP is offline or busy during a request, the transaction fails and requires retries) | High (Queue buffers files during downtime; processing resumes automatically when active) |
+
+*   **Data Package API Suitability:** This pattern is highly direct and provides tight execution synchronization, making it well-suited for ad-hoc, low-frequency, or admin-triggered bulk loads where immediate processing confirmation is the priority.
+*   **Recurring Integrations API Suitability:** This pattern reduces connection overhead and provides automated queuing, making it well-suited for high-frequency, continuous background flows where load throttling, server resource safety, and queue resilience are preferred over immediate execution control.
+
+---
 
 ##### 1.2.1 OData Import Implementation
 
