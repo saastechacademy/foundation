@@ -120,6 +120,40 @@ After successfully downloading and processing the export package, you must send 
 * **API Correlation ID:** The `CorrelationId` in the `/dequeue` JSON response is a *temporary lease lock token* used to link the dequeue session to the acknowledgment POST payload.
 * **Mapping:** D365 resolves the `CorrelationId` internally on `/ack` POST ingestion, updates the corresponding database message record (e.g. `{1EB6FF02-...}`), and updates its status to **Acknowledged** in the UI.
 
+### 2.5 Targeted Dequeue by Message ID
+The standard dequeue endpoint always retrieves the **next available message** from the head of the queue. D365 supports an optional `messageId` query parameter to target a **specific message** by its persistent database record GUID (the **UI Message ID** from section 2.4):
+
+* **Endpoint:** `GET https://<d365-instance-url>/api/connector/dequeue/<activity-id>?messageId=<ui-message-id-guid>`
+* **Behaviour:** D365 locates the specific queue message matching that GUID and returns it in the same `200 OK` JSON response as a standard dequeue call.
+* **Response (HTTP 200):** Identical structure to a normal dequeue response:
+  ```json
+  {
+    "CorrelationId": "81037098-0d8d-4d52-80b5-7cd37c4f1641",
+    "PopReceipt": "AgAAAAMAAAAAAAAA45VJANDx3AE=",
+    "DownloadLocation": "https://<d365-instance-url>/api/connector/download/...",
+    "IsDownLoadFileExist": true,
+    "FileDownLoadErrorMessage": null,
+    "LastDequeueDateTime": null
+  }
+  ```
+* **Ack behaviour:** The resulting `CorrelationId` and `PopReceipt` must still be passed back to `/ack` after processing, exactly as in a standard dequeue flow. The 30-minute lease lock applies equally.
+
+#### When to Use
+| Scenario | Recommendation |
+| :--- | :--- |
+| Normal continuous export polling | Standard dequeue (no `messageId`) |
+| Re-processing a specific failed or stuck message | Pass the UI Message ID via `?messageId=` |
+| Debugging — inspecting a specific package without consuming the queue head | Pass the UI Message ID; the file download can be inspected before ack |
+| Manual re-run after an OMS-side error that was already acknowledged in D365 | Not possible via dequeue; the message has been removed from the queue |
+
+#### OMS Implementation
+The `dequeue#RecurringSalesOrderNumbers` service accepts an optional `messageId` parameter. When provided, it appends `?messageId=<value>` to the dequeue URL. The rest of the flow — download, unzip, DataManager upload, and ack — is identical to the standard path.
+
+The `d365_DequeueRecurringSalesOrderNumbers` ServiceJob exposes a `messageId` parameter slot (empty by default). To trigger a targeted re-run, set this parameter to the UI Message ID GUID from the D365 **View messages** screen, run the job once manually, then clear the parameter back to empty so subsequent scheduled runs return to normal queue polling.
+
+> [!NOTE]
+> The UI Message ID used here is the **persistent database GUID** shown in the D365 "Manage messages" screen — **not** the `CorrelationId` returned by the dequeue response, which is a temporary lease token.
+
 ---
 
 ## 3. D365 UI Monitoring & Administration
