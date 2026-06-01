@@ -252,19 +252,16 @@ This is a fully implemented direct-sync path that creates a sales order header a
 - The selected shipment method is then mapped through `IntegrationTypeMapping(D365_SHP_MTHD)` to populate `DeliveryModeCode`.
 
 ##### OData Warehouse / Site Behavior
-- In the target D365 setup, **Site** is mandatory for sales order lines.
-- **Warehouse** is effectively required for OMS integration because D365 derives the mandatory Site from the provided warehouse configuration.
-- If OMS sends a sales order line without `ShippingWarehouseId`, D365 can reject the line with an error similar to:
-
-```json
-{
-  "message": "Write failed for table row of type 'SalesOrderLineV3Entity'. Infolog: Warning: Inventory dimension Site is mandatory and must consequently be specified.; Error: Update has been canceled.."
-}
-```
-
-- Observation from integration testing:
-  - sending `ShippingWarehouseId` allows D365 to populate the required inventory site context
-  - omitting it causes order-line creation to fail for products where the storage/inventory dimension setup requires Site
+- **Inventory Site Resolution:** D365 strictly requires the Inventory **Site** dimension for all sales order lines in the tested setup. D365 resolves this mandatory Site context by reading the line-level `ShippingWarehouseId`.
+- **Header-Level Cascading Defaults:**
+  - If a line is sent *without* `ShippingWarehouseId` (or if it is empty), D365 will automatically cascade the header's `DefaultShippingWarehouseId` down to the line level.
+  - **The Error Threshold:** If **both** the header's `DefaultShippingWarehouseId` and the line's `ShippingWarehouseId` are left empty or omitted, F&O has no default to inherit, and it will reject the line with a target validation error similar to:
+    ```json
+    {
+      "message": "Write failed for table row of type 'SalesOrderLineV3Entity'. Infolog: Warning: Inventory dimension Site is mandatory and must consequently be specified.; Error: Update has been canceled.."
+    }
+    ```
+- *Mitigation:* Ensure that either a header-level fallback (e.g. `'NA'`) is passed as the `DefaultShippingWarehouseId` or each individual line carries a valid `ShippingWarehouseId`.
 
 ##### OData Inventory Behavior Observation
 - Creating a sales order in the tested D365 environment:
@@ -641,12 +638,10 @@ After OMS confirms the remote execution and completes follow-up processing, the 
 - The selected shipment method is then mapped through `IntegrationTypeMapping(D365_SHP_MTHD)` to populate `DELIVERYMODECODE`.
 
 ###### DMF Warehouse / Site Behavior
-- The same D365 inventory-dimension rule applies to DMF-imported order lines:
-  - **Site** is mandatory for the line in the tested D365 setup
-  - OMS must therefore provide a warehouse that lets D365 resolve the required site
-- This is particularly important for orders that are created in OMS before final warehouse assignment is complete.
-- If a line is imported without a warehouse and D365 cannot derive Site, import can fail for the same underlying reason observed through OData:
-  - `Inventory dimension Site is mandatory and must consequently be specified`
+- **Cascading Header Warehouse Default:** Similar to OData, F&O's DMF uses cascading defaults. If an order line `SALESORDERLINEV2ENTITY` is imported without `SHIPPINGWAREHOUSEID` (or if the attribute is empty), the SSIS/DMF import engine automatically inherits the `DEFAULTSHIPPINGWAREHOUSEID` mapped on the header `SALESORDERHEADERV3ENTITY`.
+- **System Failure Scenario:** If **both** the header `DEFAULTSHIPPINGWAREHOUSEID` and the line `SHIPPINGWAREHOUSEID` are empty or omitted, the DMF import will fail during the target table writing phase with the same validation crash:
+  `Inventory dimension Site is mandatory and must consequently be specified.`
+- *Mitigation:* Ensure that a standard warehouse default (such as `'NA'`) is mapped on the composite header to protect lines from crashing if they are sent without a specific warehouse context.
 
 ###### DMF Inventory Behavior Observation
 - In the tested D365 setup, importing the sales order does not itself reserve inventory.
