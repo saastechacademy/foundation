@@ -399,9 +399,28 @@ This means the pattern is operationally useful, but it behaves more like a light
 - The `SystemMessageType` exists and categorizes the flow, but its `sendServiceName` is not the primary initiator of the remote work.
 - This is functionally valid, but it does not fully align with the usual Moqui pattern where a produced outgoing message is later sent by `send#ProducedSystemMessage`.
 
-###### Data Package / DMF Limitations
-1. **Omitted Line-Level Execution Errors via API:**
-   - When a composite entity import (such as `Sales orders composite V4`) fails, D365's standard `GetExecutionErrors` API does not return the detailed line-level validation errors. This makes programmatic debugging within Moqui highly restricted; failed imports often require manual inspection within the D365 Data Management workspace.
+###### Programmatic Error Retrieval & Pipeline Behavior
+
+Both the Data Package API and the Recurring Integrations API run on the exact same underlying D365 Data Management Framework (DMF) pipeline. Staging table validation errors *can* be successfully retrieved programmatically via `/data/DataManagementDefinitionGroups/Microsoft.Dynamics.DataEntities.GetExecutionErrors`, but the results depend strictly on the **point of failure** inside the F&O pipeline:
+
+1. **Phase 1: File/Source $\rightarrow$ Staging Table Validation (Fully Queryable)**
+   - *Behavior:* DMF successfully parses the zipped XML and populates the staging tables (e.g. `SalesOrderHeaderV3Staging`). If standard data constraints fail (e.g., variant color not assigned to a product store, mandatory warehouse missing but tags are present), F&O writes these errors to the staging log.
+   - *Programmatic Visibility:* Calling `GetExecutionErrors` returns a detailed JSON array of line-level validation errors (e.g. item color/warehouse issues).
+
+2. **Phase 2: Staging $\rightarrow$ Target Table Write (Conditional Visibility)**
+   - *Behavior:* DMF tries to write validated staging rows to the ledger tables. F&O executes business logic checking (e.g., customer credit limits).
+   - *Programmatic Visibility:* If the ledger validation propagates logs to the staging error table, they appear in the OData response. If they are stored only in F&O's global System InfoLog, `GetExecutionErrors` may return an empty list.
+
+3. **Phase 0: SSIS Package & Schema Mismatches (Returns Empty)**
+   - *Behavior:* SSIS (SQL Server Integration Services) performs strict mapping validations. If you omit a mapped XML element entirely from your payload (e.g. removing `SHIPPINGWAREHOUSEID` from the XML lines entirely when it is mapped in the data project), SSIS crashes immediately during file ingestion:
+     `Exception from HRESULT: 0xC0010009 ... '0' records inserted in staging.`
+   - *Programmatic Visibility:* Because SSIS crashed before inserting any data, **no staging error logs exist** in the database. Consequently, the OData `GetExecutionErrors` API returns a completely empty list.
+
+4. **Staging Clean-up Purge Rules (Returns Empty)**
+   - *Behavior:* D365 standard periodic jobs run "Staging clean-up" batches to delete staging rows and their logs to avoid database bloat.
+   - *Programmatic Visibility:* Once this clean-up job purges a historical execution's staging table data, `GetExecutionErrors` will return empty.
+
+*Integration Rule:* OMS status checkers must poll and log errors immediately upon discovering a `Failed` or `Canceled` status. If the error list is returned empty, OMS should record a fallback warning: *"D365 job failed, but no staging log errors were returned. This indicates an SSIS schema mismatch, a framework-level history key collision, or that the logs were already purged."*
 
 2. **Batch Outcome Ambiguity (Partially Succeeded Batches):**
    - *The Problem:* D365 imports are batch-oriented. If a batch of 100 orders contains 5 failures, D365 returns the execution status `PartiallySucceeded`. If the poller immediately marks that `SystemMessage` as `SmsgConfirmed`, those 5 failed orders will get lost in a "limbo" state in OMS because they are marked with `D365SalesOrderImportHistory` and cannot be re-packaged.
@@ -709,23 +728,25 @@ This approach wraps the hierarchical `Sales orders composite V4` package and sen
    - Resolves the Azure AD OAuth access token.
    - Reads the binary cached ZIP package from the filesystem.
    - **Binary Transmission Safety:** Uses standard Java `HttpURLConnection` to execute a direct binary `POST` payload transfer to the D365 Enqueuer endpoint (`/api/connector/enqueue/<activity-id>`) with `Content-Type: application/zip`, bypassing the Moqui `RestClient` limitation (which lacks binary-stream body method helpers).
-   - Receives the D365 **Queue Message ID GUID** response, parses it cleanly to standard UTF-8 string format, deletes the temporary file from the disk to free up space, saves the Queue GUID as the `remoteMessageId` on the message tracking row, and moves the status to `SmsgSent`.
+   - Receives the D365 **Queue Message ID GUID** response, parses it cleanly to standard UTF-8 string format, deletes the temporary file from the disk to free up space, persists the Queue GUID directly to the `messageId` field in the database, returns it as `remoteMessageId` for initial status tracking, and moves the status to `SmsgSent`.
 
 3. **The Poller Orchestration (`pollAndConfirm#RecurringSalesOrderImport`):**
    - Regularly finds all `D365_REC_IMP_SLS_ORDERS` messages in the `SmsgSent` state.
    - Loops and triggers the custom status checker (`check#RecurringSalesOrderImport`) in individual transactions.
 
 4. **The Custom Status Checker (`check#RecurringSalesOrderImport`):**
-   - Extracts the enqueued Queue Message ID GUID from `SystemMessage.remoteMessageId`.
-   - Sends a POST request to OData action `/data/DataManagementDefinitionGroups/Microsoft.Dynamics.DataEntities.GetExecutionIdByMessageId` with payload `{"_messageId": "<messageId>"}`.
+   - Extracts the enqueued Queue Message ID GUID from `SystemMessage.messageId`.
+   - **Bypass Resolution if Already Resolved:** If `SystemMessage.remoteMessageId` is present and does not equal `messageId`, it indicates the DMF Execution ID has already been resolved. The checker bypasses the OData lookup entirely and directly delegates checking to the standard package status service.
+   - **OData Execution ID Lookup:** If not yet resolved, it sends a POST request to OData action `/data/DataManagementDefinitionGroups/Microsoft.Dynamics.DataEntities.GetExecutionIdByMessageId` with payload `{"_messageId": "<messageId>"}`.
    - **Handling Queue Delays:** If D365 has not yet scheduled/processed the queue item, it returns the empty GUID `'00000000-0000-0000-0000-000000000000'`. The service logs this pending status, updates the `lastAttemptDate` to space out subsequent checks, and returns early keeping the message in `SmsgSent` status.
    - **DMF Delegation:** If a valid non-zero DMF Execution ID GUID is returned, the checker dynamically updates `SystemMessage.remoteMessageId` to this Execution ID in the database and immediately delegates downstream checking to the standard package status service:
      `co.hotwax.d365.D365DataPackageServices.check#ImportDataPackageStatus`
 
 5. **Detailed Error Resolution:**
-   - Standard `ImportFromPackage` API fails to return composite errors programmatically.
-   - In contrast, our queue-based checking sequence resolves standard composite failures successfully!
-   - If the delegated checker discovers that the DMF Execution ID has failed (`GetExecutionSummaryStatus` returns `Failed`, `Unknown`, or `Canceled`), it invokes `co.hotwax.d365.D365DataPackageServices.get#ExecutionErrors` which calls OData action `/data/DataManagementDefinitionGroups/Microsoft.Dynamics.DataEntities.GetExecutionErrors` to extract the raw staging table execution logs, parses the detailed JSON list of entity/record validation failures (such as missing product variant colors or storage dimension requirements), prints them in Moqui logs, and changes status to `SmsgError`.
+   - Programmatic error retrieval is fully supported across all package-based DMF integration patterns, utilizing OData action `/data/DataManagementDefinitionGroups/Microsoft.Dynamics.DataEntities.GetExecutionErrors`.
+   - If the delegated checker discovers that the DMF Execution ID has failed (`GetExecutionSummaryStatus` returns `Failed`, `Unknown`, or `Canceled`), it invokes the standard execution error retriever service to pull raw staging log rows.
+   - It parses the detailed JSON list of record/field validation failures (e.g. variant configuration or site/warehouse issues), prints them to Moqui logs, and transitions the tracking status to `SmsgError`.
+   - **Fallback for Schema/System Crashes:** If the status is `Failed` but the staging error list is returned empty, it indicates a Phase 0 SSIS schema mismatch (e.g., completely omitted columns) or framework crash, and Moqui logs a fallback warning pointing developers to the F&O Data Management UI.
 
 ###### D365 SCM Configuration Setup
 To enable Recurring Integration on the existing Sales Orders Import project:
