@@ -1010,6 +1010,7 @@ To bypass request-driven generation and polling overhead, this flow active-polls
 1. **The Dequeue Service (`dequeue#RecurringSalesOrderNumbers`):**
    - Triggered on a cron schedule via the Service Job `d365_DequeueRecurringSalesOrderNumbers`.
    - Sends an authenticated `GET` call to `/api/connector/dequeue/{activityId}`.
+   - **Targeted dequeue (optional):** When the `messageId` parameter is set on the service or job, the URL becomes `/api/connector/dequeue/{activityId}?messageId={messageId}`, targeting that specific queue message instead of the head of the queue. See [Targeted Dequeue by Message ID](../recurring-integrations/recurring_integrations_api.md#25-targeted-dequeue-by-message-id) for details.
    - If empty, D365 returns `204 No Content` and the service terminates gracefully.
    - If a package is ready, D365 returns `200 OK` with a JSON payload containing the `CorrelationId`, `PopReceipt`, and `DownloadLocation`.
    - The service makes a secondary `GET` call to the `DownloadLocation` URL (passing the OAuth Bearer token) to download the ZIP package, unzips it in-memory, extracts the target CSV file, and registers it with the Maarg DataManager (`D365_IMP_SALES_ORD`).
@@ -1019,6 +1020,16 @@ To bypass request-driven generation and polling overhead, this flow active-polls
    - Sends a `POST` request to `/api/connector/ack/{activityId}`.
    - Passes the **exact JSON payload** received from the dequeue request in the POST body.
    - D365 resolves the `CorrelationId` and lease lock, permanently deletes the message from the queue, and marks the corresponding message status in the D365 UI as **Acknowledged**.
+
+###### Targeted Re-run / Debugging
+To re-process a specific export message without consuming the queue head:
+1. Look up the **Message ID** GUID from the D365 UI: **System administration > Data management IT > Manage scheduled data jobs > View messages**.
+2. Set the `messageId` parameter on the `d365_DequeueRecurringSalesOrderNumbers` ServiceJob to that GUID.
+3. Run the job once manually.
+4. Clear the `messageId` parameter back to empty so subsequent scheduled runs return to normal queue polling.
+
+> [!NOTE]
+> This only works for messages that are still **in the queue** (status `In queue` or within the 30-minute lease window). Messages that have already been **Acknowledged** are permanently removed from the queue and cannot be re-dequeued.
 
 ---
 
