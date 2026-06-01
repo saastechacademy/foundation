@@ -126,7 +126,7 @@ Two separate eligibility views are used so OData and DMF can evolve independentl
 
 #### 1.2 Supported Import Approaches
 
-The connector currently supports two separate technical approaches for sales order synchronization:
+The connector currently supports three separate technical approaches for sales order synchronization:
 
 1. **Approach 1.2.1: OData Pattern**
    - Service name: `co.hotwax.d365.D365OrderServices.sync#SalesOrders`
@@ -139,6 +139,27 @@ The connector currently supports two separate technical approaches for sales ord
    - D365 model: `Sales orders composite V4`
    - Processing style: Package-based batch import via DMF
    - OMS tracking entity name: `D365SalesOrderImportHistory`
+
+3. **Approach 1.2.3: DMF / Recurring Integrations Pattern (Queue-Based Enqueue)**
+   - Service name: `co.hotwax.d365.D365RecurringImportServices.queue#RecurringSalesOrders`
+   - D365 model: `Sales orders composite V4`
+   - Processing style: Queue-based package upload and automatic background import
+   - OMS tracking entity name: `D365SalesOrderImportHistory`
+##### Comparison: Data Package API vs. Recurring Integrations API
+
+Below is an analytical comparison of the two package-based import and export patterns supported by the connector:
+
+| Feature | Data Package API (Request/Poll) | Recurring Integrations API (Queue-Based) |
+| :--- | :--- | :--- |
+| **Interface Complexity** | High (Requires multiple sequential API steps: request path, upload, and trigger execution) | Low (Single HTTP POST/GET request directly to/from a dedicated queue endpoint) |
+| **Execution Control** | Direct (OMS controls exactly when the import/export execution starts) | Managed (D365 background batch scheduler processes the queue asynchronously) |
+| **System Resource Impact** | High (Immediate trigger can lead to locking contentions during high concurrent usage) | Controlled (D365 manages queue ingestion sequentially, preventing load spikes) |
+| **Resilience to Downtime** | Low (If the ERP is offline or busy during a request, the transaction fails and requires retries) | High (Queue buffers files during downtime; processing resumes automatically when active) |
+
+*   **Data Package API Suitability:** This pattern is highly direct and provides tight execution synchronization, making it well-suited for ad-hoc, low-frequency, or admin-triggered bulk loads where immediate processing confirmation is the priority.
+*   **Recurring Integrations API Suitability:** This pattern reduces connection overhead and provides automated queuing, making it well-suited for high-frequency, continuous background flows where load throttling, server resource safety, and queue resilience are preferred over immediate execution control.
+
+---
 
 ##### 1.2.1 OData Import Implementation
 
@@ -246,19 +267,16 @@ This is a fully implemented direct-sync path that creates a sales order header a
 - The selected shipment method is then mapped through `IntegrationTypeMapping(D365_SHP_MTHD)` to populate `DeliveryModeCode`.
 
 ##### OData Warehouse / Site Behavior
-- In the target D365 setup, **Site** is mandatory for sales order lines.
-- **Warehouse** is effectively required for OMS integration because D365 derives the mandatory Site from the provided warehouse configuration.
-- If OMS sends a sales order line without `ShippingWarehouseId`, D365 can reject the line with an error similar to:
-
-```json
-{
-  "message": "Write failed for table row of type 'SalesOrderLineV3Entity'. Infolog: Warning: Inventory dimension Site is mandatory and must consequently be specified.; Error: Update has been canceled.."
-}
-```
-
-- Observation from integration testing:
-  - sending `ShippingWarehouseId` allows D365 to populate the required inventory site context
-  - omitting it causes order-line creation to fail for products where the storage/inventory dimension setup requires Site
+- **Inventory Site Resolution:** D365 strictly requires the Inventory **Site** dimension for all sales order lines in the tested setup. D365 resolves this mandatory Site context by reading the line-level `ShippingWarehouseId`.
+- **Header-Level Cascading Defaults:**
+  - If a line is sent *without* `ShippingWarehouseId` (or if it is empty), D365 will automatically cascade the header's `DefaultShippingWarehouseId` down to the line level.
+  - **The Error Threshold:** If **both** the header's `DefaultShippingWarehouseId` and the line's `ShippingWarehouseId` are left empty or omitted, F&O has no default to inherit, and it will reject the line with a target validation error similar to:
+    ```json
+    {
+      "message": "Write failed for table row of type 'SalesOrderLineV3Entity'. Infolog: Warning: Inventory dimension Site is mandatory and must consequently be specified.; Error: Update has been canceled.."
+    }
+    ```
+- *Mitigation:* Ensure that either a header-level fallback (e.g. `'NA'`) is passed as the `DefaultShippingWarehouseId` or each individual line carries a valid `ShippingWarehouseId`.
 
 ##### OData Inventory Behavior Observation
 - Creating a sales order in the tested D365 environment:
@@ -393,9 +411,28 @@ This means the pattern is operationally useful, but it behaves more like a light
 - The `SystemMessageType` exists and categorizes the flow, but its `sendServiceName` is not the primary initiator of the remote work.
 - This is functionally valid, but it does not fully align with the usual Moqui pattern where a produced outgoing message is later sent by `send#ProducedSystemMessage`.
 
-###### Data Package / DMF Limitations
-1. **Omitted Line-Level Execution Errors via API:**
-   - When a composite entity import (such as `Sales orders composite V4`) fails, D365's standard `GetExecutionErrors` API does not return the detailed line-level validation errors. This makes programmatic debugging within Moqui highly restricted; failed imports often require manual inspection within the D365 Data Management workspace.
+###### Programmatic Error Retrieval & Pipeline Behavior
+
+Both the Data Package API and the Recurring Integrations API run on the exact same underlying D365 Data Management Framework (DMF) pipeline. Staging table validation errors *can* be successfully retrieved programmatically via `/data/DataManagementDefinitionGroups/Microsoft.Dynamics.DataEntities.GetExecutionErrors`, but the results depend strictly on the **point of failure** inside the F&O pipeline:
+
+1. **Phase 1: File/Source $\rightarrow$ Staging Table Validation (Fully Queryable)**
+   - *Behavior:* DMF successfully parses the zipped XML and populates the staging tables (e.g. `SalesOrderHeaderV3Staging`). If standard data constraints fail (e.g., variant color not assigned to a product store, mandatory warehouse missing but tags are present), F&O writes these errors to the staging log.
+   - *Programmatic Visibility:* Calling `GetExecutionErrors` returns a detailed JSON array of line-level validation errors (e.g. item color/warehouse issues).
+
+2. **Phase 2: Staging $\rightarrow$ Target Table Write (Conditional Visibility)**
+   - *Behavior:* DMF tries to write validated staging rows to the ledger tables. F&O executes business logic checking (e.g., customer credit limits).
+   - *Programmatic Visibility:* If the ledger validation propagates logs to the staging error table, they appear in the OData response. If they are stored only in F&O's global System InfoLog, `GetExecutionErrors` may return an empty list.
+
+3. **Phase 0: Import Engine & Schema Mismatches (Returns Empty)**
+   - *Behavior:* The D365 Import Engine performs strict mapping validations. If you omit a mapped XML element entirely from your payload (e.g. removing `SHIPPINGWAREHOUSEID` from the XML lines entirely when it is mapped in the data project), the Import Engine crashes immediately during file ingestion:
+     `Exception from HRESULT: 0xC0010009 ... '0' records inserted in staging.`
+   - *Programmatic Visibility:* Because the Import Engine crashed before inserting any data, **no staging error logs exist** in the database. Consequently, the OData `GetExecutionErrors` API returns a completely empty list.
+
+4. **Staging Clean-up Purge Rules (Returns Empty)**
+   - *Behavior:* D365 standard periodic jobs run "Staging clean-up" batches to delete staging rows and their logs to avoid database bloat.
+   - *Programmatic Visibility:* Once this clean-up job purges a historical execution's staging table data, `GetExecutionErrors` will return empty.
+
+*Integration Rule:* OMS status checkers must poll and log errors immediately upon discovering a `Failed` or `Canceled` status. If the error list is returned empty, OMS should record a fallback warning: *"D365 job failed, but no staging log errors were returned. This indicates an import engine schema mismatch, a framework-level history key collision, or that the logs were already purged."*
 
 2. **Batch Outcome Ambiguity (Partially Succeeded Batches):**
    - *The Problem:* D365 imports are batch-oriented. If a batch of 100 orders contains 5 failures, D365 returns the execution status `PartiallySucceeded`. If the poller immediately marks that `SystemMessage` as `SmsgConfirmed`, those 5 failed orders will get lost in a "limbo" state in OMS because they are marked with `D365SalesOrderImportHistory` and cannot be re-packaged.
@@ -616,12 +653,10 @@ After OMS confirms the remote execution and completes follow-up processing, the 
 - The selected shipment method is then mapped through `IntegrationTypeMapping(D365_SHP_MTHD)` to populate `DELIVERYMODECODE`.
 
 ###### DMF Warehouse / Site Behavior
-- The same D365 inventory-dimension rule applies to DMF-imported order lines:
-  - **Site** is mandatory for the line in the tested D365 setup
-  - OMS must therefore provide a warehouse that lets D365 resolve the required site
-- This is particularly important for orders that are created in OMS before final warehouse assignment is complete.
-- If a line is imported without a warehouse and D365 cannot derive Site, import can fail for the same underlying reason observed through OData:
-  - `Inventory dimension Site is mandatory and must consequently be specified`
+- **Cascading Header Warehouse Default:** Similar to OData, F&O's DMF uses cascading defaults. If an order line `SALESORDERLINEV2ENTITY` is imported without `SHIPPINGWAREHOUSEID` (or if the attribute is empty), the DMF import engine automatically inherits the `DEFAULTSHIPPINGWAREHOUSEID` mapped on the header `SALESORDERHEADERV3ENTITY`.
+- **System Failure Scenario:** If **both** the header `DEFAULTSHIPPINGWAREHOUSEID` and the line `SHIPPINGWAREHOUSEID` are empty or omitted, the DMF import will fail during the target table writing phase with the same validation crash:
+  `Inventory dimension Site is mandatory and must consequently be specified.`
+- *Mitigation:* Ensure that a standard warehouse default (such as `'NA'`) is mapped on the composite header to protect lines from crashing if they are sent without a specific warehouse context.
 
 ###### DMF Inventory Behavior Observation
 - In the tested D365 setup, importing the sales order does not itself reserve inventory.
@@ -675,6 +710,67 @@ For generic package upload/import mechanics and API sequencing, refer to [data_i
 - Resolve `ITEMNUMBER` from OMS-to-D365 product mapping
 - Add support for additional D365 variant dimension fields beyond the current size/color handling if required
 - Validate whether shipping charge handling through `SALESORDERHEADERCHARGEV2ENTITY` is sufficient for all order scenarios
+
+##### 1.2.3 DMF / Recurring Integrations Pattern (Queue-Based Enqueue) [POC IMPLEMENTED]
+
+This approach wraps the hierarchical `Sales orders composite V4` package and sends it directly via the **D365 Recurring Integrations Enqueue API**, streamlining the transmission and solving programmatic error visibility for composite entities.
+
+###### POC Component Configuration
+
+* **Outgoing `SystemMessageType`**: `D365_REC_IMP_SLS_ORDERS`
+* **Scheduled Service Jobs**:
+  * `d365_QueueRecurringSalesOrders` (schedules the queuing service with `sendNow="true"`)
+  * `d365_PollRecurringSalesOrdersImportStatus` (orchestrates background polling)
+
+###### Detailed Service Flow
+
+1. **The Queue Job (`queue#RecurringSalesOrders`):**
+   - Queries the eligible order lines using the `D365EligibleSalesOrdersDMF` view.
+   - Compiles a standard hierarchical XML file containing `SALESORDERHEADERV3ENTITY`, `SALESORDERLINEV2ENTITY`, and `SALESORDERHEADERCHARGEV2ENTITY` elements.
+   - Generates the matching `Manifest.xml` and `PackageHeader.xml` package schemas.
+   - Compresses these items in memory into a ZIP package byte-stream.
+   - **Database Size Safety Rule:** Caches the binary ZIP file directly onto the local filesystem under `runtime/tmp/d365_recurring_import/` and only saves its absolute path, definition group, and activity ID inside a lightweight JSON metadata string in the database `SystemMessage.messageText` field, preventing database record bloat.
+   - Persists execution markers to `D365SalesOrderImportHistory` so packaged orders are removed from eligibility immediately.
+   - Queues a `SystemMessage` record in `SmsgProduced` status.
+
+2. **The Send Service (`send#RecurringSalesOrderImport`):**
+   - Invoked dynamically by the framework because `sendNow="true"` is enabled.
+   - Resolves the Azure AD OAuth access token.
+   - Reads the binary cached ZIP package from the filesystem.
+   - **Binary Transmission Safety:** Uses standard Java `HttpURLConnection` to execute a direct binary `POST` payload transfer to the D365 Enqueuer endpoint (`/api/connector/enqueue/<activity-id>`) with `Content-Type: application/zip`, bypassing the Moqui `RestClient` limitation (which lacks binary-stream body method helpers).
+   - Receives the D365 **Queue Message ID GUID** response, parses it cleanly to standard UTF-8 string format, deletes the temporary file from the disk to free up space, persists the Queue GUID directly to the `messageId` field in the database, returns it as `remoteMessageId` for initial status tracking, and moves the status to `SmsgSent`.
+
+3. **The Poller Orchestration (`pollAndConfirm#RecurringSalesOrderImport`):**
+   - Regularly finds all `D365_REC_IMP_SLS_ORDERS` messages in the `SmsgSent` state.
+   - Loops and triggers the custom status checker (`check#RecurringSalesOrderImport`) in individual transactions.
+
+4. **The Custom Status Checker (`check#RecurringSalesOrderImport`):**
+   - Extracts the enqueued Queue Message ID GUID from `SystemMessage.messageId`.
+   - **Bypass Resolution if Already Resolved:** If `SystemMessage.remoteMessageId` is present and does not equal `messageId`, it indicates the DMF Execution ID has already been resolved. The checker bypasses the OData lookup entirely and directly delegates checking to the standard package status service.
+   - **OData Execution ID Lookup:** If not yet resolved, it sends a POST request to OData action `/data/DataManagementDefinitionGroups/Microsoft.Dynamics.DataEntities.GetExecutionIdByMessageId` with payload `{"_messageId": "<messageId>"}`.
+   - **Handling Queue Delays:** If D365 has not yet scheduled/processed the queue item, it returns the empty GUID `'00000000-0000-0000-0000-000000000000'`. The service logs this pending status, updates the `lastAttemptDate` to space out subsequent checks, and returns early keeping the message in `SmsgSent` status.
+   - **DMF Delegation:** If a valid non-zero DMF Execution ID GUID is returned, the checker dynamically updates `SystemMessage.remoteMessageId` to this Execution ID in the database and immediately delegates downstream checking to the standard package status service:
+     `co.hotwax.d365.D365DataPackageServices.check#ImportDataPackageStatus`
+
+5. **Detailed Error Resolution:**
+   - Programmatic error retrieval is fully supported across all package-based DMF integration patterns, utilizing OData action `/data/DataManagementDefinitionGroups/Microsoft.Dynamics.DataEntities.GetExecutionErrors`.
+   - If the delegated checker discovers that the DMF Execution ID has failed (`GetExecutionSummaryStatus` returns `Failed`, `Unknown`, or `Canceled`), it invokes the standard execution error retriever service to pull raw staging log rows.
+   - It parses the detailed JSON list of record/field validation failures (e.g. variant configuration or site/warehouse issues), prints them to Moqui logs, and transitions the tracking status to `SmsgError`.
+   - **Fallback for Schema/System Crashes:** If the status is `Failed` but the staging error list is returned empty, it indicates a Phase 0 file schema mismatch (e.g., completely omitted columns) or framework crash, and Moqui logs a fallback warning pointing developers to the F&O Data Management UI.
+
+###### D365 SCM Configuration Setup
+To enable Recurring Integration on the existing Sales Orders Import project:
+1. Open the **Data management** workspace in D365 SCM.
+2. Select the existing data import project: **`HotWax_Import_SalesOrders_Composite`**.
+3. In the top action pane, click **Create recurring data job**.
+4. Configure the following parameters:
+   - **Name:** `HotWax Recurring Sales Orders Import`
+   - **Application ID:** Select the App Registration Application ID used by Moqui OMS to authorize incoming enqueue payloads.
+   - **Supported Data Format:** Select **`Package`** (required for composite entity processing).
+5. Click **Set scheduled processing** to define the background import recurrence pattern (e.g. every 5 minutes).
+6. Click **Save** and copy the generated **`Activity ID`** GUID (e.g., `BC384DF1-78B3-473B-AA18-4EE5102D4717`).
+
+For detailed architectural specifications, refer to [recurring_integrations_api.md](../recurring-integrations/recurring_integrations_api.md).
 
 #### 1.3 Mixed Cart Order Handling
 
@@ -815,8 +911,24 @@ This flow returns the D365-generated `SalesOrderNumber` back into OMS after the 
 - Change tracking only controls incremental selection. The project filters still determine which D365 records are considered eligible for the export.
 - **Future option**: if change tracking proves too broad operationally, introduce an explicit D365 field such as `HcOrderExported` and use that to drive export selection instead.
 
-#### Implemented Flow
+#### Supported Export Approaches
 
+The connector supports two separate technical approaches for exporting Sales Order Numbers back to OMS:
+
+1. **Approach 1: Data Package API (Request/Poll Pattern)**
+   - System message type: `D365_EXP_SALES_ORDERS`
+   - Queue job: `d365_QueueSalesOrderExport`
+   - Poll job: `d365_ExportSalesOrdersPoll`
+   - Processing style: Request-based execution trigger, async polling, and file download.
+
+2. **Approach 2: Recurring Integrations (Queue-Based Dequeue & Ack Pattern) [POC Ready]**
+   - Service job: `d365_DequeueRecurringSalesOrderNumbers`
+   - Service name: `co.hotwax.d365.D365RecurringExportServices.dequeue#RecurringSalesOrderNumbers`
+   - Processing style: Active queue polling (dequeueing) of pre-scheduled exports, binary package download from Azure Blob Storage, and JSON-based request acknowledgment (Ack).
+
+---
+
+##### Export Approach 1: Data Package API (Request/Poll)
 This export reconciles the D365-assigned `SalesOrderNumber` back to the OMS order.
 
 ###### D365 / OMS Components
@@ -881,6 +993,34 @@ Below is an example of a processed export `SystemMessage` record:
 | :--- | :--- |
 | `CUSTOMERSORDERREFERENCE` | OMS `orderId` |
 | `SALESORDERNUMBER` | Stored as `OrderIdentification.idValue` for type `D365_SLS_ORD_NUM` |
+
+##### Export Approach 2: Recurring Integrations (Dequeue & Ack Flow) [POC Ready]
+To bypass request-driven generation and polling overhead, this flow active-polls a pre-scheduled recurring export job queue in D365 to pull sales order numbers, downloads the package via Blob Storage redirect, and completes queue clearance via POST acknowledgments.
+
+###### D365 / OMS Components
+- **Service Job**: `d365_DequeueRecurringSalesOrderNumbers`
+- **Service Name**: `co.hotwax.d365.D365RecurringExportServices.dequeue#RecurringSalesOrderNumbers`
+- **Ack Service Name**: `co.hotwax.d365.D365RecurringExportServices.ack#RecurringSalesOrderNumbers`
+- **Activity ID (GUID)**: `A82CB85F-3E4E-4215-8796-F954028FE331` (D365 SCM export scheduler)
+- **Target CSV File**: `Sales order headers V4.csv`
+- **DataManager config**: `D365_IMP_SALES_ORD`
+- **Row-storage service**: `co.hotwax.d365.D365OrderServices.store#D365SalesOrderNumber`
+
+###### Processing Sequence
+1. **The Dequeue Service (`dequeue#RecurringSalesOrderNumbers`):**
+   - Triggered on a cron schedule via the Service Job `d365_DequeueRecurringSalesOrderNumbers`.
+   - Sends an authenticated `GET` call to `/api/connector/dequeue/{activityId}`.
+   - If empty, D365 returns `204 No Content` and the service terminates gracefully.
+   - If a package is ready, D365 returns `200 OK` with a JSON payload containing the `CorrelationId`, `PopReceipt`, and `DownloadLocation`.
+   - The service makes a secondary `GET` call to the `DownloadLocation` URL (passing the OAuth Bearer token) to download the ZIP package, unzips it in-memory, extracts the target CSV file, and registers it with the Maarg DataManager (`D365_IMP_SALES_ORD`).
+   
+2. **The Acknowledge Service (`ack#RecurringSalesOrderNumbers`):**
+   - Invoked immediately upon successful DataManager file registration.
+   - Sends a `POST` request to `/api/connector/ack/{activityId}`.
+   - Passes the **exact JSON payload** received from the dequeue request in the POST body.
+   - D365 resolves the `CorrelationId` and lease lock, permanently deletes the message from the queue, and marks the corresponding message status in the D365 UI as **Acknowledged**.
+
+---
 
 ###### OMS Persistence
 - **Entity**: `co.hotwax.order.OrderIdentification`
