@@ -896,8 +896,24 @@ This flow returns the D365-generated `SalesOrderNumber` back into OMS after the 
 - Change tracking only controls incremental selection. The project filters still determine which D365 records are considered eligible for the export.
 - **Future option**: if change tracking proves too broad operationally, introduce an explicit D365 field such as `HcOrderExported` and use that to drive export selection instead.
 
-#### Implemented Flow
+#### Supported Export Approaches
 
+The connector supports two separate technical approaches for exporting Sales Order Numbers back to OMS:
+
+1. **Approach 1: Data Package API (Request/Poll Pattern)**
+   - System message type: `D365_EXP_SALES_ORDERS`
+   - Queue job: `d365_QueueSalesOrderExport`
+   - Poll job: `d365_ExportSalesOrdersPoll`
+   - Processing style: Request-based execution trigger, async polling, and file download.
+
+2. **Approach 2: Recurring Integrations (Queue-Based Dequeue & Ack Pattern) [POC Ready]**
+   - Service job: `d365_DequeueRecurringSalesOrderNumbers`
+   - Service name: `co.hotwax.d365.D365RecurringExportServices.dequeue#RecurringSalesOrderNumbers`
+   - Processing style: Active queue polling (dequeueing) of pre-scheduled exports, binary package download from Azure Blob Storage, and JSON-based request acknowledgment (Ack).
+
+---
+
+##### Export Approach 1: Data Package API (Request/Poll)
 This export reconciles the D365-assigned `SalesOrderNumber` back to the OMS order.
 
 ###### D365 / OMS Components
@@ -962,6 +978,34 @@ Below is an example of a processed export `SystemMessage` record:
 | :--- | :--- |
 | `CUSTOMERSORDERREFERENCE` | OMS `orderId` |
 | `SALESORDERNUMBER` | Stored as `OrderIdentification.idValue` for type `D365_SLS_ORD_NUM` |
+
+##### Export Approach 2: Recurring Integrations (Dequeue & Ack Flow) [POC Ready]
+To bypass request-driven generation and polling overhead, this flow active-polls a pre-scheduled recurring export job queue in D365 to pull sales order numbers, downloads the package via Blob Storage redirect, and completes queue clearance via POST acknowledgments.
+
+###### D365 / OMS Components
+- **Service Job**: `d365_DequeueRecurringSalesOrderNumbers`
+- **Service Name**: `co.hotwax.d365.D365RecurringExportServices.dequeue#RecurringSalesOrderNumbers`
+- **Ack Service Name**: `co.hotwax.d365.D365RecurringExportServices.ack#RecurringSalesOrderNumbers`
+- **Activity ID (GUID)**: `A82CB85F-3E4E-4215-8796-F954028FE331` (D365 SCM export scheduler)
+- **Target CSV File**: `Sales order headers V4.csv`
+- **DataManager config**: `D365_IMP_SALES_ORD`
+- **Row-storage service**: `co.hotwax.d365.D365OrderServices.store#D365SalesOrderNumber`
+
+###### Processing Sequence
+1. **The Dequeue Service (`dequeue#RecurringSalesOrderNumbers`):**
+   - Triggered on a cron schedule via the Service Job `d365_DequeueRecurringSalesOrderNumbers`.
+   - Sends an authenticated `GET` call to `/api/connector/dequeue/{activityId}`.
+   - If empty, D365 returns `204 No Content` and the service terminates gracefully.
+   - If a package is ready, D365 returns `200 OK` with a JSON payload containing the `CorrelationId`, `PopReceipt`, and `DownloadLocation`.
+   - The service makes a secondary `GET` call to the `DownloadLocation` URL (passing the OAuth Bearer token) to download the ZIP package, unzips it in-memory, extracts the target CSV file, and registers it with the Maarg DataManager (`D365_IMP_SALES_ORD`).
+   
+2. **The Acknowledge Service (`ack#RecurringSalesOrderNumbers`):**
+   - Invoked immediately upon successful DataManager file registration.
+   - Sends a `POST` request to `/api/connector/ack/{activityId}`.
+   - Passes the **exact JSON payload** received from the dequeue request in the POST body.
+   - D365 resolves the `CorrelationId` and lease lock, permanently deletes the message from the queue, and marks the corresponding message status in the D365 UI as **Acknowledged**.
+
+---
 
 ###### OMS Persistence
 - **Entity**: `co.hotwax.order.OrderIdentification`
