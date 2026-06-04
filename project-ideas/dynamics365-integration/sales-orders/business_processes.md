@@ -197,23 +197,96 @@ Customer payments from HotWax OMS are captured in D365 F&O as **Customer Payment
 
 ---
 
-## 5. Fulfillment & Invoicing
+## 5. Fulfillment
 
-This section captures the intended D365-side operational flow after order synchronization. The connector implementation reviewed here focuses on pushing customers, sales orders, and payment journals; fulfillment and invoice posting are still D365-side process decisions.
+Fulfillment ownership is determined at the order item (line) level. A single sales order can contain lines fulfilled by OMS (stores) and lines fulfilled by D365 (warehouses). Each path sends a different data feed to D365 and triggers packing slip posting through a different mechanism.
 
-### 5.1 Fulfillment Flow
-- **Picking and Packing**: These operations are handled in D365.
-- **Packing Slip**: Posting a packing slip marks the order as "Delivered."
+```
+OMS Brokers Order Items
+        │
+        ├── Store facility  ──► OMS fulfills ──► OMS sends fulfilled location ──► D365 packing slip batch (HcFulfillmentType = OMS)
+        │
+        └── Warehouse facility ──► OMS sends brokered location ──► D365 WMS fulfills ──► D365 packing slip (WMS ops)
+```
 
-### 5.2 Invoicing Requirement
-- **Custom Logic**: Orders created via OData may not automatically trigger invoicing upon packing slip posting.
-- **Requirement**: Implement or trigger invoicing logic within D365 to ensure the Sales Order moves to the "Invoiced" state.
+### 5.1 Store Fulfillment (OMS-Side)
 
-> [!TODO]
-> Validate the exact invoicing behavior in the target D365 environment. This is retained as an exploration point and is not enforced by the current HotWax connector code.
+Store-fulfilled order items are physically picked, packed, and shipped within OMS. D365 receives the fulfillment result after the fact and posts the packing slip using a batch job.
 
-### 5.3 Settlement Logic
+1. **OMS brokers the order item** to a store facility.
+2. **OMS fulfills the order** — pick, pack, ship.
+3. **OMS sends the fulfilled location update to D365** via the `HotWax_Import_Fulfilled_Order_Items` data package.
+   - Entity: `Sales order lines V3`
+   - Field updated: `SHIPPINGWAREHOUSEID` (the store's D365 warehouse ID from `Facility.externalId`)
+   - Prerequisite: `D365_SLS_ORD_NUM` and `D365SalesOrderItemInventoryLotId` must already be resolved in OMS.
+4. **D365 posts the packing slip** via an OOTB batch job filtered on the custom field `HcFulfillmentType = OMS`:
+   - Navigation: `Sales and marketing > Order shipping > Post packing slip`
+   - Query filters: `Sales Order Line HC Fulfillment Type = OMS`, Sales Order status = `Open order, Delivered`
+   - Validated — see issue [#15](https://github.com/hotwax/dynamics365-integration/issues/15).
+5. The packing slip marks these lines as **Delivered** in D365, making them eligible for the invoice batch.
+
+### 5.2 Warehouse Fulfillment (D365/WMS-Side)
+
+Warehouse-fulfilled order items are handed off to D365 after brokering. D365 owns all physical fulfillment and posts the packing slip as part of its own WMS operations.
+
+1. **OMS brokers the order item** to a warehouse facility that has a D365 warehouse mapping (`Facility.externalId`).
+2. **OMS sends the brokered warehouse location to D365** via the `HotWax_Import_Brokered_Order_Items` data package.
+   - Entity: `Sales order lines V3`
+   - Field updated: `SHIPPINGWAREHOUSEID`
+   - Prerequisite: `D365_SLS_ORD_NUM` and `D365SalesOrderItemInventoryLotId` must already be resolved in OMS.
+3. **D365 owns all fulfillment from this point** — warehouse staff pick and pack using D365 WMS flows, and D365 posts the packing slip as part of its shipping confirmation process.
+4. **D365 can optionally push shipment data back to OMS** after packing slip posting. See [Section 9 — Outbound Notifications](#9-outbound-notifications-d365---oms) and [shipment_export_exploration.md](./shipment_export_exploration.md).
+
+> [!NOTE]
+> Reservation is currently configured as `Manual` in the tested D365 setup (`AR > Parameters > General > Sales default values > Reservation`). Sending the brokered warehouse location does not automatically trigger reservation. Reservation remains an ERP-side operational step performed before warehouse picking begins.
+
+### 5.3 Mixed Cart Handling
+
+A single sales order can contain both store-fulfilled and warehouse-fulfilled lines. Each line is processed independently through its own path.
+
+- OMS sends **two separate data packages**:
+  - `HotWax_Import_Brokered_Order_Items` for warehouse-destined lines (after brokering)
+  - `HotWax_Import_Fulfilled_Order_Items` for store-fulfilled lines (after OMS fulfillment completes)
+- D365 produces **separate packing slips** — one triggered by the HC-fulfillment batch job, one by WMS warehouse operations.
+- A single sales order therefore generates **multiple packing slips and multiple invoices**.
+
+For detailed line-level routing and brokering mechanics, see [implementation_plan.md — Section 1.3: Mixed Cart Order Handling](./implementation_plan.md).
+
+---
+
+## 6. Invoicing
+
+### 6.1 Invoice Batch Job
+
+A single OOTB D365 batch job handles invoice posting for all order lines regardless of fulfillment type. It picks up any lines that have reached the **Delivered** state (packing slip posted).
+
+- **Navigation**: `Accounts receivable > Invoices > Batch invoicing > Invoice`
+- **Quantity**: `Packing slip` — invoices only the quantities confirmed by packing slip.
+- **Late selection**: `Yes` — query re-evaluates at each run, not only at job creation time.
+- **Scope**: Covers both OMS-fulfilled lines (packing slip posted by HC batch) and WMS-fulfilled lines (packing slip posted by D365 warehouse operations).
+- Validated in issues [#16](https://github.com/hotwax/dynamics365-integration/issues/16) (POS) and [#17](https://github.com/hotwax/dynamics365-integration/issues/17) (HC fulfilled).
+
+> [!NOTE]
+> The current invoice batch job has no filter on `HcFulfillmentType` — it picks up all `Delivered` lines. If separate invoicing cadences for store-fulfilled vs. warehouse-fulfilled lines are needed in future, separate batch jobs with distinct query filters can be configured.
+
+### 6.2 Multi-Invoice Scenario
+
+Because packing slips are posted per fulfillment event, a single sales order can produce multiple invoices:
+
+| Scenario | Packing slips | Invoices |
+| :--- | :---: | :---: |
+| Single shipment, single fulfillment type | 1 | 1 |
+| Mixed cart (store + warehouse lines) | 2 | 2 |
+| Partial WMS shipments from same warehouse | N (one per shipment) | N |
+
+The settlement service handles all of these cases. See [invoice_settlement.md — Section 5](./invoice_settlement.md) for the multi-invoice settlement design.
+
+---
+
+## 7. Settlement
+
 Since one Sales Order can produce multiple invoices (due to partial shipments or split fulfillment), the settlement process must be robust.
+
 - **Pattern**: Apply captured payments to open invoices for the same Sales Order.
 - **Matching**: OMS writes the D365 `SalesOrderNumber` into `PaymentReference` on every payment journal line. The custom settlement service matches on `invoice.SalesId == payment.PaymReference` — explicitly order-scoped, not customer-level FIFO.
 - **Rule**: Payment is applied to all open invoices for the matched Sales Order until either the payment is exhausted or all invoices are closed. Partial settlement is supported natively.
@@ -223,7 +296,7 @@ Since one Sales Order can produce multiple invoices (due to partial shipments or
 
 ---
 
-## 6. Integration Questions (Discovery)
+## 8. Integration Questions (Discovery)
 
 The following questions should be clarified with the D365 Finance/Functional team:
 
@@ -242,7 +315,7 @@ The following questions should be clarified with the D365 Finance/Functional tea
 
 ---
 
-## 7. Outbound Notifications (D365 -> OMS)
+## 9. Outbound Notifications (D365 -> OMS)
 
 Outbound integration from D365 to OMS can be implemented through either event-driven notifications or data export patterns, depending on payload and filtering requirements.
 
