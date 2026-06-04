@@ -16,6 +16,8 @@ The goal of this integration is to synchronize critical business data, specifica
     *   Specific technical design, sequence flows, and step-by-step roadmap for development.
 4.  **[Shipment Export Exploration](sales-orders/shipment_export_exploration.md)**
     *   Exploration notes for outbound shipment synchronization patterns from D365 to OMS.
+5.  **[Invoice Settlement & Customer Payment Integration](sales-orders/invoice_settlement.md)**
+    *   Full lifecycle from payment journal creation through invoice posting and settlement, including explored approaches, verified behaviors, use cases, and open items.
 
 ### Sales Returns
 1.  **[D365 Return & Exchange Accounting Model](sales-returns/d365_return_exchange_accounting_model.md)**
