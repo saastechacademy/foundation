@@ -1263,7 +1263,7 @@ INVENTORYLOTID,SHIPPINGWAREHOUSEID
 | D365 Field | Moqui Field | Usage / Notes |
 | :--- | :--- | :--- |
 | `dataAreaId` | `ProductStore.externalId` | Legal entity context. |
-| `JournalName` | "CUSTPAY" | Fixed mapping for payment journals. |
+| `JournalName` | "OMSPAY" | Fixed mapping for payment journals. |
 | `Description` | "OMS Payment - SO [id]" | Reference for identifying the batch. |
 
 #### Line (`CustomerPaymentJournalLines`)

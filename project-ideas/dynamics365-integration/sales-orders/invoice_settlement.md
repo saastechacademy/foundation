@@ -76,59 +76,141 @@ Settlement                 ←── Posted payment applied to open invoice(s)
 
 ## 3. Customer Payment Journal Sync
 
-OMS pushes payments to D365 as **Customer Payment Journals** via OData. Journals are created in an unposted (draft) state.
+The connector supports two approaches for syncing OMS payments to D365 as Customer Payment Journals. Both create journals in an **unposted (draft)** state; posting is handled by a D365-side batch job.
 
-### 3.1 Approach: Standard On-Account Payment (`IsPrepayment = No`)
+### 3.1 Common Design: On-Account Payment (`IsPrepayment = No`)
 
-- **Why on-account, not prepayment**: The `IsPrepayment = Yes` path requires D365 to validate tax inclusion and a dedicated prepayment posting profile at journal creation time. In practice this caused frequent validation failures during OData posting, especially when tax configuration was incomplete in the sandbox.
-- **On-account behavior**: Creates an open "unapplied" transaction on the customer's AR account in D365. This open transaction waits to be settled against an invoice when the packing slip + invoice posting cycle completes.
+Both approaches use the standard on-account (non-prepayment) flow.
+
+- **Why on-account, not prepayment**: `IsPrepayment = Yes` requires D365 to validate tax inclusion and a dedicated prepayment posting profile at journal creation time. In practice this caused frequent validation failures during OData posting, especially when tax configuration was incomplete in the sandbox.
+- **On-account behavior**: Creates an open "unapplied" transaction on the customer's AR account. This waits to be settled against an invoice when the packing slip + invoice posting cycle completes.
+- **Journal name**: `OMSPAY` (fixed, both approaches).
+- **One journal header per sales order**, with one line per `OrderPaymentPreference` (supports multi-payment per order — e.g. gift card + credit card).
 
 **Verified**: On-account payment journal creation via OData works in the D365 sandbox.
 
-### 3.2 Payment Journal Entity Mapping
+### 3.2 Eligibility View (`D365EligibleSalesOrderPayments`)
 
-#### Header (`CustomerPaymentJournalHeaders`)
+Both approaches query the same view entity: `co.hotwax.d365.payment.D365EligibleSalesOrderPayments`.
+
+**Eligibility rules:**
+- Order type is `SALES_ORDER`.
+- Order has a `D365_SLS_ORD_NUM` `OrderIdentification` (D365 Sales Order Number must be resolved before payments can be synced).
+- `OrderPaymentPreference.statusId != PAYMENT_REFUNDED` (excludes refunded payments; all other statuses are eligible).
+
+**Aliases exposed**: `orderId`, `partyId`, `d365SalesOrderNumber`, `orderPaymentPreferenceId`, `amount`, `paymentMethodTypeId`, `dataAreaId`.
+
+> [!NOTE]
+> There is currently no `D365PaymentSyncHistory` persistence entity. Both approaches rely on D365-side idempotency checks (OData) or re-import behavior (DMF) to avoid duplicates. Adding a local sync history entity to gate eligibility at the OMS level is a tracked TODO.
+
+### 3.3 Approach 1: OData (`sync#CustomerPaymentJournals`)
+
+Creates journal headers and lines via direct OData REST calls. One API call per header, one per line.
+
+**Service**: `co.hotwax.d365.D365PaymentServices.sync#CustomerPaymentJournals`
+
+#### Header mapping (`CustomerPaymentJournalHeaders`)
 
 | D365 Field | OMS / Moqui Source | Notes |
 | :--- | :--- | :--- |
 | `dataAreaId` | `ProductStore.externalId` | Legal entity context. |
-| `JournalName` | `"CUSTPAY"` | Fixed journal name for customer payments. |
-| `Description` | `"OMS Payment - SO <d365SalesOrderNumber>"` | Used as idempotency key. |
+| `JournalName` | `"OMSPAY"` | Fixed journal name. |
+| `Description` | `"OMS Payment Journal - SO <d365SalesOrderNumber>"` | Used as idempotency lookup key. |
 
-#### Line (`CustomerPaymentJournalLines`)
+#### Line mapping (`CustomerPaymentJournalLines`)
 
 | D365 Field | OMS / Moqui Source | Notes |
 | :--- | :--- | :--- |
 | `dataAreaId` | `ProductStore.externalId` | Legal entity context. |
 | `JournalBatchNumber` | Returned from header POST | Links line to journal header. |
-| `AccountType` | `"Cust"` | Fixed: customer account debit. |
-| `AccountDisplayValue` | `"HW-" + partyId` | Customer account identifier. Must be backslash-escaped if it contains special chars (`HW\-02`). |
-| `CreditAmount` | `OrderPaymentPreference.maxAmount` | Settled amount from OMS. |
+| `AccountType` | `"Cust"` | Fixed. |
+| `AccountDisplayValue` | `"HW\\-" + partyId` | Backslash-escaped to avoid OData filter issues. |
 | `CurrencyCode` | `"USD"` | Currently defaulted. |
-| `IsPrepayment` | `"No"` | Standard on-account flow. |
-| `PaymentReference` | `d365SalesOrderNumber` | Links the payment to the sales order. Critical for settlement matching. |
-| `PaymentMethodName` | `paymentMethodTypeId` | E.g., `CASH`, `CREDIT_CARD`. |
-| `OffsetAccountType` | `"Bank"` | Counter account type. |
-| `OffsetAccountDisplayValue` | `paymentMethodTypeId` mapping | Bank account code (e.g., `USMF OPER`). |
+| `CreditAmount` | `OrderPaymentPreference.maxAmount` | Payment amount. |
+| `IsPrepayment` | `"No"` | On-account flow. |
+| `PaymentReference` | `d365SalesOrderNumber` | Critical for settlement matching. |
+| `OffsetAccountType` | `"Bank"` | Fixed. |
+| `OffsetAccountDisplayValue` | `"USMF OPER"` | Hardcoded. **TODO**: map from `paymentMethodTypeId` via `IntegrationTypeMapping`. |
+| `PaymentId` | `orderPaymentPreferenceId` | Used for idempotency line lookup. |
 
-- **Reference**: [Customer payment journals](https://learn.microsoft.com/en-us/dynamics365/finance/accounts-receivable/tasks/create-free-text-invoice)
+#### Idempotency
 
-### 3.3 Idempotency Pattern
+- **Header**: `GET /data/CustomerPaymentJournalHeaders` filtered by `Description eq '<journalDescription>' and IsPosted eq 'No'`. Reuses existing unposted journal if found.
+- **Line**: `GET /data/CustomerPaymentJournalLines` filtered by `JournalBatchNumber` and `PaymentId`. Skips line if already exists.
 
-- **Header**: Lookup by `Description = "OMS Payment Journal - SO <d365SalesOrderNumber>"`.
-- **Line**: Lookup by `PaymentId = orderPaymentPreferenceId`.
-- If the journal already exists for the same order, the existing record is reused.
+#### Limitations
 
-> [!NOTE]
-> The connector currently creates unposted journal headers and lines. It does **not** post the journal. Journal posting is expected to be handled by a D365 batch job (OOTB or custom X++).
+- No batch size limit — a large number of orders each with multiple payment lines generates `1 + N` API calls per order.
+- `OffsetAccountDisplayValue` is currently hardcoded; no payment method mapping applied.
 
-### 3.4 Eligibility View (`D365EligiblePaymentJournals`)
+### 3.4 Approach 2: Data Package API (`import#CustomerPaymentJournalsDataPackage`)
 
-- Order has a `D365_SLS_ORD_NUM` `OrderIdentification` (i.e., D365 Sales Order Number is known).
-- Payment preference is in `PAYMENT_SETTLED` status.
-- Aliases exposed: `orderId`, `d365SalesOrderNumber`, `orderPaymentPreferenceId`, `amount`, `paymentMethodTypeId`, `dataAreaId`, `partyId`.
+Builds a composite XML package and submits it through the D365 Data Management Framework (DMF). Follows the same pattern as the sales order Data Package import.
 
-**TODO**: Add persistence for synced payments (e.g., `D365PaymentSyncHistory` entity) so already-synced payments are excluded from the eligibility view on next run.
+**Service**: `co.hotwax.d365.D365PaymentServices.import#CustomerPaymentJournalsDataPackage`  
+**D365 entity**: `Customer payment journal` (composite — `CUSTOMERPAYMENTJOURNALHEADERENTITY` + `CUSTOMERPAYMENTJOURNALLINEENTITY`)  
+**Definition group**: `HotWax_Import_CustomerPayments_Composite`  
+**System message type**: `D365_IMP_ORDER_PMTS`
+
+#### XML Structure
+
+```xml
+<Document>
+  <CUSTOMERPAYMENTJOURNALHEADERENTITY JOURNALNAME="OMSPAY" DESCRIPTION="OMS Payment Journal - SO 000887">
+    <CUSTOMERPAYMENTJOURNALLINEENTITY
+      ACCOUNTTYPE="Cust"
+      ACCOUNTDISPLAYVALUE="HW\-10001"
+      CURRENCYCODE="USD"
+      CREDITAMOUNT="100.00"
+      ISPREPAYMENT="No"
+      PAYMENTREFERENCE="000887"
+      OFFSETACCOUNTTYPE="Bank"
+      OFFSETACCOUNTDISPLAYVALUE="USMF OPER"
+      PAYMENTMETHODNAME="CASH"
+      PAYMENTID="10050"/>
+  </CUSTOMERPAYMENTJOURNALHEADERENTITY>
+</Document>
+```
+
+#### Field mapping differences vs. OData
+
+| Field | OData | Data Package |
+| :--- | :--- | :--- |
+| `PaymentMethodName` / `PAYMENTMETHODNAME` | Not mapped (no `IntegrationTypeMapping` lookup) | Resolved via `IntegrationTypeMapping(D365_PMT_MTHD)`, falls back to `CASH` |
+| `LineNumber` | Explicitly managed (auto-incremented) | Not sent — D365 assigns line numbers |
+| Idempotency | Pre-import OData lookup per header and line | No pre-import lookup; D365 DMF handles re-import behavior |
+
+#### Processing Flow
+
+1. Query `D365EligibleSalesOrderPayments`, group by `orderId`, limit to 1000 payments.
+2. Apply optional `fromDate` filter (supports `lastRunTime` job parameter for incremental runs).
+3. Build composite XML in memory (`CUSTOMERPAYMENTJOURNALHEADERENTITY` with nested `CUSTOMERPAYMENTJOURNALLINEENTITY`).
+4. Generate `PackageHeader.xml` and `Manifest.xml`.
+5. Compress to ZIP in memory.
+6. `POST /data/DataManagementDefinitionGroups/Microsoft.Dynamics.DataEntities.GetAzureWriteUrl` → obtain blob URL.
+7. `PUT <blobUrl>` (direct HTTP, `Content-Type: application/zip`) → upload ZIP.
+8. `POST /data/DataManagementDefinitionGroups/Microsoft.Dynamics.DataEntities.ImportFromPackage` → trigger import, receive `executionId`.
+9. Create `SystemMessage` in `SmsgSent` with `remoteMessageId = executionId` for status tracking.
+
+#### Tracking
+
+- **System message type**: `D365_IMP_ORDER_PMTS`
+- **Execution ID stored in**: `SystemMessage.remoteMessageId`
+- Poll job queries `D365_IMP_ORDER_PMTS` messages in `SmsgSent` using the generic `poll#ImportDataPackageStatus` service.
+
+### 3.5 Approach Comparison
+
+| Feature | OData (`sync#CustomerPaymentJournals`) | Data Package (`import#CustomerPaymentJournalsDataPackage`) |
+| :--- | :--- | :--- |
+| **Transport** | Direct OData REST (per header + per line) | DMF composite XML package via Azure Blob |
+| **Idempotency** | OData lookup before each header and line creation | No pre-import OData lookup |
+| **Payment method mapping** | Not applied (hardcoded `USMF OPER` offset account) | `IntegrationTypeMapping(D365_PMT_MTHD)` applied |
+| **Incremental support** | `orderId` filter only | `fromDate` + `lastRunTime` job parameter |
+| **Batch limit** | None (unbounded) | 1000 payments per run |
+| **Execution tracking** | None | `SystemMessage` in `SmsgSent` with D365 `executionId` |
+| **Status** | Implemented | Implemented |
+
+- **Reference**: [Customer payment journals](https://learn.microsoft.com/en-us/dynamics365/finance/accounts-receivable/customer-payment-journal)
 
 ---
 
@@ -378,11 +460,7 @@ These scenarios cover the `HotWaxAutoPostSettlementService` custom X++ settlemen
 
 | Item | Priority | Notes |
 | :--- | :--- | :--- |
-| Add `D365PaymentSyncHistory` entity | High | Prevent duplicate payment journal creation on scheduler re-runs. Currently `sync#CustomerPayments` has no persistence guard. |
-| Validate auto-invoice OOTB batch for OMS-imported orders | High | Must be tested in the target D365 environment to confirm OMS-imported orders are eligible for the OOTB invoice batch. |
 | Run settlement test scenarios #4, #6, #8–#11, #14–#16 | High | See section 8 for full scenario descriptions and current status. |
-| Validate payment journal auto-post in target environment | Medium | Confirm whether OOTB AR auto-post handles `CUSTPAY` journals, or whether a custom batch is needed (see section 5.4 step 5). |
-| Validate end-to-end POS lifecycle | Medium | Steps 1–3 and step 6 validated individually; full chain (order → packing slip → invoice → payment → settlement) not yet run as one sequence. |
 | Map `paymentMethodTypeId` to D365 bank account codes | Medium | Currently requires manual mapping. Should be driven by `IntegrationTypeMapping`. |
 | Decide on `SalesTaxGroup` mapping | Medium | Currently sent as empty string. Expected D365 value is something like `AVATAX`. |
 
