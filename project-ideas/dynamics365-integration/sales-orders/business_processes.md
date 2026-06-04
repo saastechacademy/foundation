@@ -217,8 +217,12 @@ Store-fulfilled order items are physically picked, packed, and shipped within OM
 2. **OMS fulfills the order** — pick, pack, ship.
 3. **OMS sends the fulfilled location update to D365** via the `HotWax_Import_Fulfilled_Order_Items` data package.
    - Entity: `Sales order lines V3`
-   - Field updated: `SHIPPINGWAREHOUSEID` (the store's D365 warehouse ID from `Facility.externalId`)
+   - Fields updated: `SHIPPINGWAREHOUSEID` (the store's D365 warehouse ID from `Facility.externalId`) and `HCFULFILLMENTTYPE = OMS`
    - Prerequisite: `D365_SLS_ORD_NUM` and `D365SalesOrderItemInventoryLotId` must already be resolved in OMS.
+
+> [!NOTE]
+> If the order was already brokered to a store when it was first synced to D365, `HcFulfillmentType = OMS` is set on the line at initial order creation time. The fulfilled items feed reinforces this value and adds the final `SHIPPINGWAREHOUSEID`.
+
 4. **D365 posts the packing slip** via an OOTB batch job filtered on the custom field `HcFulfillmentType = OMS`:
    - Navigation: `Sales and marketing > Order shipping > Post packing slip`
    - Query filters: `Sales Order Line HC Fulfillment Type = OMS`, Sales Order status = `Open order, Delivered`
@@ -232,8 +236,11 @@ Warehouse-fulfilled order items are handed off to D365 after brokering. D365 own
 1. **OMS brokers the order item** to a warehouse facility that has a D365 warehouse mapping (`Facility.externalId`).
 2. **OMS sends the brokered warehouse location to D365** via the `HotWax_Import_Brokered_Order_Items` data package.
    - Entity: `Sales order lines V3`
-   - Field updated: `SHIPPINGWAREHOUSEID`
+   - Fields updated: `SHIPPINGWAREHOUSEID` (the final warehouse) and `HCFULFILLMENTTYPE = WMS`
    - Prerequisite: `D365_SLS_ORD_NUM` and `D365SalesOrderItemInventoryLotId` must already be resolved in OMS.
+
+> [!NOTE]
+> If the order was already brokered to a warehouse when it was first synced to D365, `HcFulfillmentType = WMS` is set on the line at initial order creation time. The brokered items feed reinforces this value and updates `SHIPPINGWAREHOUSEID` with the final warehouse once brokering is confirmed.
 3. **D365 owns all fulfillment from this point** — warehouse staff pick and pack using D365 WMS flows, and D365 posts the packing slip as part of its shipping confirmation process.
 4. **D365 pushes shipment data back to OMS** after packing slip posting so OMS can mark the warehouse-fulfilled order items as shipped/completed. See [Section 9 — Outbound Notifications](#9-outbound-notifications-d365---oms) and [shipment_export_exploration.md](./shipment_export_exploration.md).
 

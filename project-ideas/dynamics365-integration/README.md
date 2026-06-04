@@ -30,3 +30,5 @@ The goal of this integration is to synchronize critical business data, specifica
     *   Documentation and APIs for pushing DMF packages to D365.
 2.  **[Data Import Package API](data-package-api/data_import_package_api.md)**
     *   Documentation and APIs for polling DMF export packages from D365.
+3.  **[Updating Field Mappings in an Existing Data Project](data-package-api/data_project_field_mapping_update.md)**
+    *   Step-by-step procedure for updating a D365 data project when a new field is added to a feed, including the correct Load project → Upload file → Regenerate mapping flow.

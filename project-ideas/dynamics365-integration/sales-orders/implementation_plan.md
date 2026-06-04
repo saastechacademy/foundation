@@ -246,7 +246,8 @@ This is a fully implemented direct-sync path that creates a sales order header a
 | `ProductSizeId` | `ProductFeature(SIZE)` | Sent when the OMS item exposes a size feature. |
 | `ProductColorId` | `ProductFeature(COLOR)` | Sent when the OMS item exposes a color feature. |
 | `shipmentMethodTypeId` | `OrderItemShipGroup.shipmentMethodTypeId` | Used to derive the order-level `DeliveryModeCode`. |
-| `ShippingWarehouseId` | `item.shippingWarehouseId` | Sent only for `WH_ONLY_FULFILLMENT` items. |
+| `ShippingWarehouseId` | `item.shippingWarehouseId` | Populated only when `HcFulfillmentType = WMS`; empty string otherwise. |
+| `HcFulfillmentType` | `D365MappingWorker.getHcFulfillmentType(facilityId)` | Set at order creation time if the fulfillment path is already known: `WMS` (facility in `WH_ONLY_FULFILLMENT`), `OMS` (facility in `OMS_FULFILLMENT`), or omitted if not yet brokered. Will be set later by the brokered/fulfilled item update feeds. |
 
 ##### OData Idempotency and Failure Behavior
 - **Header idempotency key**: `CustomersOrderReference`
@@ -641,7 +642,8 @@ After OMS confirms the remote execution and completes follow-up processing, the 
 | `PRODUCTSIZEID` | `ProductFeature(SIZE)` | Sent when the OMS item exposes a size feature. |
 | `PRODUCTCOLORID` | `ProductFeature(COLOR)` | Sent when the OMS item exposes a color feature. |
 | `shipmentMethodTypeId` | `OrderItemShipGroup.shipmentMethodTypeId` | Used to derive the order-level `DELIVERYMODECODE`. |
-| `SHIPPINGWAREHOUSEID` | `shippingWarehouseId` | Sent for D365 fulfillment warehouse use case. |
+| `SHIPPINGWAREHOUSEID` | `shippingWarehouseId` | Populated only when `HCFULFILLMENTTYPE = WMS`; empty string otherwise. |
+| `HCFULFILLMENTTYPE` | `D365MappingWorker.getHcFulfillmentType(facilityId)` | Set at order creation time if the fulfillment path is already known: `WMS` (facility in `WH_ONLY_FULFILLMENT`), `OMS` (facility in `OMS_FULFILLMENT`), or omitted if not yet brokered. Will be set later by the brokered/fulfilled item update feeds. |
 
 ###### DMF Shipment Method Handling
 - The eligible-order view also exposes `isMixCartOrder` so order-level delivery mode can be derived consistently.
@@ -1166,9 +1168,9 @@ Once OMS has final brokered fulfillment location information, it can update the 
 - **Validated file shape**:
 
 ```csv
-INVENTORYLOTID,SHIPPINGWAREHOUSEID
-479494,100
-479495,13
+INVENTORYLOTID,SHIPPINGWAREHOUSEID,HCFULFILLMENTTYPE
+479494,100,WMS
+479495,13,WMS
 ```
 
 - `DATAAREAID` is intentionally not included in the file. The OMS service requires `dataAreaId` as an input parameter and passes it to D365 as `legalEntityId` in the `ImportFromPackage` request.
@@ -1219,9 +1221,9 @@ Once OMS has physically fulfilled a store-owned line, it can update the D365 sal
 - **Validated file shape**:
 
 ```csv
-INVENTORYLOTID,SHIPPINGWAREHOUSEID
-479494,100
-479495,13
+INVENTORYLOTID,SHIPPINGWAREHOUSEID,HCFULFILLMENTTYPE
+479494,100,OMS
+479495,13,OMS
 ```
 
 - `DATAAREAID` is intentionally not included in the file. The OMS service requires `dataAreaId` as an input parameter and passes it to D365 as `legalEntityId` in the `ImportFromPackage` request.
@@ -1247,6 +1249,16 @@ INVENTORYLOTID,SHIPPINGWAREHOUSEID
 - `OrderFulfillmentHistory` is used only as a sent marker here; the full D365 execution id is not stored on that entity because the value can exceed the local field length.
 - If a fulfilled-item package fails in D365 and the same item needs to be re-sent, the corresponding `OrderFulfillmentHistory` row must be removed or otherwise cleared for retry.
 - Because reservation is currently manual in the tested D365 setup, this fulfilled-location update is expected to be safe before downstream D365 posting. If D365 reservation or posting behavior changes, this assumption must be retested.
+
+> [!TODO]
+> **Revisit: single vs. separate D365 data projects for brokered and fulfilled item updates.**
+> Both feeds now send identical fields to D365 (`INVENTORYLOTID`, `SHIPPINGWAREHOUSEID`, `HCFULFILLMENTTYPE`) against the same entity (`Sales order lines V3`). A single D365 data project (`HotWax_Import_Order_Item_Updates`) could technically serve both, since D365 does not distinguish between brokered and fulfilled items — it just updates the sales order line.
+>
+> **Reasons to consolidate:** fewer D365 data projects to maintain and configure.
+>
+> **Reasons to keep separate:** independent scheduling frequency (brokered items should be sent as soon as brokering is confirmed; fulfilled items are sent after physical shipment), independent monitoring and failure isolation, and the ability for each flow to evolve its field set independently if future requirements differ (e.g., adding a tracking number or fulfillment timestamp to the fulfilled items feed).
+>
+> If the two feeds remain field-identical over time and operational simplicity is preferred, consolidation into a single D365 data project is a valid option.
 
 ## Customer Payment Integration
 
