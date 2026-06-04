@@ -300,15 +300,15 @@ Since one Sales Order can produce multiple invoices (due to partial shipments or
 
 The following questions should be clarified with the D365 Finance/Functional team:
 
-### 6.1 Legal Entities (dataAreaId)
+### 8.1 Legal Entities (dataAreaId)
 - Which **Legal Entities (dataAreaId)** are in scope for this integration?
 - Should we map these 1-to-1 with HotWax **Product Stores**, or is there a specific organizational hierarchy to follow?
 
-### 6.2 Customer Groups (CustomerGroupId)
+### 8.2 Customer Groups (CustomerGroupId)
 - Which **Customer Groups** should be assigned to customers synced from HotWax?
 - Will all digital/B2C customers use a single group (e.g., `DEFLT`), or are there multiple groups based on customer categorization?
 
-### 6.3 Financial Configuration
+### 8.3 Financial Configuration
 - What is the default **Sales Currency Code** (e.g., USD, EUR) to be used for these customers? Does it vary by legal entity?
 - [ ] Can you confirm whether the current environment allows caller-provided `CustomerAccount` values for customer creation?
 - [ ] If the target state is **Automatic** numbering with **Manual = No**, when should the connector be updated to stop sending `CustomerAccount`?
@@ -317,35 +317,35 @@ The following questions should be clarified with the D365 Finance/Functional tea
 
 ## 9. Outbound Notifications (D365 -> OMS)
 
-Outbound integration from D365 to OMS can be implemented through either event-driven notifications or data export patterns, depending on payload and filtering requirements.
+D365 pushes data back to OMS at two points in the order lifecycle: after warehouse fulfillment completes (mandatory) and after invoice posting (future).
 
-### 7.1 Fulfillment Updates (Packing Slip)
-- **D365 Event**: `SalesOrderPackingSlipPostBusinessEvent` (or similar).
-- **Trigger**: When a packing slip is posted in D365.
-- **OMS Action**: Update shipment status to "Shipped" and record tracking information.
-- **Implementation options**:
-  - Business Event -> Logic App
-  - Business Event -> Azure Service Bus Queue -> Azure Function
-  - Custom shipment export entity -> DMF recurring export -> Azure Function
-- **Selection driver**: Choose the pattern based on payload completeness, filtering requirements, operational controls, and downstream transformation complexity.
+### 9.1 Shipment Sync — WMS-Fulfilled Orders (Mandatory)
 
-### 7.2 Financial Updates (Invoice)
-- **D365 Event**: `SalesOrderInvoicedBusinessEvent`.
-- **Trigger**: When a sales order is successfully invoiced.
-- **OMS Action**: Capture payment (if not already captured) and mark the order as "Completed."
+After D365 posts the packing slip for warehouse-fulfilled order lines, OMS must receive the shipment data to mark those items as shipped and trigger order completion.
 
-### 7.3 Integration Pattern
-- **Method**: D365 pushes a JSON payload to a Moqui REST endpoint via an HTTPS Webhook or Azure Power Automate.
-- **Payload**: Minimal event data (Event ID, Company, SalesOrderNumber) used by Moqui to then pull detailed data via OData if necessary.
+- **Trigger**: Packing slip posted in D365 for lines where `HcFulfillmentType = WMS`.
+- **OMS Action**: Create an OMS shipment record with tracking information; mark warehouse-fulfilled order items as shipped/completed.
+- **Selected approach**: Custom flat export entity (`OmsPackingSlipExportEntity`) via DMF recurring integration (dequeue/ack).
+  - The entity filters on `HcFulfillmentType = WMS` so only warehouse-fulfilled lines are exported, keeping store-fulfilled lines out of this feed.
+  - A single flat row includes packing slip header, order line, and tracking data combined — no middleware assembly required.
+  - OMS polls the D365 recurring export queue (`dequeue`), groups flat rows by `PackingSlipId + SalesId` to reconstruct the shipment structure, creates OMS shipments, then acknowledges (`ack`) to clear the message from the queue.
+- **OMS integration components**: `D365_EXP_PACKING_SLIPS` system message type, `d365_QueuePackingSlipsExport` queue job, `d365_ExportPackingSlipsPoll` poll job, `storeAndCreate#D365OutboundShipments` processing service.
 
-### 7.4 Shipment Export Pattern (Data Entity + DMF)
-When outbound integration requires line-level filtering and combined header/line/tracking data, a custom flat export entity can be used.
+**Approaches Explored**
 
-- **Requirement pattern**: Sync only a subset of shipment lines based on fulfillment source/business criteria.
-- **Entity composition**:
-  - `CustPackingSlipJourBiEntities` for header fields
-  - `CustPackingSlipTransBiEntities` for line fields
-  - `PackingSlipTrackingInformation` for tracking/carrier fields
-- **Export model**: Flat rows via DMF recurring integration.
-- **Transformation model**: Integration middleware polls recurring integration (`dequeue`/`ack`), groups rows by shipment key, and constructs OMS shipment JSON.
-- **Exploration details**: See [shipment_export_exploration.md](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/foundation/project-ideas/dynamics365-integration/sales-orders/shipment_export_exploration.md).
+| Approach | POC Status | Outcome |
+| :--- | :--- | :--- |
+| Business Event → Logic App | Validated as technically feasible | Not selected |
+| Business Event → Azure Service Bus → Azure Function | Validated as technically feasible | Not selected |
+| Custom flat entity → DMF recurring export → OMS | **Selected** | Chosen for line-level `HcFulfillmentType` filtering and single-export payload completeness (header + lines + tracking) |
+
+For full D365 entity design, field mappings, and OMS processing logic, see [shipment_export_exploration.md](./shipment_export_exploration.md).
+
+### 9.2 Financial Updates — Invoice Posted (Future)
+
+When D365 posts a sales invoice, OMS may need to trigger post-invoice processing (e.g., updating order status or confirming financial closure).
+
+- **Trigger**: Sales order successfully invoiced in D365 (`SalesOrderInvoicedBusinessEvent`).
+- **OMS Action**: Mark order as financially completed / trigger any post-invoice OMS processing.
+- **Approach under consideration**: `SalesOrderInvoicedBusinessEvent` → Azure integration (Logic App or Service Bus) → OMS REST endpoint.
+- **Status**: Not yet implemented.
