@@ -1250,10 +1250,13 @@ INVENTORYLOTID,SHIPPINGWAREHOUSEID
 
 ## Customer Payment Integration
 
+> For the complete settlement lifecycle — including why OOTB D365 settlement is insufficient, the custom `HotWaxAutoPostSettlementService` design, the X++ API used, the multi-payment amount-capping fix, contract parameters, and full test scenarios — see **[Invoice Settlement & Customer Payment Integration](./invoice_settlement.md)**.
+
 ### Sync Flow & Posting Strategy
 1.  **Draft Creation**: OMS POSTs `CustomerPaymentJournalHeaders` then `CustomerPaymentJournalLines`.
 2.  **Unposted State**: Journals created via OData are initially **Unposted** (`IsPosted = No`).
-3.  **Batch Posting**: A scheduled D365 batch job (standard or custom) identifies these unposted journals and executes the "Post" business logic to move them to the subledger.
+3.  **Batch Posting**: A scheduled D365 batch job identifies unposted journals and posts them to the subledger.
+4.  **Settlement**: The custom `HotWaxAutoPostSettlementService` batch job settles posted payments against posted invoices using `PaymReference = SalesId` matching. OOTB auto-settlement was evaluated and rejected — it operates at customer account level (FIFO) and cannot honor order-specific payment references.
 
 ### Mappings
 #### Header (`CustomerPaymentJournalHeaders`)
@@ -1344,16 +1347,9 @@ The order will be sent to D365 as part of the [Sales Order Sync](#sales-order-sy
 
 ### Implementation Strategy: OOTB vs. Custom Code
 
-Many of these automated steps can be configured Out-Of-The-Box (OOTB) in Dynamics 365 using standard functionalities like Batch Jobs without requiring custom X++ development:
+- **Automated Packing Slip Posting**: Handled by OOTB D365 batch job (`Sales and marketing > Post packing slip`, filtered by `SalesOrigin = POS`). Validated — see issue [#13](https://github.com/hotwax/dynamics365-integration/issues/13).
+- **Automated Invoice Posting**: Handled by OOTB D365 batch job (`AR > Invoices > Batch invoicing > Invoice`, filtered by `SalesOrigin = POS`). Validated — see issue [#16](https://github.com/hotwax/dynamics365-integration/issues/16).
+- **Payment Journal Posting**: Under evaluation — OOTB AR auto-post may be sufficient; to be confirmed in target environment.
+- **Settlement**: Custom `HotWaxAutoPostSettlementService` implemented in the `dynamics365-integration` repository. OOTB settlement was rejected because it uses customer-level FIFO matching, which cannot honor `PaymentReference = SalesOrderNumber`. See [invoice_settlement.md](./invoice_settlement.md) for full design and test results.
 
-- **Automated Packing Slip Publishing**: Can be scheduled OOTB using standard D365 batch processing for eligible POS orders.
-- **Automated Invoice Posting**: Can also be scheduled OOTB to automatically invoice orders that have been packing-slip updated.
-
-**Custom Implementation Evaluation**
-For processes that cannot be easily fully automated via standard OOTB batch jobs, we maintain a separate repository for custom D365 code: `/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/dynamics365-integration`.
-
-Currently, we are evaluating if custom X++ logic (e.g., SysOperation jobs) is the **only way** to reliably automate:
-- **Auto Post Payments**: Posting the Customer Payment Journals as soon as they are synced from the OMS.
-- **Auto Settle Transactions**: Automatically settling the posted payment against the posted invoice for the POS order.
-
-If OOTB configurations fall short for payments and settlements, custom services will be developed in the `dynamics365-integration` repository to handle these specific automated closures.
+Custom D365 code lives in the `dynamics365-integration` repository.

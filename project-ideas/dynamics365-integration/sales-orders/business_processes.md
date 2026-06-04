@@ -190,10 +190,10 @@ Customer payments from HotWax OMS are captured in D365 F&O as **Customer Payment
 ### 4.3 Settlement Strategy
 1.  **Creation**: Payment is posted to the customer account "on-account" (unapplied).
 2.  **Invoice Generation**: Later, when the order is fulfilled, a Sales Invoice is created.
-3.  **Settlement**: A separate process (either D365 batch settlement or custom logic) is expected to match the payment to the invoice using the shared D365 sales order reference.
+3.  **Settlement**: The custom `HotWaxAutoPostSettlementService` batch job (D365-side) matches the posted payment to its invoice using `PaymReference = SalesOrderNumber`. OOTB D365 automatic settlement was evaluated and rejected — it settles at customer account level (FIFO by due date) and cannot honor the order-specific payment reference.
 
 > [!NOTE]
-> The current connector creates unposted payment journal headers and lines. It does not yet implement journal posting or invoice settlement orchestration.
+> The connector creates unposted payment journal headers and lines. Journal **posting** is handled by a D365 batch job. **Settlement** is handled by the custom `HotWaxAutoPostSettlementService`. For full design, implementation details, and test scenarios see [invoice_settlement.md](./invoice_settlement.md).
 
 ---
 
@@ -215,8 +215,11 @@ This section captures the intended D365-side operational flow after order synchr
 ### 5.3 Settlement Logic
 Since one Sales Order can produce multiple invoices (due to partial shipments or split fulfillment), the settlement process must be robust.
 - **Pattern**: Apply captured payments to open invoices for the same Sales Order.
-- **Matching**: The current payment sync writes the D365 `SalesOrderNumber` into `PaymentReference`. Any future settlement flow should be aligned to that identifier unless the mapping is changed.
-- **Rule**: Oldest invoice first or exact match based on shipment.
+- **Matching**: OMS writes the D365 `SalesOrderNumber` into `PaymentReference` on every payment journal line. The custom settlement service matches on `invoice.SalesId == payment.PaymReference` — explicitly order-scoped, not customer-level FIFO.
+- **Rule**: Payment is applied to all open invoices for the matched Sales Order until either the payment is exhausted or all invoices are closed. Partial settlement is supported natively.
+
+> [!NOTE]
+> For the complete settlement design — including why OOTB settlement fails, the X++ API used, the multi-payment capping fix, and test scenarios — see [invoice_settlement.md](./invoice_settlement.md).
 
 ---
 
