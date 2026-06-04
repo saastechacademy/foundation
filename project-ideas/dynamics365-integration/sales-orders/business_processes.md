@@ -340,12 +340,3 @@ After D365 posts the packing slip for warehouse-fulfilled order lines, OMS must 
 | Custom flat entity → DMF recurring export → OMS | **Selected** | Chosen for line-level `HcFulfillmentType` filtering and single-export payload completeness (header + lines + tracking) |
 
 For full D365 entity design, field mappings, and OMS processing logic, see [shipment_export_exploration.md](./shipment_export_exploration.md).
-
-### 9.2 Financial Updates — Invoice Posted (Future)
-
-When D365 posts a sales invoice, OMS may need to trigger post-invoice processing (e.g., updating order status or confirming financial closure).
-
-- **Trigger**: Sales order successfully invoiced in D365 (`SalesOrderInvoicedBusinessEvent`).
-- **OMS Action**: Mark order as financially completed / trigger any post-invoice OMS processing.
-- **Approach under consideration**: `SalesOrderInvoicedBusinessEvent` → Azure integration (Logic App or Service Bus) → OMS REST endpoint.
-- **Status**: Not yet implemented.
