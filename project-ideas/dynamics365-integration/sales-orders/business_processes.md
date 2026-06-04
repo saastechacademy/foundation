@@ -235,7 +235,7 @@ Warehouse-fulfilled order items are handed off to D365 after brokering. D365 own
    - Field updated: `SHIPPINGWAREHOUSEID`
    - Prerequisite: `D365_SLS_ORD_NUM` and `D365SalesOrderItemInventoryLotId` must already be resolved in OMS.
 3. **D365 owns all fulfillment from this point** — warehouse staff pick and pack using D365 WMS flows, and D365 posts the packing slip as part of its shipping confirmation process.
-4. **D365 can optionally push shipment data back to OMS** after packing slip posting. See [Section 9 — Outbound Notifications](#9-outbound-notifications-d365---oms) and [shipment_export_exploration.md](./shipment_export_exploration.md).
+4. **D365 pushes shipment data back to OMS** after packing slip posting so OMS can mark the warehouse-fulfilled order items as shipped/completed. See [Section 9 — Outbound Notifications](#9-outbound-notifications-d365---oms) and [shipment_export_exploration.md](./shipment_export_exploration.md).
 
 > [!NOTE]
 > Reservation is currently configured as `Manual` in the tested D365 setup (`AR > Parameters > General > Sales default values > Reservation`). Sending the brokered warehouse location does not automatically trigger reservation. Reservation remains an ERP-side operational step performed before warehouse picking begins.
