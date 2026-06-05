@@ -25,7 +25,7 @@ This means you cannot simply add a manual mapping for a new field — the Source
 
 2. **Select the data project** you want to update (e.g., `HotWax_Import_Brokered_Order_Items`).
 
-3. **Click `Load project`** (not `Run project`, and do not click into the project to open it). The `Load project` option appears in the action bar when the project row is selected.
+3. **Click `Run project`** (not `Load project`, and do not click into the project to open it). The `Run project` option appears in the action bar when the project row is selected.
 
 4. **Click `Upload file`** and upload a new sample file that includes the new field column.
    - For CSV-based projects: upload a CSV with the new column header included (a single data row is sufficient).
