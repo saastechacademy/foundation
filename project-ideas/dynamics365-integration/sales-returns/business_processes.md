@@ -63,7 +63,8 @@ The full step-by-step process for a physical return in D365:
 
 Before inventory can be received, arrival must be registered via an **Item Arrival Journal**.
 
-- Created via `ItemArrivalJournalHeadersV2` + `ItemArrivalJournalLinesV2` OData entities (confirmed available)
+- The OMS creates arrival journals via the D365 DMF **"Item arrival journals V2" composite entity** — header and lines are submitted as a single XML document in a ZIP package via `/api/connector/enqueue/{activityId}`; D365 auto-generates the journal number internally
+- The individual OData entities `ItemArrivalJournalHeadersV2` and `ItemArrivalJournalLinesV2` are confirmed available but are not used in the OMS integration — the OData path has a sequencing constraint where the journal number is auto-generated on header creation and must be known for each subsequent line POST; the DMF composite entity avoids this entirely
 - Posting the arrival journal is handled by the D365 batch class **`WMSJournalCheckPostReception`**
 - **Important limitation:** `WMSJournalCheckPostReception` posts **one selected journal at a time** — it is not a query-based batch that auto-picks up all unposted arrival journals. For bulk auto-posting, the class must be extended to multi-threaded behavior (like `LedgerJournalMultiPost`)
 - Quarantine can be enabled during arrival if inspection is required — quarantined items cannot have a disposition code assigned until the quarantine order is completed
@@ -153,8 +154,9 @@ Settlement matches the credit note (negative) and refund journal (positive) agai
 | :--- | :--- | :--- |
 | `ReturnOrderHeadersV2` | Create return order header | Step 1 |
 | `ReturnOrderLinesV2` | Create return order lines | Step 1 |
-| `ItemArrivalJournalHeadersV2` | Create arrival journal header | Step 2 |
-| `ItemArrivalJournalLinesV2` | Create arrival journal lines | Step 2 |
+| `ItemArrivalJournalHeadersV2` | Create arrival journal header | Step 2 — OData (not used in OMS integration; see DMF composite entity below) |
+| `ItemArrivalJournalLinesV2` | Create arrival journal lines | Step 2 — OData (not used in OMS integration; see DMF composite entity below) |
+| DMF: `Item arrival journals V2` | Create header + lines atomically | Step 2 — **Used in OMS integration**; submitted as ZIP via Queue Connector (`/api/connector/enqueue/{activityId}`) |
 | `CustomerPaymentJournalHeaders` | Create refund payment journal header | Step 7 |
 | `CustomerPaymentJournalLines` | Create refund payment journal lines | Step 7 |
 

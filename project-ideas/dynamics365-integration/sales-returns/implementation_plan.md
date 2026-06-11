@@ -18,8 +18,13 @@ For D365 standard return process, disposition codes, accounting model, and lifec
 - ServiceJob-based batch sweep using `D365EligibleReturnView`
 - Retry for `D365_RTN_ERROR` and `D365_RTN_PARTIAL` records missed by event-driven Phase 1
 
+### Phase 3 — Arrival Journal DMF Sync (Implemented)
+- Batch-sweep ServiceJob packages eligible returns into a DMF ZIP using the "Item arrival journals V2" composite entity
+- Services: `queue#ArrivalJournals`, `send#ArrivalJournalImport`, `pollAndConfirm#ArrivalJournalImport`, `check#ArrivalJournalImport`
+- Tracking entity: `D365ArrivalJournalHistory`; view: `D365EligibleArrivalJournals`
+- `definitionGroupId`: `HotWax_Import_Item_Arrival_Journals_V2`
+
 ### Future Phases (Not yet in scope — see Section 7)
-- Arrival journal creation via OData
 - Arrival journal posting (D365 batch)
 - Packing slip posting (D365 batch)
 - Credit note generation
@@ -121,7 +126,7 @@ Tracks the aggregate sync state per return. PK is `returnId` (one row per OMS re
 | :--- | :--- | :--- |
 | `returnId` | id (PK) | OMS return ID |
 | `d365ReturnOrderNumber` | text-short | D365 `ReturnOrderNumber` from create response |
-| `d365RmaNumber` | text-short | D365 RMA number |
+| `d365RmaNumber` | text-short | D365 RMA number — captured from `RMANumber` in GET (`$select=ReturnOrderNumber,RMANumber`) and POST responses |
 | `syncStatusId` | id | `D365_RTN_PENDING` / `D365_RTN_SYNCED` / `D365_RTN_PARTIAL` / `D365_RTN_ERROR` |
 | `syncedDate` | date-time | Timestamp of successful sync |
 | `logText` | text-long | Error details |
@@ -306,7 +311,132 @@ Content-Type: application/json
 
 ---
 
-## 4. TODOs by Approach
+## 4. Phase 3 — Arrival Journal DMF Sync
+
+### 4.1 Approach: DMF Composite Entity over OData
+
+OData (`ItemArrivalJournalHeadersV2` + `ItemArrivalJournalLinesV2`) has a critical sequencing constraint: the arrival journal header must be POSTed first to obtain a D365-generated `JOURNALNUMBER`, which is then required for each line POST — the same N+1 problem encountered with return order lines. Except here, unlike return orders, there is no workaround via synchronous response chaining at scale.
+
+The DMF **"Item arrival journals V2" composite entity** solves this — header and lines are submitted as a single XML document in a ZIP package, and D365 resolves the journal number internally. This is the same pattern used for sales order sync via the `Sales orders V4` composite entity.
+
+Additionally, one ZIP can cover multiple return journals in a single import operation, making the sweep efficient.
+
+### 4.2 Data Model
+
+#### Entity: `D365ArrivalJournalHistory`
+
+Tracks which returns have been packaged into a DMF arrival journal import. A record means the return was included in at least one import attempt. There is no status field — presence equals queued.
+
+| Field | Type | Notes |
+| :--- | :--- | :--- |
+| `returnId` | id (PK) | OMS return ID |
+| `d365ReturnOrderNumber` | id | D365 `ReturnOrderNumber` at time of packaging |
+| `systemMessageId` | id | `SystemMessage` holding the DMF ZIP |
+| `queuedDate` | date-time | When the return was packaged |
+
+**Retry:** Delete the `D365ArrivalJournalHistory` record to re-queue. The `D365EligibleArrivalJournals` view excludes returns that have any history record.
+
+#### View-Entity: `D365EligibleArrivalJournals`
+
+Returns that are `D365_RTN_SYNCED` (return order exists in D365) and have no `D365ArrivalJournalHistory` record.
+
+Exposes: `returnId`, `destinationFacilityId`, `d365ReturnOrderNumber`, `d365RmaNumber`, `arrivalQueuedDate`.
+
+### 4.3 Service Architecture
+
+**File:** `co.hotwax.d365.D365ReturnServices`
+
+#### `queue#ArrivalJournals`
+
+Batch sweep — called by `queue_D365ArrivalJournals` ServiceJob.
+
+**Flow:**
+1. Query `D365EligibleArrivalJournals` (filtered by `returnId` for targeted runs)
+2. For each eligible return: fetch `ReturnHeader` + `ReturnItem` records
+3. Resolve customer account from `PartyIdentification(D365_CUST_ACCT)` on `ReturnHeader.fromPartyId` — no D365 call
+4. Resolve receiving site ID from parent facility's `externalId` (`Facility.parentFacilityId` → `siteFacility.externalId`)
+5. Resolve item numbers via `GoodIdentification(D365_PRODUCT_ID)` on `productId`
+6. Build `WMSITEMARRIVALJOURNALHEADERV2ENTITY` + `WMSITEMARRIVALJOURNALLINEV2ENTITY` XML per return journal
+7. Group all journals into one XML document, ZIP with `PackageHeader.xml` + `Manifest.xml`
+8. Create `SystemMessage(D365_ARR_JNL_IMPORT)` with the ZIP binary; create `D365ArrivalJournalHistory` per return
+
+Supports `dryRun=true` — logs generated XML without creating SystemMessage or history records.
+
+#### `send#ArrivalJournalImport`
+
+Implements `send#SystemMessage` for `SystemMessageTypeId=D365_ARR_JNL_IMPORT`. POSTs the ZIP to:
+```
+POST /api/connector/enqueue/{activityId}
+```
+D365 returns a Queue Message ID stored as the SystemMessage `remoteMessageId`.
+
+#### `pollAndConfirm#ArrivalJournalImport`
+
+ServiceJob-driven. Finds all `D365_ARR_JNL_IMPORT` SystemMessages in `SmsgSent` status and delegates to `check#ArrivalJournalImport` per message.
+
+#### `check#ArrivalJournalImport`
+
+1. Calls `GetExecutionIdByMessageId` with the Queue Message ID → resolves the DMF Execution ID
+2. Delegates to existing `check#ImportDataPackageStatus` with the Execution ID
+
+### 4.4 Field Mappings
+
+#### Arrival Journal Header (`WMSITEMARRIVALJOURNALHEADERV2ENTITY`)
+
+| XML Attribute | Source | Notes |
+| :--- | :--- | :--- |
+| `JOURNALNAMEID` | Hardcoded `WArr` | D365 warehouse arrival journal name |
+| `DEFAULTACCOUNTNUMBER` | `PartyIdentification(D365_CUST_ACCT)` on `ReturnHeader.fromPartyId` | No D365 call — resolved locally |
+| `DEFAULTRETURNITEMNUMBER` | `D365ReturnHeaderHistory.d365RmaNumber` | `RMANumber` from D365 (e.g. `00412`) |
+| `DEFAULTTRANSACTIONREFERENCENUMBER` | `D365ReturnHeaderHistory.d365ReturnOrderNumber` | `ReturnOrderNumber` from D365 (e.g. `001624`) |
+| `DEFAULTTRANSACTIONREFERENCETYPE` | Hardcoded `0` | Numeric — `0` = Sales order type |
+| `ISITEMMOVEDTODEFAULTITEMPICKINGWAREHOUSELOCATION` | Hardcoded `0` | Required on both header **and** line |
+
+#### Arrival Journal Lines (`WMSITEMARRIVALJOURNALLINEV2ENTITY`)
+
+| XML Attribute | Source | Notes |
+| :--- | :--- | :--- |
+| `LINENUMBER` | Sequential (1, 2, 3…) | Required — auto-incremented per journal |
+| `ACCOUNTNUMBER` | `PartyIdentification(D365_CUST_ACCT)` | Customer account |
+| `ITEMNUMBER` | `GoodIdentification(D365_PRODUCT_ID)` on `productId` | Falls back to `1000` — TODO |
+| `ITEMQUANTITY` | `ReturnItem.returnQuantity` | Positive quantity |
+| `ISRETURNORDER` | Hardcoded `1` | Marks as return arrival |
+| `RETURNITEMNUMBER` | `d365RmaNumber` | `RMANumber` (e.g. `00412`) |
+| `RETURNDISPOSITIONCODEID` | Hardcoded `11` | TODO: map from OMS return reason |
+| `TRANSACTIONREFERENCENUMBER` | `d365ReturnOrderNumber` | `ReturnOrderNumber` (e.g. `001624`) |
+| `TRANSACTIONREFERENCETYPE` | Hardcoded `0` | Numeric — `0` = Sales order type |
+| `TRANSACTIONDATE` | `ReturnHeader.entryDate` | Return entry date (not current timestamp) |
+| `ISITEMMOVEDTODEFAULTITEMPICKINGWAREHOUSELOCATION` | Hardcoded `0` | Required on both header and line |
+
+### 4.5 D365 Return Identifier Clarification
+
+Two distinct identifiers on a D365 return order:
+
+| D365 Field | Example | OMS Field | Arrival Journal Usage |
+| :--- | :--- | :--- | :--- |
+| `ReturnOrderNumber` | `001624` | `d365ReturnOrderNumber` | `DEFAULTTRANSACTIONREFERENCENUMBER` / `TRANSACTIONREFERENCENUMBER` |
+| `RMANumber` | `00412` | `d365RmaNumber` | `DEFAULTRETURNITEMNUMBER` / `RETURNITEMNUMBER` |
+
+`sync#ReturnOrder` captures both identifiers: GET uses `$select=ReturnOrderNumber,RMANumber`; POST response body contains both. Both are persisted to `D365ReturnHeaderHistory`.
+
+### 4.6 Customer Account Resolution
+
+`sync#Customer` now persists the resolved D365 customer account to `PartyIdentification(partyIdentificationTypeId='D365_CUST_ACCT')` after every successful sync (upsert by PK — safe on retry). The `queue#ArrivalJournals` service reads from this record locally when building the arrival journal XML — no additional D365 API call needed.
+
+`PartyIdentificationType(D365_CUST_ACCT)` seed data is defined in `D365OrderSyncData.xml`.
+
+### 4.7 ServiceJobs
+
+| Job | Service | Key Parameters |
+| :--- | :--- | :--- |
+| `queue_D365ArrivalJournals` | `queue#ArrivalJournals` | `systemMessageRemoteId`, `activityId` (D365 Data Management activity ID for "Item arrival journals V2"), `definitionGroupId=HotWax_Import_Item_Arrival_Journals_V2`, optional `returnId` |
+| `pollAndConfirm_D365ArrivalJournalImport` | `pollAndConfirm#ArrivalJournalImport` | `systemMessageRemoteId` |
+
+Both jobs are paused by default.
+
+---
+
+## 5. TODOs by Approach
 
 ### Phase 1 — OData Event-Driven (DataFeed) ✅ Core implemented and tested
 
@@ -326,11 +456,11 @@ Content-Type: application/json
 | 7 | Cron schedule | `sync_D365ReturnOrders` job has no cron set. Schedule once Phase 1 DataFeed path is validated in production. |
 | 8 | Full sweep test | Test `sync#ReturnOrders` with no `returnId` (sweep all eligible) to confirm batch isolation works — one failed return must not abort others. |
 
-### Future Phases — Downstream Lifecycle (see Section 6)
+### Future Phases — Downstream Lifecycle (see Section 7)
 
 | # | Item | Details |
 | :--- | :--- | :--- |
-| 9 | Arrival journal creation | For online returns — OMS signals goods received → `POST ItemArrivalJournalHeadersV2` + `POST ItemArrivalJournalLinesV2` |
+| 9 | Arrival journal creation via DMF | ✅ Implemented — `queue#ArrivalJournals` sweeps `D365EligibleArrivalJournals` and packages returns into a DMF ZIP using the "Item arrival journals V2" composite entity. See Section 4 for full details. |
 | 10 | Arrival journal posting | D365 batch class `WMSJournalCheckPostReception` — needs D365-side setup. Decide: OMS-triggered per journal or manual warehouse staff action. |
 | 11 | Credit note generation | D365 batch class `SalesFormLetter_Invoice` — runs after packing slip posted (or immediately for Credit only disposition). |
 | 12 | Credit note export back to OMS | Export generated credit note number back to OMS for reconciliation — similar to sales order number export. |
@@ -340,7 +470,7 @@ Content-Type: application/json
 
 ---
 
-## 5. Verification Plan
+## 6. Verification Plan
 
 | # | Step | Status |
 | :--- | :--- | :--- |
@@ -356,24 +486,32 @@ Content-Type: application/json
 | 10 | Test POS return — `RETURN_COMPLETED` on POS channel, confirm only `D365PosReturnHeaderDoc` fires | Pending — needs Shopify dev store |
 | 11 | Test `sync#ReturnOrders` sweep with no `returnId` — confirm batch isolation (one failure does not abort others) | Pending |
 | 12 | Test error scenario — unmapped product, confirm `D365_RTN_ERROR` on line, other lines continue | Pending |
+| 13 | Run `queue#ArrivalJournals` with `dryRun=true` — confirm generated XML shows `DEFAULTRETURNITEMNUMBER=RMANumber` (e.g. `00412`) and `DEFAULTTRANSACTIONREFERENCENUMBER=ReturnOrderNumber` (e.g. `001624`) | Pending |
+| 14 | Run `queue#ArrivalJournals` without `dryRun` — confirm `SystemMessage(D365_ARR_JNL_IMPORT)` created and `D365ArrivalJournalHistory` records inserted per return | Pending |
+| 15 | Run `send#ArrivalJournalImport` — confirm ZIP POSTed to `/api/connector/enqueue/{activityId}`, Queue Message ID persisted as `remoteMessageId` | Pending |
+| 16 | Run `pollAndConfirm#ArrivalJournalImport` — confirm DMF execution status resolved, SystemMessage marked confirmed | Pending |
+| 17 | Verify arrival journals visible in D365 `Inventory management > Journals > Item arrival` and can be posted | Pending |
 
 ---
 
-## 6. Future Phases — Downstream Lifecycle (Design Pending)
+## 7. Future Phases — Downstream Lifecycle
 
 The following steps complete the full return lifecycle in D365 after the return order is created. These are **not yet in scope** but are documented here for planning purposes based on research from Microsoft Learn and the D365 community thread.
 
-### Phase 3: Arrival Journal (Online Returns)
+### Phase 3: Arrival Journal DMF Sync ✅ Implemented
 
-**When:** OMS signals goods received (`RETURN_RECEIVED` or equivalent)
+**When:** `queue_D365ArrivalJournals` ServiceJob sweeps eligible returns after their return order is `D365_RTN_SYNCED`.
+
+OMS packages returns into a DMF ZIP using the "Item arrival journals V2" composite entity and submits via Queue Connector. See Section 4 for the full implementation details.
+
+**Remaining for Phase 3:**
 
 | Step | Detail |
 | :--- | :--- |
-| OMS creates arrival journal | `POST /data/ItemArrivalJournalHeadersV2` + `POST /data/ItemArrivalJournalLinesV2` |
 | D365 posts arrival journal | Batch class `WMSJournalCheckPostReception` — triggers per journal |
 | Limitation | Not a query-based auto-batch; one journal at a time; bulk posting requires extending the class to multi-threaded like `LedgerJournalMultiPost` |
 
-**Decision pending:** OMS-triggered vs. D365 warehouse staff manual for arrival registration.
+**Decision pending:** OMS-triggered vs. D365 warehouse staff manual for arrival journal posting.
 
 ### Phase 4: Credit Note Generation
 
