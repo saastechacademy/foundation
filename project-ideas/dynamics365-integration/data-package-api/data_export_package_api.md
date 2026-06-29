@@ -107,26 +107,26 @@ This is the current export model and the implemented generic framework.
 
 #### Generic services in this approach
 - **Generic queue service**
-  - Service: [D365DataPackageServices.queue#ExportDataPackage](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml:4)
+  - Service: `D365DataPackageServices.queue#ExportDataPackage`
   - Responsibility:
     - validate export-specific inputs
     - build the export payload JSON
     - call `org.moqui.impl.SystemMessageServices.queue#SystemMessage`
     - queue the message with `sendNow=true`
 - **Generic send service**
-  - Service: [D365DataPackageServices.send#ExportDataPackage](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml:40)
+  - Service: `D365DataPackageServices.send#ExportDataPackage`
   - Responsibility:
     - implement `org.moqui.impl.SystemMessageServices.send#SystemMessage`
     - parse `SystemMessage.messageText`
     - call D365 `ExportToPackage`
     - return `remoteMessageId = executionId`
 - **Generic poll service**
-  - Service: [D365DataPackageServices.poll#ExportDataPackageStatus](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml:86)
+  - Service: `D365DataPackageServices.poll#ExportDataPackageStatus`
   - Responsibility:
     - find sent export messages by `systemMessageTypeId` and `statusId = SmsgSent`
     - call the single-message checker
 - **Generic single-message poll/check service**
-  - Service: [D365DataPackageServices.check#ExportDataPackageStatus](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml:110)
+  - Service: `D365DataPackageServices.check#ExportDataPackageStatus`
   - Responsibility:
     - read `executionId` from `SystemMessage.remoteMessageId`
     - call `GetExecutionSummaryStatus`
@@ -139,12 +139,12 @@ This is the current export model and the implemented generic framework.
     - move the `SystemMessage` entity record to `SmsgConfirmed` on success
     - move it to `SmsgError` on terminal failure
 - **Generic download service**
-  - Service: [D365DataPackageServices.download#DataPackage](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml:276)
+  - Service: `D365DataPackageServices.download#DataPackage`
   - Responsibility:
     - download the D365 ZIP
     - extract the configured file to a local directory
 - **Generic execution error reader**
-  - Service: [D365DataPackageServices.get#ExecutionErrors](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml:385)
+  - Service: `D365DataPackageServices.get#ExecutionErrors`
   - Responsibility:
     - call D365 `GetExecutionErrors`
 
@@ -183,7 +183,7 @@ This is the current export model and the implemented generic framework.
   - D365 export failed, or OMS failed to process the returned file
 
 #### Boundary of the generic layer
-- The generic export services in [D365DataPackageServices.xml](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml) now cover:
+- The generic export services in `D365DataPackageServices.xml` now cover:
   - queuing export `SystemMessage` entity records
   - triggering D365 `ExportToPackage`
   - polling export status
@@ -209,7 +209,7 @@ This is the current export model and the implemented generic framework.
 
 - Use **Approach 2** for current and future export integrations.
 - Keep **Approach 1** documented only as the earlier design that validated the D365 export mechanics.
-- For the sales-order-specific export reconciliation flow that uses the current generic export services, refer to [implementation_plan.md](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/foundation/project-ideas/dynamics365-integration/sales-orders/implementation_plan.md).
+- For the sales-order-specific export reconciliation flow that uses the current generic export services, refer to [implementation_plan.md](../sales-orders/implementation_plan.md).
 
 ---
 
