@@ -2,7 +2,7 @@
 
 This document outlines the technical design and implementation steps for integrating HotWax OMS with Microsoft Dynamics 365 Finance & Operations (D365 F&O).
 
-## 1. Technical Architecture
+## Technical Architecture
 - Sales-order integration uses the generic D365 connector foundation documented in [connector_foundation.md](../foundation/connector_foundation.md).
 - **Sales-order specific interfaces**:
     - OData v4 (REST) for direct entity-based sync
@@ -874,10 +874,10 @@ Designed for high-volume and guaranteed document atomicity.
 - **TODO**: [Mapping] Define `facilityId` to D365 warehouse/site mapping, including the strategy for unbrokered OMS orders.
 - **TODO**: [Mapping] Create mapping table for `TaxCategory` -> `ItemSalesTaxGroup`.
 
-## Integration Type Mappings
+### Integration Type Mappings
 To avoid hardcoding values like `SalesOrderOriginCode` and `DeliveryModeCode` in service logic, we use the `IntegrationTypeMapping` entity to translate OMS identifiers into D365 codes.
 
-### Configuration Structure
+#### Configuration Structure
 Add records to the entity `co.hotwax.integration.IntegrationTypeMapping` for the target system:
 
 | Mapping Category | OMS Internal ID (`mappingKey`) | D365 Code (`mappingValue`) | Enum Type (`integrationTypeId`) |
@@ -885,11 +885,11 @@ Add records to the entity `co.hotwax.integration.IntegrationTypeMapping` for the
 | **Sales Order Origin** | OMS Sales Channel (for example `WEB_SALES_CHANNEL`) | D365 Sales Origin (for example `Ecom`) | `D365_SALES_CHNL` |
 | **Delivery Mode** | OMS Shipment Method (for example `STANDARD`) | D365 Mode of Delivery (for example `Standard`) | `D365_SHP_MTHD` |
 
-### Mapping Details
+#### Mapping Details
 - **Sales Order Origin**: Maps the OMS `salesChannelEnumId` (from `OrderHeader`) to the D365 Sales Origin. In D365, this is the 'Sales Origin' field.
 - **Delivery Mode**: Maps the OMS `shipmentMethodTypeId` (from `OrderItemShipGroup`) to the D365 Mode of Delivery. In D365, this is the 'Mode of delivery' field. For mixed-cart orders, first select the shipment method that is not `STOREPICKUP` or `POS_COMPLETED`, and if none exists, fall back to the first non-empty shipment method on the order.
 
-### Setup Steps
+#### Setup Steps
 1. **Define Enumerations**: Add the mapping category IDs (for example `D365_SALES_CHNL`, `D365_SHP_MTHD`) to `moqui.basic.Enumeration`.
 2. **Populate Mappings**: Provide the specific mapping records:
    - `integrationTypeId`: The category ID.
@@ -1138,7 +1138,7 @@ This export reconciles the D365-assigned `InventoryLotId` back to the OMS order 
 
 ### 2.2 Export of Packing Slips (Outbound Shipments) from D365 to OMS
 
-*For complete implementation specifications, architectural decisions, and step-by-step development instructions for synchronizing outbound shipments/packing slips from D365 SCM to OMS, see the [Shipment Export Exploration Notes](file:///Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/foundation/project-ideas/dynamics365-integration/sales-orders/shipment_export_exploration.md).*
+*For complete implementation specifications, architectural decisions, and step-by-step development instructions for synchronizing outbound shipments/packing slips from D365 SCM to OMS, see the [Shipment Export Exploration Notes](./shipment_export_exploration.md).*
 
 ### 3. Brokered Order Items Update from OMS to D365
 

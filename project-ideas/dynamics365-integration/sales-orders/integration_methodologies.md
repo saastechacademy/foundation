@@ -31,6 +31,7 @@ To prevent duplicate records (e.g., Sales Headers) during retries, OData calls s
 ---
 
 ## 2. Custom Services (SysOperation)
+- **Official Documentation**: [Custom service development](https://learn.microsoft.com/dynamics365/fin-ops-core/dev-itpro/data-entities/custom-services)
 - **Use Case**: Atomic creation of complex documents (Header + Lines) in a single transaction.
 - **Protocol**: REST (JSON/XML) or SOAP.
 - **Description**: A custom X++ endpoint that accepts a full document payload. D365 processes the entire structure within one database transaction.
@@ -52,7 +53,7 @@ For Sales Order synchronization where transactional integrity is critical, OData
 
 Integrating with D365 F&O requires a multi-layered security configuration. All API calls execute in the context of a specific D365 user, not a generic application identity.
 
-### 2.1 The Authentication Flow
+### 3.1 The Authentication Flow
 1. **Identity Provider**: Azure Active Directory (Microsoft Entra ID) validates the **App Registration** (Client ID/Secret).
 2. **User Mapping**: The App Registration is mapped to a specific **D365 Finance User** within the ERP.
 3. **Effective Permissions**: All OData calls execute using the mapped user's:
@@ -60,17 +61,17 @@ Integrating with D365 F&O requires a multi-layered security configuration. All A
     - Data Permissions
     - Legal Entity (Company) Access
 
-### 2.2 Configuration in D365
+### 3.2 Configuration in D365
 The mapping is configured at: `System administration > Setup > Microsoft Entra applications`.
 - **Client ID**: The Application ID from Azure.
 - **User ID**: The dedicated service user in D365.
 
-### 2.3 Company (Legal Entity) Access
+### 3.3 Company (Legal Entity) Access
 D365 is a multi-company system. OData visibility is strictly partitioned by `dataAreaId`.
 - **Constraint**: If the service user lacks access to a specific company (Legal Entity), queries will return **empty results** rather than an authorization error.
 - **Requirement**: Assign all required legal entities to the service user at: `System administration > Users > Users > [User] > Companies`.
 
-### 2.4 Best Practices
+### 3.4 Best Practices
 > [!IMPORTANT]
 > - **Dedicated Service User**: Always use a non-human service user (e.g., `svc_hotwax_integration`) for production.
 > - **Explicit Context**: Always include `dataAreaId` in POST payloads and `$filter` by it in GET requests.
@@ -78,24 +79,24 @@ D365 is a multi-company system. OData visibility is strictly partitioned by `dat
 
 ---
 
-## 3. Data Management Framework (DMF)
+## 4. Data Management Framework (DMF)
 - **Use Case**: High-volume asynchronous batch processing. Useful for bulk customer imports or large order migrations.
 - **Official Documentation**: [Data management overview](https://learn.microsoft.com/en-us/dynamics365/fin-ops-core/dev-itpro/data-entities/data-entities-data-packages)
 
-## 4. Business Events (Near Real-time Outbound)
+## 5. Business Events (Near Real-time Outbound)
 - **Use Case**: Triggering external actions based on D365 internal events (e.g., notifying OMS of a posted invoice).
 - **Official Documentation**: [Business events overview](https://learn.microsoft.com/en-us/dynamics365/fin-ops-core/dev-itpro/data-entities/business-events/home-page)
 
-### 4.1 Key Concepts
+### 5.1 Key Concepts
 Business Events provide a mechanism that lets external systems receive notifications from Finance and Operations. This is the **recommended methodology** for "D365 -> OMS" push notifications.
 
 | Feature | Description |
 | :--- | :--- |
-| **Push-based** | D365 activeley sends a notification when a business process completes. |
+| **Push-based** | D365 actively sends a notification when a business process completes. |
 | **Event-driven** | Reduces load by eliminating the need for external systems to poll OData. |
 | **Standard Events** | Includes `SalesOrderInvoicedBusinessEvent`, `SalesOrderConfirmedBusinessEvent`, etc. |
 
-### 4.2 Integration Patterns
+### 5.2 Integration Patterns
 Business events can be consumed through various endpoints:
 
 1.  **Azure Power Automate**: The most common "low-code" approach using the D365 F&O connector.
@@ -103,19 +104,49 @@ Business events can be consumed through various endpoints:
 3.  **Azure Service Bus**: For reliable, asynchronous messaging and queuing.
 4.  **Azure Event Grid**: For high-scale event routing.
 
-### 4.3 Comparison: OData vs. Business Events
+### 5.3 Comparison: OData vs. Business Events
 - **OData (Pull)**: Best for synchronous CRUD or batch data retrieval where the OMS initiates the request.
 - **Business Events (Push)**: Best for reactive workflows where D365 must notify the OMS of a state change (e.g., fulfillment complete).
 
 ---
 
-## 5. Shipment Export via Data Entities
-- **Goal**: Export shipment details with source-side filtering so only required fulfillment lines are synchronized to OMS.
-- **Source entities**:
-  - `CustPackingSlipJourBiEntities` (packing slip header)
-  - `CustPackingSlipTransBiEntities` (packing slip lines)
-  - `PackingSlipTrackingInformation` (tracking and carrier details)
-- **Entity grain**: One export row per shipment line (or per shipment line + tracking number, based on tracking cardinality).
-- **Export mechanism**: Data Management Framework (DMF) recurring export.
-- **Consumption mechanism**: Middleware polls recurring integration dequeue APIs, processes export packages, and acknowledges consumption.
-- **Payload shaping**: DMF exports tabular records; middleware groups rows (for example by `packingSlipId`) to construct nested OMS shipment payloads.
+## 6. Recurring Integrations Scheduler
+- **Use Case**: Continuous, queue-based import or export of data packages without requiring the external system to manage Azure Blob upload/download URLs.
+- **Official Documentation**: [Recurring integrations](https://learn.microsoft.com/en-us/dynamics365/fin-ops-core/dev-itpro/data-entities/recurring-integrations)
+
+### 6.1 Key Concepts
+
+The Recurring Integrations Scheduler exposes two queue-based APIs that sit on top of the same DMF pipeline: an **Enqueue API** for inbound data (OMS → D365) and a **Dequeue API** for outbound data (D365 → OMS).
+
+| Feature | Description |
+| :--- | :--- |
+| **Queue-based** | External system enqueues or dequeues packages; D365 manages the internal queue |
+| **Same DMF pipeline** | Uses the same composite entities and definition groups as the Data Package API |
+| **No Azure Blob management** | Eliminates explicit Azure Blob upload/download URL handling required by the Data Package API |
+| **Asynchronous** | Processing is non-blocking; status is resolved separately via `GetExecutionIdByMessageId` |
+
+### 6.2 Enqueue API (Inbound: OMS → D365)
+
+Used to submit data packages into D365 without uploading to Azure Blob Storage directly.
+
+- **Endpoint**: `POST /api/connector/enqueue/{activityId}`
+- **Returns**: A Queue Message ID (GUID)
+- **Status resolution**: Two-step — `GetExecutionIdByMessageId` (Queue Message ID → DMF Execution ID) → `GetExecutionSummaryStatus` (Execution ID → status)
+- **Suitable for**: High-frequency or continuous background inbound flows (e.g., sales order import, arrival journal import)
+
+### 6.3 Dequeue API (Outbound: D365 → OMS)
+
+Used to pull pre-scheduled D365 export packages from a recurring job queue.
+
+- **Endpoints**: `GET /api/connector/dequeue/{activityId}` → download via Blob redirect → `POST /api/connector/ack/{activityId}` (acknowledgment)
+- **Returns**: A package URL for download; acknowledgment clears the item from the queue
+- **Suitable for**: Polling-based outbound flows where D365 generates export packages on a schedule (e.g., sales order number export, product variant export)
+
+### 6.4 Comparison: Data Package API vs. Recurring Integrations API
+
+| Feature | Data Package API | Recurring Integrations API |
+| :--- | :--- | :--- |
+| **Azure Blob** | External system manages upload/download URLs | Managed internally by D365 |
+| **Status** | Execution ID returned directly on import | Queue Message ID → Execution ID (extra hop) |
+| **Best for** | On-demand, controlled batch imports | High-frequency, continuous background flows |
+| **Outbound** | `ExportToPackage` + `GetExportedPackageUrl` | Dequeue + Ack pattern |

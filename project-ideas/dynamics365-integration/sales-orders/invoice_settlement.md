@@ -38,7 +38,10 @@ Settlement                 ←── Posted payment applied to open invoice(s)
 ### 2.1 Standard E-Commerce Order (Warehouse Fulfilled)
 
 - Order is fulfilled from a D365-managed warehouse.
-- D365 owns picking, packing slip, and invoice posting. //TODO verify this about invoice posting. 
+- D365 owns picking, packing slip, and invoice posting.
+
+> [!NOTE]
+> **TODO**: Verify that invoice posting is fully owned by D365 (not triggered by OMS).
 - OMS pushes a customer payment journal after the order is settled in Shopify.
 - D365 settles the posted payment against the posted invoice using the shared `SalesOrderNumber` as the matching key.
 
@@ -53,21 +56,21 @@ Settlement                 ←── Posted payment applied to open invoice(s)
 
 **Status**: Fulfilled order items warehouse update implemented. Invoice posting and settlement remain D365-side steps (OOTB or custom batch). Not end-to-end verified.
 
-### 2.3 POS Carry-Out Order
+### 2.3 POS Completed Order
 
-- Order is placed at POS, payment is captured immediately (carry-out: fulfilled on the spot).
-- Requires a tightly automated lifecycle in D365: packing slip → invoice → payment post → settlement, all happening close together.
-- Because the customer has already paid at point of sale, automated settlement against the same-session invoice is the target behavior.
-
-**Status**: Explored. POS order sync itself is implemented (same sales order path). Automated packing slip posting, invoice posting, payment posting, and settlement require D365-side automation (OOTB batch or custom X++ SysOperation). Not yet verified end-to-end.
+- Order is placed and fulfilled at the store counter in a single transaction; payment is captured immediately via the payment gateway.
+- OMS pushes the sales order to D365 (same path as other order types) when the order reaches `COMPLETED` status.
+- D365-side automation handles packing slip posting and invoice generation (OOTB batch or custom X++).
+- OMS pushes the customer payment journal to D365 after confirming payment settlement in Shopify.
+- D365 settles the posted payment against the posted invoice using `SalesOrderNumber` as the matching key.
 
 ### 2.4 Mixed Cart Order (Store + Warehouse Lines)
 
 - A single sales order contains lines fulfilled by both D365 (warehouse) and OMS (store).
-- D365 generates **multiple invoices** from the same order as different fulfillment events complete.
-- Settlement must match the payment against multiple invoices over time.
-
-**Status**: Mixed cart order creation and per-line warehouse update implemented. Multi-invoice settlement strategy is designed but not yet verified end-to-end.
+- OMS pushes the sales order to D365 and updates warehouse context per fulfillment event — warehouse lines via the Brokered Order Items package, store-fulfilled lines via the Fulfilled Order Items package.
+- D365 generates **multiple invoices** from the same order as different fulfillment events complete — one per fulfillment wave.
+- OMS pushes a customer payment journal after payment is settled in Shopify.
+- D365 settles the posted payment against multiple invoices over time using `SalesOrderNumber` as the matching key.
 
 > [!NOTE]
 > The identified matching key for all settlement use cases is `SalesOrderNumber`. OMS writes this into `PaymentReference` on the payment journal line. Any future D365 settlement batch or custom settlement logic should be built around that identifier.
@@ -143,7 +146,7 @@ A custom X++ `SysOperation` batch class was implemented in the `dynamics365-inte
 
 For each customer with open transactions, the service:
 1. Collects open invoices (`CustTrans` where `TransType = Invoice`), reading `SalesId` from each.
-2. Collects open payments (`CustTrans` where `TransType = Payment`), reading `PaymReference` from each — which OMS populates with the D365 `SalesOrderNumber`.
+2. Collects open payments (`CustTrans` where `TransType = Payment`), reading `PaymReference` from each — the X++ `CustTrans` field name for what the OData API calls `PaymentReference`, which OMS populates with the D365 `SalesOrderNumber`.
 3. Settles only pairs where `invoice.SalesId == payment.PaymReference`.
 
 This ensures a payment for Order B is never applied to Order A's invoice, regardless of invoice age.
@@ -201,13 +204,13 @@ The service runs as a recurring D365 batch job. Access it from the HotWax custom
 
 ### 5.4 POS Order Settlement Flow
 
-POS carry-out orders require a tightly automated lifecycle since payment is captured at the point of sale. Steps 1–3 use validated OOTB D365 batch jobs; step 4 uses the custom settlement service.
+POS Completed orders require a tightly automated lifecycle since payment is captured at the point of sale. Steps 1–3 use validated OOTB D365 batch jobs; step 4 uses the custom settlement service.
 
 1. OMS pushes sales order to D365.
 2. D365 auto-posts packing slip — OOTB batch (`Sales and marketing > Order shipping > Post packing slip`, filtered by `SalesOrigin = POS`). Validated in issue [#13](https://github.com/hotwax/dynamics365-integration/issues/13).
 3. D365 auto-posts invoice — OOTB batch (`AR > Invoices > Batch invoicing > Invoice`, filtered by `SalesOrigin = POS`). Validated in issue [#16](https://github.com/hotwax/dynamics365-integration/issues/16).
 4. OMS pushes customer payment journal (OData, unposted draft).
-5. D365 posts the payment journal — OOTB AR auto-post or custom batch (under evaluation for target environment).
+5. D365 posts the payment journal — OOTB AR auto-post batch. Validated.
 6. `HotWaxAutoPostSettlementService` runs and settles the posted payment against the posted invoice using `PaymReference = SalesId`.
 
 **Status**: Steps 1–3 validated. Step 6 (settlement service) implemented and verified in isolation. End-to-end POS lifecycle not yet verified as a complete chain.
@@ -229,7 +232,7 @@ POS carry-out orders require a tightly automated lifecycle since payment is capt
 | :--- | :--- | :--- |
 | Packing slip auto-post | OOTB ✓ | Standard D365 batch (`Sales and marketing > Post packing slip`). Validated — see issues #13, #15. |
 | Invoice auto-post | OOTB ✓ | Standard D365 batch (`AR > Invoices > Batch invoicing > Invoice`). Validated — see issues #16, #17. |
-| Payment journal post | OOTB (under evaluation) | Can be configured via AR parameters auto-post. Needs validation in target environment. |
+| Payment journal post | OOTB ✓ | Standard D365 AR auto-post batch. Validated. |
 | Settlement | Custom ✓ | OOTB rejected (FIFO by customer, ignores `PaymentReference`). Custom `HotWaxAutoPostSettlementService` implemented — see [section 5.2](#52-custom-settlement-service-hotwaxautopostsettlementservice). |
 
 ---
@@ -237,7 +240,7 @@ POS carry-out orders require a tightly automated lifecycle since payment is capt
 ## 7. Key Technical Observations
 
 - **Journal created unposted**: OData creates the payment journal in draft (`IsPosted = No`). Posting is a separate operation. If posting fails (e.g., due to missing bank account mapping), the journal stays unposted and payments appear pending in D365.
-- **`PaymentReference` is the settlement anchor**: OMS writes `d365SalesOrderNumber` into `PaymentReference` on every journal line. The custom settlement service (`HotWaxAutoPostSettlementService`) matches on `PaymReference = SalesId`. If this field mapping is ever changed in OMS, the settlement service must be updated in sync.
+- **`PaymentReference` / `PaymReference` is the settlement anchor**: OMS writes `d365SalesOrderNumber` into `PaymentReference` (OData API field name) on every journal line. The custom settlement service (`HotWaxAutoPostSettlementService`) reads this as `PaymReference` — the X++ `CustTrans` field name for the same field — and matches on `PaymReference = SalesId`. If this field mapping is ever changed in OMS, the settlement service must be updated in sync.
 - **OOTB settlement cannot be used**: D365 OOTB auto-settlement and periodic settlement both operate at customer account level using FIFO due-date ordering. They have no mechanism to honor `PaymentReference`. See [section 5.1](#51-why-ootb-d365-settlement-is-insufficient) for the full failure scenario.
 - **Multiple invoices per order**: A mixed-cart or partially-fulfilled order can produce 2–4 invoices. The custom settlement service handles this iteratively — each posted payment is matched against all open invoices for the same `SalesId` until the payment is exhausted or all invoices are closed.
 - **Settlement is D365-internal**: OMS has no direct role in triggering settlement. The custom batch job runs inside D365 on a schedule and operates entirely on D365-side `CustTrans` records.
@@ -280,8 +283,8 @@ These scenarios cover the `HotWaxAutoPostSettlementService` custom X++ settlemen
 | # | Scenario | Result |
 | :--- | :--- | :--- |
 | 9 | **SalesId filter** — run with a specific `SalesId` in the contract dialog. Only that order is settled; all others are untouched. | Pending |
-| 10 | **FromDate filter** — set `FromDate` to tomorrow's date. No invoices qualify, settled count = 0. Then set to today or earlier — invoices are picked up. | Pending |
-| 11 | **No filters (default)** — empty `SalesId`, empty `FromDate`. All eligible orders processed in one run. | Pending |
+| 10 | **TransDate filter** — set `TransDate` to tomorrow's date. No invoices qualify, settled count = 0. Then set to today or earlier — invoices are picked up. | Pending |
+| 11 | **No filters (default)** — empty `SalesId`, empty `TransDate`. All eligible orders processed in one run. | Pending |
 
 ### 8.5 Idempotency / Re-run Safety
 
@@ -316,7 +319,7 @@ These scenarios cover the `HotWaxAutoPostSettlementService` custom X++ settlemen
 | 7 | Invoice exists, no payment — warning logged | ✓ |
 | 8 | Payment exists, no invoice yet | Pending |
 | 9 | SalesId filter | Pending |
-| 10 | FromDate filter | Pending |
+| 10 | TransDate filter | Pending |
 | 11 | No filters (default) | Pending |
 | 12 | Re-run on already-settled order — no double settlement | ✓ |
 | 13 | Same customer, two orders — each payment settles its own invoice only | ✓ **Critical** |
@@ -326,7 +329,7 @@ These scenarios cover the `HotWaxAutoPostSettlementService` custom X++ settlemen
 
 ---
 
-## 10. Open Items / TODOs
+## 9. Open Items / TODOs
 
 | Item | Priority | Notes |
 | :--- | :--- | :--- |
@@ -336,7 +339,7 @@ These scenarios cover the `HotWaxAutoPostSettlementService` custom X++ settlemen
 
 ---
 
-## 11. Official References
+## 10. Official References
 
 - [Accounts receivable overview](https://learn.microsoft.com/en-us/dynamics365/finance/accounts-receivable/accounts-receivable)
 - [Customer payment journal](https://learn.microsoft.com/en-us/dynamics365/finance/accounts-receivable/customer-payment-journal)
@@ -348,7 +351,7 @@ These scenarios cover the `HotWaxAutoPostSettlementService` custom X++ settlemen
 
 ---
 
-## 12. Related Docs
+## 11. Related Docs
 
 - [Business Processes](./business_processes.md) — Section 4 (Customer Payment Management) and Section 5 (Fulfillment & Invoicing).
 - [Implementation Plan](./implementation_plan.md) — Customer Payment Integration section and POS Completed Orders Sync section.

@@ -8,7 +8,7 @@ Before records can be synchronized, the foundational structural context must be 
 
 ### 1.1 Multi-Company Structure (dataAreaId) & Legal Entities
 - **dataAreaId**: Represents the Legal Entity (Company).
-- **System Bucket**: Every table in D365 is partitioned by this "Company Code." It defines the context for all validation and financial posting.
+- **System Bucket**: Most transactional and configuration tables in D365 are partitioned by this "Company Code." It defines the context for all validation and financial posting. Shared tables (such as products, workers, and chart of accounts) are global and do not carry a `dataAreaId`.
 - **Organization Administration**: Legal entities are managed under the Organization Administration module.
 - **Validation**: Fields like Customer group, currency, and posting profiles are validated within the specific company context.
 
@@ -22,7 +22,7 @@ Before records can be synchronized, the foundational structural context must be 
 ### 1.3 Number Sequences & Identification
 Number sequences are used in D365 to generate unique identifiers for entities like Customers and Sales Orders. The generation of identifiers such as `CustomerAccount` is company-specific and controlled by D365 configuration.
 
-- **Reference**: [Number sequences overview](https://learn.microsoft.com/en-us/dynamics365/fin-ops-core/fin-ops/organization-administration/number-sequence-overview?toc=%2Fdynamics365%2Fretail%2Ftoc.json)
+- **Reference**: [Number sequences overview](https://learn.microsoft.com/en-us/dynamics365/fin-ops-core/fin-ops/organization-administration/number-sequence-overview)
 
 #### 1.3.1 Verifying Configuration
 To check the sequence in a specific legal entity (for example `USMF`):
@@ -41,7 +41,7 @@ The **Manual** flag directly affects API behavior during record creation:
 | Manual Setting | API Behavior |
 | :--- | :--- |
 | **Yes** | Identifier must be provided in the payload. |
-| **No** | Identifier is auto-generated; caller-provided values are ignored or rejected. |
+| **No** | Identifier is auto-generated; caller-provided values are ignored or rejected. D365 returns the generated identifier in the API response body — integrations must read it from the response to capture the D365-assigned ID. |
 
 > [!IMPORTANT]
 > If `Manual = Yes` and the identifier is missing, the API rejects the request.
@@ -57,3 +57,10 @@ For a system-of-record style integration, the preferred configuration is:
 > The current connector implementations may still assume caller-provided identifiers in some flows during exploration and early rollout.
 >
 > **TODO:** Re-evaluate each flow if the target D365 environments move to auto-generated numbering.
+
+---
+
+## Related Docs
+
+- [connector_foundation.md](./connector_foundation.md) — Generic connector-level modeling: credentials, token management, OData client, and metadata reference.
+- [d365_sysoperation_framework.md](./d365_sysoperation_framework.md) — The D365-side X++ batch operation pattern (SysOperation Framework) used for all custom periodic jobs in this integration.

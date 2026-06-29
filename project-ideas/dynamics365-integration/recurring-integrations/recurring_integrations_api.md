@@ -13,7 +13,7 @@ The Inbound Integration allows external systems to push bulk data files or compo
 ### 1.1 Core Enqueue API
 External systems push payloads directly into a scheduled data job queue:
 * **Endpoint:** `POST https://<d365-instance-url>/api/connector/enqueue/<activity-id>`
-* **Content-Type:** `application/zip` (for Data Packages) or `application/octet-stream` (for flat files like CSV).
+* **Content-Type:** `application/zip` for a Data Package ZIP — which is what the `hotwax-d365` connector sends (confirmed in implementation). `application/octet-stream` (generic binary) is also accepted by the API for any binary payload, whether a ZIP package or a standalone flat file (CSV/XML). Microsoft's documentation does not specify which value to use; the API accepts both.
 * **Response (HTTP 200):** Returns a unique **Queue Message ID** GUID in the JSON body:
   ```json
   {
@@ -21,11 +21,18 @@ External systems push payloads directly into a scheduled data job queue:
   }
   ```
 
+> **`?entity=<entity name>` query parameter** — This parameter is optional, and its requirement depends on the data project configuration:
+> - **Single-entity project:** Can be omitted. D365 routes the payload to the only entity configured in the activity.
+> - **Multi-entity project + individual file (CSV/XML):** Must be specified. Without it, D365 cannot determine which entity the file belongs to and the import will fail.
+> - **Multi-entity project + Data Package ZIP (with `PackageHeader.xml`):** Can be omitted. The package manifest carries the entity mapping internally.
+>
+> The `hotwax-d365` connector sends Data Packages with `PackageHeader.xml`, so the parameter is omitted in all current enqueue calls.
+
 ### 1.2 Programmatic Error Retrieval Strategy
 Both standard Data Package (`ImportFromPackage`) and queue-based Recurring Integrations use the same underlying D365 Data Management Framework (DMF) engine. When an import fails, F&O exposes detailed record-level errors through the following two-step sequencing:
 
 #### Step 1: Resolve the Execution ID from the Message ID
-Because enqueuing returns a *Queue Message ID* (rather than a DMF *Execution ID*), we first call the OData action:
+Because enqueuing returns a *Queue Message ID* (rather than a DMF *Execution ID*), we first call the custom service endpoint:
 * **Endpoint:** `POST /data/DataManagementDefinitionGroups/Microsoft.Dynamics.DataEntities.GetExecutionIdByMessageId`
 * **Request Body:**
   ```json
@@ -34,12 +41,41 @@ Because enqueuing returns a *Queue Message ID* (rather than a DMF *Execution ID*
   }
   ```
 * **Response:** Returns the underlying DMF `executionId` GUID.
-  * > [!IMPORTANT]
-  * > **Handling Pending Queue Messages (Empty GUID):** If the Dynamics 365 background batch engine has not yet scheduled the enqueued file, the API returns the empty GUID `00000000-0000-0000-0000-000000000000`.
-  * >
-  * > In our poller poller (`check#RecurringSalesOrderImport`), this fallback GUID is intercepted, logging that the message is still pending in the queue, updating `lastAttemptDate` to throttle OData rate consumption, and keeping the message in the `SmsgSent` state for retry in the next scheduled loop.
-  * >
-  * > Once a valid non-zero DMF `executionId` is returned, the poller dynamically writes the `executionId` into `remoteMessageId` while keeping the original Queue Message ID safely preserved in the `messageId` field. This enables Moqui to maintain full auditability of both the Queue Message ID and the underlying DMF Execution ID concurrently.
+
+  > [!IMPORTANT]
+  > **Handling Pending Queue Messages (Empty GUID):** If the Dynamics 365 background batch engine has not yet scheduled the enqueued file, the API returns the empty GUID `00000000-0000-0000-0000-000000000000`.
+  >
+  > In our poller (`check#RecurringSalesOrderImport`), this fallback GUID is intercepted, logging that the message is still pending in the queue, updating `lastAttemptDate` to throttle OData rate consumption, and keeping the message in the `SmsgSent` state for retry in the next scheduled loop.
+  >
+  > Once a valid non-zero DMF `executionId` is returned, the poller dynamically writes the `executionId` into `remoteMessageId` while keeping the original Queue Message ID safely preserved in the `messageId` field. This enables Moqui to maintain full auditability of both the Queue Message ID and the underlying DMF Execution ID concurrently.
+
+#### Alternative: GetMessageStatus
+The Microsoft docs also describe a `GetMessageStatus` API that returns the queue-level processing state of a message directly from its Queue Message ID:
+
+* **Endpoint:** `POST /data/DataManagementDefinitionGroups/Microsoft.Dynamics.DataEntities.GetMessageStatus`
+* **Request Body:** `{ "messageId": "<queue-message-guid>" }`
+* **Response:** Returns one of the following status values:
+
+| Status | Meaning |
+| :--- | :--- |
+| `Enqueued` | File successfully enqueued to blob storage |
+| `Dequeued` | File successfully dequeued from blob storage |
+| `Acked` | Exported file acknowledged as downloaded |
+| `Preprocessing` | Import/export operation is preprocessing the request |
+| `Processing` | Import/export operation is in progress |
+| `Processed` | Import/export operation completed successfully |
+| `PreProcessingError` | Operation failed in the preprocessing stage |
+| `ProcessedWithErrors` | Operation completed with errors |
+| `PostProcessingFailed` | Operation failed during post-processing |
+
+**Why the current implementation uses `GetExecutionIdByMessageId` instead:**
+`GetMessageStatus` only returns a queue-level status string — it does not return the DMF Execution ID. Since `GetExecutionSummaryStatus` and `GetExecutionErrors` both require the Execution ID, `GetExecutionIdByMessageId` is called directly. Its non-zero response confirms processing started and provides the Execution ID in one call, making `GetMessageStatus` redundant in the current flow.
+
+**Known gap:** If a message hits a `PreProcessingError`, `GetExecutionIdByMessageId` returns the zero GUID indefinitely — the poller keeps retrying without knowing the message actually failed. Calling `GetMessageStatus` first could detect this state early and move the `SystemMessage` to a failed status without waiting for a timeout.
+
+> **TODO:** Evaluate adding a `GetMessageStatus` call in `check#RecurringSalesOrderImport` before `GetExecutionIdByMessageId` to detect `PreProcessingError` early and avoid indefinite polling on permanently failed messages.
+
+---
 
 #### Step 2: Retrieve the Staging Execution Errors
 Once the `executionId` is resolved, we call the standard error reader endpoint:
@@ -62,15 +98,15 @@ This allows Moqui to capture, decode, and log the F&O validation failures direct
 ### 1.3 DMF Staging Error Pipeline Scenarios & Visibility
 While programmatic retrieval is highly robust, calling `GetExecutionErrors` will return different results depending strictly on the **point of failure** inside the F&O execution pipeline:
 
+* **Phase 0: Import Engine Package & Schema Mismatches (Returns Empty)**
+  - *Scenario:* The XML payload is malformed or completely omits a mapped element (e.g. commenting out the `SHIPPINGWAREHOUSEID` element when it has a defined column mapping in the data project).
+  - *Result:* The D365 Import Engine throws a mapping collection crash (`HRESULT: 0xC0010009`) and aborts immediately before writing *any* rows to the staging tables. Since F&O never created staging records, **no staging error logs exist**, and `GetExecutionErrors` **returns an empty list**.
 * **Phase 1: File/Source $\rightarrow$ Staging Table (Fully Exposed)**
   - *Scenario:* The package is correctly formed, but the data fails staging validations (e.g. `PRODUCTCOLORID` value is invalid, or the customer profile does not exist in F&O).
   - *Result:* The D365 Import Engine successfully writes rows to the staging tables and records the validation constraints in the staging logs. `GetExecutionErrors` **successfully returns** the complete JSON list of failures.
 * **Phase 2: Staging $\rightarrow$ Target Ledger Tables (Conditional Exposure)**
   - *Scenario:* The records pass staging checks but crash on ledger-specific target business logic (e.g., credit limit exceeded or posting period closed).
   - *Result:* If the target writing logic propagates errors back to the staging tables, they are visible. If they reside exclusively in F&O's global System InfoLogs, `GetExecutionErrors` might return an empty list.
-* **Phase 0: Import Engine Package & Schema Mismatches (Returns Empty)**
-  - *Scenario:* The XML payload is malformed or completely omits a mapped element (e.g. commenting out the `SHIPPINGWAREHOUSEID` element when it has a defined column mapping in the data project).
-  - *Result:* The D365 Import Engine throws a mapping collection crash (`HRESULT: 0xC0010009`) and aborts immediately before writing *any* rows to the staging tables. Since F&O never created staging records, **no staging error logs exist**, and `GetExecutionErrors` **returns an empty list**.
 * **Staging Data Clean-up Purge Rules (Returns Empty)**
   - *Scenario:* D365 standard periodic jobs run "Staging clean-up" batches to physically purge staging rows and their logs to avoid database bloat.
   - *Result:* Once old staging logs are cleaned up, calling `GetExecutionErrors` for historical executions **returns an empty list**.
@@ -84,7 +120,7 @@ The Outbound Integration allows external systems to pull bulk data files generat
 ### 2.1 Core Dequeue API
 To retrieve the next exported package from the queue, make an HTTP call:
 * **Endpoint:** `GET https://<d365-instance-url>/api/connector/dequeue/<activity-id>`
-* **Response (HTTP 204):** Returned if the export queue is empty.
+* **Response (HTTP 204 — queue empty):** Returned when no messages are waiting. The response body is empty. This is **not an error** — it is the expected "nothing to process" signal. Pollers must handle it by exiting cleanly and waiting for the next scheduled run. Do **not** call `/ack` after a 204; no message was dequeued and there is nothing to acknowledge.
 * **Response (HTTP 200):** Returns a JSON metadata redirect containing the download path and lease lock details:
   ```json
   {
@@ -99,6 +135,9 @@ To retrieve the next exported package from the queue, make an HTTP call:
 
 ### 2.2 Package Download Process
 The connector makes a secondary `GET` call to the `DownloadLocation` URL provided in the dequeue response (passing the OAuth Bearer token in the `Authorization` header) to download the binary ZIP package containing the exported CSV files.
+
+> [!IMPORTANT]
+> In load-balanced environments (e.g. production), the `DownloadLocation` URL returned by `/dequeue` may use `http://` instead of `https://`. This is a known D365 behavior documented by Microsoft. Always replace the URI scheme with `https://` before making the download request — do not follow an HTTP download URL in production.
 
 ### 2.3 Acknowledge (Ack) API
 After successfully downloading and processing the export package, you must send an acknowledgment back to D365. **Until a message is acknowledged, D365 will release the lease lock after 30 minutes, making the message available to dequeue again.**
@@ -115,13 +154,16 @@ After successfully downloading and processing the export package, you must send 
   }
   ```
 
-### 2.4 GUID Mapping Distinction (UI Message ID vs. API CorrelationId)
+### 2.4 GUID Mapping Distinction (UI Message ID vs. API Response Fields)
 * **D365 UI Message ID:** In the D365 SCM UI (**Manage scheduled data jobs > Manage messages**), the GUID displayed under the **"Message ID"** column is the *persistent database record ID* (e.g. `{1EB6FF02-...}`).
-* **API Correlation ID:** The `CorrelationId` in the `/dequeue` JSON response is a *temporary lease lock token* used to link the dequeue session to the acknowledgment POST payload.
-* **Mapping:** D365 resolves the `CorrelationId` internally on `/ack` POST ingestion, updates the corresponding database message record (e.g. `{1EB6FF02-...}`), and updates its status to **Acknowledged** in the UI.
+* **CorrelationId / PopReceipt:** Both fields are returned by the `/dequeue` API. The Microsoft documentation does not describe these fields individually. Send the full dequeue JSON body back unchanged in the `/ack` POST — do not selectively pick fields.
+* **Mapping:** D365 resolves the ack internally, updates the corresponding database message record (e.g. `{1EB6FF02-...}`), and sets its status to **Acknowledged** in the UI.
 
 ### 2.5 Targeted Dequeue by Message ID
 The standard dequeue endpoint always retrieves the **next available message** from the head of the queue. D365 supports an optional `messageId` query parameter to target a **specific message** by its persistent database record GUID (the **UI Message ID** from section 2.4):
+
+> [!NOTE]
+> The `?messageId=` parameter is **not documented in the official Microsoft Learn documentation** for Recurring Integrations. It was discovered through implementation and testing. Behaviour may change across D365 platform updates without notice.
 
 * **Endpoint:** `GET https://<d365-instance-url>/api/connector/dequeue/<activity-id>?messageId=<ui-message-id-guid>`
 * **Behaviour:** D365 locates the specific queue message matching that GUID and returns it in the same `200 OK` JSON response as a standard dequeue call.
@@ -149,7 +191,7 @@ The standard dequeue endpoint always retrieves the **next available message** fr
 #### OMS Implementation
 The `dequeue#RecurringSalesOrderNumbers` service accepts an optional `messageId` parameter. When provided, it appends `?messageId=<value>` to the dequeue URL. The rest of the flow — download, unzip, DataManager upload, and ack — is identical to the standard path.
 
-The `d365_DequeueRecurringSalesOrderNumbers` ServiceJob exposes a `messageId` parameter slot (empty by default). To trigger a targeted re-run, set this parameter to the UI Message ID GUID from the D365 **View messages** screen, run the job once manually, then clear the parameter back to empty so subsequent scheduled runs return to normal queue polling.
+The `d365_DequeueRecurringSalesOrderNumbers` ServiceJob exposes a `messageId` parameter slot (empty by default). To trigger a targeted re-run, set this parameter to the UI Message ID GUID from the D365 **Manage messages** screen, run the job once manually, then clear the parameter back to empty so subsequent scheduled runs return to normal queue polling.
 
 > [!NOTE]
 > The UI Message ID used here is the **persistent database GUID** shown in the D365 "Manage messages" screen — **not** the `CorrelationId` returned by the dequeue response, which is a temporary lease token.
@@ -173,7 +215,7 @@ To monitor enqueued messages, check job runs, and download active payloads direc
 
 ### 3.3 Inspecting and Downloading Queue Payloads
 * Select your scheduled job from the list.
-* In the top action pane, click **View messages** or **Queue status**.
+* In the top action pane, click **Manage messages**.
 * This screen shows each enqueued/dequeued package with its:
   * **Message ID:** Database record GUID.
   * **Message status:** (e.g., `In queue`, `Processed`, `Acknowledged`, `Failed`).

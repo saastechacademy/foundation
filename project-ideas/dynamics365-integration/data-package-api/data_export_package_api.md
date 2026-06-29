@@ -45,7 +45,7 @@ Synchronizing Released Product Variants from D365 to Moqui/HotWax OMS.
 
 The connector has explored two integration approaches over the D365 Data Package Export APIs.
 
-### Approach 1 - Execution Tracking Using `SystemMessage` Records
+### 4.1 Approach 1 - Execution Tracking Using `SystemMessage` Records
 
 This was the earlier implementation approach.
 
@@ -94,7 +94,7 @@ This was the earlier implementation approach.
 - `sendNow=false` meant the created `SystemMessage` entity record was not intended to be sent through `send#ProducedSystemMessage`
 - `SmsgProduced` therefore represented a tracker row, not a true produced outbound message
 
-### Approach 2 - Moqui-Native `SystemMessage` Send Flow
+### 4.2 Approach 2 - Moqui-Native `SystemMessage` Send Flow
 
 This is the current export model and the implemented generic framework.
 
@@ -198,23 +198,25 @@ This is the current export model and the implemented generic framework.
   - `dataManagerConfigId` or `targetDirectory`
 - Consumer flows also provide the downstream row-processing logic through the configured DataManager import service.
 
-### 4.1 Implemented Export APIs Used
+### 4.3 Implemented Export APIs Used
 
 - `ExportToPackage` API
 - `GetExecutionSummaryStatus` API
 - `GetExportedPackageUrl` API
 - `GetExecutionErrors` API
 
-### 4.2 Guidance for Consumer Flows
+### 4.4 Guidance for Consumer Flows
 
 - Use **Approach 2** for current and future export integrations.
 - Keep **Approach 1** documented only as the earlier design that validated the D365 export mechanics.
 - For the sales-order-specific export reconciliation flow that uses the current generic export services, refer to [implementation_plan.md](../sales-orders/implementation_plan.md).
 
+
 ---
 
 ## 5. Key Considerations
+*   **Data Project Must Exist**: The export data project (`definitionGroupId`) must already be created in D365 Data Management before calling `ExportToPackage`. If the project does not exist, the API call will return an error.
 *   **Asynchronous Nature**: Exports are batch jobs in D365 and may take several minutes depending on the volume of data.
 *   **Unique Package Names**: Always generate a unique `packageName` for each export to avoid collisions.
 *   **File Encoding**: D365 typically exports CSVs in `UTF-16LE` encoding. Local processing logic must be aware of this.
-*   **Security**: The download URL is a pre-signed SAS token and typically expires within 90 minutes.
+*   **File Retention**: The exported file in Azure Blob storage is available for **seven days** after which it is automatically deleted by D365. Download and process the package within this window.
