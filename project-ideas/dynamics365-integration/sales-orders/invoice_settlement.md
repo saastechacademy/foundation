@@ -64,10 +64,10 @@ Settlement                 ←── Posted payment applied to open invoice(s)
 ### 2.4 Mixed Cart Order (Store + Warehouse Lines)
 
 - A single sales order contains lines fulfilled by both D365 (warehouse) and OMS (store).
-- D365 generates **multiple invoices** from the same order as different fulfillment events complete.
-- Settlement must match the payment against multiple invoices over time.
-
-**Status**: Mixed cart order creation and per-line warehouse update implemented. Multi-invoice settlement strategy is designed but not yet verified end-to-end.
+- OMS pushes the sales order to D365 and updates warehouse context per fulfillment event — warehouse lines via the Brokered Order Items package, store-fulfilled lines via the Fulfilled Order Items package.
+- D365 generates **multiple invoices** from the same order as different fulfillment events complete — one per fulfillment wave.
+- OMS pushes a customer payment journal after payment is settled in Shopify.
+- D365 settles the posted payment against multiple invoices over time using `SalesOrderNumber` as the matching key.
 
 > [!NOTE]
 > The identified matching key for all settlement use cases is `SalesOrderNumber`. OMS writes this into `PaymentReference` on the payment journal line. Any future D365 settlement batch or custom settlement logic should be built around that identifier.
