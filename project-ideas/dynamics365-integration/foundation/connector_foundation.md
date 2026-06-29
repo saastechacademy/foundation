@@ -72,3 +72,4 @@ This document captures the generic connector-level modeling used across the `hot
 ## Related Docs
 
 - [business_process_foundations.md](./business_process_foundations.md) — Foundational D365 concepts: multi-company structure, the Party model, and number sequences.
+- [d365_sysoperation_framework.md](./d365_sysoperation_framework.md) — The D365-side X++ batch operation pattern (SysOperation Framework) used for all custom periodic jobs in this integration.

@@ -63,3 +63,4 @@ For a system-of-record style integration, the preferred configuration is:
 ## Related Docs
 
 - [connector_foundation.md](./connector_foundation.md) — Generic connector-level modeling: credentials, token management, OData client, and metadata reference.
+- [d365_sysoperation_framework.md](./d365_sysoperation_framework.md) — The D365-side X++ batch operation pattern (SysOperation Framework) used for all custom periodic jobs in this integration.

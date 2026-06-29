@@ -7,6 +7,14 @@ The goal of this integration is to synchronize critical business data, specifica
 
 ## Documentation Flow
 
+### Foundation
+1.  **[Business Process Foundations](foundation/business_process_foundations.md)**
+    *   Core D365 concepts that apply across all flows: multi-company structure (`dataAreaId`), the Party model, and number sequences.
+2.  **[Connector Foundation](foundation/connector_foundation.md)**
+    *   OMS-side connector patterns: credentials storage, OAuth token management, OData client, and metadata reference.
+3.  **[D365 SysOperation Framework](foundation/d365_sysoperation_framework.md)**
+    *   The Microsoft-standard three-class pattern (Contract / Service / Controller) used for all custom D365-side batch and periodic operations, with examples from this integration.
+
 ### Sales Orders
 1.  **[Business Processes](sales-orders/business_processes.md)**
     *   High-level business flows and requirements for Customer and Order management.
