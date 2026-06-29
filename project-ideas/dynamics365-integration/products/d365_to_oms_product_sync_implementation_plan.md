@@ -13,8 +13,8 @@ The current connector work on products is an **export from D365 to OMS** using t
 ## 2. Current Scope
 
 ### 2.1 What is implemented
-- A D365 export `SystemMessage` flow using the generic export services in [D365DataPackageServices.xml](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml)
-- Product export job seeds in [D365ServiceJobData.xml](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/data/D365ServiceJobData.xml)
+- A D365 export `SystemMessage` flow using the generic export services in `D365DataPackageServices.xml`
+- Product export job seeds in `D365ServiceJobData.xml`
 - Download and extraction of `Released product variants V2.csv` into:
   - `runtime://datamanager/d365/export/products`
 
@@ -34,7 +34,7 @@ So the current product flow is best understood as:
 
 ## 3. Current Implemented Export Flow
 
-For the generic export framework, see [data_export_package_api.md](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/foundation/project-ideas/dynamics365-integration/data-package-api/data_export_package_api.md).
+For the generic export framework, see [data_export_package_api.md](../data-package-api/data_export_package_api.md).
 
 The current product flow uses the generic export queue/send/poll services with product-specific job parameters.
 
@@ -46,8 +46,8 @@ The current product flow uses the generic export queue/send/poll services with p
 
 #### Queue Job
 - service job `d365_QueueProductVariantsExport`
-- defined in [D365ServiceJobData.xml](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/data/D365ServiceJobData.xml)
-- calls the generic service [D365DataPackageServices.queue#ExportDataPackage](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml:4)
+- defined in `D365ServiceJobData.xml`
+- calls the generic service `D365DataPackageServices.queue#ExportDataPackage`
 
 Parameters:
 - `systemMessageTypeId = D365_EXPORT_PRODUCTS`
@@ -58,8 +58,8 @@ Parameters:
 
 #### Poll Job
 - service job `d365_ExportProductVariantsPoll`
-- defined in [D365ServiceJobData.xml](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/data/D365ServiceJobData.xml)
-- calls the generic service [D365DataPackageServices.poll#ExportDataPackageStatus](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml:86)
+- defined in `D365ServiceJobData.xml`
+- calls the generic service `D365DataPackageServices.poll#ExportDataPackageStatus`
 
 Parameter:
 - `systemMessageTypeId = D365_EXPORT_PRODUCTS`

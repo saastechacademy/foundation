@@ -6,7 +6,7 @@ HotWax acts as an integration adapter to ensure that D365, as the financial syst
 
 ## 1. Foundational Concepts & System Setup
 
-The generic business-process foundations for D365 F&O integration are documented in [business_process_foundations.md](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/foundation/project-ideas/dynamics365-integration/foundation/business_process_foundations.md).
+The generic business-process foundations for D365 F&O integration are documented in [business_process_foundations.md](../foundation/business_process_foundations.md).
 
 This sales-order document focuses only on customer, sales-order, and payment process behavior that is specific to the sales-order domain.
 
@@ -123,7 +123,7 @@ This pattern creates a composite package and submits it through the Data Managem
 | DMF | `Sales orders composite V4` | Composite import package | Batch/asynchronous | Package generation, upload, and import monitoring |
 
 > [!NOTE]
-> Detailed implementation specifics for both patterns are documented in [implementation_plan.md](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/foundation/project-ideas/dynamics365-integration/sales-orders/implementation_plan.md) and the shared DMF reference at [data_import_package_api.md](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/foundation/project-ideas/dynamics365-integration/data-package-api/data_import_package_api.md).
+> Detailed implementation specifics for both patterns are documented in [implementation_plan.md](implementation_plan.md) and the shared DMF reference at [data_import_package_api.md](../data-package-api/data_import_package_api.md).
 
 ### 3.3 Shared Business Rules
 

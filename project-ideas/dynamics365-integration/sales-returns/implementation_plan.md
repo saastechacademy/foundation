@@ -20,7 +20,7 @@ For D365 standard return process, disposition codes, accounting model, and lifec
 
 ### Phase 3 — Arrival Journal DMF Sync (Implemented)
 - Batch-sweep ServiceJob packages eligible returns into a DMF ZIP using the "Item arrival journals V2" composite entity
-- Services: `queue#ArrivalJournals`, `send#ArrivalJournalImport`, `pollAndConfirm#ArrivalJournalImport`, `check#ArrivalJournalImport`
+- Services: `queue#ArrivalJournals`, `send#ArrivalJournalImport`, `poll#ArrivalJournalImport`, `check#ArrivalJournalImport`
 - Tracking entity: `D365ArrivalJournalHistory`; view: `D365EligibleArrivalJournals`
 - `definitionGroupId`: `HotWax_Import_Item_Arrival_Journals_V2`
 
@@ -370,7 +370,7 @@ POST /api/connector/enqueue/{activityId}
 ```
 D365 returns a Queue Message ID stored as the SystemMessage `remoteMessageId`.
 
-#### `pollAndConfirm#ArrivalJournalImport`
+#### `poll#ArrivalJournalImport`
 
 ServiceJob-driven. Finds all `D365_ARR_JNL_IMPORT` SystemMessages in `SmsgSent` status and delegates to `check#ArrivalJournalImport` per message.
 
@@ -430,7 +430,7 @@ Two distinct identifiers on a D365 return order:
 | Job | Service | Key Parameters |
 | :--- | :--- | :--- |
 | `queue_D365ArrivalJournals` | `queue#ArrivalJournals` | `systemMessageRemoteId`, `activityId` (D365 Data Management activity ID for "Item arrival journals V2"), `definitionGroupId=HotWax_Import_Item_Arrival_Journals_V2`, optional `returnId` |
-| `pollAndConfirm_D365ArrivalJournalImport` | `pollAndConfirm#ArrivalJournalImport` | `systemMessageRemoteId` |
+| `poll_D365ArrivalJournalImport` | `poll#ArrivalJournalImport` | `systemMessageRemoteId` |
 
 Both jobs are paused by default.
 
@@ -489,7 +489,7 @@ Both jobs are paused by default.
 | 13 | Run `queue#ArrivalJournals` with `dryRun=true` — confirm generated XML shows `DEFAULTRETURNITEMNUMBER=RMANumber` (e.g. `00412`) and `DEFAULTTRANSACTIONREFERENCENUMBER=ReturnOrderNumber` (e.g. `001624`) | Pending |
 | 14 | Run `queue#ArrivalJournals` without `dryRun` — confirm `SystemMessage(D365_ARR_JNL_IMPORT)` created and `D365ArrivalJournalHistory` records inserted per return | Pending |
 | 15 | Run `send#ArrivalJournalImport` — confirm ZIP POSTed to `/api/connector/enqueue/{activityId}`, Queue Message ID persisted as `remoteMessageId` | Pending |
-| 16 | Run `pollAndConfirm#ArrivalJournalImport` — confirm DMF execution status resolved, SystemMessage marked confirmed | Pending |
+| 16 | Run `poll#ArrivalJournalImport` — confirm DMF execution status resolved, SystemMessage marked confirmed | Pending |
 | 17 | Verify arrival journals visible in D365 `Inventory management > Journals > Item arrival` and can be posted | Pending |
 
 ---

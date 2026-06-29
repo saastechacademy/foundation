@@ -3,7 +3,7 @@
 This document outlines the technical design and implementation steps for integrating HotWax OMS with Microsoft Dynamics 365 Finance & Operations (D365 F&O).
 
 ## 1. Technical Architecture
-- Sales-order integration uses the generic D365 connector foundation documented in [connector_foundation.md](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/foundation/project-ideas/dynamics365-integration/foundation/connector_foundation.md).
+- Sales-order integration uses the generic D365 connector foundation documented in [connector_foundation.md](../foundation/connector_foundation.md).
 - **Sales-order specific interfaces**:
     - OData v4 (REST) for direct entity-based sync
     - Data Management Framework (DMF) / Data Package API for composite package import
@@ -78,7 +78,7 @@ This entity is used by the batch DMF import pattern (`import#SalesOrdersDataPack
 
 ## Foundation
 
-The generic connector foundation for authentication, credentials storage, legal-entity mapping, token management, and common OData request handling is documented in [connector_foundation.md](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/foundation/project-ideas/dynamics365-integration/foundation/connector_foundation.md).
+The generic connector foundation for authentication, credentials storage, legal-entity mapping, token management, and common OData request handling is documented in [connector_foundation.md](../foundation/connector_foundation.md).
 
 This sales-order implementation plan focuses on the sales-order-specific services, entities, views, and orchestration built on top of that shared connector layer.
 
@@ -359,7 +359,7 @@ This section documents two approaches for the DMF / Data Package path:
 - **Approach 1**: execution tracking using `SystemMessage` records after the remote D365 trigger call
 - **Approach 2**: a Moqui-native `SystemMessage` send lifecycle using `SmsgProduced` -> `SmsgSending` -> `SmsgSent` -> `SmsgConfirmed`
 
-See the shared Data Package API reference: [data_import_package_api.md](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/foundation/project-ideas/dynamics365-integration/data-package-api/data_import_package_api.md). That document describes only the generic D365 package API services; the sales-order-specific job, packaging, and submission details remain in this implementation plan.
+See the shared Data Package API reference: [data_import_package_api.md](../data-package-api/data_import_package_api.md). That document describes only the generic D365 package API services; the sales-order-specific job, packaging, and submission details remain in this implementation plan.
 
 ##### Approach 1 - Execution Tracking Using `SystemMessage` Records
 
@@ -706,7 +706,7 @@ After OMS confirms the remote execution and completes follow-up processing, the 
 - **Operational handling for now**: If a sales order import package fails, OMS records the failed state by moving the `SystemMessage` to `SmsgError`; the detailed import errors may need to be checked manually in D365 Data Management until API-based retrieval is figured out.
 - **TODO**: revisit failed sales order import error retrieval and confirm whether another D365 API, exported log, or DMF artifact can provide the detailed execution errors for composite entity imports.
 
-For generic package upload/import mechanics and API sequencing, refer to [data_import_package_api.md](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/foundation/project-ideas/dynamics365-integration/data-package-api/data_import_package_api.md).
+For generic package upload/import mechanics and API sequencing, refer to [data_import_package_api.md](../data-package-api/data_import_package_api.md).
 
 ##### DMF TODOs / Gaps
 - Resolve `ITEMNUMBER` from OMS-to-D365 product mapping
@@ -742,7 +742,7 @@ This approach wraps the hierarchical `Sales orders composite V4` package and sen
    - **Binary Transmission Safety:** Uses standard Java `HttpURLConnection` to execute a direct binary `POST` payload transfer to the D365 Enqueuer endpoint (`/api/connector/enqueue/<activity-id>`) with `Content-Type: application/zip`, bypassing the Moqui `RestClient` limitation (which lacks binary-stream body method helpers).
    - Receives the D365 **Queue Message ID GUID** response, parses it cleanly to standard UTF-8 string format, deletes the temporary file from the disk to free up space, persists the Queue GUID directly to the `messageId` field in the database, returns it as `remoteMessageId` for initial status tracking, and moves the status to `SmsgSent`.
 
-3. **The Poller Orchestration (`pollAndConfirm#RecurringSalesOrderImport`):**
+3. **The Poller Orchestration (`poll#RecurringSalesOrderImport`):**
    - Regularly finds all `D365_REC_IMP_SLS_ORDERS` messages in the `SmsgSent` state.
    - Loops and triggers the custom status checker (`check#RecurringSalesOrderImport`) in individual transactions.
 
@@ -899,7 +899,7 @@ Add records to the entity `co.hotwax.integration.IntegrationTypeMapping` for the
 
 ### 2. Export of Sales Orders from D365 to OMS
 
-This flow returns the D365-generated `SalesOrderNumber` back into OMS after the OMS-to-D365 sales order import completes. The generic Data Package queue/send/poll services remain documented in [data_export_package_api.md](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/foundation/project-ideas/dynamics365-integration/data-package-api/data_export_package_api.md); this section covers the sales-order-header-specific D365 project, jobs, row mappings, and OMS persistence.
+This flow returns the D365-generated `SalesOrderNumber` back into OMS after the OMS-to-D365 sales order import completes. The generic Data Package queue/send/poll services remain documented in [data_export_package_api.md](../data-package-api/data_export_package_api.md); this section covers the sales-order-header-specific D365 project, jobs, row mappings, and OMS persistence.
 
 #### Objective
 - Store the D365 `SalesOrderNumber` against the originating OMS order.

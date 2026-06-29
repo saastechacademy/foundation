@@ -24,13 +24,13 @@ The Data Import Package API follows these core steps:
 The connector currently has the following generic implemented services over the D365 Data Package import APIs:
 
 - **Generic poll service for import execution**
-  - Service: [D365DataPackageServices.poll#ImportDataPackageStatus](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml:348)
+  - Service: `D365DataPackageServices.poll#ImportDataPackageStatus`
   - Used by import polling service jobs to monitor D365 import execution ids stored as `SystemMessage` entity records
 - **Generic single-execution checker**
-  - Service: [D365DataPackageServices.check#ImportDataPackageStatus](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml:384)
+  - Service: `D365DataPackageServices.check#ImportDataPackageStatus`
   - Checks one import execution id and updates the related `SystemMessage` entity record
 - **Generic execution error reader**
-  - Service: [D365DataPackageServices.get#ExecutionErrors](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml:446)
+  - Service: `D365DataPackageServices.get#ExecutionErrors`
   - Retrieves D365 DMF execution errors for a given import execution id
   - Called by `check#ImportDataPackageStatus` when D365 reports a terminal failure status
 
@@ -56,9 +56,9 @@ The connector currently has the following generic implemented services over the 
 
 ### 4.3 Boundary of the Generic Layer
 
-- The generic services in [D365DataPackageServices.xml](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/hotwax-d365/service/co/hotwax/d365/D365DataPackageServices.xml) cover import-status polling and error retrieval after an import execution id already exists.
+- The generic services in `D365DataPackageServices.xml` cover import-status polling and error retrieval after an import execution id already exists.
 - Package construction, ZIP upload, `ImportFromPackage` submission, tracking-entity updates, and any follow-up reconciliation remain consumer-flow responsibilities.
-- For the sales-order-specific implementation that uses these generic APIs, refer to [implementation_plan.md](/Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/foundation/project-ideas/dynamics365-integration/sales-orders/implementation_plan.md).
+- For the sales-order-specific implementation that uses these generic APIs, refer to [implementation_plan.md](../sales-orders/implementation_plan.md).
 
 ---
 
