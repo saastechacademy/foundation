@@ -207,7 +207,7 @@ POS Completed orders require a tightly automated lifecycle since payment is capt
 2. D365 auto-posts packing slip — OOTB batch (`Sales and marketing > Order shipping > Post packing slip`, filtered by `SalesOrigin = POS`). Validated in issue [#13](https://github.com/hotwax/dynamics365-integration/issues/13).
 3. D365 auto-posts invoice — OOTB batch (`AR > Invoices > Batch invoicing > Invoice`, filtered by `SalesOrigin = POS`). Validated in issue [#16](https://github.com/hotwax/dynamics365-integration/issues/16).
 4. OMS pushes customer payment journal (OData, unposted draft).
-5. D365 posts the payment journal — OOTB AR auto-post or custom batch (under evaluation for target environment).
+5. D365 posts the payment journal — OOTB AR auto-post batch. Validated.
 6. `HotWaxAutoPostSettlementService` runs and settles the posted payment against the posted invoice using `PaymReference = SalesId`.
 
 **Status**: Steps 1–3 validated. Step 6 (settlement service) implemented and verified in isolation. End-to-end POS lifecycle not yet verified as a complete chain.
@@ -229,7 +229,7 @@ POS Completed orders require a tightly automated lifecycle since payment is capt
 | :--- | :--- | :--- |
 | Packing slip auto-post | OOTB ✓ | Standard D365 batch (`Sales and marketing > Post packing slip`). Validated — see issues #13, #15. |
 | Invoice auto-post | OOTB ✓ | Standard D365 batch (`AR > Invoices > Batch invoicing > Invoice`). Validated — see issues #16, #17. |
-| Payment journal post | OOTB (under evaluation) | Can be configured via AR parameters auto-post. Needs validation in target environment. |
+| Payment journal post | OOTB ✓ | Standard D365 AR auto-post batch. Validated. |
 | Settlement | Custom ✓ | OOTB rejected (FIFO by customer, ignores `PaymentReference`). Custom `HotWaxAutoPostSettlementService` implemented — see [section 5.2](#52-custom-settlement-service-hotwaxautopostsettlementservice). |
 
 ---
