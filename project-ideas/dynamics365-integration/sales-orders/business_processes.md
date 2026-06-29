@@ -112,6 +112,9 @@ This pattern creates a composite package and submits it through the Data Managem
     - `SALESORDERHEADERV3ENTITY`
     - `SALESORDERLINEV2ENTITY`
     - `SALESORDERHEADERCHARGEV2ENTITY`
+
+> [!NOTE]
+> The "V4" in `Sales orders composite V4` is the composite entity's own version number, not the version of its child sub-entities. The composite uses header **V3** and line **V2** child entities — which are distinct from the standalone OData entities used in the OData pattern (`SalesOrderHeadersV4` / `SalesOrderLinesV3`). These child entity versions are defined by the composite entity schema in D365 and cannot be changed independently.
 - **Processing Style**: Batch/package-based import
 - **Constraint**: Import processing is asynchronous from the business point of view and requires package submission/orchestration.
 - **Current Use Case**: Larger-volume order import and composite payload submission.

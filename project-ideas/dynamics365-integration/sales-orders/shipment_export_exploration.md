@@ -89,15 +89,34 @@ This section defines the components in the `hotwax-d365` connector to schedule, 
 - **D365 Definition Group**: `HotWax_Export_Packing_Slips`
 - **D365 Package Name**: `OmsPackingSlipExportEntity`
 - **Target CSV Filename**: `Oms packing slip export entity.csv`
-- **DataManager Configuration**: `D365_IMP_PACKING_SLIPS`
+- **DataManager Configuration**: `D365_IMP_PACKING_SLIPS` (the `IMP` prefix follows the OMS DataManager naming convention — it represents an OMS-side import of the D365 export data, consistent with `D365_IMP_SALES_ORD` used in other D365-to-OMS export flows)
 - **Processing Service**: `co.hotwax.d365.D365ShipmentServices.storeAndCreate#D365OutboundShipments`
 
-### Processing Flow
-1. **Triggering**: The queue job `d365_QueuePackingSlipsExport` triggers `D365DataPackageServices.queue#ExportDataPackage` which sets up a `SystemMessage` record.
-2. **Execution**: The `send#ExportDataPackage` service issues a request to D365 `ExportToPackage` for the `HotWax_Export_Packing_Slips` group.
-3. **Polling**: The `d365_ExportPackingSlipsPoll` service monitors the job status until completion.
-4. **Ingestion**: Upon completion, the checker downloads the export package, extracts the CSV, and initiates the `D365_IMP_PACKING_SLIPS` DataManager parsing flow.
-5. **Consumption**: Tabular rows are passed to `storeAndCreate#D365OutboundShipments` for processing.
+### Candidate OMS Integration Approaches
+
+> [!NOTE]
+> **Approach not finalized.** Two options are under consideration. Both use the same D365 entity (`OmsPackingSlipExportEntity`), definition group (`HotWax_Export_Packing_Slips`), and downstream processing service (`storeAndCreate#D365OutboundShipments`). The choice affects the Moqui queue/poll service names and how D365 is configured.
+
+#### Option A: Data Package Export API
+
+1. A queue job triggers `D365DataPackageServices.queue#ExportDataPackage`, which queues a `SystemMessage` and calls D365 `ExportToPackage` for the `HotWax_Export_Packing_Slips` definition group.
+2. A poll job calls `GetExecutionSummaryStatus` until the export status is `Succeeded`.
+3. `GetExportedPackageUrl` is called to retrieve a signed blob download URL.
+4. The ZIP is downloaded, the target CSV (`Oms packing slip export entity.csv`) is extracted, and the `D365_IMP_PACKING_SLIPS` DataManager flow processes the rows.
+5. Tabular rows are passed to `storeAndCreate#D365OutboundShipments`.
+
+**Trade-off**: OMS controls export timing (triggered on demand). Requires the full ExportToPackage → poll → download cycle per run.
+
+#### Option B: Recurring Integration (dequeue/ack)
+
+1. A recurring export job is configured in D365 Data Management for `HotWax_Export_Packing_Slips` to run on a schedule.
+2. Moqui polls the `/api/connector/dequeue/{activityId}` endpoint on its own schedule; each successful response contains a download URL for the exported CSV package.
+3. The CSV is downloaded and rows are processed through `D365_IMP_PACKING_SLIPS` DataManager and `storeAndCreate#D365OutboundShipments`.
+4. Moqui calls `/api/connector/ack/{activityId}` to prevent reprocessing.
+
+**Trade-off**: D365 drives the export schedule; OMS only polls and acknowledges. Simpler OMS-side triggering, but export cadence is configured in D365.
+
+For reference on both APIs, see [recurring_integrations_api.md](../recurring-integrations/recurring_integrations_api.md) and [data_export_package_api.md](../data-package-api/data_export_package_api.md).
 
 ### Exported Fields & Mappings
 

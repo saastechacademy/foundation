@@ -31,6 +31,7 @@ To prevent duplicate records (e.g., Sales Headers) during retries, OData calls s
 ---
 
 ## 2. Custom Services (SysOperation)
+- **Official Documentation**: [Custom service development](https://learn.microsoft.com/dynamics365/fin-ops-core/dev-itpro/data-entities/custom-services)
 - **Use Case**: Atomic creation of complex documents (Header + Lines) in a single transaction.
 - **Protocol**: REST (JSON/XML) or SOAP.
 - **Description**: A custom X++ endpoint that accepts a full document payload. D365 processes the entire structure within one database transaction.
@@ -91,7 +92,7 @@ Business Events provide a mechanism that lets external systems receive notificat
 
 | Feature | Description |
 | :--- | :--- |
-| **Push-based** | D365 activeley sends a notification when a business process completes. |
+| **Push-based** | D365 actively sends a notification when a business process completes. |
 | **Event-driven** | Reduces load by eliminating the need for external systems to poll OData. |
 | **Standard Events** | Includes `SalesOrderInvoicedBusinessEvent`, `SalesOrderConfirmedBusinessEvent`, etc. |
 

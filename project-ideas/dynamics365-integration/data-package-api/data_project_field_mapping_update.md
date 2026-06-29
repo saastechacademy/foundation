@@ -37,14 +37,14 @@ This means you cannot simply add a manual mapping for a new field — the Source
 
 7. Inside the project, find the entity tile (e.g., `Sales order lines V3`) and click **View map**.
 
-8. Click **Regenerate source mapping** (or **Generate source mapping** depending on the D365 version).
+8. Click **Regenerate source mapping** (the button reads **Generate source mapping** on a first-time setup when no mapping exists yet; for an existing project being updated, it will always read **Regenerate source mapping**).
    - D365 will ask: *"Do you want to generate the mapping from scratch?"* → click **Yes**.
    - The new field now appears in the Source field column and is automatically mapped to the matching Staging field.
 
 9. **Verify** that the new field appears in the mapping with a Source → Staging connection.
 
 > [!NOTE]
-> `Load project` + `Upload file` is the correct entry point for replacing the sample file on an existing project. Opening the project directly and using `Add file` or `Run project` serves a different purpose and may not correctly replace the existing entity's source file.
+> `Run project` (from the project list action bar, without opening the project) is the correct entry point for replacing the sample file. It exposes the `Upload file` option that replaces the existing entity's source file. Do not open the project directly to upload — use the action bar.
 
 ## Example: Adding `HCFULFILLMENTTYPE` to `HotWax_Import_Brokered_Order_Items`
 
@@ -62,3 +62,10 @@ After regenerating the source mapping, the mapping should show:
 | INVENTORYLOTID | INVENTORYLOTID |
 | SHIPPINGWAREHOUSEID | SHIPPINGWAREHOUSEID |
 | HCFULFILLMENTTYPE | HCFULFILLMENTTYPE |
+
+---
+
+## Related Docs
+
+- [data_import_package_api.md](./data_import_package_api.md) — Import package API flow that uses these data projects for inbound sync.
+- [data_export_package_api.md](./data_export_package_api.md) — Export package API flow that uses these data projects for outbound sync.
