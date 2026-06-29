@@ -53,13 +53,13 @@ Settlement                 ←── Posted payment applied to open invoice(s)
 
 **Status**: Fulfilled order items warehouse update implemented. Invoice posting and settlement remain D365-side steps (OOTB or custom batch). Not end-to-end verified.
 
-### 2.3 POS Carry-Out Order
+### 2.3 POS Completed Order
 
-- Order is placed at POS, payment is captured immediately (carry-out: fulfilled on the spot).
-- Requires a tightly automated lifecycle in D365: packing slip → invoice → payment post → settlement, all happening close together.
-- Because the customer has already paid at point of sale, automated settlement against the same-session invoice is the target behavior.
-
-**Status**: Explored. POS order sync itself is implemented (same sales order path). Automated packing slip posting, invoice posting, payment posting, and settlement require D365-side automation (OOTB batch or custom X++ SysOperation). Not yet verified end-to-end.
+- Order is placed and fulfilled at the store counter in a single transaction; payment is captured immediately via the payment gateway.
+- OMS pushes the sales order to D365 (same path as other order types) when the order reaches `COMPLETED` status.
+- D365-side automation handles packing slip posting and invoice generation (OOTB batch or custom X++).
+- OMS pushes the customer payment journal to D365 after confirming payment settlement in Shopify.
+- D365 settles the posted payment against the posted invoice using `SalesOrderNumber` as the matching key.
 
 ### 2.4 Mixed Cart Order (Store + Warehouse Lines)
 
@@ -201,7 +201,7 @@ The service runs as a recurring D365 batch job. Access it from the HotWax custom
 
 ### 5.4 POS Order Settlement Flow
 
-POS carry-out orders require a tightly automated lifecycle since payment is captured at the point of sale. Steps 1–3 use validated OOTB D365 batch jobs; step 4 uses the custom settlement service.
+POS Completed orders require a tightly automated lifecycle since payment is captured at the point of sale. Steps 1–3 use validated OOTB D365 batch jobs; step 4 uses the custom settlement service.
 
 1. OMS pushes sales order to D365.
 2. D365 auto-posts packing slip — OOTB batch (`Sales and marketing > Order shipping > Post packing slip`, filtered by `SalesOrigin = POS`). Validated in issue [#13](https://github.com/hotwax/dynamics365-integration/issues/13).
