@@ -159,6 +159,6 @@ To process the flat lines from the CSV and construct the hierarchical shipments,
 ## Related References
 - D365 Integration Issue: [hotwax/dynamics365-integration#23](https://github.com/hotwax/dynamics365-integration/issues/23)
 - Exploration Issue: [hotwax/hotwax-d365#51](https://github.com/hotwax/hotwax-d365/issues/51)
-- Business process reference: [business_processes.md](file:///Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/foundation/project-ideas/dynamics365-integration/sales-orders/business_processes.md)
-- Integration methodology reference: [integration_methodologies.md](file:///Users/gurveenkaur/Documents/Work/git/oms/moqui-framework/runtime/component/foundation/project-ideas/dynamics365-integration/sales-orders/integration_methodologies.md)
+- Business process reference: [business_processes.md](business_processes.md)
+- Integration methodology reference: [integration_methodologies.md](integration_methodologies.md)
 
