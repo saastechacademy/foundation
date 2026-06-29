@@ -76,9 +76,10 @@ D365 does not store a specific General Ledger (GL) account on the customer recor
 
 ## 3. Sales Orders Sync
 
-Sales orders are synchronized from HotWax OMS to D365 F&O after prerequisite customer creation. The business process is the same regardless of transport method, but the connector currently supports two separate implementation patterns:
+Sales orders are synchronized from HotWax OMS to D365 F&O after prerequisite customer creation. The business process is the same regardless of transport method, but the connector currently supports three separate implementation patterns:
 - **OData pattern**: Direct sync using `SalesOrderHeadersV4` and `SalesOrderLinesV3`.
 - **DMF / Data Package pattern**: Package-based import using the `Sales orders composite V4` composite entity.
+- **Recurring Integrations pattern**: Queue-based enqueue using the same `Sales orders composite V4` composite entity submitted via the D365 Recurring Integrations Scheduler.
 
 > **Prerequisite**: A customer record must exist in D365 before a sales order can be created for that customer. Refer to the [Customer Sync](#2-customer-sync) section for more details.
 
@@ -86,7 +87,7 @@ Sales orders are synchronized from HotWax OMS to D365 F&O after prerequisite cus
 
 - **Order Selection**: Eligible OMS sales orders are identified for export to D365.
 - **Customer Prerequisite**: The bill-to customer is created or verified in D365 before order creation/import.
-- **Order Creation**: The sales order header and lines are sent to D365 using either OData or DMF.
+- **Order Creation**: The sales order header and lines are sent to D365 using OData, DMF, or Recurring Integrations.
 - **Acknowledgment**: The order is considered synced only after the selected integration path reaches its defined success checkpoint.
 - **Downstream Ownership**: Fulfillment, packing slip posting, invoicing, and settlement remain D365-side operational processes.
 
@@ -115,19 +116,31 @@ This pattern creates a composite package and submits it through the Data Managem
 - **Constraint**: Import processing is asynchronous from the business point of view and requires package submission/orchestration.
 - **Current Use Case**: Larger-volume order import and composite payload submission.
 
-#### 3.2.3 Pattern Comparison
+#### 3.2.3 Recurring Integrations Pattern
+This pattern uses the D365 Recurring Integrations Scheduler to enqueue the composite package via a queue endpoint, bypassing the explicit upload step required by the Data Package API.
+
+- **D365 Interface**: D365 Recurring Integrations Scheduler (Queue Connector — `/api/connector/enqueue/{activityId}`)
+- **Composite Entity**: Same `Sales orders composite V4` as the DMF pattern
+- **Processing Style**: Queue-based enqueue — fire-and-forget; D365 processes the package from an internal queue
+- **Status Resolution**: Two-step — Queue Message ID → DMF Execution ID (via `GetExecutionIdByMessageId`) → status (via `GetExecutionSummaryStatus`)
+- **Key Advantage over DMF**: Eliminates the Azure Blob upload step; reduces connection overhead; better suited for high-frequency continuous background flows with built-in queue resilience and load throttling
+- **Constraint**: No direct execution ID on submission; status resolution requires an extra API hop compared to the DMF pattern.
+- **Current Use Case**: High-frequency or continuous background order sync where queue resilience and reduced overhead are preferred.
+
+#### 3.2.4 Pattern Comparison
 
 | Pattern | D365 Interface | Entity Model | Processing Style | Main Constraint |
 | :--- | :--- | :--- | :--- | :--- |
 | OData | `SalesOrderHeadersV4`, `SalesOrderLinesV3` | Separate header and line entities | Direct request/response | Partial order creation on failure |
-| DMF | `Sales orders composite V4` | Composite import package | Batch/asynchronous | Package generation, upload, and import monitoring |
+| DMF | `Sales orders composite V4` | Composite import package | Batch/asynchronous via Azure Blob upload | Package generation, upload, and import monitoring |
+| Recurring Integrations | `Sales orders composite V4` (via Queue Connector) | Composite import package | Queue-based enqueue/asynchronous | Two-step status resolution (Queue MessageId → ExecutionId) |
 
 > [!NOTE]
-> Detailed implementation specifics for both patterns are documented in [implementation_plan.md](implementation_plan.md) and the shared DMF reference at [data_import_package_api.md](../data-package-api/data_import_package_api.md).
+> Detailed implementation specifics for all three patterns are documented in [implementation_plan.md](implementation_plan.md) and the shared DMF reference at [data_import_package_api.md](../data-package-api/data_import_package_api.md).
 
 ### 3.3 Shared Business Rules
 
-The following business rules apply regardless of whether the order is synchronized through OData or DMF.
+The following business rules apply regardless of whether the order is synchronized through OData, DMF, or Recurring Integrations.
 
 - **D365 Order Identity**: `SalesOrderNumber` is the D365-generated order identifier returned after successful creation/import.
 - **External Reference**: HotWax `orderId` is carried as `CustomersOrderReference` to support lookup and reconciliation.
