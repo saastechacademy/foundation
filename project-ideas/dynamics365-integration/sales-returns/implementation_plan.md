@@ -44,7 +44,7 @@ For D365 standard return process, disposition codes, accounting model, and lifec
 - Arrival journal posting (D365 batch)
 - Packing slip posting (D365 batch)
 - Credit note generation
-- Refund payment journal
+- Refund payment journal — OMS service `create#RefundPaymentJournal` in `D365ReturnServices.xml`, journal name `OMSRFND` (separate from `OMSPAY` used for sales order payments)
 - Settlement
 
 ---
@@ -560,7 +560,7 @@ For generic package upload/import mechanics and API sequencing, refer to [data_i
 | 10 | Arrival journal posting | D365 batch class `WMSJournalCheckPostReception` — needs D365-side setup. Decide: OMS-triggered per journal or manual warehouse staff action. |
 | 11 | Credit note generation | D365 batch class `SalesFormLetter_Invoice` — runs after packing slip posted (or immediately for Credit only disposition). |
 | 12 | Credit note export back to OMS | Export generated credit note number back to OMS for reconciliation — similar to sales order number export. |
-| 13 | Refund payment journal | New `sync#ReturnRefund` service. Triggered when OMS confirms refund issued. Must be gated on credit note existing in D365. |
+| 13 | Refund payment journal | New `create#RefundPaymentJournal` service in `D365ReturnServices.xml`. Uses journal name `OMSRFND` (separate from `OMSPAY`). Triggered when OMS confirms a cash refund is due. Must be gated on credit note existing in D365. D365-side setup required — see Section 7, Phase 5. |
 | 14 | Settlement | Extend `HotWaxAutoPostSettlementService` to settle credit note + refund journal against original invoice. Handle exchange scenarios. |
 | 15 | Custom composite entity (D365) | If high volume requires DMF path — D365 dev to build `ReturnOrderCompositeV1` entity duplicating the sales order composite pattern. |
 
@@ -620,13 +620,74 @@ OMS packages returns into a DMF ZIP using the "Item arrival journals V2" composi
 
 ### Phase 5: Refund Payment Journal
 
-| Step | Detail |
+#### Why a Separate Journal Name (OMSRFND)
+
+Sales order incoming payments use journal name `OMSPAY`. Return refunds are a different concern — they are outgoing (company pays customer back) and must be posted only after the credit note has been generated in D365. Mixing refunds into the `OMSPAY` batch would:
+- Remove independent posting control (refunds need to be sequenced after credit note exists)
+- Merge incoming and outgoing transactions in the same accounting audit trail
+- Make it impossible to hold or review refunds separately from sales payments
+
+`OMSRFND` is a dedicated journal name for refund journals. It uses the same D365 journal type (`Customer payment`) and the same OOTB posting mechanism — only the journal name filter differs.
+
+#### D365 Setup Required
+
+**Step 1 — Create the journal name**
+
+Navigate to **General Ledger → Journal setup → Journal names**:
+
+| Field | Value |
 | :--- | :--- |
-| Trigger | OMS confirms refund was issued via payment gateway |
-| Gate | Only create after credit note exists in D365 |
-| OMS service | New `sync#ReturnRefund` service, reuses `CustomerPaymentJournalHeaders` + `CustomerPaymentJournalLines` pattern |
-| Amount sign | Positive (company pays customer) — opposite of payment journals for sales orders |
-| `PaymentReference` | Original D365 Sales Order Number (for settlement matching) |
+| Name | `OMSRFND` |
+| Description | `OMS Return Refund Payment Journal` |
+| Journal type | `Customer payment` |
+| Voucher series | Reuse OMSPAY number sequence or create a dedicated one with a `RFND-` prefix — confirm with accounting |
+
+**Step 2 — Configure the auto-posting batch job**
+
+Navigate to **General Ledger → Journal entries → Post journals**. Create a new batch job separate from the OMSPAY posting job:
+
+| Setting | Value |
+| :--- | :--- |
+| Journal type | `Customer payment` |
+| Journal name | `OMSRFND` |
+| Posted | `No` |
+| Late selection | `Yes` |
+| Run in background | `Yes` |
+| Recurrence | After the credit note posting batch has completed — sequencing matters for settlement |
+
+> [!IMPORTANT]
+> The OMSRFND posting batch must run **after** the credit note batch (`SalesFormLetter_Invoice`). The custom `HotWaxAutoPostSettlementService` requires both sides (credit note and refund journal) to be posted before it can settle them. See [D365 setup issue #27](https://github.com/hotwax/dynamics365-integration/issues/27).
+
+#### OMS Service Design
+
+**File:** `co.hotwax.d365.D365ReturnServices` — kept here (not in `D365PaymentServices`) because the service reads return-specific data (`D365ReturnHeaderHistory`, `ReturnHeader`, `ReturnItem`) and is a step in the return lifecycle.
+
+**Service:** `create#RefundPaymentJournal`
+
+**Trigger (Phase 1 — manual):** `create_D365RefundPaymentJournal` ServiceJob, `paused="Y"`, `returnId` parameter for targeted runs.
+
+**Flow:**
+1. Load `D365ReturnHeaderHistory` — fail if `d365ReturnOrderNumber` is null or status is not `D365_RTN_SYNCED`
+2. Load `ReturnHeader.fromPartyId` → `PartyIdentification(D365_CUST_ACCT)` → `customerAccount`
+3. Resolve `dataAreaId` from `ProductStore.externalId`
+4. Sum total refund amount: `Σ (ReturnItem.returnPrice × returnQuantity)`
+5. Idempotency check: `GET /data/CustomerPaymentJournalHeaders` filtered by `Description eq 'OMS Refund Journal - RTN {returnId}'` and `IsPosted eq No` — reuse existing `JournalBatchNumber` if found
+6. `POST /data/CustomerPaymentJournalHeaders` with `JournalName: 'OMSRFND'`
+7. `POST /data/CustomerPaymentJournalLines` — see field mapping below
+
+#### Field Mapping
+
+| D365 Field | Value | Notes |
+| :--- | :--- | :--- |
+| `JournalBatchNumber` | From header POST response | |
+| `AccountType` | `Cust` | |
+| `AccountDisplayValue` | `HW-{fromPartyId}` | Same format as sales order payment journals |
+| `DebitAmount` | Total refund amount | Debit on customer account = company pays customer — opposite of `CreditAmount` used in OMSPAY |
+| `PaymentReference` | `d365ReturnOrderNumber` | Used by `HotWaxAutoPostSettlementService` to match the refund journal to the credit note |
+| `OffsetAccountType` | `Bank` | |
+| `OffsetAccountDisplayValue` | `USMF OPER` | Bank account — confirm per legal entity |
+| `PaymentId` | `returnId` | Idempotency key per line |
+| `Description` | `OMS Refund Journal - RTN {returnId}` | Used for header idempotency lookup |
 
 ### Phase 6: Settlement
 

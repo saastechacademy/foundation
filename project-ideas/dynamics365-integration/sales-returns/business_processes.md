@@ -243,7 +243,7 @@ Two outcomes depending on whether cash moves:
 
 **Option A — Store Credit:** The `-100` credit note is left open on the customer account. No refund journal is created. The customer can apply the credit to a future purchase.
 
-**Option B — Cash Refund:** OMS creates a Refund Payment Journal (`+100`) in D365.
+**Option B — Cash Refund:** OMS creates a Refund Payment Journal (`+100`) in D365 using journal name `OMSRFND` (a dedicated journal separate from `OMSPAY` used for sales order incoming payments — see [implementation_plan.md](./implementation_plan.md) Section 7 Phase 5 for D365 setup details).
 - Settlement: Credit Note `-100` ↔ Refund Journal `+100` = `0` — both closed.
 
 ---
