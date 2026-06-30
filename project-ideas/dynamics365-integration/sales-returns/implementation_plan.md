@@ -4,6 +4,22 @@ This document covers the technical design, integration approaches evaluated, ser
 
 For D365 standard return process, disposition codes, accounting model, and lifecycle overview see [business_processes.md](./business_processes.md).
 
+## Technical Architecture
+- Return order integration uses the generic D365 connector foundation documented in [connector_foundation.md](../foundation/connector_foundation.md).
+- **Return-specific interfaces**:
+    - OData v4 (REST) for return order header and line creation (`ReturnOrderHeadersV2`, `ReturnOrderLinesV2`)
+    - DMF / Recurring Integrations Queue Connector for arrival journal batch import (`Item arrival journals V2` composite entity)
+
+---
+
+## Technical Reference: OData Metadata
+| Term | Meaning |
+| :--- | :--- |
+| **EntitySet** | The URL collection or endpoint (e.g., `ReturnOrderHeadersV2`). |
+| **EntityType** | The schema definition and structure of the data object. |
+| **Key** | Defines the Primary Key fields (e.g., `dataAreaId`, `ReturnOrderNumber`). |
+| **Nullable="false"** | Indicates a **Required Field** that cannot be empty. |
+
 ---
 
 ## 1. Overview and Scope
@@ -72,6 +88,16 @@ Explored and tested. Two obstacles encountered:
 
 OData is the only viable path because `POST ReturnOrderHeadersV2` returns the generated `ReturnOrderNumber` synchronously in the response, which is immediately used for subsequent line POSTs.
 
+##### Comparison: Approach A vs Approach B vs Approach C
+
+| Feature | OData / DataFeed (A) | OData / ServiceJob (B) | DMF / Data Package (C) |
+| :--- | :--- | :--- | :--- |
+| **Latency** | Near real-time (event-driven) | Batch / scheduled | Batch / scheduled |
+| **`systemMessageRemoteId` passing** | Resolved from `ProductStoreSetting` (workaround required) | Job parameter — no blocker | Job parameter — no blocker |
+| **D365 entity availability** | `ReturnOrderHeadersV2`, `ReturnOrderLinesV2` — confirmed | Same | No standard composite entity — **closed** |
+| **Atomicity** | Non-atomic (1 header + N line POSTs) | Same | N/A — DMF approach is not viable |
+| **Selected for** | Phase 1 — event-driven creation | Phase 2 — sweep / retry fallback | Not used |
+
 ### 2.2 Alternative Approaches (Future Options from D365 Community)
 
 These were identified via the Microsoft D365 Community forum thread and are not planned for immediate implementation but are worth tracking for production-scale decisions.
@@ -96,6 +122,14 @@ These were identified via the Microsoft D365 Community forum thread and are not 
 
 ---
 
+## Foundation
+
+The generic connector foundation for authentication, credentials storage, legal-entity mapping, OAuth token management, and common OData request handling is documented in [connector_foundation.md](../foundation/connector_foundation.md).
+
+This returns implementation plan focuses on the return-specific services, entities, views, and orchestration built on top of that shared connector layer.
+
+---
+
 ## 3. Phase 1 Implementation Details
 
 ### 3.1 systemMessageRemoteId Resolution ✅ Implemented
@@ -116,11 +150,26 @@ ProductStoreSetting(
 
 Inside `sync#ReturnOrder`, after resolving `productStoreId`, the setting is looked up when `systemMessageRemoteId` is not passed in (DataFeed path). When called via ServiceJob, the value is passed directly as a job parameter and the lookup is skipped. This naturally supports multi-tenant deployments.
 
+> [!NOTE]
+> The `ProductStoreSetting` lookup is the canonical pattern for resolving per-store D365 configuration in all return services. Any new service that needs `systemMessageRemoteId` should follow the same pattern rather than accepting it as a required parameter.
+
 ### 3.2 Data Model
 
 #### Entity: `D365ReturnHeaderHistory`
 
 Tracks the aggregate sync state per return. PK is `returnId` (one row per OMS return — no surrogate key needed).
+- *Reasoning:* Prevents duplicate return header creation in D365 on retry, stores the resulting D365 Return Order Number and RMA Number, and records detailed execution logs on failure.
+
+```xml
+<entity entity-name="D365ReturnHeaderHistory" package="co.hotwax.d365.return">
+    <field name="returnId" type="id" is-pk="true"/>
+    <field name="d365ReturnOrderNumber" type="text-short"/>
+    <field name="d365RmaNumber" type="text-short"/>
+    <field name="syncStatusId" type="id" default="D365_RTN_PENDING"/>
+    <field name="syncedDate" type="date-time"/>
+    <field name="logText" type="text-long"/>
+</entity>
+```
 
 | Field | Type | Notes |
 | :--- | :--- | :--- |
@@ -134,6 +183,19 @@ Tracks the aggregate sync state per return. PK is `returnId` (one row per OMS re
 #### Entity: `D365ReturnLineHistory`
 
 Tracks per-line sync state for partial success and targeted retry.
+- *Reasoning:* Enables granular, retry-safe resumption of interrupted syncs. If a return with multiple items fails on one line, the next attempt reads this history to skip already-synced lines and resume only at the failed ones.
+
+```xml
+<entity entity-name="D365ReturnLineHistory" package="co.hotwax.d365.return">
+    <field name="returnId" type="id" is-pk="true"/>
+    <field name="returnItemSeqId" type="id" is-pk="true"/>
+    <field name="d365ReturnOrderNumber" type="text-short"/>
+    <field name="syncStatusId" type="id" default="D365_RTN_PENDING"/>
+    <field name="syncedDate" type="date-time"/>
+    <field name="lastAttemptDate" type="date-time"/>
+    <field name="logText" type="text-long"/>
+</entity>
+```
 
 | Field | Type | Notes |
 | :--- | :--- | :--- |
@@ -216,7 +278,7 @@ Implements `org.moqui.EntityServices.receive#DataFeed`. Iterates `documentList`,
 | `InvoiceCustomerAccountNumber` | Same as `CustomerAccountNumber` | ✅ Implemented |
 | `CustomersOrderReference` | `ReturnHeader.returnId` | ✅ Implemented — idempotency key |
 | `CustomerRequisitionNumber` | `OrderIdentification(D365_SLS_ORD_NUM)` on linked `orderId` | ✅ Implemented |
-| `CustomerReturnReasonCode` | `IntegrationTypeMapping(D365_RTN_REASON)` | ⚠️ **Hardcoded to `39`** — mapping TODO |
+| `CustomerReturnReasonCode` | `IntegrationTypeMapping(D365_RTN_REASON)` | ⚠️ Hardcoded to `39` — mapping TODO |
 | `CurrencyCode` | `ReturnHeader.currencyUomId` | ✅ Implemented — defaults to `USD` |
 | `DefaultReturnWarehouseId` | `Facility.externalId` on `destinationFacilityId` | ✅ Implemented |
 | `DefaultReturnSiteId` | *(not sent)* | ✅ Omitted — D365 derives from warehouse |
@@ -239,16 +301,32 @@ Implements `org.moqui.EntityServices.receive#DataFeed`. Iterates `documentList`,
 | `ReturnWarehouseId` | `Facility.externalId` on `destinationFacilityId` | ✅ Implemented |
 | `ReturnSiteId` | *(not sent)* | ✅ Omitted — D365 derives from warehouse |
 | `SalesPrice` | `ReturnItem.returnPrice` | ✅ Implemented |
-| `ReturnDispositionCode` | `IntegrationTypeMapping(D365_RTN_DISPOSITION)` | ⚠️ **Hardcoded to `11`** — mapping TODO |
-| `ProductSizeId` | `ProductFeature(SIZE)` | ⚠️ **Not yet implemented** — variant TODO |
-| `ProductColorId` | `ProductFeature(COLOR)` | ⚠️ **Not yet implemented** — variant TODO |
+| `ReturnDispositionCode` | `IntegrationTypeMapping(D365_RTN_DISPOSITION)` | ⚠️ Hardcoded to `11` — mapping TODO |
+| `ProductSizeId` | `ProductFeature(SIZE)` | ⚠️ Not yet implemented — variant TODO |
+| `ProductColorId` | `ProductFeature(COLOR)` | ⚠️ Not yet implemented — variant TODO |
 
-### 3.7 Integration Type Mappings Needed
+> [!IMPORTANT]
+> `CustomerReturnReasonCode` is hardcoded to `39` and `ReturnDispositionCode` is hardcoded to `11`. Both must be replaced with `IntegrationTypeMapping` lookups before production. Define mappings for `D365_RTN_REASON` and `D365_RTN_DISPOSITION` in coordination with business input on which codes to use.
 
-| Mapping Type | OMS Source | D365 Target | Notes |
+### 3.7 Integration Type Mappings
+
+To avoid hardcoding values like `CustomerReturnReasonCode` and `ReturnDispositionCode` in service logic, we use the `IntegrationTypeMapping` entity to translate OMS identifiers into D365 codes.
+
+#### Configuration Structure
+
+| Mapping Category | OMS Internal ID (`mappingKey`) | D365 Code (`mappingValue`) | Enum Type (`integrationTypeId`) |
 | :--- | :--- | :--- | :--- |
-| `D365_RTN_REASON` | OMS `ReturnHeader.returnReasonEnumId` | D365 `CustomerReturnReasonCode` | Not yet defined |
-| `D365_RTN_DISPOSITION` | OMS return reason or item condition | D365 `ReturnDispositionCode` | Not yet defined; hardcoded to `11` currently |
+| **Return Reason** | OMS `returnReasonEnumId` (e.g. `RTN_DEFECTIVE`) | D365 `CustomerReturnReasonCode` (e.g. `39`) | `D365_RTN_REASON` |
+| **Disposition Code** | OMS return condition or reason (e.g. `RTN_CREDIT_ONLY`) | D365 `ReturnDispositionCode` (e.g. `11`) | `D365_RTN_DISPOSITION` |
+
+#### Setup Steps
+1. **Define Enumerations**: Add the mapping category IDs (`D365_RTN_REASON`, `D365_RTN_DISPOSITION`) to `moqui.basic.Enumeration`.
+2. **Populate Mappings**: Provide the specific mapping records per OMS return reason / condition:
+   - `integrationTypeId`: The category ID.
+   - `mappingKey`: The internal OMS enumeration ID.
+   - `mappingValue`: The external D365 code value.
+   - `integrationRefId`: Set to the same value as `mappingKey` for referential integrity.
+3. **Remove hardcodes**: Once mappings are populated, remove the hardcoded fallbacks in `sync#ReturnOrder` (`39`) and `queue#ArrivalJournals` (`11`).
 
 ### 3.8 Seed Data Required
 
@@ -321,11 +399,24 @@ The DMF **"Item arrival journals V2" composite entity** solves this — header a
 
 Additionally, one ZIP can cover multiple return journals in a single import operation, making the sweep efficient.
 
+> [!NOTE]
+> The individual OData entities `ItemArrivalJournalHeadersV2` and `ItemArrivalJournalLinesV2` are available but not used in the OMS integration — the OData path has a critical sequencing constraint where the journal number is auto-generated on header creation and must be known for each subsequent line POST. The DMF composite entity avoids this entirely.
+
 ### 4.2 Data Model
 
 #### Entity: `D365ArrivalJournalHistory`
 
 Tracks which returns have been packaged into a DMF arrival journal import. A record means the return was included in at least one import attempt. There is no status field — presence equals queued.
+- *Reasoning:* Prevents a return from being packaged into multiple arrival journal batches. Eligibility view excludes any return that has a history record.
+
+```xml
+<entity entity-name="D365ArrivalJournalHistory" package="co.hotwax.d365.return">
+    <field name="returnId" type="id" is-pk="true"/>
+    <field name="d365ReturnOrderNumber" type="id"/>
+    <field name="systemMessageId" type="id"/>
+    <field name="queuedDate" type="date-time"/>
+</entity>
+```
 
 | Field | Type | Notes |
 | :--- | :--- | :--- |
@@ -419,6 +510,9 @@ Two distinct identifiers on a D365 return order:
 
 `sync#ReturnOrder` captures both identifiers: GET uses `$select=ReturnOrderNumber,RMANumber`; POST response body contains both. Both are persisted to `D365ReturnHeaderHistory`.
 
+> [!NOTE]
+> Do not confuse `ReturnOrderNumber` and `RMANumber` — they are two distinct D365 identifiers with different roles in arrival journal construction. `TRANSACTIONREFERENCENUMBER` uses `ReturnOrderNumber`; `RETURNITEMNUMBER` uses `RMANumber`.
+
 ### 4.6 Customer Account Resolution
 
 `sync#Customer` now persists the resolved D365 customer account to `PartyIdentification(partyIdentificationTypeId='D365_CUST_ACCT')` after every successful sync (upsert by PK — safe on retry). The `queue#ArrivalJournals` service reads from this record locally when building the arrival journal XML — no additional D365 API call needed.
@@ -433,6 +527,8 @@ Two distinct identifiers on a D365 return order:
 | `poll_D365ArrivalJournalImport` | `poll#ArrivalJournalImport` | `systemMessageRemoteId` |
 
 Both jobs are paused by default.
+
+For generic package upload/import mechanics and API sequencing, refer to [data_import_package_api.md](../data-package-api/data_import_package_api.md).
 
 ---
 

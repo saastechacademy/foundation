@@ -28,36 +28,26 @@ The full step-by-step process for a physical return in D365:
         ↓
 2. Arrival Registration (goods received at warehouse)
         ↓
-3. Optional: Quarantine Order (inspection)
+3. Assign Disposition Code
         ↓
-4. Assign Disposition Code
+4. Post Packing Slip (commits disposition to inventory)
         ↓
-5. Post Packing Slip (commits disposition to inventory)
+5. Generate Invoice → Credit Note (financial closing)
         ↓
-6. Generate Invoice → Credit Note (financial closing)
+6. Create Refund Payment Journal (if cash refund issued)
         ↓
-7. Create Refund Payment Journal (if cash refund issued)
-        ↓
-8. Settle (credit note + refund journal against original invoice)
+7. Settle (credit note + refund journal against original invoice)
 ```
+
+> **Note:** D365 also supports an optional Quarantine Order step between arrival and disposition assignment, where items are held for inspection before being accepted into inventory. This is not part of the OMS integration flow.
 
 ### 2.1 Create Return Order
 
-**Header fields:**
+The OMS initiates return order creation in D365 at the `RETURN_REQUESTED` stage — one return order per OMS return. The return header and lines are created via OData using `ReturnOrderHeadersV2` and `ReturnOrderLinesV2`.
 
-| Field | Description |
-| :--- | :--- |
-| `CustomerAccount` | Must reference an existing customer |
-| `Site / Warehouse` | Receiving site and warehouse |
-| `RMANumber` | Auto-assigned from AR number sequence |
-| `ReturnReasonCode` | Customer's reason for return (user-defined) |
-| `Deadline` | Last date item can be returned (defaults to current date + validity period from AR parameters) |
+D365 auto-generates an **RMA number** from the AR number sequence on header creation and assigns it back to the return order record — the OMS reads and stores this as `D365_RMA_NUM` for reference throughout the lifecycle.
 
-**Line creation options:**
-- Manually enter item, quantity, price
-- Use **Find sales order** to reference the original invoiced sales order line — this ensures the return is valued at the original cost price and quantity is validated against what was sold
-
-> **Best practice:** Always use **Find sales order** when the original invoice is known. This ensures exact reversal of the original transaction (correct discount and cost price) and prevents over-returning.
+For the full OData field mapping and payload structure, see [implementation_plan.md](./implementation_plan.md).
 
 ### 2.2 Arrival at Warehouse (Arrival Journal)
 
@@ -71,18 +61,26 @@ Before inventory can be received, arrival must be registered via an **Item Arriv
 
 ### 2.3 Disposition Codes
 
-The disposition code is assigned during arrival registration and controls three things simultaneously: financial treatment, inventory fate, and whether a replacement order is auto-created.
+D365 separates two concepts:
+- **Disposition actions** — six predefined behaviors built into D365 that control financial treatment, inventory fate, and whether a replacement order is auto-created
+- **Disposition codes** — user-defined codes (e.g. `CREDIT`, `SCRAP`, `EXCHANGE`) configured in AR parameters, each mapped to one of the six actions; the warehouse assigns a code during arrival registration
 
-| Disposition | Customer Credited? | Inventory | Replacement Order |
+The six standard disposition actions:
+
+| Disposition Action | Customer Credited? | Inventory | Replacement Order |
 | :--- | :---: | :--- | :---: |
 | **Credit only** | Yes | No physical return — no inventory movement | No |
 | **Credit** | Yes | Item returned to stock | No |
-| **Replace and credit** | Yes | Item returned to stock | Yes (auto-created at packing slip) |
-| **Replace and scrap** | Yes | Item scrapped, loss posted to ledger | Yes (auto-created at packing slip) |
+| **Replace and credit** | Yes | Item returned to stock | Yes (auto-created at packing slip posting) |
+| **Replace and scrap** | Yes | Item scrapped, loss posted to ledger | Yes (auto-created at packing slip posting) |
 | **Scrap** | Yes | Item scrapped, loss posted to ledger | No |
-| **Return to customer** | No | Item sent back to customer after inspection | No |
+| **Return to customer** | No | Item returned to customer after inspection | No |
 
 > **Credit only** is the most important disposition for integration: it allows skipping the arrival and packing slip steps entirely and going directly to invoice/credit note. This is the correct disposition for POS completed returns and online returns where the item will not be physically tracked back into D365 inventory.
+
+> **Exchange orders and replacement orders:** The "Replace and credit" and "Replace and scrap" actions auto-create a D365 replacement sales order at packing slip posting. Since OMS exchange orders are synced to D365 as normal sales orders via the standard sales order sync, care must be taken to avoid creating duplicate D365 sales orders for the same exchange — the disposition mapping for exchange returns should use **Credit** (not Replace and credit) so that the OMS-driven exchange order is the single source of truth.
+
+> **TODO:** Confirm D365 behavior when "Replace and credit" or "Replace and scrap" disposition is used — specifically: what data does the auto-created replacement sales order contain (item, quantity, price), can it be suppressed or skipped, and whether using **Credit** disposition instead is safe for the exchange flow where OMS owns the replacement order creation.
 
 ### 2.4 Post Packing Slip
 
@@ -223,40 +221,139 @@ To maintain clean accounting, settlement logic must strictly adhere to D365 tran
 
 Settlement must always match **positive transactions against negative transactions**. Payment journals should **only** be created when actual money moves.
 
-### 7.2 Case 1: Same Value Exchange ($100 item for $100 item)
+The original sales order invoice and the customer's payment for that order are **already settled and closed** before any return begins. The return lifecycle creates a fresh set of open transactions.
 
-No actual cash movement occurs.
+---
 
-- Return Order → Credit Note (`-100`)
-- Exchange Order → Invoice (`+100`)
-- **Settlement:** `-100` ↔ `+100` = `0`
-- **No payment journal required**
+### 7.2 Pure Return (No Exchange)
 
-### 7.3 Case 2: Exchange with Higher Value ($100 item for $150 item)
+Customer returns an item and expects a refund or store credit. No replacement item is ordered.
 
-Customer pays the difference.
+**Transaction timeline:**
 
-- Return Order → Credit Note (`-100`)
-- Exchange Order → Invoice (`+150`)
-- Additional Payment Journal → Customer Payment (`-50`)
-- **Settlement:** `-150` (Credit + Payment) ↔ `+150` (Invoice) = `0`
+| Step | D365 Document | Sign | State |
+| :--- | :--- | :---: | :--- |
+| Original sale — invoiced | Sales Order Invoice | `+100` | Open |
+| Original sale — customer pays | Customer Payment Journal | `-100` | — |
+| Original sale settled | — | `0` | **Closed** |
+| Return Order synced (OMS → D365 via OData) | Return Order | — | — |
+| Return invoiced by D365 batch | Credit Note | `-100` | Open |
 
-### 7.4 Case 3: Exchange with Lower Value ($100 item for $70 item)
+Two outcomes depending on whether cash moves:
 
-Company owes the customer the difference.
+**Option A — Store Credit:** The `-100` credit note is left open on the customer account. No refund journal is created. The customer can apply the credit to a future purchase.
 
-- Return Order → Credit Note (`-100`)
-- Exchange Order → Invoice (`+70`)
+**Option B — Cash Refund:** OMS creates a Refund Payment Journal (`+100`) in D365.
+- Settlement: Credit Note `-100` ↔ Refund Journal `+100` = `0` — both closed.
 
-Two options:
+---
 
-| Option | Mechanism | Outcome |
+### 7.3 Case 1: Same Value Exchange ($100 item for $100 item)
+
+Customer returns a $100 item and receives a $100 item in return. No cash moves in either direction.
+
+**Transaction timeline:**
+
+| Step | D365 Document | Sign | State |
+| :--- | :--- | :---: | :--- |
+| Original sale settled | — | `0` | **Closed** |
+| Return Order synced (OMS → D365) | Return Order | — | — |
+| Return invoiced by D365 batch | Credit Note | `-100` | Open |
+| Exchange Sales Order synced (OMS → D365 as regular sales order) | Sales Order | — | — |
+| Exchange Order invoiced by D365 batch | Sales Order Invoice | `+100` | Open |
+
+No cash moves. Settlement: Credit Note `-100` ↔ Exchange Invoice `+100` = `0` — both closed.
+
+**OMS responsibility:** The exchange order must be synced to D365 and `D365_SLS_ORD_NUM` stored in OMS before the settlement service can run. The settlement service pairs the credit note to the exchange invoice using the return order number → exchange order number linkage maintained in OMS.
+
+---
+
+### 7.4 Case 2: Exchange with Higher Value ($100 item for $150 item)
+
+Customer returns a $100 item and receives a $150 item. Customer must pay the $50 difference.
+
+**Transaction timeline:**
+
+| Step | D365 Document | Sign | State |
+| :--- | :--- | :---: | :--- |
+| Original sale settled | — | `0` | **Closed** |
+| Return invoiced by D365 batch | Credit Note | `-100` | Open |
+| Exchange Order invoiced by D365 batch | Sales Order Invoice | `+150` | Open |
+| Customer pays $50 difference | Customer Payment Journal (OMS creates) | `-50` | — |
+
+Settlement: Credit Note `-100` + Payment `-50` ↔ Exchange Invoice `+150` = `0` — all closed.
+
+**OMS responsibility:** OMS creates the $50 payment journal in D365 only after the customer's payment is confirmed via the payment gateway. `PaymReference` on the journal line must be set to the exchange order's D365 sales order number so the settlement service can match it to the correct invoice.
+
+> **Open question:** Should OMS create the payment journal at exchange order placement time or only after explicit payment gateway confirmation? This timing must be decided before implementation.
+
+---
+
+### 7.5 Case 3: Exchange with Lower Value ($100 item for $70 item)
+
+Customer returns a $100 item and receives a $70 item. The company owes the customer $30.
+
+**Transaction timeline:**
+
+| Step | D365 Document | Sign | State |
+| :--- | :--- | :---: | :--- |
+| Original sale settled | — | `0` | **Closed** |
+| Return invoiced by D365 batch | Credit Note | `-100` | Open |
+| Exchange Order invoiced by D365 batch | Sales Order Invoice | `+70` | Open |
+| Net after pairing | — | `-30` | Open — company owes customer |
+
+Two options for the remaining $30:
+
+| Option | D365 Action | Outcome |
 | :--- | :--- | :--- |
-| **Store Credit** | No refund — leave open balance | `-30` sits on customer account as open credit |
-| **Immediate Refund** | Refund Journal (`+30`) | Settlement: `-100` ↔ `+70` + `+30` = `0` |
+| **Store Credit** | No refund journal — leave open | `-30` remains on customer account as open credit for a future purchase |
+| **Cash Refund** | OMS creates Refund Journal (`+30`) | Settlement: Credit Note `-100` ↔ Exchange Invoice `+70` + Refund `+30` = `0` — all closed |
 
-### 7.5 Key Integration Guidelines
+**OMS responsibility:** OMS must determine at exchange order creation time whether to issue a cash refund or apply store credit, and create the refund journal accordingly. This decision is driven by OMS business logic — D365 does not make this determination.
 
-- Only initiate payment/refund journals when hard cash actually moves
-- For same-value exchanges, settlement between credit note and new invoice is sufficient — no journal needed
-- The OMS exchange logic (credit/refund decision) must be translated into the correct D365 journal creation decision before syncing
+---
+
+### 7.6 Settlement Service Design Requirements
+
+The custom `HotWaxAutoPostSettlementService` (D365-side X++) is responsible for closing all open return and exchange transactions in the correct order-specific groupings.
+
+#### Why OOTB Settlement Fails
+
+D365's out-of-the-box auto-settlement operates at the **customer account level, FIFO by due date**. It has no awareness of which credit note belongs to which return, or which exchange invoice it should be matched against. In accounts with multiple open transactions, it will match incorrectly — settling a credit note against an unrelated open invoice on the same customer account.
+
+#### Matching Strategy
+
+The settlement service must match by **order reference, not by date**:
+
+- `SalesId` on the credit note — the D365 return order number
+- `PaymReference` on payment/refund journal lines — set by OMS to the D365 sales order number of the corresponding exchange order or the return order number for pure refunds
+
+#### Per-Scenario Settlement Logic
+
+| Scenario | Transactions to Settle | Match Key |
+| :--- | :--- | :--- |
+| Pure Return — Store Credit | Leave credit note open | n/a |
+| Pure Return — Cash Refund | Credit Note `-100` ↔ Refund Journal `+100` | `returnOrderNumber` |
+| Same Value Exchange | Credit Note `-100` ↔ Exchange Invoice `+100` | `returnOrderNumber` → `exchangeOrderNumber` |
+| Higher Value Exchange | Credit Note `-100` + Payment `-50` ↔ Exchange Invoice `+150` | `returnOrderNumber` → `exchangeOrderNumber` |
+| Lower Value — Store Credit | Credit Note `-100` ↔ Exchange Invoice `+70`, leave `-30` open | `returnOrderNumber` → `exchangeOrderNumber` |
+| Lower Value — Cash Refund | Credit Note `-100` ↔ Exchange Invoice `+70` + Refund `+30` | `returnOrderNumber` → `exchangeOrderNumber` |
+
+#### Open Questions Before Implementation
+
+- **Exchange order linkage:** How does the settlement service know which exchange order corresponds to a given return? OMS must store the `returnId` → `exchangeOrderId` relationship and ensure `D365_SLS_ORD_NUM` is populated on the exchange order before settlement runs.
+- **Trigger mechanism:** Is the settlement service triggered by an event (e.g. after credit note posting) or run as a periodic batch? Event-driven is preferable to reduce settlement lag but requires an integration point from D365 invoice posting back to the service.
+- **Higher value exchange — payment journal timing:** Who confirms the customer has paid the $50 difference and triggers the OMS payment journal creation? This must be resolved before the Case 2 flow can be implemented end-to-end.
+
+---
+
+## 8. Manual Return Creation in D365 (Testing Reference)
+
+When creating a return order directly in D365 — useful for manual testing or one-off scenarios outside the OMS integration flow:
+
+1. Navigate to **Accounts receivable > Orders > All sales orders**
+2. Select **New** and set `Order type = Returned order`
+3. Set the `Customer account`, receiving `Site / Warehouse`, and `Return reason code`
+4. For lines, use **Find sales order** to reference the original invoiced sales order line — this ensures the return is valued at the original cost price and quantity is validated against what was sold
+
+> **Best practice:** Always use **Find sales order** when the original invoice is known. It guarantees exact reversal of the original transaction (correct discount, cost price, and quantity ceiling) and prevents over-returning.

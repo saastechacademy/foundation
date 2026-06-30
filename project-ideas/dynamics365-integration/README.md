@@ -28,10 +28,10 @@ The goal of this integration is to synchronize critical business data, specifica
     *   Full lifecycle from payment journal creation through invoice posting and settlement, including explored approaches, verified behaviors, use cases, and open items.
 
 ### Sales Returns
-1.  **[D365 Return & Exchange Accounting Model](sales-returns/d365_return_exchange_accounting_model.md)**
-    *   Conceptual model for how return, exchange, and settlement scenarios are modeled in D365 using accounting principles.
-2.  **[OMS to D365 Return Sync — Implementation Plan](sales-returns/oms_to_d365_return_sync_implementation_plan.md)**
-    *   Technical implementation plan for syncing completed returns from OMS to D365, covering entity design, data feed configuration, service wrappers, and field mappings.
+1.  **[Business Processes](sales-returns/business_processes.md)**
+    *   D365 return lifecycle (physical return and credit-only paths), disposition codes, OMS return type mapping, and the return/exchange accounting model.
+2.  **[Implementation Plan](sales-returns/implementation_plan.md)**
+    *   OData approach selection, service architecture, field mappings, arrival journal DMF sync, and phased verification plan.
 
 ### Data Packages
 1.  **[Data Export Package API](data-package-api/data_export_package_api.md)**
