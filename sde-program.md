@@ -91,13 +91,20 @@ This training program requires a solid foundation in software development princi
 * [SQL Assignment 2](udm/intermediate/sql-assignment/sql-assignment-2.md)
 * [SQL Assignment 3](udm/intermediate/sql-assignment/sql-assignment-3.md)
 
-### Module 9: Detailed Design
+### Module 9: Shopify Integration Training Module
+* [Introduction to Shopify Integration & Architecture](shopify-dev/shopify-integration-course-plan.md#module-1-introduction-to-shopify-integration--architecture)
+* [Authentication & Authorization Deep Dive](shopify-dev/shopify-integration-course-plan.md#module-2-authentication--authorization-deep-dive)
+* [Designing the Integration Layer](shopify-dev/shopify-integration-course-plan.md#module-3-designing-the-integration-layer)
+* [Execution, Testing, and UAT](shopify-dev/shopify-integration-course-plan.md#module-4-execution-testing-and-uat)
+* [Operational Concerns & Polish (Optional)](shopify-dev/shopify-integration-course-plan.md#module-5-operational-concerns--polish-optional)
+
+### Module 10: Detailed Design
 1. [Design CDP](udm/beginner/activity-design-cdp.md)
 2. [Design PIM](udm/beginner/activity-design-pim.md)
 3. [Design OMS](udm/intermediate/data-model-assignment/activity-design-order.md)
 4. [Order Fulfillment System](udm/intermediate/data-model-assignment/activity-design-fulfillment.md)
 
-### Module 10: Experience Applications 
+### Module 11: Experience Applications 
 * [Launchpad](https://launchpad.hotwax.io/home)
 * [User Management](https://launchpad.hotwax.io/login?redirectUrl=https://users-dev.hotwax.io/login)
 * [ATP](https://launchpad.hotwax.io/login?isLoggedOut=true&redirectUrl=https://atp.hotwax.io/login)
