@@ -45,7 +45,7 @@ The full step-by-step process for a physical return in D365:
 
 The OMS initiates return order creation in D365 at the `RETURN_REQUESTED` stage — one return order per OMS return. The return header and lines are created via OData using `ReturnOrderHeadersV2` and `ReturnOrderLinesV2`.
 
-D365 auto-generates an **RMA number** from the AR number sequence on header creation and assigns it back to the return order record — the OMS reads and stores this as `D365_RMA_NUM` for reference throughout the lifecycle.
+D365 auto-generates an **RMA number** from the AR number sequence on header creation and assigns it back to the return order record — the OMS reads and stores this as `D365_RMA_NUM` for reference throughout the lifecycle. Both `D365_RTN_ORD_NUM` (the D365 Return Order Number) and `D365_RMA_NUM` are stored on the standard OMS `ReturnIdentification` entity, mirroring how `D365_SLS_ORD_NUM` is stored on `OrderIdentification` for sales orders. No export or polling step is needed to get these values back into OMS — since return order creation uses OData (not DMF), both numbers are already returned synchronously in the same POST response.
 
 For the full OData field mapping and payload structure, see [implementation_plan.md](./implementation_plan.md).
 
@@ -55,9 +55,18 @@ Before inventory can be received, arrival must be registered via an **Item Arriv
 
 - The OMS creates arrival journals via the D365 DMF **"Item arrival journals V2" composite entity** — header and lines are submitted as a single XML document in a ZIP package via `/api/connector/enqueue/{activityId}`; D365 auto-generates the journal number internally
 - The individual OData entities `ItemArrivalJournalHeadersV2` and `ItemArrivalJournalLinesV2` are confirmed available but are not used in the OMS integration — the OData path has a sequencing constraint where the journal number is auto-generated on header creation and must be known for each subsequent line POST; the DMF composite entity avoids this entirely
-- Posting the arrival journal is handled by the D365 batch class **`WMSJournalCheckPostReception`**
-- **Important limitation:** `WMSJournalCheckPostReception` posts **one selected journal at a time** — it is not a query-based batch that auto-picks up all unposted arrival journals. For bulk auto-posting, the class must be extended to multi-threaded behavior (like `LedgerJournalMultiPost`)
+- Posting the arrival journal is handled by the custom D365 batch class **`HotWaxAutoPostArrivalJournalService`**, which wraps `WMSJournalCheckPostReception` and picks up **all unposted Reception journals matching a configured `JournalNameId`** (the OOTB `WMSJournalCheckPostReception` only posts one selected journal at a time; this custom class is what enables bulk auto-posting)
 - Quarantine can be enabled during arrival if inspection is required — quarantined items cannot have a disposition code assigned until the quarantine order is completed
+
+#### Journal Name: `OMSArr`
+
+Arrival journals from OMS use a dedicated journal name, **`OMSArr`** ("OMS Arrival Journal"), rather than the D365 default (`WArr`).
+
+**Why:** `WArr` is also the *default* journal name for Item Arrival in this D365 environment (Inventory management → Setup → Journal names → Warehouse management). Since it's a default, any native or manual arrival journal posting that doesn't explicitly pick a different journal name — a warehouse worker registering a return receipt manually, for example — would also land under `WArr`, and `HotWaxAutoPostArrivalJournalService` would then auto-post those too, even though they were never created by OMS. This is the same reasoning behind splitting `OMSPAY`/`OMSRFND` for payments: a shared/default journal name can't reliably isolate OMS-originated records from everything else in the system that might use the same name.
+
+`OMSArr` is deliberately **not** set as a default anywhere, so it's only ever used when OMS explicitly specifies it. **Check picking location** is left off on this journal name — that setting controls whether D365 auto-assigns a storage bin/location on posting, which only matters for advanced/license-plate-controlled warehouses. Since OMS-driven return arrivals mostly target POS/store facilities (basic inventory management, not WMS-controlled locations), leaving it off matches Microsoft's documented guidance for basic-warehousing scenarios.
+
+> **Known gap:** OMS currently queues an arrival journal for *any* return that's synced and not cancelled, regardless of return status. This is correct for POS returns (goods are already physically back by the time OMS syncs them), but not yet correct for online returns — those sync to D365 at `RETURN_REQUESTED`, *before* the item physically arrives, so queuing the arrival journal at that point would tell D365 inventory has arrived before it actually has. Not yet fixed — needs gating on an actual physical-receipt signal (e.g. `ShipmentReceipt`) for online returns specifically. Separately, returns destined for D365-managed warehouses (not OMS/WMS-managed facilities) should be excluded from this flow entirely, since D365's own native receiving process would create its own arrival journal — this exclusion is also not yet implemented.
 
 ### 2.3 Disposition Codes
 
@@ -119,18 +128,71 @@ For returns where no physical goods movement is needed:
 
 No arrival journal. No packing slip. This is the intended path for **POS completed returns**.
 
+### 2.7 Automating Packing Slip & Invoice Posting for Completed Returns
+
+D365 batch jobs handle packing slip and invoice posting natively — OMS never calls a service to trigger either. But the batch job's own **query/select parameters** need a way to identify which return orders are ready, and D365 return orders don't have a native channel/origin field the way sales orders do.
+
+> This section covers POS returns that go through arrival registration and packing slip posting (standard `Credit` disposition, physical restock) — not the `Credit only` shortcut path in Section 2.6, which skips packing slip entirely.
+
+#### The Missing Field: `ReturnOrderOriginCode`
+
+Sales orders use `SalesOrderOriginCode` to tag the channel (POS/Ecom), and this is the standard filter used by the sales order packing slip batch job. `ReturnOrderHeadersV2` has no equivalent field.
+
+We raised this on the D365 community forum ([thread](https://community.dynamics.com/forums/thread/details/?threadid=a9f3ec12-8674-f111-ab0f-6045bddc3c65)) and confirmed: return orders live in the same underlying `SalesTable` as sales orders, so the origin field (`SalesOriginId`) already exists — it's just not exposed on `ReturnOrderHeadersV2`. The fix is a D365 data entity extension exposing it as a new field, `ReturnOrderOriginCode`, mapped directly from `SalesTable.SalesOriginId`.
+
+We initially considered repurposing `CustomerReturnReasonCode` (a reason-code field) as a channel tag instead, but rejected it — it's semantically wrong (a reason code isn't a channel), and it would have blocked the still-pending real reason-code mapping (`D365_RTN_REASON`).
+
+OMS populates this field via a dedicated `D365_RTN_CHNL` IntegrationTypeMapping (`POS_RTN_CHANNEL → POS`, `ECOM_RTN_CHANNEL → Ecom`) — kept separate from the sales order `D365_SALES_CHNL` mapping even though the target values overlap, for the same reason `OMSPAY`/`OMSRFND` are separate: independent evolution of order-channel vs. return-channel mapping.
+
+#### Batch Job: Packing Slip for POS Completed Returns
+
+A dedicated batch job, `HotWax Post POS Returns Packing Slip`, posts packing slips for POS-completed returns using:
+
+| Query Parameter | Value |
+| :--- | :--- |
+| Sales Order Return Status | `Open` |
+| Sales Order Order Type | `Returned Order` |
+| Sales Order Origin | `POS` |
+| Sales Order Lines Return Status | `Registered` |
+
+This mirrors the sales order POS packing slip job pattern, filtered to return orders instead.
+
+#### Batch Job: Invoice Posting for Completed Returns
+
+Unlike packing slip posting (split by channel), invoice posting uses a **single converged job** regardless of channel — mirroring the sales order invoice posting pattern, where by the time a line reaches `Delivered`/`Received` it no longer matters which path got it there:
+
+| Query Parameter | Value |
+| :--- | :--- |
+| Sales Order Return Status | `Open`, `Delivered` |
+| Sales Order Order Type | `Returned Order` |
+| Sales Order Lines Return Status | `Received` |
+
+**Why the header status includes both `Open` and `Delivered`:** a return order can have lines that reach `Received` at different times, so the header may still read `Open` while some lines have already completed — the line-level `Received` status is the real gating condition, not the header.
+
+**Verified working end-to-end in D365.**
+
 ---
 
 ## 3. Refund Payment Journal
 
 When cash was actually returned to the customer (via payment gateway, store cash, etc.), a Customer Payment Journal must be created in D365 to record the refund.
 
-- Uses the same `CustomerPaymentJournalHeaders` + `CustomerPaymentJournalLines` entities as payment capture
-- The amount sign is **positive** (company pays customer) — opposite of the payment journal for sales orders
-- `PaymentReference` should reference the original D365 Sales Order Number — this is how the settlement service matches the refund to the original transaction
+- Uses the same `CustomerPaymentJournalHeaders` + `CustomerPaymentJournalLines` entities (and the equivalent DMF composite entity) as payment capture
+- Journal name is **`OMSRFND`**, separate from `OMSPAY` (see [implementation_plan.md](./implementation_plan.md) Section 5 for the OMS-side implementation and Section 8 Phase 5 for D365 setup)
+- The amount sign is **positive** (`DebitAmount`, company pays customer) — opposite of the payment journal for sales orders (`CreditAmount`)
+- `PaymentReference` is set to the D365 Return Order Number — this is how the settlement service matches the refund to the credit note
+- **One journal header per return, one line per original payment method (OPP)** — if a customer paid via two different methods and both are refunded, both refunds go under the same journal header as two separate lines, each tagged with `PaymentId = orderPaymentPreferenceId` (mirrors the sales order payment sync pattern for split payments)
 - Journal posting is handled by D365 batch class **`LedgerJournalMultiPost`** (multi-threaded, picks up multiple journals)
 
 > Payment journals should only be created when actual money moves. Do not create refund journals for exchange scenarios where the credit note is simply offset against a new invoice.
+
+### 3.1 Idempotency
+
+To prevent resending the same refund twice, OMS reuses `OrderPaymentPreference.finAccountId` — a standard OFBiz field — as an "already synced" marker, stamped with the DMF submission's execution ID after a successful import. This mirrors how the NetSuite integration for the same OMS reuses this exact field to store its own Credit Memo ID once an OPP is settled.
+
+A separate time-based window (`fromDate`/last-run-time, same pattern used for sales order payment sync) is also applied, but only to bound how much history gets rescanned on each run — it is not what prevents duplicates. `finAccountId` being unset is what actually determines eligibility, so a failed submission naturally stays eligible for the next run regardless of the time window.
+
+> **Known limitation:** `finAccountId` currently stores the DMF **execution ID**, not D365's actual `JournalBatchNumber` — the DMF import is asynchronous, so the import trigger call doesn't return the batch number synchronously. Getting the real batch number would require an additional poll/check step after the import completes. Not yet built — the execution ID is sufficient for idempotency, and this gap would likely disappear anyway if refund journal creation is later moved to an OData-based approach (which returns the batch number synchronously, same as sales order payment sync already does).
 
 ---
 
@@ -140,7 +202,7 @@ Settlement matches the credit note (negative) and refund journal (positive) agai
 
 - OOTB D365 settlement (FIFO by due date) should not be used — it settles at customer account level and cannot honor order-specific matching
 - The existing custom **`HotWaxAutoPostSettlementService`** must be extended to handle credit note + refund journal settlement using `SalesId == PaymReference` matching
-- For exchanges, the credit note and new sales invoice settle against each other (see Section 6)
+- For exchanges, the credit note and new sales invoice settle against each other (see Section 7)
 
 ---
 
@@ -150,21 +212,21 @@ Settlement matches the credit note (negative) and refund journal (positive) agai
 
 | Entity | Purpose | Step |
 | :--- | :--- | :--- |
-| `ReturnOrderHeadersV2` | Create return order header | Step 1 |
+| `ReturnOrderHeadersV2` | Create return order header (incl. `ReturnOrderOriginCode` extension) | Step 1 |
 | `ReturnOrderLinesV2` | Create return order lines | Step 1 |
 | `ItemArrivalJournalHeadersV2` | Create arrival journal header | Step 2 — OData (not used in OMS integration; see DMF composite entity below) |
 | `ItemArrivalJournalLinesV2` | Create arrival journal lines | Step 2 — OData (not used in OMS integration; see DMF composite entity below) |
-| DMF: `Item arrival journals V2` | Create header + lines atomically | Step 2 — **Used in OMS integration**; submitted as ZIP via Queue Connector (`/api/connector/enqueue/{activityId}`) |
-| `CustomerPaymentJournalHeaders` | Create refund payment journal header | Step 7 |
-| `CustomerPaymentJournalLines` | Create refund payment journal lines | Step 7 |
+| DMF: `Item arrival journals V2` | Create header + lines atomically | Step 2 — **Used in OMS integration**; submitted as ZIP via Queue Connector (`/api/connector/enqueue/{activityId}`), journal name `OMSArr` |
+| `CustomerPaymentJournalHeaders` / `Lines` | Create refund payment journal (OData) | Step 7 — not used; see DMF composite entity below |
+| DMF: Customer Payment Journal composite | Create refund payment journal header + lines atomically | Step 7 — **Used in OMS integration**; journal name `OMSRFND` |
 
 ### D365 Batch Classes for Posting
 
 | Batch Class | Purpose | Notes |
 | :--- | :--- | :--- |
-| `WMSJournalCheckPostReception` | Post item arrival journals | Per-journal, single-threaded; extend for bulk |
-| `SalesFormLetter_Invoice` | Post packing slip and generate credit note | Covers both posting steps |
-| `LedgerJournalMultiPost` | Post payment journals (including refund journals) | Multi-threaded, picks up multiple journals |
+| `HotWaxAutoPostArrivalJournalService` | Post item arrival journals | Custom class wrapping `WMSJournalCheckPostReception`; picks up all unposted Reception journals matching `JournalNameId = OMSArr`. The OOTB `WMSJournalCheckPostReception` alone only posts one selected journal at a time |
+| `SalesFormLetter_Invoice` | Post packing slip and generate credit note for return orders | Same batch class as sales order invoicing; select-parameter query determines scope (see Section 2.7) |
+| `LedgerJournalMultiPost` | Post payment journals (including refund journals) | Multi-threaded, picks up multiple journals by journal name |
 
 ---
 
@@ -201,7 +263,7 @@ Customer returns Item A and receives Item B.
 
 - Return order → credit note (negative)
 - New sales order → invoice (positive)
-- Settlement between credit note and new invoice (see Section 6 Accounting Model)
+- Settlement between credit note and new invoice (see Section 7 Accounting Model)
 - Additional payment journal or refund journal only if there is a net difference
 
 ---
@@ -243,7 +305,7 @@ Two outcomes depending on whether cash moves:
 
 **Option A — Store Credit:** The `-100` credit note is left open on the customer account. No refund journal is created. The customer can apply the credit to a future purchase.
 
-**Option B — Cash Refund:** OMS creates a Refund Payment Journal (`+100`) in D365 using journal name `OMSRFND` (a dedicated journal separate from `OMSPAY` used for sales order incoming payments — see [implementation_plan.md](./implementation_plan.md) Section 7 Phase 5 for D365 setup details).
+**Option B — Cash Refund:** OMS creates a Refund Payment Journal (`+100`) in D365 using journal name `OMSRFND` (a dedicated journal separate from `OMSPAY` used for sales order incoming payments — see [implementation_plan.md](./implementation_plan.md) Section 5 for D365 setup details).
 - Settlement: Credit Note `-100` ↔ Refund Journal `+100` = `0` — both closed.
 
 ---
@@ -357,3 +419,11 @@ When creating a return order directly in D365 — useful for manual testing or o
 4. For lines, use **Find sales order** to reference the original invoiced sales order line — this ensures the return is valued at the original cost price and quantity is validated against what was sold
 
 > **Best practice:** Always use **Find sales order** when the original invoice is known. It guarantees exact reversal of the original transaction (correct discount, cost price, and quantity ceiling) and prevents over-returning.
+
+---
+
+## 9. Future Direction: Event-Driven Lifecycle Orchestration
+
+The return lifecycle today is implemented as several independent pieces — a DataFeed for return order creation, separate ServiceJob sweeps for arrival journals and refund payment journals. A NetSuite integration built for the same OMS (`gorjana-maarg`) uses a different architecture worth considering here: a single idempotent orchestrator script, triggered by a DataFeed watching *three* entities (`ReturnHeader`, `ShipmentReceipt`, `ReturnItemResponse`) instead of just the return header. Each lifecycle step (RMA, item receipt, credit memo/refund) independently checks its own precondition against current state before acting, so the same script can be safely re-invoked by any of the three triggers — a refund created *after* the return already exists simply causes the next invocation to pick up where the last one left off, rather than requiring the return and its refund to be known at the same time.
+
+This is not yet started for the D365 integration, but is being considered as the direction for consolidating return lifecycle sync once settlement and exchange order work is further along.

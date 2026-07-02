@@ -40,12 +40,21 @@ For D365 standard return process, disposition codes, accounting model, and lifec
 - Tracking entity: `D365ArrivalJournalHistory`; view: `D365EligibleArrivalJournals`
 - `definitionGroupId`: `HotWax_Import_Item_Arrival_Journals_V2`
 
-### Future Phases (Not yet in scope — see Section 7)
-- Arrival journal posting (D365 batch)
-- Packing slip posting (D365 batch)
-- Credit note generation
-- Refund payment journal — OMS service `create#RefundPaymentJournal` in `D365ReturnServices.xml`, journal name `OMSRFND` (separate from `OMSPAY` used for sales order payments)
-- Settlement
+### Phase 4 — Refund Payment Journal DMF Sync (Implemented)
+- Batch-sweep ServiceJob packages eligible cash refunds into a DMF ZIP using the Customer Payment Journal composite entity
+- Service: `import#RefundPaymentJournalsDataPackage` in `D365ReturnServices.xml`, journal name `OMSRFND` (separate from `OMSPAY` used for sales order payments)
+- One journal header per return, one line per original payment method (`OrderPaymentPreference`)
+- Idempotency via `OrderPaymentPreference.finAccountId`; view: `D365EligibleRefundPayments`
+- Verified end-to-end against the live D365 import project
+
+### Downstream Batch Automation (D365-native, Implemented)
+- Packing slip posting for POS completed returns — dedicated D365 batch job filtered on `ReturnOrderOriginCode = POS` (requires the `ReturnOrderOriginCode` entity extension — see Section 3.6)
+- Invoice / credit note posting for completed returns — single converged D365 batch job, verified end-to-end
+- Arrival journal auto-posting — `HotWaxAutoPostArrivalJournalService`, journal name `OMSArr` (see Section 4.8)
+
+### Future Phases (Not yet in scope — see Section 8)
+- Settlement (credit note + refund journal / exchange invoice matching)
+- Exchange order handling
 
 ---
 
@@ -279,6 +288,7 @@ Implements `org.moqui.EntityServices.receive#DataFeed`. Iterates `documentList`,
 | `CustomersOrderReference` | `ReturnHeader.returnId` | ✅ Implemented — idempotency key |
 | `CustomerRequisitionNumber` | `OrderIdentification(D365_SLS_ORD_NUM)` on linked `orderId` | ✅ Implemented |
 | `CustomerReturnReasonCode` | `IntegrationTypeMapping(D365_RTN_REASON)` | ⚠️ Hardcoded to `39` — mapping TODO |
+| `ReturnOrderOriginCode` | `IntegrationTypeMapping(D365_RTN_CHNL)` on `returnChannelEnumId` | ✅ Implemented — requires the D365 entity extension mapping this field to `SalesTable.SalesOriginId` (see Section 4.9) |
 | `CurrencyCode` | `ReturnHeader.currencyUomId` | ✅ Implemented — defaults to `USD` |
 | `DefaultReturnWarehouseId` | `Facility.externalId` on `destinationFacilityId` | ✅ Implemented |
 | `DefaultReturnSiteId` | *(not sent)* | ✅ Omitted — D365 derives from warehouse |
@@ -530,9 +540,120 @@ Both jobs are paused by default.
 
 For generic package upload/import mechanics and API sequencing, refer to [data_import_package_api.md](../data-package-api/data_import_package_api.md).
 
+### 4.8 Journal Name Correction: `WArr` → `OMSArr`
+
+`queue#ArrivalJournals` originally sent `JOURNALNAMEID: "WArr"`. This was changed to `JOURNALNAMEID: "OMSArr"` after discovering `WArr` is D365's **default** journal name for Item Arrival (Inventory management → Setup → Journal names → Warehouse management) — any native/manual arrival posting not explicitly overriding the journal name would also use `WArr`, and the auto-post batch class (`HotWaxAutoPostArrivalJournalService`, which filters strictly by `JournalNameId`) would then post those too, even though OMS never created them.
+
+`OMSArr` is a new, dedicated journal name (description: "OMS Arrival Journal"), deliberately not set as a default anywhere. Its `Check picking location` setting is left off, matching the guidance for basic (non-license-plate-controlled) warehousing, which is what OMS-driven return arrivals target.
+
+Both sides needed updating:
+- OMS: `queue#ArrivalJournals` — `JOURNALNAMEID` literal changed to `"OMSArr"`
+- D365: `HotWaxAutoPostArrivalJournalService`'s coded fallback default (used only when the batch job's `JournalNameId` parameter is left blank) was `"RTN_ARR"` — a stale value that never matched anything — corrected to `"OMSArr"`
+
+Full D365 setup steps are in `dynamics365-integration/docs/auto-post-arrival-journal.md`.
+
+### 4.9 `ReturnOrderOriginCode` Entity Extension
+
+`ReturnOrderHeadersV2` has no native field identifying the sales channel (POS vs. Ecom) that created the return — unlike sales orders, which have `SalesOrderOriginCode`. This blocks any D365 batch job (e.g. the packing slip job in business_processes.md Section 2.7) that needs to filter return orders by channel.
+
+**D365-side (implemented):** a data entity view extension on `ReturnOrderHeadersV2` adds a new mapped field:
+
+```xml
+<AxDataEntityViewField xmlns="" i:type="AxDataEntityViewMappedField">
+  <Name>ReturnOrderOriginCode</Name>
+  <AllowEdit>Auto</AllowEdit>
+  <Label>Return order origin code</Label>
+  <DataField>SalesOriginId</DataField>
+  <DataSource>SalesTable</DataSource>
+</AxDataEntityViewField>
+```
+
+No table extension was needed — `SalesOriginId` already exists on `SalesTable` (return orders are `OrderType = Returned order` rows in the same table sales orders live in). After deploying, **System administration → Data management → Framework parameters → Refresh entity list** must be run so the Data Management framework picks up the change.
+
+**OMS-side (implemented):** `sync#ReturnOrder` resolves `ReturnOrderOriginCode` via a new `D365_RTN_CHNL` IntegrationTypeMapping on `returnChannelEnumId` (`POS_RTN_CHANNEL → POS`, `ECOM_RTN_CHANNEL → Ecom`) and includes it in the `ReturnOrderHeadersV2` POST payload — same pattern as `SalesOrderOriginCode` resolution for sales orders, but a separate mapping type since return-channel and order-channel enums differ.
+
 ---
 
-## 5. TODOs by Approach
+## 5. Phase 4 — Refund Payment Journal DMF Sync
+
+### 5.1 Approach: DMF Composite Entity, Mirroring Sales Order Payment Sync
+
+Unlike returns and arrival journals (where DMF was the *only* viable path), the OData `CustomerPaymentJournalHeaders`/`Lines` entities work perfectly well for payment journals — `sync#CustomerPaymentJournals` already uses them for sales order payments. The refund journal service uses the **DMF Data Package** approach instead (`import#RefundPaymentJournalsDataPackage`), mirroring `import#CustomerPaymentJournalsDataPackage` — the existing bulk/batch-oriented sibling for sales order payments — rather than the OData path. This is a design choice for consistency with the existing bulk payment sync pattern, not a technical constraint the way it was for returns.
+
+**Trade-off accepted:** the DMF import is asynchronous, so `JournalBatchNumber` is not available synchronously the way it is via OData (see Section 5.5).
+
+### 5.2 Data Model
+
+#### View-Entity: `D365EligibleRefundPayments`
+
+Joins `ReturnHeader → D365ReturnHeaderHistory (D365_RTN_SYNCED) → ReturnItemResponse → OrderPaymentPreference (PAYMENT_REFUNDED)`. One row per `(returnId, orderPaymentPreferenceId)`.
+
+```
+ReturnHeader (RH)
+  └─ D365ReturnHeaderHistory (RSH) — must be D365_RTN_SYNCED
+  └─ ReturnItemResponse (RIR)
+        └─ OrderPaymentPreference (OPP) — must be PAYMENT_REFUNDED
+```
+
+Confirmed 1:1 between `ReturnItemResponse` and `orderPaymentPreferenceId` by reading the only `ReturnItemResponse`-creation code in the OMS (`process#ShopifyRefund`) — it always creates exactly one `ReturnItemResponse` per OPP, with `returnItemSeqId` hardcoded to `"_NA_"`, never per return line item. A return with multiple `ReturnItemResponse` rows means multiple distinct payment transactions (e.g. a refund split across two payment methods), never the same OPP duplicated.
+
+**Why `ReturnItem`/`OrderHeader`/`ProductStore` are not in this view:** `dataAreaId` is a per-return value, not a per-OPP value — joining those entities in would multiply rows for no benefit. It's resolved once per return inside the service instead (same `ReturnItem → OrderHeader → ProductStore` pattern `sync#ReturnOrder` already uses).
+
+**Eligibility conditions (entity-condition on the view):**
+- `ReturnHeader.statusId != RETURN_CANCELLED`
+- `D365ReturnHeaderHistory.syncStatusId = D365_RTN_SYNCED`
+- `OrderPaymentPreference.statusId = PAYMENT_REFUNDED`
+- `OrderPaymentPreference.paymentMethodTypeId NOT IN (SHOP_STORE_CREDIT, EXCHANGE_CREDIT, EXCHANGE_PAYMENT, EXT_GIFT_CARD, EXT_SHOP_GFT_CARD)` — only cash refunds get a journal; store credit and gift card refunds stay as open credits on the D365 customer account, covered by the credit note
+- `OrderPaymentPreference.finAccountId IS NULL` — idempotency guard, see Section 5.5
+
+### 5.3 Service Architecture
+
+**Service:** `import#RefundPaymentJournalsDataPackage` in `D365ReturnServices.xml`
+
+**Flow:**
+1. Query `D365EligibleRefundPayments` (optionally filtered by `returnId`, and by `fromDate` — see Section 5.5), group rows by `returnId`
+2. For each return: resolve `customerAccount` via `PartyIdentification(D365_CUST_ACCT)`; resolve `dataAreaId` via `ReturnItem → OrderHeader → ProductStore`
+3. Build **one journal header per return** — `JournalName: 'OMSRFND'`, `Description: 'OMS Refund Journal - RTN {d365ReturnOrderNumber}'`
+4. Build **one journal line per OPP** (not summed) — see field mapping below. A return refunded across two payment methods produces two lines under the same header.
+5. Package all headers/lines as `CUSTOMERPAYMENTJOURNALHEADERENTITY`/`CUSTOMERPAYMENTJOURNALLINEENTITY` XML, ZIP with manifest, upload to Azure Blob, trigger `ImportFromPackage` (`overwrite: false` — required for composite entities)
+6. On success: stamp `finAccountId` on each submitted OPP (Section 5.5), record a `SystemMessage`, update `lastRunTime` if run via job
+
+### 5.4 Field Mapping (Journal Line)
+
+| D365 Field | Source | Notes |
+| :--- | :--- | :--- |
+| `ACCOUNTTYPE` | Hardcoded `Cust` | |
+| `ACCOUNTDISPLAYVALUE` | `HW-{fromPartyId}` | Same format as sales order payment journals |
+| `CURRENCYCODE` | Hardcoded `USD` | |
+| `DEBITAMOUNT` | `OrderPaymentPreference.maxAmount` (abs) | Debit on customer account = company pays customer — opposite of `CREDITAMOUNT` used in OMSPAY |
+| `PAYMENTREFERENCE` | `D365ReturnHeaderHistory.d365ReturnOrderNumber` | Used by `HotWaxAutoPostSettlementService` to match the refund journal to the credit note |
+| `OFFSETACCOUNTTYPE` | Hardcoded `Bank` | |
+| `OFFSETACCOUNTDISPLAYVALUE` | Hardcoded `USMF OPER` | Bank account — confirm per legal entity |
+| `PAYMENTMETHODNAME` | `IntegrationTypeMapping(D365_PMT_MTHD)` on `paymentMethodTypeId`, default `CASH` | Same mapping already used for sales order payments |
+| `PAYMENTID` | `orderPaymentPreferenceId` | Uniquely identifies the line — same OPP-per-line pattern as sales order payment sync |
+| `ISPREPAYMENT` | Hardcoded `No` | |
+
+### 5.5 Idempotency
+
+Two mechanisms, each solving a different problem:
+
+**`OrderPaymentPreference.finAccountId`** (guarantees correctness) — reused from an existing OFBiz field, stamped with the DMF execution ID after a successful `ImportFromPackage` trigger. `D365EligibleRefundPayments` excludes any OPP where this is already set. A failed submission leaves it unset, so the OPP stays eligible on the next run regardless of the time window below. This directly mirrors how the NetSuite integration for the same OMS reuses this exact field to store its own Credit Memo ID (confirmed by reading NetSuite's `syncNetSuiteReturnTransactions.groovy` settlement logic).
+
+**`fromDate` / `lastRunTime` windowing** (query efficiency only) — same pattern as `import#CustomerPaymentJournalsDataPackage`: resolves `fromDate` from the ServiceJob's last successful run time if not passed explicitly, and filters the query to only rescan recent history. This bounds how much data gets queried each run; it is **not** what prevents duplicates — `finAccountId` is.
+
+> **Known limitation:** `finAccountId` stores the DMF **execution ID**, not D365's actual `JournalBatchNumber` — `ImportFromPackage` doesn't return the batch number synchronously since the import itself is processed asynchronously. Getting the real batch number would require a poll/check step after the import completes (mirroring `poll#ArrivalJournalImport`/`check#ArrivalJournalImport`). Not built — the execution ID already satisfies idempotency, and this gap would likely disappear if refund journal creation is ever moved to OData instead (which returns the batch number synchronously).
+
+### 5.6 ServiceJob
+
+| Job | Service | Key Parameters |
+| :--- | :--- | :--- |
+| `import_D365RefundPaymentJournals` | `import#RefundPaymentJournalsDataPackage` | `systemMessageRemoteId`, `definitionGroupId=HotWax_Import_RefundPayments_Composite`, optional `returnId`, `jobName` |
+
+Paused by default.
+
+---
+
+## 6. TODOs by Approach
 
 ### Phase 1 — OData Event-Driven (DataFeed) ✅ Core implemented and tested
 
@@ -552,21 +673,25 @@ For generic package upload/import mechanics and API sequencing, refer to [data_i
 | 7 | Cron schedule | `sync_D365ReturnOrders` job has no cron set. Schedule once Phase 1 DataFeed path is validated in production. |
 | 8 | Full sweep test | Test `sync#ReturnOrders` with no `returnId` (sweep all eligible) to confirm batch isolation works — one failed return must not abort others. |
 
-### Future Phases — Downstream Lifecycle (see Section 7)
+### Downstream Lifecycle (see Section 8)
 
 | # | Item | Details |
 | :--- | :--- | :--- |
-| 9 | Arrival journal creation via DMF | ✅ Implemented — `queue#ArrivalJournals` sweeps `D365EligibleArrivalJournals` and packages returns into a DMF ZIP using the "Item arrival journals V2" composite entity. See Section 4 for full details. |
-| 10 | Arrival journal posting | D365 batch class `WMSJournalCheckPostReception` — needs D365-side setup. Decide: OMS-triggered per journal or manual warehouse staff action. |
-| 11 | Credit note generation | D365 batch class `SalesFormLetter_Invoice` — runs after packing slip posted (or immediately for Credit only disposition). |
-| 12 | Credit note export back to OMS | Export generated credit note number back to OMS for reconciliation — similar to sales order number export. |
-| 13 | Refund payment journal | New `create#RefundPaymentJournal` service in `D365ReturnServices.xml`. Uses journal name `OMSRFND` (separate from `OMSPAY`). Triggered when OMS confirms a cash refund is due. Must be gated on credit note existing in D365. D365-side setup required — see Section 7, Phase 5. |
-| 14 | Settlement | Extend `HotWaxAutoPostSettlementService` to settle credit note + refund journal against original invoice. Handle exchange scenarios. |
-| 15 | Custom composite entity (D365) | If high volume requires DMF path — D365 dev to build `ReturnOrderCompositeV1` entity duplicating the sales order composite pattern. |
+| 9 | Arrival journal creation via DMF | ✅ Implemented — `queue#ArrivalJournals` sweeps `D365EligibleArrivalJournals` and packages returns into a DMF ZIP using the "Item arrival journals V2" composite entity, journal name `OMSArr`. See Section 4 for full details. |
+| 10 | Arrival journal posting | ✅ Implemented — `HotWaxAutoPostArrivalJournalService`, filtered by `JournalNameId = OMSArr`. See Section 4.8. |
+| 11 | Arrival journal timing gate for online returns | ⚠️ Not yet implemented — OMS currently queues an arrival journal for any synced return regardless of status. Correct for POS (receipt already happened by sync time) but not yet gated for online returns, which sync at `RETURN_REQUESTED` before physical receipt. Needs a gate on an actual receipt signal (e.g. `ShipmentReceipt`). |
+| 12 | D365-managed warehouse exclusion | ⚠️ Not yet implemented — returns destined for D365-managed (non-OMS/WMS) warehouses should be excluded from the OMS arrival journal flow entirely, since D365's own native receiving process would create its own arrival journal. |
+| 13 | Packing slip posting for POS returns | ✅ Implemented — D365 batch job filtered on `ReturnOrderOriginCode = POS`. See business_processes.md Section 2.7. |
+| 14 | Credit note generation | ✅ Implemented — single converged D365 batch job (`SalesFormLetter_Invoice`), verified end-to-end. See Section 8, Phase 4. |
+| 15 | Credit note export back to OMS | ⚠️ Not yet implemented — credit note number is not currently exported back to OMS for reconciliation. |
+| 16 | Refund payment journal | ✅ Implemented — `import#RefundPaymentJournalsDataPackage`, journal name `OMSRFND`. See Section 5. |
+| 17 | Refund journal batch scaling | ⚠️ Not yet implemented — every other bulk DMF service in this codebase caps batch size (`.limit(N)`); the refund journal service doesn't yet. A naive limit on the current (return × OPP) denormalized view would risk truncating a return's OPPs mid-group — the correct fix is a two-step query (limit on distinct `returnId`s first, then fetch OPPs for that bounded set). Not urgent at current volume. |
+| 18 | Settlement | Extend `HotWaxAutoPostSettlementService` to settle credit note + refund journal against original invoice. Handle exchange scenarios. |
+| 19 | Custom composite entity (D365) | If high volume requires DMF path for return orders — D365 dev to build `ReturnOrderCompositeV1` entity duplicating the sales order composite pattern. |
 
 ---
 
-## 6. Verification Plan
+## 7. Verification Plan
 
 | # | Step | Status |
 | :--- | :--- | :--- |
@@ -587,10 +712,15 @@ For generic package upload/import mechanics and API sequencing, refer to [data_i
 | 15 | Run `send#ArrivalJournalImport` — confirm ZIP POSTed to `/api/connector/enqueue/{activityId}`, Queue Message ID persisted as `remoteMessageId` | Pending |
 | 16 | Run `poll#ArrivalJournalImport` — confirm DMF execution status resolved, SystemMessage marked confirmed | Pending |
 | 17 | Verify arrival journals visible in D365 `Inventory management > Journals > Item arrival` and can be posted | Pending |
+| 18 | Run `HotWaxAutoPostArrivalJournalService` — confirm it posts `OMSArr` journals and does not touch journals under other names (e.g. `WArr`) | ✅ Done |
+| 19 | Post packing slip via the POS returns batch job — confirm `ReturnOrderOriginCode = POS` filter correctly selects only POS return orders | ✅ Done |
+| 20 | Post invoice via the converged invoice batch job — confirm credit note generated for completed returns regardless of channel | ✅ Done — verified end-to-end |
+| 21 | Run `import#RefundPaymentJournalsDataPackage` against a return with cash-refunded OPPs — confirm one journal header with one line per OPP, correct `DebitAmount`/`PaymentMethodName`/`PaymentReference` | ✅ Done — verified against the live `HotWax_Import_RefundPayments_Composite` D365 import project |
+| 22 | Re-run `import#RefundPaymentJournalsDataPackage` for an already-processed return — confirm it's excluded (finAccountId already set) and no duplicate journal is created | Pending |
 
 ---
 
-## 7. Future Phases — Downstream Lifecycle
+## 8. Future Phases — Downstream Lifecycle
 
 The following steps complete the full return lifecycle in D365 after the return order is created. These are **not yet in scope** but are documented here for planning purposes based on research from Microsoft Learn and the D365 community thread.
 
@@ -604,36 +734,25 @@ OMS packages returns into a DMF ZIP using the "Item arrival journals V2" composi
 
 | Step | Detail |
 | :--- | :--- |
-| D365 posts arrival journal | Batch class `WMSJournalCheckPostReception` — triggers per journal |
-| Limitation | Not a query-based auto-batch; one journal at a time; bulk posting requires extending the class to multi-threaded like `LedgerJournalMultiPost` |
+| D365 posts arrival journal | ✅ Implemented — `HotWaxAutoPostArrivalJournalService` (custom class, journal name `OMSArr`). See Section 4.8. |
+| Limitation | Underlying OOTB `WMSJournalCheckPostReception` only posts one journal at a time; the custom class wraps it to sweep all matching-`JournalNameId` journals in one run |
 
-**Decision pending:** OMS-triggered vs. D365 warehouse staff manual for arrival journal posting.
-
-### Phase 4: Credit Note Generation
+### Phase 4: Credit Note Generation ✅ Implemented
 
 | Step | Detail |
 | :--- | :--- |
-| Who triggers | D365 batch class `SalesFormLetter_Invoice` |
+| Who triggers | D365 batch class `SalesFormLetter_Invoice` — a single converged batch job for all completed returns regardless of channel (see business_processes.md Section 2.7). Verified end-to-end. |
 | Prerequisite | Return line must be in `Received` status (arrival registered + packing slip posted, OR `Credit only` disposition) |
 | Output | Credit note with negative amount |
-| OMS sync-back | Credit note number should be exported back to OMS for reconciliation (similar to sales order number export) |
+| OMS sync-back | Not yet implemented — credit note number is not currently exported back to OMS for reconciliation |
 
-### Phase 5: Refund Payment Journal
+### Phase 5: Refund Payment Journal ✅ Implemented — see Section 5
 
-#### Why a Separate Journal Name (OMSRFND)
+`OMSRFND` journal name, D365 setup, and OMS service (`import#RefundPaymentJournalsDataPackage`) are fully documented in Section 5. Kept the D365 setup steps below since they're one-time environment configuration, not something Section 5 repeats.
 
-Sales order incoming payments use journal name `OMSPAY`. Return refunds are a different concern — they are outgoing (company pays customer back) and must be posted only after the credit note has been generated in D365. Mixing refunds into the `OMSPAY` batch would:
-- Remove independent posting control (refunds need to be sequenced after credit note exists)
-- Merge incoming and outgoing transactions in the same accounting audit trail
-- Make it impossible to hold or review refunds separately from sales payments
+#### D365 Setup: Journal Name and Posting Batch
 
-`OMSRFND` is a dedicated journal name for refund journals. It uses the same D365 journal type (`Customer payment`) and the same OOTB posting mechanism — only the journal name filter differs.
-
-#### D365 Setup Required
-
-**Step 1 — Create the journal name**
-
-Navigate to **General Ledger → Journal setup → Journal names**:
+**Step 1 — Create the journal name.** Navigate to **General Ledger → Journal setup → Journal names**:
 
 | Field | Value |
 | :--- | :--- |
@@ -642,9 +761,7 @@ Navigate to **General Ledger → Journal setup → Journal names**:
 | Journal type | `Customer payment` |
 | Voucher series | Reuse OMSPAY number sequence or create a dedicated one with a `RFND-` prefix — confirm with accounting |
 
-**Step 2 — Configure the auto-posting batch job**
-
-Navigate to **General Ledger → Journal entries → Post journals**. Create a new batch job separate from the OMSPAY posting job:
+**Step 2 — Configure the auto-posting batch job.** Navigate to **General Ledger → Journal entries → Post journals**. Create a batch job separate from the OMSPAY posting job:
 
 | Setting | Value |
 | :--- | :--- |
@@ -657,37 +774,6 @@ Navigate to **General Ledger → Journal entries → Post journals**. Create a n
 
 > [!IMPORTANT]
 > The OMSRFND posting batch must run **after** the credit note batch (`SalesFormLetter_Invoice`). The custom `HotWaxAutoPostSettlementService` requires both sides (credit note and refund journal) to be posted before it can settle them. See [D365 setup issue #27](https://github.com/hotwax/dynamics365-integration/issues/27).
-
-#### OMS Service Design
-
-**File:** `co.hotwax.d365.D365ReturnServices` — kept here (not in `D365PaymentServices`) because the service reads return-specific data (`D365ReturnHeaderHistory`, `ReturnHeader`, `ReturnItem`) and is a step in the return lifecycle.
-
-**Service:** `create#RefundPaymentJournal`
-
-**Trigger (Phase 1 — manual):** `create_D365RefundPaymentJournal` ServiceJob, `paused="Y"`, `returnId` parameter for targeted runs.
-
-**Flow:**
-1. Load `D365ReturnHeaderHistory` — fail if `d365ReturnOrderNumber` is null or status is not `D365_RTN_SYNCED`
-2. Load `ReturnHeader.fromPartyId` → `PartyIdentification(D365_CUST_ACCT)` → `customerAccount`
-3. Resolve `dataAreaId` from `ProductStore.externalId`
-4. Sum total refund amount: `Σ (ReturnItem.returnPrice × returnQuantity)`
-5. Idempotency check: `GET /data/CustomerPaymentJournalHeaders` filtered by `Description eq 'OMS Refund Journal - RTN {returnId}'` and `IsPosted eq No` — reuse existing `JournalBatchNumber` if found
-6. `POST /data/CustomerPaymentJournalHeaders` with `JournalName: 'OMSRFND'`
-7. `POST /data/CustomerPaymentJournalLines` — see field mapping below
-
-#### Field Mapping
-
-| D365 Field | Value | Notes |
-| :--- | :--- | :--- |
-| `JournalBatchNumber` | From header POST response | |
-| `AccountType` | `Cust` | |
-| `AccountDisplayValue` | `HW-{fromPartyId}` | Same format as sales order payment journals |
-| `DebitAmount` | Total refund amount | Debit on customer account = company pays customer — opposite of `CreditAmount` used in OMSPAY |
-| `PaymentReference` | `d365ReturnOrderNumber` | Used by `HotWaxAutoPostSettlementService` to match the refund journal to the credit note |
-| `OffsetAccountType` | `Bank` | |
-| `OffsetAccountDisplayValue` | `USMF OPER` | Bank account — confirm per legal entity |
-| `PaymentId` | `returnId` | Idempotency key per line |
-| `Description` | `OMS Refund Journal - RTN {returnId}` | Used for header idempotency lookup |
 
 ### Phase 6: Settlement
 
