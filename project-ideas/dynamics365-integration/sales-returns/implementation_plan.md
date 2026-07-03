@@ -855,9 +855,9 @@ customerRequisitionNumber = linkedReturnHeaderHistory?.d365ReturnOrderNumber ?: 
 > [!CAUTION]
 > **Naming caveat, accepted for now:** `CustomerRequisitionNumber` / `PurchOrderFormNum` is semantically a "customer's purchase order number" field — repurposing it to carry a D365 SalesId (return order number) is a field-reuse decision made because it's the one standard, freely-settable field proven to survive header → invoice (see verification below), not because it's the "correct" field for this purpose. This mirrors the same reuse tradeoff already accepted for `OrderPaymentPreference.finAccountId` in the refund payment journal design (Section 5.5). Flagged here so this reuse is revisited if D365 ever exposes a more purpose-built cross-reference field (see also TODO #20 in Section 6, "Common Shopify Order Id" — a more semantically correct long-term alternative).
 
-##### 6.4.2 Matching Strategy — Four Lookups Per Return
+##### 6.4.2 Matching Strategy — Discover, Then Mark ✅ Implemented
 
-For each return with an open credit note, the service performs up to four lookups, each keyed off the previous one's D365 SalesId — no date-based or FIFO logic anywhere:
+For each return with an open credit note, the service runs a **discovery pass** (read-only) before marking anything, then a **marking pass** that hands D365's `SpecTransManager` only amounts already known to sum to exactly zero:
 
 | # | Lookup | Match Key | Covers |
 | :--- | :--- | :--- | :--- |
@@ -865,6 +865,10 @@ For each return with an open credit note, the service performs up to four lookup
 | 2 | Refund payment journal(s) | `PaymReference = SalesId` from step 1 | Pure cash refund **and** the lower-value exchange's leftover cash-back remainder |
 | 3 | Exchange order invoice | `PurchOrderFormNum = SalesId` from step 1, `AmountCur > 0` | Same-value, higher-value, and lower-value exchange (whenever an exchange order exists) |
 | 4 | Difference payment journal | `PaymReference = SalesId` from step 3 (the exchange order's own SalesId) | Higher-value exchange only — the customer's payment for the price difference, using the **existing**, already-implemented sales-order payment journal flow (`OMSPAY`) unmodified |
+
+**Why a discovery pass, not mark-as-you-go (corrected during implementation):** an earlier version of this service marked the credit note at its full amount unconditionally, then capped the *other* legs down when they exceeded what was still needed. That only handles one direction. Every group of transactions handed to `SpecTransManager` in one `settleTransaction` call must sum to exactly zero — that's not D365 being lenient about an imbalance, it's the actual contract of the API (the already-proven overpayment case in `HotWaxAutoPostSettlementService` works because it marks a *balanced* pair, `$90` against `$90`, not because D365 tolerates a mismatch). The fix: total up what's genuinely available (refund + exchange invoice) *before* deciding how much of the credit note to mark, then cap the **credit note itself** down to `min(creditNoteOpen, totalAvailable)` when the available counterpart is smaller — the missing half of the capping logic.
+
+**Higher-value exchange needs an extra safeguard, not just balanced math.** Even with correct amounts, marking a partial settlement (credit note fully closed against only part of a larger exchange invoice) *before* the difference payment exists would close the credit note — the service's only anchor, since Step 1 only ever looks at *open* credit notes — while leaving the exchange invoice's real remaining gap with nothing that could ever find it again on a later run. Since a higher-value exchange always requires the customer to pay the difference (business_processes.md Section 7.4 — there's no valid "higher value, nothing more coming" ending the way lower-value has a legitimate store-credit ending), the service now **waits**: if the exchange invoice found is larger than the credit note, it first checks whether the difference payment is *already* present covering the full gap. If not, it skips that return entirely for this run — nothing is marked, nothing is orphaned. Once the difference payment posts and a later run finds it, credit note + full exchange invoice + difference payment all settle together in one shot. The lower-value case doesn't need this — there, the credit note is the side left holding any leftover balance, and it naturally stays visible to the next run since Step 1 keeps finding it as "open."
 
 Whatever isn't found at a given step is simply not marked — no special-casing needed. A pure store-credit return (no refund journal, no exchange order) marks only the credit note, finds no counterpart, and it stays open on the customer account, which is the correct outcome. A lower-value store-credit exchange (step 3 found, no refund at step 2) leaves exactly the remaining difference open, matching business_processes.md Section 7.5's "Store Credit" option.
 
@@ -899,6 +903,15 @@ Two checks were identified before writing the X++, both now verified:
    > `SysTableBrowser` is the recommended verification method for similar "does this field survive D365's posting pipeline" questions going forward — it's faster and more conclusive than working through UI form field visibility/Personalize settings.
 
 2. **`ReturnItemResponse.replacementOrderId` population coverage** — confirmed Shopify-only, which is sufficient for current scope. See the note in Section 6.4.1.
+
+##### 6.4.5 `HotWaxAutoPostSettlementService` Must Exclude Exchange Orders ✅ Implemented
+
+Since an exchange order is a plain Sales Order in D365 with no marker other than `PurchOrderFormNum` being populated, the **existing**, already-in-production `HotWaxAutoPostSettlementService` (sales-order settlement) would independently pick up an exchange order's invoice and any payment matching `PaymReference == SalesId` — including the higher-value exchange's difference payment, which intentionally reuses that exact key so it can ride the existing, unmodified `OMSPAY` payment flow. Without an exclusion, two independent batch jobs could race to settle the same invoice/payment pair, with unpredictable outcomes depending on run order.
+
+**Fix**: `HotWaxAutoPostSettlementService`'s invoice-eligibility join now also requires `custInvoiceJour.PurchOrderFormNum == ""` (blank), so it only ever processes genuine sales orders, leaving anything flagged as an exchange order exclusively to `HotWaxAutoPostReturnSettlementService`.
+
+> [!CAUTION]
+> **Field-reuse risk, deliberately deferred, not yet resolved.** `PurchOrderFormNum`/`CustomerRequisitionNumber` is a real, native D365 field (customer's PO number) being repurposed throughout this design (see the naming caveat in Section 6.4.1). If this environment ever has *legitimate, non-exchange* sales orders that populate this field for its native purpose, this exclusion would wrongly skip them from `HotWaxAutoPostSettlementService` too — and `HotWaxAutoPostReturnSettlementService` wouldn't pick them up either, since they wouldn't match the `ReturnItemResponse` lookup. Decided to treat this as a separate concern to resolve later (potentially its own dedicated settlement handling) rather than a blocker — flagged here, in the code comment on the new condition, and in Section 6.4.1's caution callout, specifically so it isn't forgotten.
 
 #### 6.5 Summary Table
 
