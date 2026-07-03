@@ -828,8 +828,11 @@ CustomerRequisitionNumber: d365SalesOrderNumber,   ← original order's D365 Sal
 
 **Where the return↔exchange link comes from on the OMS side:** OMS already tracks this relationship via the standard OFBiz field `ReturnItemResponse.replacementOrderId` (extended with `returnId` in `HwmappsEntitymodel.xml`), populated today by the Shopify exchange flow (`shopify-oms-bridge`). This is not a new mechanism invented for D365 — `mantle-netsuite-connector/service/co/hotwax/netsuite/OrderServices.xml` already queries this exact field (`replacementOrderId = order.orderId`) to resolve an exchange order's originating return for NetSuite export, so D365 would be reusing an established, already-proven-elsewhere linkage rather than adding a new one.
 
-> [!WARNING]
-> **Open item to confirm before implementation:** `ReturnItemResponse.replacementOrderId` is currently only *populated* by the Shopify-triggered exchange flow. If exchanges can also originate through a different path (e.g. a POS/in-store RMA flow that doesn't go through Shopify), this field may not always be set, and a broader population mechanism would be needed before the D365 settlement service could rely on it universally.
+> [!NOTE]
+> **Confirmed:** `ReturnItemResponse.replacementOrderId` is currently populated only by the Shopify-triggered exchange flow — but Shopify is the only exchange-creation channel in scope for this integration today, so this is not a gap. If a non-Shopify exchange-creation path is added later (e.g. a POS/in-store RMA flow), this field's population would need to be revisited at that time.
+
+> [!CAUTION]
+> **Naming caveat, accepted for now:** `CustomerRequisitionNumber` / `PurchOrderFormNum` is semantically a "customer's purchase order number" field — repurposing it to carry a D365 SalesId (return order number) is a field-reuse decision made because it's the one standard, freely-settable field proven to survive header → invoice (see verification below), not because it's the "correct" field for this purpose. This mirrors the same reuse tradeoff already accepted for `OrderPaymentPreference.finAccountId` in the refund payment journal design (Section 5.5). Flagged here so this reuse is revisited if D365 ever exposes a more purpose-built cross-reference field (see also TODO #20 in Section 6, "Common Shopify Order Id" — a more semantically correct long-term alternative).
 
 ##### 6.4.2 Matching Strategy — Four Lookups Per Return
 
@@ -859,12 +862,22 @@ This single method covers all six rows of the "Per-Scenario Settlement Logic" ta
 
 Proposed as a **periodic batch**, consistent with every existing D365-side job in this integration (`HotWaxAutoPostSettlementService`, `HotWaxAutoPostArrivalJournalService`) — no new D365-to-OMS or OMS-to-D365 callback path is required, and the service can run entirely self-contained inside D365 the same way settlement already does for sales orders. Event-driven triggering (e.g. firing immediately after the exchange invoice posts) would reduce settlement lag but requires a new integration point that doesn't exist today; it's an additive change that can be layered on later without reworking the matching logic above, since the logic itself doesn't depend on how it's invoked.
 
-##### 6.4.4 Pre-Implementation Verification
+##### 6.4.4 Pre-Implementation Verification ✅ Completed
 
-Two checks recommended before writing the X++, both low-risk since they build on fields/mechanisms already proven elsewhere in this integration:
+Two checks were identified before writing the X++, both now verified:
 
-1. Confirm `PurchOrderFormNum` is queryable on `CustInvoiceJour`/`CustTrans` after invoicing in the target D365 environment, the same way `SalesId` already is in `HotWaxAutoPostSettlementService`'s joins.
-2. Confirm whether `ReturnItemResponse.replacementOrderId` is populated for every exchange-order-creation path relevant to this integration, or only the Shopify-triggered one (see the warning in Section 6.4.1).
+1. **`PurchOrderFormNum` survives header → invoice on `CustInvoiceJour`.** Verified directly against a real D365 dev-instance record rather than assumed from field documentation alone.
+
+   **Why this needed checking:** `HotWaxAutoPostSettlementService` already proves `SalesId` survives the same header → invoice hop (it joins on `custInvoiceJour.SalesId` today), but that says nothing about whether `PurchOrderFormNum` — a different field — is carried through the same way. D365's invoice-posting pipeline could in principle copy some header fields onto `CustInvoiceJour` and not others, and the two fields in question sit on different order types in our flow (`SalesId` is read off a return order's invoice; the settlement design needs `PurchOrderFormNum` off a **regular Sales Order's** invoice, since the exchange order is `OrderType = Sales order`, not `Returned order`) — so evidence from one doesn't automatically transfer to the other.
+
+   **How it was verified:** using D365's built-in raw table browser, reachable by appending `?cmp=usmf&mi=SysTableBrowser&tablename=CustInvoiceJour` to the environment URL. This reads the table directly, bypassing whatever limited field set a given form happens to expose (the posted-invoice UI form, by comparison, only surfaced a minimal set of fields and wasn't sufficient on its own).
+
+   **What was found:** Sales Order `001217` (`OrderType = Sales order`) had `CustomerRequisitionNumber = RMA 00085` set on its header. Its posted invoice's `CustInvoiceJour` record, found via `SysTableBrowser`, showed the same value under the `PurchOrderFormNum` column (labeled "Purchase order" in that grid). Confirms the field is safe to join on for Step 3 of Section 6.4.2.
+
+   > [!TIP]
+   > `SysTableBrowser` is the recommended verification method for similar "does this field survive D365's posting pipeline" questions going forward — it's faster and more conclusive than working through UI form field visibility/Personalize settings.
+
+2. **`ReturnItemResponse.replacementOrderId` population coverage** — confirmed Shopify-only, which is sufficient for current scope. See the note in Section 6.4.1.
 
 #### 6.5 Summary Table
 
