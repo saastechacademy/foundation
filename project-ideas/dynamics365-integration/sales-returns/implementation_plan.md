@@ -686,7 +686,7 @@ Paused by default.
 | 15 | Credit note export back to OMS | ⚠️ Not yet implemented — credit note number is not currently exported back to OMS for reconciliation. |
 | 16 | Refund payment journal | ✅ Implemented — `import#RefundPaymentJournalsDataPackage`, journal name `OMSRFND`. See Section 5. |
 | 17 | Refund journal batch scaling | ⚠️ Not yet implemented — every other bulk DMF service in this codebase caps batch size (`.limit(N)`); the refund journal service doesn't yet. A naive limit on the current (return × OPP) denormalized view would risk truncating a return's OPPs mid-group — the correct fix is a two-step query (limit on distinct `returnId`s first, then fetch OPPs for that bounded set). Not urgent at current volume. |
-| 18 | Settlement | ⚠️ Proposed, not implemented — new `HotWaxAutoPostReturnSettlementService` (separate from the sales-order `HotWaxAutoPostSettlementService`), matching credit note/exchange invoice via `SalesId` and payment/refund journals via `PaymReference`. Requires stamping `CustomerRequisitionNumber` on exchange orders (via `sync#SalesOrders`), sourced from `ReturnItemResponse.replacementOrderId`. See Section 6 (Phase 6) below for the full design. |
+| 18 | Settlement | ⚠️ X++ service proposed, not implemented — new `HotWaxAutoPostReturnSettlementService` (separate from the sales-order `HotWaxAutoPostSettlementService`), matching credit note/exchange invoice via `SalesId` and payment/refund journals via `PaymReference`. ✅ Prerequisite done: `CustomerRequisitionNumber`/`CUSTOMERREQUISITIONNUMBER` now stamped on exchange orders in both `sync#SalesOrders` and `import#SalesOrdersDataPackage`, sourced from `ReturnItemResponse.replacementOrderId` → `D365ReturnHeaderHistory.d365ReturnOrderNumber` (feature branch, not yet merged). See Section 6 (Phase 6) below for the full design. |
 | 19 | Custom composite entity (D365) | If high volume requires DMF path for return orders — D365 dev to build `ReturnOrderCompositeV1` entity duplicating the sales order composite pattern. |
 | 20 | Common Shopify Order Id on Return Order / Credit Note / Exchange Order | ⚠️ Not yet implemented — none of these carry a Shopify Order Id field in D365 today. NetSuite sends the Shopify Order Id as a common cross-reference on every related transaction (Sales Order, Customer Deposit, RMA, Credit Memo, Exchange Order); D365 relies instead on OMS-side tracking and repurposed free-text fields (see business_processes.md Section 9). Would also resolve the exchange-order-linkage open question in business_processes.md Section 7.6. See `sales-orders/implementation_plan.md` §"OData TODOs / Gaps" for the Sales Order / Payment side of this same gap. |
 
@@ -812,11 +812,11 @@ Per the earlier decision on this project, the right approach is a **new, separat
 
 A new X++ class, structurally modeled on `HotWaxAutoPostSettlementService` — same `SpecTransExecutionContext` / `SpecTransManager` / `CustTrans::settleTransaction` pattern, same capped-amount logic (`min(remaining, amountToSettle)`) to avoid over-marking when multiple transactions apply to one side.
 
-##### 6.4.1 The Missing Link: How to Find an Exchange Order's Invoice
+##### 6.4.1 The Missing Link: How to Find an Exchange Order's Invoice ✅ Implemented (OMS side)
 
 `PaymReference` (used for step 2/4 below) only exists on payment/refund journal lines — it doesn't help find the **exchange order's invoice** for the "Same Value Exchange" case, where no journal is created at all (see business_processes.md Section 7.3). Something has to carry the return↔exchange relationship onto the exchange order itself.
 
-The proposed fix reuses a pattern **already implemented** in this same codebase for a structurally identical problem — linking a *return* order back to its *original* sales order:
+The fix reuses a pattern **already implemented** in this same codebase for a structurally identical problem — linking a *return* order back to its *original* sales order:
 
 ```xml
 <!-- D365ReturnServices.xml, sync#ReturnOrder — already implemented -->
@@ -824,9 +824,30 @@ CustomersOrderReference: returnId,
 CustomerRequisitionNumber: d365SalesOrderNumber,   ← original order's D365 SalesId, stamped onto the return order
 ```
 
-`CustomerRequisitionNumber` (OData) / `PurchOrderFormNum` (X++, on `SalesTable`) is a standard, freely-settable AR field — not a retail/commerce extension — so it survives through to `CustInvoiceJour`/`CustTrans` after invoicing, the same way `SalesId` does. The proposal is to set it one hop later in the same chain: when OMS syncs the **exchange order** to D365 (`sync#SalesOrders` in `D365OrderServices.xml`), stamp `CustomerRequisitionNumber = d365ReturnOrderNumber` — the linked return's D365 SalesId — mirroring the existing return-order line exactly.
+`CustomerRequisitionNumber` (OData) / `PurchOrderFormNum` (X++, on `SalesTable`) is a standard, freely-settable AR field — not a retail/commerce extension — so it survives through to `CustInvoiceJour`/`CustTrans` after invoicing, the same way `SalesId` does. It's set one hop later in the same chain: when OMS syncs the **exchange order** to D365, stamp `CustomerRequisitionNumber = d365ReturnOrderNumber` — the linked return's D365 SalesId — mirroring the return-order line exactly.
 
-**Where the return↔exchange link comes from on the OMS side:** OMS already tracks this relationship via the standard OFBiz field `ReturnItemResponse.replacementOrderId` (extended with `returnId` in `HwmappsEntitymodel.xml`), populated today by the Shopify exchange flow (`shopify-oms-bridge`). This is not a new mechanism invented for D365 — `mantle-netsuite-connector/service/co/hotwax/netsuite/OrderServices.xml` already queries this exact field (`replacementOrderId = order.orderId`) to resolve an exchange order's originating return for NetSuite export, so D365 would be reusing an established, already-proven-elsewhere linkage rather than adding a new one.
+**Implemented in both sales order sync flows, not just one.** An exchange order is just a regular `OrderHeader` in OMS and a regular Sales Order in D365 — there is no separate "exchange order sync" mechanism, so both existing sales-order sync services in `D365OrderServices.xml` were updated identically:
+
+- `sync#SalesOrders` (OData) — `CustomerRequisitionNumber` added to the `salesOrderHeader` map.
+- `import#SalesOrdersDataPackage` (DMF/composite entity) — `CUSTOMERREQUISITIONNUMBER` added to `headerMap` (all-caps, matching this file's DMF field-naming convention).
+
+Both use the same inline lookup, added once per file directly before the header map is built:
+
+```groovy
+// 1. Is this order an exchange order? (mirrors mantle-netsuite-connector's inline
+//    ReturnItemResponse.replacementOrderId check — no separate service, no eligibility
+//    pre-filter; the lookup simply no-ops for regular sales orders)
+entity-find ReturnItemResponse where replacementOrderId = order.orderId
+// 2. If found, resolve the linked return's D365 order number
+entity-find-one D365ReturnHeaderHistory where returnId = returnItemResponseList[0].returnId
+customerRequisitionNumber = linkedReturnHeaderHistory?.d365ReturnOrderNumber ?: ''
+```
+
+**Where the return↔exchange link comes from on the OMS side:** the standard OFBiz field `ReturnItemResponse.replacementOrderId` (extended with `returnId` in `HwmappsEntitymodel.xml`), populated today by the Shopify exchange flow (`shopify-oms-bridge`). This is not a new mechanism invented for D365 — `mantle-netsuite-connector/service/co/hotwax/netsuite/OrderServices.xml` already queries this exact field (`replacementOrderId = order.orderId`) to resolve an exchange order's originating return for NetSuite export. Reading that service in full also clarified the right shape for the D365-side lookup: NetSuite doesn't use a separate exchange-order sync path or a dedicated eligibility filter — it's a single generic order-sync loop with this lookup embedded inline, running unconditionally for every order and simply finding nothing for regular sales orders. D365's implementation mirrors that shape exactly rather than adding new services or view-entity conditions.
+
+**Where the linked return's D365 order number actually comes from — corrected during implementation.** Initial research assumed this would come from `ReturnIdentification(returnIdentificationTypeId='D365_RTN_ORD_NUM')`, by analogy with `OrderIdentification(D365_SLS_ORD_NUM)`. Direct code inspection showed this was wrong: `D365ReturnServices.xml` only has a `<!-- TODO -->` comment proposing that write — `ReturnIdentification` is never actually populated anywhere in the codebase today. The correct, already-populated source is **`D365ReturnHeaderHistory.d365ReturnOrderNumber`**, written by `sync#ReturnOrder` at the point the return order is created in D365 — a simpler lookup too, since this entity's PK is `returnId` alone (no date-versioning), unlike `ReturnIdentification`.
+
+**Status:** implemented on a feature branch in the `hotwax-d365` repo (`feature/exchange-order-customer-requisition-number`), not yet merged.
 
 > [!NOTE]
 > **Confirmed:** `ReturnItemResponse.replacementOrderId` is currently populated only by the Shopify-triggered exchange flow — but Shopify is the only exchange-creation channel in scope for this integration today, so this is not a gap. If a non-Shopify exchange-creation path is added later (e.g. a POS/in-store RMA flow), this field's population would need to be revisited at that time.
