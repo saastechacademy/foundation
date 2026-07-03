@@ -686,8 +686,9 @@ Paused by default.
 | 15 | Credit note export back to OMS | ⚠️ Not yet implemented — credit note number is not currently exported back to OMS for reconciliation. |
 | 16 | Refund payment journal | ✅ Implemented — `import#RefundPaymentJournalsDataPackage`, journal name `OMSRFND`. See Section 5. |
 | 17 | Refund journal batch scaling | ⚠️ Not yet implemented — every other bulk DMF service in this codebase caps batch size (`.limit(N)`); the refund journal service doesn't yet. A naive limit on the current (return × OPP) denormalized view would risk truncating a return's OPPs mid-group — the correct fix is a two-step query (limit on distinct `returnId`s first, then fetch OPPs for that bounded set). Not urgent at current volume. |
-| 18 | Settlement | Extend `HotWaxAutoPostSettlementService` to settle credit note + refund journal against original invoice. Handle exchange scenarios. |
+| 18 | Settlement | ⚠️ Proposed, not implemented — new `HotWaxAutoPostReturnSettlementService` (separate from the sales-order `HotWaxAutoPostSettlementService`), matching credit note/exchange invoice via `SalesId` and payment/refund journals via `PaymReference`. Requires stamping `CustomerRequisitionNumber` on exchange orders (via `sync#SalesOrders`), sourced from `ReturnItemResponse.replacementOrderId`. See Section 6 (Phase 6) below for the full design. |
 | 19 | Custom composite entity (D365) | If high volume requires DMF path for return orders — D365 dev to build `ReturnOrderCompositeV1` entity duplicating the sales order composite pattern. |
+| 20 | Common Shopify Order Id on Return Order / Credit Note / Exchange Order | ⚠️ Not yet implemented — none of these carry a Shopify Order Id field in D365 today. NetSuite sends the Shopify Order Id as a common cross-reference on every related transaction (Sales Order, Customer Deposit, RMA, Credit Memo, Exchange Order); D365 relies instead on OMS-side tracking and repurposed free-text fields (see business_processes.md Section 9). Would also resolve the exchange-order-linkage open question in business_processes.md Section 7.6. See `sales-orders/implementation_plan.md` §"OData TODOs / Gaps" for the Sales Order / Payment side of this same gap. |
 
 ---
 
@@ -775,14 +776,104 @@ OMS packages returns into a DMF ZIP using the "Item arrival journals V2" composi
 > [!IMPORTANT]
 > The OMSRFND posting batch must run **after** the credit note batch (`SalesFormLetter_Invoice`). The custom `HotWaxAutoPostSettlementService` requires both sides (credit note and refund journal) to be posted before it can settle them. See [D365 setup issue #27](https://github.com/hotwax/dynamics365-integration/issues/27).
 
-### Phase 6: Settlement
+### Phase 6: Settlement (Proposed — Not Yet Implemented)
+
+> [!NOTE]
+> This section documents a **proposed approach**, not a built/verified implementation — unlike Phases 1–5 above. It reflects design research and a matching strategy worked out ahead of implementation. Treat field names and joins here as the intended design, to be confirmed against a real D365 environment before coding (see the verification callout in Section 6.4.4).
+
+#### 6.1 Why OOTB D365 Settlement Won't Work Here
+
+Same fundamental limitation already documented for sales order settlement (see [`sales-orders/invoice_settlement.md`](../sales-orders/invoice_settlement.md) Section 5.1): both OOTB mechanisms — **Automatic settlement** (`AR Parameters > Settlement`) and the **Periodic settlement batch** — operate at the **customer account level using FIFO by due date**. Neither has any concept of "this credit note belongs to return X" or "this invoice is the exchange order for return X."
+
+This is worse for returns than for plain sales orders: a single customer can easily have an open credit note, an open refund journal, and an open exchange invoice all sitting on their account at once. FIFO-by-date settlement would happily net the wrong pair together — for example, applying an unrelated customer's older refund credit against a completely different return's invoice — silently producing correct-looking dollar totals with the wrong underlying transactions closed.
+
+- **Reference:** [Settlement overview](https://learn.microsoft.com/en-us/dynamics365/finance/cash-bank-management/settlement-overview)
+- **Reference:** [Automatic settlement and prioritization](https://learn.microsoft.com/en-us/dynamics365/finance/accounts-receivable/automatic-settlement-prioritization)
+
+#### 6.2 Confirmed: D365 Settlement Is Not Limited to Invoice-Against-Payment
+
+Before designing around it, it's worth being explicit that D365's settlement engine is not restricted to "one invoice + one payment." Microsoft's own documentation describes settlement generically as **"the process of settling an invoice against a payment or credit note,"** and separately documents a **Replacement order / "Apply credit"** flow (Commerce call center) where an even exchange is explicitly settled by **manually settling the credit note against the replacement order's invoice** — invoice-to-invoice, no payment involved at all.
+
+Mechanically this isn't a special case: a credit note is simply a negative-signed Invoice-type `CustTrans` record. The `CustTrans::settleTransaction` API (the same non-obsolete "mark-and-settle" API `HotWaxAutoPostSettlementService` already uses via `SpecTransExecutionContext`/`SpecTransManager`) marks arbitrary `CustTrans` records for settlement regardless of type — invoice, credit note, or payment — and nets them. So "settle a return's credit note against a brand-new exchange order's invoice" requires no new D365-side API or capability; it's the exact same primitive already in use, applied to a different pair of transactions.
+
+- **Reference:** [Settle a partial customer payment that has discounts on credit notes](https://learn.microsoft.com/en-us/dynamics365/finance/accounts-receivable/settle-partial-payment-discounts-credit-notes) — includes a worked "Settle a credit note with an invoice" example
+- **Reference:** [Refund payment processing in call centers — Replacement orders](https://learn.microsoft.com/en-us/dynamics365/commerce/call-center-refund-payments#replacement-orders)
+
+#### 6.3 Why the Existing `HotWaxAutoPostSettlementService` Can't Be Reused As-Is
+
+The sales-order settlement service (Section 5.2 of `sales-orders/invoice_settlement.md`) is hardcoded around assumptions that don't hold for returns:
+
+- It only collects invoices where `custTransInvoice.AmountCur > 0` — a return's credit note is negative and would never be picked up.
+- Its only matching path is `payment.PaymReference == invoice.CustInvoiceJour.SalesId` — there is no path for matching one invoice-type `CustTrans` against another invoice-type `CustTrans` (needed for the exchange scenarios), since `PaymReference` only exists on payment/refund **journal lines**, never on an invoice or credit note itself.
+
+Per the earlier decision on this project, the right approach is a **new, separate service** for return/exchange settlement rather than bolting negative-amount and invoice-to-invoice branches onto the sales-order-specific service.
+
+#### 6.4 Proposed Approach: New `HotWaxAutoPostReturnSettlementService`
+
+A new X++ class, structurally modeled on `HotWaxAutoPostSettlementService` — same `SpecTransExecutionContext` / `SpecTransManager` / `CustTrans::settleTransaction` pattern, same capped-amount logic (`min(remaining, amountToSettle)`) to avoid over-marking when multiple transactions apply to one side.
+
+##### 6.4.1 The Missing Link: How to Find an Exchange Order's Invoice
+
+`PaymReference` (used for step 2/4 below) only exists on payment/refund journal lines — it doesn't help find the **exchange order's invoice** for the "Same Value Exchange" case, where no journal is created at all (see business_processes.md Section 7.3). Something has to carry the return↔exchange relationship onto the exchange order itself.
+
+The proposed fix reuses a pattern **already implemented** in this same codebase for a structurally identical problem — linking a *return* order back to its *original* sales order:
+
+```xml
+<!-- D365ReturnServices.xml, sync#ReturnOrder — already implemented -->
+CustomersOrderReference: returnId,
+CustomerRequisitionNumber: d365SalesOrderNumber,   ← original order's D365 SalesId, stamped onto the return order
+```
+
+`CustomerRequisitionNumber` (OData) / `PurchOrderFormNum` (X++, on `SalesTable`) is a standard, freely-settable AR field — not a retail/commerce extension — so it survives through to `CustInvoiceJour`/`CustTrans` after invoicing, the same way `SalesId` does. The proposal is to set it one hop later in the same chain: when OMS syncs the **exchange order** to D365 (`sync#SalesOrders` in `D365OrderServices.xml`), stamp `CustomerRequisitionNumber = d365ReturnOrderNumber` — the linked return's D365 SalesId — mirroring the existing return-order line exactly.
+
+**Where the return↔exchange link comes from on the OMS side:** OMS already tracks this relationship via the standard OFBiz field `ReturnItemResponse.replacementOrderId` (extended with `returnId` in `HwmappsEntitymodel.xml`), populated today by the Shopify exchange flow (`shopify-oms-bridge`). This is not a new mechanism invented for D365 — `mantle-netsuite-connector/service/co/hotwax/netsuite/OrderServices.xml` already queries this exact field (`replacementOrderId = order.orderId`) to resolve an exchange order's originating return for NetSuite export, so D365 would be reusing an established, already-proven-elsewhere linkage rather than adding a new one.
+
+> [!WARNING]
+> **Open item to confirm before implementation:** `ReturnItemResponse.replacementOrderId` is currently only *populated* by the Shopify-triggered exchange flow. If exchanges can also originate through a different path (e.g. a POS/in-store RMA flow that doesn't go through Shopify), this field may not always be set, and a broader population mechanism would be needed before the D365 settlement service could rely on it universally.
+
+##### 6.4.2 Matching Strategy — Four Lookups Per Return
+
+For each return with an open credit note, the service performs up to four lookups, each keyed off the previous one's D365 SalesId — no date-based or FIFO logic anywhere:
+
+| # | Lookup | Match Key | Covers |
+| :--- | :--- | :--- | :--- |
+| 1 | Open credit note | `CustInvoiceJour.SalesId = <return's D365 order number>`, `AmountCur < 0` | Every scenario — this is the anchor |
+| 2 | Refund payment journal(s) | `PaymReference = SalesId` from step 1 | Pure cash refund **and** the lower-value exchange's leftover cash-back remainder |
+| 3 | Exchange order invoice | `PurchOrderFormNum = SalesId` from step 1, `AmountCur > 0` | Same-value, higher-value, and lower-value exchange (whenever an exchange order exists) |
+| 4 | Difference payment journal | `PaymReference = SalesId` from step 3 (the exchange order's own SalesId) | Higher-value exchange only — the customer's payment for the price difference, using the **existing**, already-implemented sales-order payment journal flow (`OMSPAY`) unmodified |
+
+Whatever isn't found at a given step is simply not marked — no special-casing needed. A pure store-credit return (no refund journal, no exchange order) marks only the credit note, finds no counterpart, and it stays open on the customer account, which is the correct outcome. A lower-value store-credit exchange (step 3 found, no refund at step 2) leaves exactly the remaining difference open, matching business_processes.md Section 7.5's "Store Credit" option.
+
+This single method covers all six rows of the "Per-Scenario Settlement Logic" table in `business_processes.md` Section 7.6:
+
+| Scenario | Transactions Marked | Steps Used |
+| :--- | :--- | :--- |
+| Pure Return — Store Credit | Credit note only (left open) | 1 |
+| Pure Return — Cash Refund | Credit note + Refund journal | 1, 2 |
+| Same Value Exchange | Credit note + Exchange invoice | 1, 3 |
+| Higher Value Exchange | Credit note + Exchange invoice + Difference payment | 1, 3, 4 |
+| Lower Value — Store Credit | Credit note + Exchange invoice (remainder left open) | 1, 3 |
+| Lower Value — Cash Refund | Credit note + Exchange invoice + Refund journal | 1, 2, 3 |
+
+##### 6.4.3 Trigger Mechanism
+
+Proposed as a **periodic batch**, consistent with every existing D365-side job in this integration (`HotWaxAutoPostSettlementService`, `HotWaxAutoPostArrivalJournalService`) — no new D365-to-OMS or OMS-to-D365 callback path is required, and the service can run entirely self-contained inside D365 the same way settlement already does for sales orders. Event-driven triggering (e.g. firing immediately after the exchange invoice posts) would reduce settlement lag but requires a new integration point that doesn't exist today; it's an additive change that can be layered on later without reworking the matching logic above, since the logic itself doesn't depend on how it's invoked.
+
+##### 6.4.4 Pre-Implementation Verification
+
+Two checks recommended before writing the X++, both low-risk since they build on fields/mechanisms already proven elsewhere in this integration:
+
+1. Confirm `PurchOrderFormNum` is queryable on `CustInvoiceJour`/`CustTrans` after invoicing in the target D365 environment, the same way `SalesId` already is in `HotWaxAutoPostSettlementService`'s joins.
+2. Confirm whether `ReturnItemResponse.replacementOrderId` is populated for every exchange-order-creation path relevant to this integration, or only the Shopify-triggered one (see the warning in Section 6.4.1).
+
+#### 6.5 Summary Table
 
 | Scenario | Settlement |
 | :--- | :--- |
 | Simple return + refund | Credit note (`-`) + Refund journal (`+`) ↔ Original invoice (`+`) |
-| Exchange same value | Credit note (`-`) ↔ New invoice (`+`) — no journal needed |
-| Exchange higher value | Credit note + payment journal ↔ New invoice |
-| Exchange lower value (store credit) | Credit note ↔ New invoice; remaining open credit stays on account |
-| Exchange lower value (refund) | Credit note ↔ New invoice + refund journal |
+| Exchange same value | Credit note (`-`) ↔ Exchange invoice (`+`) — no journal needed |
+| Exchange higher value | Credit note + difference payment journal ↔ Exchange invoice |
+| Exchange lower value (store credit) | Credit note ↔ Exchange invoice; remaining open credit stays on account |
+| Exchange lower value (refund) | Credit note ↔ Exchange invoice + refund journal |
 
-**Implementation:** Extend existing `HotWaxAutoPostSettlementService` to handle credit note settlement using `SalesId == PaymReference` matching.
+**Proposed implementation:** New `HotWaxAutoPostReturnSettlementService` (X++), matching via `SalesId` (credit note / exchange invoice) and `PaymReference` (payment/refund journals) as detailed in Section 6.4 above — not an extension of the existing sales-order `HotWaxAutoPostSettlementService`.

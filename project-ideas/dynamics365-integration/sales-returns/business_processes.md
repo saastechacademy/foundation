@@ -403,7 +403,7 @@ The settlement service must match by **order reference, not by date**:
 
 #### Open Questions Before Implementation
 
-- **Exchange order linkage:** How does the settlement service know which exchange order corresponds to a given return? OMS must store the `returnId` → `exchangeOrderId` relationship and ensure `D365_SLS_ORD_NUM` is populated on the exchange order before settlement runs.
+- **Exchange order linkage:** How does the settlement service know which exchange order corresponds to a given return? OMS must store the `returnId` → `exchangeOrderId` relationship and ensure `D365_SLS_ORD_NUM` is populated on the exchange order before settlement runs. A common Shopify Order Id sent to D365 across all transaction types (Sales Order, Customer Deposit, Return Order, Credit Note, Exchange Order) — mirroring the pattern already used in the NetSuite integration for this OMS — would give D365 itself a native cross-reference here instead of relying entirely on OMS-side tracking. See TODO #20 in `implementation_plan.md` Section 6.
 - **Trigger mechanism:** Is the settlement service triggered by an event (e.g. after credit note posting) or run as a periodic batch? Event-driven is preferable to reduce settlement lag but requires an integration point from D365 invoice posting back to the service.
 - **Higher value exchange — payment journal timing:** Who confirms the customer has paid the $50 difference and triggers the OMS payment journal creation? This must be resolved before the Case 2 flow can be implemented end-to-end.
 
