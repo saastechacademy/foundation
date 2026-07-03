@@ -1,18 +1,34 @@
-# reset#InventoryItem Service Specification
+# Inventory Reset Item Specification
 
-**Implemented in Poorti component**
+## Overview
 
-This service computes external vs internal inventory differences and decides whether an inventory reset is required. It is the **primary entry point** for external systems (WMS, ERP, NetSuite, etc.) that want to reconcile inventory with OMS.
+The inventory reset flow is split into:
 
-`reset#InventoryItem` performs **no ledger updates directly**. It computes diffs and, only when necessary, calls `create#ExternalInventoryReset`.
+- `reset#InventoryItem`
+- `create#ExternalInventoryReset`
 
-If no diff is found, it simply returns the computed values. Zero diffs communicate that **no reset action was taken**.
+`reset#InventoryItem` is the shared decision service.
+`create#ExternalInventoryReset` is the persistence service.
 
----
+Custom components should not directly own the reset logic. They should create thin wrapper services for their external file or API shape, and those wrappers should call `reset#InventoryItem`.
 
-## Input
+Example wrapper:
 
-The service accepts raw external inventory data and the identifiers needed to resolve the internal InventoryItem:
+- `process#NetSuiteInventoryReset`
+
+## `reset#InventoryItem`
+
+### Purpose
+
+This service:
+
+- resolves the facility, product, and inventory item
+- reads the current internal ATP and QOH
+- computes the variance against the external quantity
+- decides whether a reset is required
+- calls `create#ExternalInventoryReset` only when the diff is non-zero
+
+### Input
 
 ```json
 {
@@ -21,100 +37,63 @@ The service accepts raw external inventory data and the identifiers needed to re
   "productIdentType": "SKU",
   "productIdentValue": "SKU-001-A",
   "externalQOH": 180,
-  "externalATP": 150,
-  "unitCost": 12.5
+  "externalATP": null,
+  "reason": "VAR_EXT_RESET",
+  "description": "NetSuite"
 }
 ```
 
----
+Rules:
 
-## Workflow
+- exactly one of `externalQOH` or `externalATP` must be passed
+- `reason` defaults to `VAR_EXT_RESET`
+- `description` is optional
 
-### 1. Resolve internal product and inventory context
+### Resolution
 
-Using `(externalFacilityId, productIdentType, productIdentValue)`, the service must:
+The service uses the standard inventory-item resolution flow to:
 
-* Resolve `facilityId`
-* Resolve `productId`
-* Resolve `inventoryItemId` (or create one if the system permits)
-* Retrieve:
+- resolve `facilityId`
+- resolve `productId`
+- resolve or create `inventoryItemId`
+- read:
+  - `inventoryItemQOH`
+  - `inventoryItemATP`
 
-  * `inventoryItemQOH`
-  * `inventoryItemATP`
+### Diff logic
 
-If any of these cannot be resolved, the service should:
-
-* Return the context and values it was able to determine
-* Add a plain-text message (in a `messages` list) describing the issue using Moqui log style:
-
-  `Inventory [Context] - [Outcome]`
-* **Not** call `create#ExternalInventoryReset`
-
-### Resolution Failure Response Format
-
-Example patterns:
-
-* **Unknown externalFacilityId**
-
-  ```json
-  "messages": [
-    "Inventory externalFacilityId=EXTFAC-UNKNOWN SKU=SKU-001-A - Facility resolution failed, no reset performed"
-  ]
-  ```
-
-* **Unknown SKU/Product**
-
-  ```json
-  "messages": [
-    "Inventory FacilityId=FAC1001 SKU=SKU-DOES-NOT-EXIST - Product resolution failed, no reset performed"
-  ]
-  ```
-
-* **No InventoryItem exists**
-
-  ```json
-  "messages": [
-    "Inventory FacilityId=FAC1001 ProductId=PROD56789 - InventoryItem not found, no reset performed"
-  ]
-  ```
-
-### 2. Compute diffs. Compute diffs
+If `externalQOH` is passed:
 
 ```text
 quantityOnHandDiff = externalQOH - inventoryItemQOH
-availableToPromiseDiff = externalATP - inventoryItemATP
+availableToPromiseDiff = quantityOnHandDiff
 ```
 
-### 3. Decide whether a reset is required
+If `externalATP` is passed:
 
-* If **both diffs = 0** → **No reset required**
-* If either diff ≠ 0 → **Reset required**
+```text
+availableToPromiseDiff = externalATP - inventoryItemATP
+quantityOnHandDiff = availableToPromiseDiff
+```
 
-### 4. When a reset is required
+### No-op behavior
 
-Call `create#ExternalInventoryReset` with all contextual fields and the computed diffs.
+If both diffs are zero:
 
-Call `create#ExternalInventoryReset` with all contextual fields and the computed diffs.
+- the service returns the resolved values
+- it does not call `create#ExternalInventoryReset`
+- it does not create any reset records
 
-Capture the returned:
+### Reset behavior
 
-* `resetItemId`
+If either diff is non-zero:
 
-### 5. Ledger posting
+- the service calls `create#ExternalInventoryReset`
+- returns the resolved context and `resetItemId`
 
-`create#ExternalInventoryReset` will:
+### Output
 
-* Create an `ExternalInventoryReset` record
-* Create an `InventoryItemDetail` entry
-* Trigger EECA to update `InventoryItem`
-
-`reset#InventoryItem` does **not** interact with the ledger directly.
-
----
-
-## Output
-
-### Case 1 — Diff found, reset performed
+#### Diff found
 
 ```json
 {
@@ -124,14 +103,14 @@ Capture the returned:
   "inventoryItemQOH": 200,
   "inventoryItemATP": 180,
   "externalQOH": 180,
-  "externalATP": 150,
+  "externalATP": null,
   "quantityOnHandDiff": -20,
-  "availableToPromiseDiff": -30,
+  "availableToPromiseDiff": -20,
   "resetItemId": "EIR123456"
 }
 ```
 
-### Case 2 — No diff found, no reset performed
+#### No diff found
 
 ```json
 {
@@ -141,19 +120,86 @@ Capture the returned:
   "inventoryItemQOH": 180,
   "inventoryItemATP": 150,
   "externalQOH": 180,
-  "externalATP": 150,
+  "externalATP": null,
   "quantityOnHandDiff": 0,
   "availableToPromiseDiff": 0
 }
 ```
 
-The absence of `resetItemId`, combined with zero diffs, implicitly communicates: **no reset performed**.
+## `create#ExternalInventoryReset`
 
----
+### Purpose
+
+This service is the persistence layer.
+
+It:
+
+- validates the reset reason
+- resolves the inventory item if needed
+- recomputes diffs defensively
+- skips persistence if the final diff is zero
+- creates `ExternalInventoryReset`
+- creates `InventoryItemDetail`
+
+### Persisted detail fields
+
+For a non-zero reset, `InventoryItemDetail` includes:
+
+- `inventoryItemId`
+- `quantityOnHandDiff`
+- `availableToPromiseDiff`
+- `accountingQuantityDiff`
+- `reasonEnumId`
+- `description`
+- `resetItemId`
+
+## Wrapper Service Pattern
+
+An external-system-specific wrapper service should:
+
+- adapt incoming attributes to the shared service contract
+- determine the right external identifier value
+- do any external-system-specific row validation
+- call `reset#InventoryItem`
+- return a top-level row error if the shared service returns an error
+
+Example:
+
+- wrapper service: `process#NetSuiteInventoryReset`
+- shared service: `reset#InventoryItem`
+- persistence service: `create#ExternalInventoryReset`
+
+## Sample DataManager Config
+
+```xml
+<co.hotwax.datamanager.DataManagerConfig
+        configId="EXT_INV_RESET"
+        importPath="/home/integration/inventory-reset/csv"
+        importServiceName="co.company.inventory.InventoryServices.process#NetSuiteInventoryReset"
+        description="Import external inventory reset feed"
+        scriptTitle="Import External Inventory Reset"
+        executionModeId="DMC_QUEUE"
+        multiThreading="N"/>
+```
+
+## Sample ServiceJob
+
+```xml
+<moqui.service.job.ServiceJob jobName="import_external_inventory_reset"
+        description="Import external inventory reset feed"
+        serviceName="co.hotwax.util.UtilityServices.get#DataManagerFileFromSftp"
+        cronExpression=""
+        paused="Y">
+    <parameters parameterName="configId" parameterValue="EXT_INV_RESET"/>
+    <parameters parameterName="systemMessageRemoteId" parameterValue=""/>
+    <parameters parameterName="parameters"
+                parameterValue="{&quot;productIdent&quot;:&quot;SKU&quot;,&quot;reason&quot;:&quot;VAR_EXT_RESET&quot;,&quot;description&quot;:&quot;NetSuite&quot;}"/>
+</moqui.service.job.ServiceJob>
+```
 
 ## Design Notes
 
-* This service represents the **decision-making layer** in the inventory reconciliation process.
-* It shields external systems from OMS ledger complexity.
-* It ensures that resets are only applied when meaningful differences exist.
-* Zero diff = no-op = clean, minimal API semantics.
+- `reset#InventoryItem` owns the decision
+- `create#ExternalInventoryReset` owns persistence
+- wrapper services should stay thin
+- zero diff means no-op and no reset record creation
