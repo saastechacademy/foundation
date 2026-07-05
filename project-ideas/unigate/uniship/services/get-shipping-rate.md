@@ -13,7 +13,7 @@ This service **does not** perform the transformation or direct integration with 
 ## Key Responsibilities
 
 * Validate presence of required parameters: `tenantPartyId`, `shippingGatewayConfigId`, `shipFrom`, `shipTo`, `packages`.
-* Ensure that the provided gateway config (`shippingGatewayConfigId`) is authorized for the given tenant (`tenantPartyId`) via a valid `ShippingGatewayAuthConfig`.
+* Ensure that the provided gateway config (`shippingGatewayConfigId`) is authorized for the given tenant (`tenantPartyId`) via a valid `ShippingGatewayAuth` record.
 * Resolve the `ShippingGatewayConfig` entity to find the gateway-specific implementation service name.
 * Pass the full input to the resolved service for carrier-specific rate calculation.
 * Return normalized `rateInfoList` response to the caller.
@@ -50,7 +50,7 @@ The service accepts a deeply nested JSON object containing:
 
 1. **Tenant Validation**
 
-   * Entity: `co.hotwax.uniship.ShippingGatewayAuthConfig`
+   * Entity: `co.hotwax.unigate.ShippingGatewayAuth`
    * Lookup using:
 
      * `tenantId = tenantPartyId`
@@ -59,7 +59,7 @@ The service accepts a deeply nested JSON object containing:
 
 2. **Gateway Resolution**
 
-   * Entity: `co.hotwax.uniship.ShippingGatewayConfig`
+   * Entity: `co.hotwax.unigate.ShippingGatewayConfig`
    * Used to retrieve implementation-specific service name:
 
      * `getRateServiceName` (e.g. co.hotwax.fedex.FedexServices.get#ShippingRate)
@@ -71,7 +71,7 @@ The service accepts a deeply nested JSON object containing:
 ```plaintext
 → Receive request with shipment + tenant/gateway context
 → Validate required fields (tenantPartyId, shippingGatewayConfigId, shipFrom, shipTo, packages)
-→ Lookup auth config (ShippingGatewayAuthConfig)
+→ Lookup auth config (ShippingGatewayAuth)
 → Lookup gateway config (ShippingGatewayConfig)
 → Resolve target service name from getRateServiceName
 → Call gateway-specific implementation with same input
@@ -106,8 +106,8 @@ All gateway-specific services must also implement this interface to ensure input
 
 ## Dependencies
 
-* `co.hotwax.uniship.ShippingGatewayAuthConfig`
-* `co.hotwax.uniship.ShippingGatewayConfig`
+* `co.hotwax.unigate.ShippingGatewayAuth`
+* `co.hotwax.unigate.ShippingGatewayConfig`
 * All gateway-specific services returned by `getRateServiceName`
 
 ---
@@ -115,7 +115,7 @@ All gateway-specific services must also implement this interface to ensure input
 ## Error Conditions
 
 * ❌ Missing `tenantPartyId` or `shippingGatewayConfigId`
-* ❌ No `ShippingGatewayAuthConfig` found for tenant
+* ❌ No `ShippingGatewayAuth` found for tenant
 * ❌ No `ShippingGatewayConfig` found for config ID
 * ❌ Downstream service error (propagated from implementation)
 
@@ -223,19 +223,18 @@ All gateway-specific services must also implement this interface to ensure input
         </out-parameters>
 
         <actions>
-            <entity-find entity-name="co.hotwax.uniship.ShippingGatewayAuthConfig" value-field="authConfig">
-                <econdition field="tenantId" from="tenantPartyId"/>
-                <econdition field="shippingGatewayConfigId" from="shippingGatewayConfigId"/>
-                <order-by field="fromDate"/>
+            <entity-find entity-name="co.hotwax.unigate.ShippingGatewayAuth" list="authConfigs" limit="1">
+                <econdition field-name="tenantPartyId"/>
+                <econdition field-name="shippingGatewayConfigId"/>
             </entity-find>
 
             <if condition="!authConfig">
                 <return error="true" message="Unauthorized: No auth configuration found for tenant and gateway config."/>
             </if>
 
-            <entity-find entity-name="co.hotwax.uniship.ShippingGatewayConfig" value-field="shippingGatewayConfig">
-                <econdition field="shippingGatewayConfigId" from="shippingGatewayConfigId"/>
-            </entity-find>
+            <entity-find-one entity-name="co.hotwax.unigate.ShippingGatewayConfig" value-field="shippingGatewayConfig">
+                <field-map field-name="shippingGatewayConfigId"/>
+            </entity-find-one>
 
             <if condition="!shippingGatewayConfig">
                 <return error="true" message="Shipping Gateway configuration not found."/>
