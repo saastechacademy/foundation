@@ -13,47 +13,25 @@ Callers never deal with provider-specific APIs, authentication schemes, or paylo
 
 Unigate is structured in five distinct layers, each with a single responsibility:
 
-```
-┌─────────────────────────────────────────────────────┐
-│  Client (OMS or other internal system)              │
-└─────────────────────────────────────────────────────┘
-            │  REST POST  +  api_key / tenant_Id headers
-            ▼
-┌─────────────────────────────────────────────────────┐
-│  1. Authentication  —  TenantAuthFilter             │
-│     Servlet filter; validates hashed API key        │
-│     against UserLoginKeyAndParty view entity        │
-└─────────────────────────────────────────────────────┘
-            │  sets tenantPartyId request attribute
-            ▼
-┌─────────────────────────────────────────────────────┐
-│  2. Routing  —  CommunicationServices / ShippingServices │
-│     Reads CommGatewayAuth or ShippingGatewayAuth    │
-│     Looks up gateway config → finds service name   │
-│     Delegates to the correct implementation         │
-└─────────────────────────────────────────────────────┘
-            │  dynamic service-call
-            ▼
-┌─────────────────────────────────────────────────────┐
-│  3. Gateway Config  —  CommGatewayConfig / ShippingGatewayConfig │
-│     Database-driven strategy pattern                │
-│     Maps abstract operations to concrete services  │
-└─────────────────────────────────────────────────────┘
-            │
-            ▼
-┌─────────────────────────────────────────────────────┐
-│  4. External Services                               │
-│     MayurServices · FedExServices · PurolatorServices │
-│     CanadaPostServices · ShiphawkServices           │
-│     C807Services · DrivInServices                   │
-│     Calls the external API and normalizes the result│
-└─────────────────────────────────────────────────────┘
-            │  uses
-            ▼
-┌─────────────────────────────────────────────────────┐
-│  5. Helpers  —  ShippingHelper                      │
-│     HTTP client abstraction                         │
-└─────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    Client["Client (OMS or other internal system)"]
+    
+    Auth["1. Authentication — TenantAuthFilter\nServlet filter; validates hashed API key against view entity"]
+    
+    Router["2. Routing — Communication/ShippingServices\nReads gateway auth & config → finds service name → delegates"]
+    
+    Config["3. Gateway Config — Comm/ShippingGatewayConfig\nDatabase-driven strategy pattern mapping abstract to concrete"]
+    
+    Ext["4. External Services\nMayur, FedEx, Purolator, CanadaPost, Shiphawk, C807, DrivIn\nCalls the external API and normalizes the result"]
+    
+    Helper["5. Helpers — ShippingHelper\nHTTP client abstraction"]
+
+    Client -- "REST POST + api_key / tenant_Id" --> Auth
+    Auth -- "sets tenantPartyId" --> Router
+    Router -- "dynamic service-call" --> Config
+    Config --> Ext
+    Ext -- "uses" --> Helper
 ```
 
 ---
