@@ -94,4 +94,4 @@ Routes to `CommunicationServices.create#EmailFlow`, which delegates to `createFl
 - [create#EmailFlow](./services/create-email-flow.md) — automated flow provisioning design
 - [get#EmailFlow](./services/get-email-flow.md) — flow status retrieval design
 - [Tenant Onboarding](../tenant-onboarding.md) — provisioning a tenant with email access
-- [TenantAuthFilter](../TenantAuthFilter.md) — request authentication
+- [TenantAuthFilter](../tenant-auth-filter.md) — request authentication

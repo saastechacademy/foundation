@@ -83,7 +83,7 @@ The cache is global (shared across requests). The token is only fetched when the
 
 See the [Entity Model documentation](../entity/entity-model.md) for full configuration details regarding `ShippingGatewayConfig` and `ShippingGatewayAuth`.
 
-For the multi-facility / multi-account credential pattern (one tenant, many carrier accounts), see [Carrier Account Management](./CarrierAccountManagement.md).
+For the multi-facility / multi-account credential pattern (one tenant, many carrier accounts), see [Carrier Account Management](./carrier-account-management.md).
 
 ---
 
