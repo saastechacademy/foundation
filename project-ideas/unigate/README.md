@@ -9,33 +9,6 @@ Callers never deal with provider-specific APIs, authentication schemes, or paylo
 
 ---
 
-## How It Works
-
-Unigate is structured in five distinct layers, each with a single responsibility:
-
-```mermaid
-flowchart TD
-    Client["Client (OMS or other internal system)"]
-    
-    Auth["1. Authentication — TenantAuthFilter\nServlet filter; validates hashed API key against view entity"]
-    
-    Router["2. Routing — Communication/ShippingServices\nReads gateway auth & config → finds service name → delegates"]
-    
-    Config["3. Gateway Config — Comm/ShippingGatewayConfig\nDatabase-driven strategy pattern mapping abstract to concrete"]
-    
-    Ext["4. External Services\nMayur, FedEx, Purolator, CanadaPost, Shiphawk, C807, DrivIn\nCalls the external API and normalizes the result"]
-    
-    Helper["5. Helpers — ShippingHelper\nHTTP client abstraction"]
-
-    Client -- "REST POST + api_key / tenant_Id" --> Auth
-    Auth -- "sets tenantPartyId" --> Router
-    Router -- "dynamic service-call" --> Config
-    Config --> Ext
-    Ext -- "uses" --> Helper
-```
-
----
-
 ## Architecture
 
 ```mermaid
