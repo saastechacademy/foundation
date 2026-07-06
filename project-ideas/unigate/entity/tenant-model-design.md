@@ -1,8 +1,8 @@
-# Tenant Model Design — Unigate Integration Gateway Microservice
+# Tenant Model Design — Unigate Integration Gateway
 
 ## Overview
 
-This document outlines the entity design and onboarding flow for a **multi-tenant shipping gateway microservice** built using the **Moqui Framework**. The system enables tenants (retailers) to interact with remote shipping carriers (e.g., Shippo, FedEx, ShipHawk) via a uniform API interface provided by Unigate.
+This document describes the entity design and onboarding flow for Unigate's multi-tenant integration platform. The system enables tenants (retailers / OMS instances) to interact with shipping carriers and communication providers via a uniform API, with all tenant-specific credentials stored and isolated per `tenantPartyId`.
 
 ---
 
@@ -25,22 +25,27 @@ Entity
 
 ## Tenant Onboarding Flow
 
-### Step 1: Retailer Signs Up (via `create#UnigateTenant` service)
+### Step 1: Tenant Provisioning (via `create#UnigateTenant` service)
 
-* Creates a Party of type `PtyOrganization`.
-* Returns `tenantPartyId`.
+* Calls `co.hotwax.unigate.UnigateTenantServices.create#UnigateTenant`.
+* Creates a `Party` of type `PtyOrganization` in the `co.hotwax.unigate` package.
+* Creates an associated `UserAccount` (userId = partyId) and adds to the `UNIGATE_API` user group.
+* Returns `partyId` as the permanent tenant identifier.
 
-### Step 2: Admin Configures Shipping Credentials
+### Step 2: Configure Gateway Credentials
 
-* Tenant admin selects from a predefined list of available shipping gateways (configured by the platform admin in `ShippingGatewayConfig`) and creates one or more mapping records in `ShippingGatewayAuth` scoped to `tenantPartyId`, alongside their credentials provisioned.
+* Tenant admin selects from available shipping or communication gateways (configured by the platform admin in `ShippingGatewayConfig` or `CommGatewayConfig`).
+* Creates one or more `ShippingGatewayAuth` or `CommGatewayAuth` records scoped to `tenantPartyId`, with their carrier API credentials.
+* The returned auth ID is passed in every subsequent API call.
 
 ---
 
 ## 🧩 Operational Logic
 
-| Concern                                     | Resolution                                                                                                          |
+| Concern | Resolution |
 | ------------------------------------------- |---------------------------------------------------------------------------------------------------------------------|
-| Retailer signs up with FedEx                | Use `create#UnigateTenant`, then `POST /rest/s1/unigate/shippingGatewayAuth`  `create#ShippingGatewayAuth` |
+| Retailer signs up with FedEx | Use `create#UnigateTenant`, then create `ShippingGatewayAuth` with `shippingGatewayConfigId=FEDEX_CONFIG` |
+| Retailer signs up with Klaviyo | Use `create#UnigateTenant`, then create `CommGatewayAuth` with `commGatewayConfigId=KLAVIYO` |
 
 ---
 

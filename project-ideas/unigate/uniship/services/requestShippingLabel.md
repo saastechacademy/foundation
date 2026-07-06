@@ -130,10 +130,7 @@ This document outlines the architecture and control flow for handling `requestSh
 Parse JWT (tenant + config)
        │
        ▼
-Fetch ShippingGatewayConfig (requestLabelsServiceName)
-       │
-       ▼
-Fetch SystemMessageRemote + Options
+Fetch ShippingGatewayAuth (tenant credentials + baseUrl)
        │
        ▼
 +----------------------------+
@@ -253,6 +250,6 @@ Return label + tracking info to OMS
 ### ✅ Key Considerations
 - Each gateway has its own label schema and response structure.
 - Transformation logic must be implemented per gateway to adapt input and output.
-- Authentication tokens and environment URLs are stored in `SystemMessageRemote`.
+- Authentication tokens and environment URLs are stored in `ShippingGatewayAuth` per tenant.
 - Adding a new carrier only requires new transform + gateway service definitions.
 
