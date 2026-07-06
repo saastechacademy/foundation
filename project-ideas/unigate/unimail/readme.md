@@ -50,43 +50,12 @@ UniMail uses the shared Unigate tenant identity entities (`Party`, `Organization
 
 ### `CommGatewayConfig`
 
-Defines which services handle each abstract operation for a given provider. One record per provider, shared across all tenants.
-
-```xml
-<entity entity-name="CommGatewayConfig" package="co.hotwax.unigate" use="configuration" cache="true">
-    <field name="commGatewayConfigId" type="id" is-pk="true"/>
-    <field name="description" type="text-medium"/>
-    <field name="sendEmailServiceName" type="text-medium"/>
-    <field name="createEventServiceName" type="text-medium"/>
-    <field name="createFlowServiceName" type="text-medium"/>
-    <field name="getFlowServiceName" type="text-medium"/>
-</entity>
-```
-
-Example record for Klaviyo:
-```json
-{
-    "createEventServiceName": "co.hotwax.communication.klaviyo.KlaviyoServices.create#WorkflowEvent",
-    "createFlowServiceName": "co.hotwax.communication.klaviyo.KlaviyoServices.create#KlaviyoEmailFlow",
-    "lastUpdatedStamp": "2026-06-30T05:31:05+0000",
-    "getFlowServiceName": "co.hotwax.communication.klaviyo.KlaviyoServices.get#KlaviyoEmailFlow",
-    "description": "Klaviyo gateway",
-    "commGatewayConfigId": "KLAVIYO",
-    "sendEmailServiceName": "co.hotwax.communication.klaviyo.KlaviyoServices.send#EmailCommunication",
-    "_entity": "co.hotwax.unigate.CommGatewayConfig"
-}
-```
+Defines which services handle each abstract operation for a given provider. One record per provider, shared across all tenants. See the [Entity Model documentation](../entity/entity-model.md) for full configuration details.
 
 ### `CommGatewayAuth`
 
 Per-tenant credential and endpoint data for a specific provider. One record per tenant+provider combination.
-
-See [CommGatewayAuth entity doc](../entity/CommGatewayAuth.md) for the full field list, encryption details, and setup workflow.
-
-Key fields for routing:
-- `commGatewayConfigId` → which provider
-- `baseUrl` → provider base URL
-- `authHeaderName` + `apiKey` → how to authenticate (varies by `authTypeEnumId`)
+See the [CommGatewayAuth entity doc](../entity/comm-gateway-auth.md) for the full field list, encryption details, and setup workflow.
 
 ---
 
@@ -98,53 +67,7 @@ Routes to `CommunicationServices.send#EmailCommunication`, which delegates to th
 
 **Required headers:** `api_key`, `tenant_Id`
 
-**Request:**
-```json
-{
-  "commGatewayAuthId": "MAYUR_ACME_PROD",
-  "emailType": "ORDER_COMPLETION",
-  "subject": "Your order is confirmed",
-  "emailAddress": "customer@example.com",
-  "messageData": {
-    "orderId": "ORD123",
-    "orderName": "ORD-2025-001",
-    "orderDate": "2025-01-15",
-    "firstName": "Jane",
-    "lastName": "Smith",
-    "grandTotal": 99.99,
-    "items": [
-      {
-        "productId": "PROD001",
-        "productName": "Widget",
-        "quantity": 2,
-        "unitPrice": 49.99,
-        "color": "Red",
-        "size": "M"
-      }
-    ],
-    "shippingAddress": {
-      "toName": "Jane Smith",
-      "address1": "123 Main St",
-      "city": "New York",
-      "stateProvinceGeoId": "NY",
-      "postalCode": "10001",
-      "countryGeoId": "USA",
-      "phoneNumber": "2125551234"
-    }
-  }
-}
-```
-
-**Response (Mayur):**
-```json
-{
-  "response": {
-    "statusCode": 200,
-    "message": "Email sent successfully"
-  },
-  "requestBody": { ... }
-}
-```
+See the [send#EmailCommunication](./services/send-email-communication.md) service documentation for detailed request and response payload schemas.
 
 **Error responses:**
 
@@ -160,34 +83,6 @@ Routes to `CommunicationServices.send#EmailCommunication`, which delegates to th
 ### `POST /email/flow` — Create an Email Flow
 
 Routes to `CommunicationServices.create#EmailFlow`, which delegates to `createFlowServiceName`. See the [services directory](./services/) for detailed explanations of all email APIs.
-
-**Request:**
-```json
-{
-  "commGatewayAuthId": "KLAVIYO_ACME_PROD",
-  "emailType": "ORDER_CANCELLATION",
-  "subject": "ORDER_CANCELLATION",
-  "fromAddress": "no-reply@example.com"
-}
-```
----
-
-## Mayur Implementation Details
-
-Mayur is the only currently implemented email provider. The service lives in `service/co/hotwax/communication/mayur/MayurServices.xml`.
-
-**`send#EmailCommunication` flow:**
-1. Loads `CommGatewayAuth` by `commGatewayAuthId`
-2. Loads FreeMarker template: `component://unigate/template/mayur/SendBOPISEmailTemplate.ftl`
-3. Renders template with `messageData` context to generate a JSON request body
-4. Looks up the `emailType` enumeration to resolve the endpoint path (via `relatedEnumId`)
-5. Calls `MayurServices.send#MayurRequest` with the endpoint and body
-
-**`send#MayurRequest`** is the generic HTTP handler:
-- Constructs `baseUrl + endPoint` (handles trailing slashes)
-- Uses Moqui's `RestClient` with `timeoutRetry(true)` and `retry(2, 4)` for resilience
-- Returns raw `statusCode` and response text to the caller
-- Auth: `commGatewayAuth.publicKey` used as the bearer/header value
 
 ---
 
