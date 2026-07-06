@@ -42,11 +42,11 @@ Unigate is structured in five distinct layers, each with a single responsibility
             │
             ▼
 ┌─────────────────────────────────────────────────────┐
-│  4. Carrier Integrations                            │
+│  4. External Services                               │
 │     MayurServices · FedExServices · PurolatorServices │
 │     CanadaPostServices · ShiphawkServices           │
 │     C807Services · DrivInServices                   │
-│     Each calls its carrier API and normalizes result│
+│     Calls the external API and normalizes the result│
 └─────────────────────────────────────────────────────┘
             │  uses
             ▼
@@ -61,78 +61,58 @@ Unigate is structured in five distinct layers, each with a single responsibility
 ## Architecture
 
 ```mermaid
-graph TB
-    Client["Client Application"]
+graph LR
+    %% Actors
+    Client["Client / OMS\n(Maarg)"]
 
-    subgraph "Unigate"
-        Filter["TenantAuthFilter\n(Servlet Filter)"]
-
-        subgraph "Routing Layer"
-            CommSvc["CommunicationServices"]
-            ShipSvc["ShippingServices"]
-        end
-
-        subgraph "UniMail Carriers"
-            Mayur["MayurServices"]
-            Klaviyo["KlaviyoServices\n(config only — not yet implemented)"]
-        end
-
-        subgraph "UniShip Carriers"
-            FedEx["FedExServices"]
-            Purolator["PurolatorServices"]
-            CanadaPost["CanadaPostServices"]
-            Shiphawk["ShiphawkServices"]
-            C807["C807Services"]
-            DrivIn["DrivInServices"]
-        end
-
-        Helper["ShippingHelper\n(HTTP)"]
-
-        subgraph "Data"
-            Entities["Party · CommGatewayAuth\nShippingGatewayAuth · Config entities"]
-        end
+    %% External APIs
+    subgraph External["External Provider APIs"]
+        MailAPI["Email APIs\n(Klaviyo, Mayur, etc.)"]
+        ShipAPI["Shipping APIs\n(FedEx, Purolator, etc.)"]
     end
 
-    subgraph "External APIs"
-        MayurAPI["Mayur API"]
-        FedExAPI["FedEx API"]
-        PurolatorAPI["Purolator SOAP"]
-        CPAPI["Canada Post XML"]
-        ShiphawkAPI["ShipHawk REST"]
-        C807API["C807 REST"]
-        DrivInAPI["DrivIn REST"]
+    %% Unigate Core
+    subgraph Unigate["Unigate Platform (Moqui)"]
+        
+        %% Security Layer
+        Filter["TenantAuthFilter\n(API Key Validation)"]
+        
+        %% Routing Layer
+        subgraph Router["Routing Layer"]
+            CommRouter["CommunicationServices"]
+            ShipRouter["ShippingServices"]
+        end
+
+        %% Database Layer
+        subgraph DB["Database Configuration"]
+            AuthDB[("Gateway Auth\n(Tenant Credentials)")]
+            ConfigDB[("Gateway Config\n(Service Mapping)")]
+        end
+
+        %% Implementation Layer
+        subgraph Impl["Provider Implementations"]
+            MailImpl["Communication Services\n(e.g., KlaviyoServices)"]
+            ShipImpl["Shipping Services\n(e.g., FedExServices)"]
+        end
+        
     end
 
-    Client -->|"api_key + tenant_Id"| Filter
-    Filter --> CommSvc
-    Filter --> ShipSvc
+    %% Flow
+    Client -- "POST /email/*\nPOST /shipment/*" --> Filter
+    
+    Filter -- "tenant_Id" --> CommRouter
+    Filter -- "tenant_Id" --> ShipRouter
 
-    CommSvc --> Mayur
-    CommSvc --> Klaviyo
-    CommSvc --> Entities
+    CommRouter -. "Look up provider" .-> AuthDB
+    CommRouter -. "Resolve service" .-> ConfigDB
+    CommRouter -- "Dynamic Call" --> MailImpl
 
-    ShipSvc --> FedEx
-    ShipSvc --> Purolator
-    ShipSvc --> CanadaPost
-    ShipSvc --> Shiphawk
-    ShipSvc --> C807
-    ShipSvc --> DrivIn
-    ShipSvc --> Entities
+    ShipRouter -. "Look up provider" .-> AuthDB
+    ShipRouter -. "Resolve service" .-> ConfigDB
+    ShipRouter -- "Dynamic Call" --> ShipImpl
 
-    FedEx --> Helper
-    Purolator --> Helper
-    CanadaPost --> Helper
-    Shiphawk --> Helper
-    C807 --> Helper
-    DrivIn --> Helper
-
-    Mayur --> MayurAPI
-    FedEx --> FedExAPI
-    Purolator --> PurolatorAPI
-    CanadaPost --> CPAPI
-    Shiphawk --> ShiphawkAPI
-    C807 --> C807API
-    DrivIn --> DrivInAPI
+    MailImpl -- "HTTP Request" --> MailAPI
+    ShipImpl -- "HTTP / SOAP" --> ShipAPI
 ```
 
 ---

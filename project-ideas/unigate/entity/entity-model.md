@@ -128,10 +128,6 @@ This entity is **read-heavy** and cached. Changes require a cache clear.
     <field name="getRateServiceName" type="text-medium"/>
     <field name="requestLabelsServiceName" type="text-medium"/>
     <field name="refundLabelsServiceName" type="text-medium"/>
-    <!-- The following fields exist in the schema but have no current implementation: -->
-    <field name="getOrderRateServiceName" type="text-medium"/>
-    <field name="getShippingRatesBulkName" type="text-medium"/>
-    <field name="getAutoPackageInfoName" type="text-medium"/>
     <field name="trackLabelsServiceName" type="text-medium"/>
     <field name="validateAddressServiceName" type="text-medium"/>
 </entity>
