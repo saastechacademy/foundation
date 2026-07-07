@@ -40,3 +40,7 @@ The goal of this integration is to synchronize critical business data, specifica
     *   Documentation and APIs for polling DMF export packages from D365.
 3.  **[Updating Field Mappings in an Existing Data Project](data-package-api/data_project_field_mapping_update.md)**
     *   Step-by-step procedure for updating a D365 data project when a new field is added to a feed, including the correct Load project → Upload file → Regenerate mapping flow.
+
+### Environment Setup
+1.  **[Granting Dev Access](environment-setup/granting_dev_access.md)**
+    *   Steps to onboard a new developer to the D365 dev environment: Microsoft 365 identity creation, LCS project access, and Azure VM Contributor role assignment.
