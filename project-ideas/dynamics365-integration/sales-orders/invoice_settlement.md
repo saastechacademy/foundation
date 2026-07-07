@@ -356,5 +356,5 @@ These scenarios cover the `HotWaxAutoPostSettlementService` custom X++ settlemen
 
 - [Business Processes](./business_processes.md) — Section 4 (Customer Payment Management) and Section 5 (Fulfillment & Invoicing).
 - [Implementation Plan](./implementation_plan.md) — Customer Payment Integration section and POS Completed Orders Sync section.
-- [D365 Return & Exchange Accounting Model](../sales-returns/d365_return_exchange_accounting_model.md) — Settlement behavior for return credit notes.
+- [D365 Return & Exchange Settlement Integration](../sales-returns/return_invoice_settlement.md) — Settlement behavior for return credit notes.
 - [Connector Foundation](../foundation/connector_foundation.md) — OData client, auth, and request handling shared by the payment sync service.
