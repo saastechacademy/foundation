@@ -29,6 +29,9 @@ Settlement                     ←── credit note netted against whichever of
 
 **Key constraint**: unlike a plain sales order (one invoice, one payment), a single return can have zero, one, or two counterpart transactions depending on the outcome (store credit, cash refund, same-value exchange, higher/lower-value exchange), and a customer can have several of these open simultaneously across different returns.
 
+> [!TIP]
+> Before reading the matching logic below, see [`business_processes.md`](./business_processes.md) Sections 7.2–7.5 for concrete, dollar-amount transaction timelines for each scenario (Pure Return, Same Value Exchange, Higher Value Exchange, Lower Value Exchange) — those walk through exactly what gets posted and what gets settled against what, before this document gets into the technical design.
+
 ---
 
 ## 2. Why OOTB D365 Settlement Is Insufficient

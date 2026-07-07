@@ -377,7 +377,10 @@ Two options for the remaining $30:
 
 ### 7.6 Settlement Service Design Requirements
 
-The custom `HotWaxAutoPostSettlementService` (D365-side X++) is responsible for closing all open return and exchange transactions in the correct order-specific groupings.
+> [!NOTE]
+> **✅ Implemented.** The design requirements below were the starting point for the now-implemented `HotWaxAutoPostReturnSettlementService` — see [`return_invoice_settlement.md`](./return_invoice_settlement.md) for the actual built design, test-data-creation scripts, real build-time technical discoveries, and current verification status (PR [hotwax/dynamics365-integration#36](https://github.com/hotwax/dynamics365-integration/pull/36)).
+
+The custom `HotWaxAutoPostReturnSettlementService` (D365-side X++) is responsible for closing all open return and exchange transactions in the correct order-specific groupings.
 
 #### Why OOTB Settlement Fails
 
@@ -401,11 +404,11 @@ The settlement service must match by **order reference, not by date**:
 | Lower Value — Store Credit | Credit Note `-100` ↔ Exchange Invoice `+70`, leave `-30` open | `returnOrderNumber` → `exchangeOrderNumber` |
 | Lower Value — Cash Refund | Credit Note `-100` ↔ Exchange Invoice `+70` + Refund `+30` | `returnOrderNumber` → `exchangeOrderNumber` |
 
-#### Open Questions Before Implementation
+#### Open Questions — ✅ Resolved
 
-- **Exchange order linkage:** How does the settlement service know which exchange order corresponds to a given return? OMS must store the `returnId` → `exchangeOrderId` relationship and ensure `D365_SLS_ORD_NUM` is populated on the exchange order before settlement runs. A common Shopify Order Id sent to D365 across all transaction types (Sales Order, Customer Deposit, Return Order, Credit Note, Exchange Order) — mirroring the pattern already used in the NetSuite integration for this OMS — would give D365 itself a native cross-reference here instead of relying entirely on OMS-side tracking. See TODO #20 in `implementation_plan.md` Section 6.
-- **Trigger mechanism:** Is the settlement service triggered by an event (e.g. after credit note posting) or run as a periodic batch? Event-driven is preferable to reduce settlement lag but requires an integration point from D365 invoice posting back to the service.
-- **Higher value exchange — payment journal timing:** Who confirms the customer has paid the $50 difference and triggers the OMS payment journal creation? This must be resolved before the Case 2 flow can be implemented end-to-end.
+- **Exchange order linkage:** resolved via `CustomerRequisitionNumber` (OData) / `PurchOrderFormNum` (`SalesTable`) / `PurchaseOrder` (`CustInvoiceJour`, the field name changes after posting) — OMS stamps the linked return's D365 order number onto the exchange order at sync time. A common Shopify Order Id across transaction types (mirroring the NetSuite integration pattern) remains a possible future improvement — see TODO #20 in `implementation_plan.md` Section 6 — but isn't required for the current design.
+- **Trigger mechanism:** resolved as a periodic batch (`HotWax Automated Return & Exchange Settlement`, System Administration → Periodic), consistent with every other D365-side job in this integration. Event-driven triggering remains a possible later improvement, not required today.
+- **Higher value exchange — payment journal timing:** not fully resolved — still no explicit confirmation step tying "customer paid the difference" to payment journal creation timing. In practice, the settlement service's own safeguard (see `return_invoice_settlement.md` Section 4.3) handles this safely regardless: it simply waits and skips a higher-value exchange on any run where the difference payment isn't yet fully present, rather than requiring this question to be answered upstream.
 
 ---
 
