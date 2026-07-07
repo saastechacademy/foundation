@@ -403,7 +403,7 @@ The settlement service must match by **order reference, not by date**:
 
 #### Open Questions Before Implementation
 
-- **Exchange order linkage:** How does the settlement service know which exchange order corresponds to a given return? OMS must store the `returnId` → `exchangeOrderId` relationship and ensure `D365_SLS_ORD_NUM` is populated on the exchange order before settlement runs.
+- **Exchange order linkage:** How does the settlement service know which exchange order corresponds to a given return? OMS must store the `returnId` → `exchangeOrderId` relationship and ensure `D365_SLS_ORD_NUM` is populated on the exchange order before settlement runs. A common Shopify Order Id sent to D365 across all transaction types (Sales Order, Customer Deposit, Return Order, Credit Note, Exchange Order) — mirroring the pattern already used in the NetSuite integration for this OMS — would give D365 itself a native cross-reference here instead of relying entirely on OMS-side tracking. See TODO #20 in `implementation_plan.md` Section 6.
 - **Trigger mechanism:** Is the settlement service triggered by an event (e.g. after credit note posting) or run as a periodic batch? Event-driven is preferable to reduce settlement lag but requires an integration point from D365 invoice posting back to the service.
 - **Higher value exchange — payment journal timing:** Who confirms the customer has paid the $50 difference and triggers the OMS payment journal creation? This must be resolved before the Case 2 flow can be implemented end-to-end.
 
@@ -422,7 +422,42 @@ When creating a return order directly in D365 — useful for manual testing or o
 
 ---
 
-## 9. Future Direction: Event-Driven Lifecycle Orchestration
+## 9. Order-to-Return Reference Linkage — OOTB Limitations and Design Decision
+
+### 9.1 The native D365 mechanism: Find sales order
+
+D365 has a purpose-built way to link a return order line to its originating sales order/invoice line: the **Find sales order** function, used when creating return order lines in the UI (see Section 8).
+
+> The **Find sales order** function establishes a reference from the return line to the invoiced sales order line, and retrieves line details — item number, quantity, price, discount, and cost — from the sales line. The reference guarantees the return is valued at the same cost it was sold at, and validates that the return quantity doesn't exceed what was sold.
+> — [Sales returns (Microsoft Learn)](https://learn.microsoft.com/dynamics365/supply-chain/sales-marketing/sales-returns#create-a-return-order)
+
+This is a **structural, table-level link** (return line → original invoice line), not a text reference. It drives correct cost-price reversal, discount reversal, and prevents over-returning.
+
+For the exchange/replacement scenario specifically, D365 also has native header-level fields designed for this relationship — `ReplacementSalesOrderNumber` and `IsReplacementSalesOrderCreated` on the Return Order Header entity — populated automatically when the "Replace and credit"/"Replace and scrap" disposition auto-creates a replacement order. See [Create an item replacement order (Microsoft Learn)](https://learn.microsoft.com/dynamics365/supply-chain/sales-marketing/create-item-replacement-order).
+
+### 9.2 Why we can't use the native mechanism in this integration
+
+- **Find sales order** is a UI-driven action that copies data from the invoice line record at creation time. It is **not exposed as a settable field** on the `ReturnOrderLinesV2` OData entity — the OMS-driven return creation flow (Section 2.1) cannot invoke it through the standard integration path.
+- `ReplacementSalesOrderNumber` / `IsReplacementSalesOrderCreated` are designed for the case where **D365 auto-creates the replacement order** (via Replace and credit/scrap disposition). As documented in Section 2.3, this integration deliberately uses the **Credit** disposition instead, because the OMS — not D365 — owns exchange order creation. This means these native fields are never populated in our flow by design.
+
+### 9.3 Our approach
+
+Since neither native mechanism is available to an OData-driven, OMS-owns-the-exchange-order integration, we repurpose two generic free-text fields on `ReturnOrderHeadersV2`:
+
+| Field (OData) | Underlying purpose (per Microsoft) | Our usage |
+| :--- | :--- | :--- |
+| `CustomerRequisitionNumber` | Generic "customer's PO number" reference field (same field used on regular sales orders) | Stores the D365 sales order number of the order being returned |
+| `CustomersOrderReference` | Generic free-text customer reference field | Stores the OMS Return ID |
+
+**Important caveat:** these are plain text fields with no validation, indexing, or standard business logic behind them — repurposing them is safe (no conflict with OOTB processes) but is a deliberate deviation from Microsoft's intended usage, not a documented best practice. Reference: [Return order headers entity schema (Microsoft Common Data Model)](https://learn.microsoft.com/common-data-model/schema/core/operationscommon/entities/supplychain/salesandmarketing/returnorderheaderentity).
+
+**Trade-off accepted:** because we don't use Find sales order, our return lines don't carry the automatic cost-price/discount reversal or over-return quantity validation that the native mechanism provides. This should be validated/handled in our own line-creation logic if cost-price accuracy matters for return valuation.
+
+See `implementation_plan.md` Section 3.6 for the concrete field-mapping rows implementing this approach.
+
+---
+
+## 10. Future Direction: Event-Driven Lifecycle Orchestration
 
 The return lifecycle today is implemented as several independent pieces — a DataFeed for return order creation, separate ServiceJob sweeps for arrival journals and refund payment journals. A NetSuite integration built for the same OMS (`gorjana-maarg`) uses a different architecture worth considering here: a single idempotent orchestrator script, triggered by a DataFeed watching *three* entities (`ReturnHeader`, `ShipmentReceipt`, `ReturnItemResponse`) instead of just the return header. Each lifecycle step (RMA, item receipt, credit memo/refund) independently checks its own precondition against current state before acting, so the same script can be safely re-invoked by any of the three triggers — a refund created *after* the return already exists simply causes the next invocation to pick up where the last one left off, rather than requiring the return and its refund to be known at the same time.
 

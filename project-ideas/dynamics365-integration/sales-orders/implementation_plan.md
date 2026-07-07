@@ -295,7 +295,8 @@ This is a fully implemented direct-sync path that creates a sales order header a
 ##### OData TODOs / Gaps
 - Confirm the final D365 `ItemNumber` strategy used for OMS parent product identifiers
 - Add support for additional D365 variant dimension fields beyond the current size/color handling if required
-- Revisit missing header fields such as order date, Shopify order identity, and ship-to phone
+- Revisit missing header fields such as order date and ship-to phone
+- **TODO — Common Shopify Order Id across transaction types:** `CustomersOrderReference` currently carries the OMS internal `orderId`, not the Shopify Order Id (`OrderHeader.externalId`) — these are two different identifiers today. The NetSuite integration for this same OMS sends the Shopify Order Id as a dedicated field (`custbody_hc_shopify_order_id`) on every related transaction — Sales Order, Customer Deposit, RMA, Credit Memo, Exchange Order — giving a single common id to cross-reference all of them. D365 has no equivalent field populated yet. Needs a field decision (new header field on `SalesOrderHeadersV4`, or reuse of an existing free field, TBD) and must be propagated to the corresponding fields on Customer Payment Journal (see `invoice_settlement.md` §9), Return Order/Credit Note/Exchange Order (see `sales-returns/implementation_plan.md` §6, item #20).
 
 ##### OData Limitations
 - **Lack of Transactional Atomicity (Partial Orders):** Because OData requires separate HTTP requests to sync headers and lines (`1 + N` requests), network drops or validation failures midway can result in incomplete "partial orders" in D365 that require manual cleanup or reconciliation.

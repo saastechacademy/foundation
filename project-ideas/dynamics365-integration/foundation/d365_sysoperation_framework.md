@@ -58,6 +58,9 @@ The orchestrator. It extends `SysOperationServiceController` and in its construc
 > [!NOTE]
 > All three operations are accessible from **System Administration → Periodic** in the D365 UI, registered via the `SystemAdministration.HotWaxD365Integration.xml` menu extension.
 
+> [!TIP]
+> In Visual Studio, a plain **Build** only compiles the X++ — it won't make a new menu item show up in the running D365 client. Run **Extensions → D365 → Build Models** to register new AOT elements like menu items into the application.
+
 ---
 
 ## Related Docs

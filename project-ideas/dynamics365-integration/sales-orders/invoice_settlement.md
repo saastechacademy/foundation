@@ -336,6 +336,7 @@ These scenarios cover the `HotWaxAutoPostSettlementService` custom X++ settlemen
 | Run settlement test scenarios #4, #6, #8–#11, #14–#16 | High | See section 8 for full scenario descriptions and current status. |
 | Map `paymentMethodTypeId` to D365 bank account codes | Medium | Currently requires manual mapping. Should be driven by `IntegrationTypeMapping`. |
 | Decide on `SalesTaxGroup` mapping | Medium | Currently sent as empty string. Expected D365 value is something like `AVATAX`. |
+| Send common Shopify Order Id on Customer Payment Journal | Medium | Today the payment journal links to a sales order only via `PaymentReference = d365SalesOrderNumber` — no Shopify Order Id is carried on the journal line. NetSuite sends the Shopify Order Id on every related transaction (Sales Order, Customer Deposit, RMA, Credit Memo, Exchange Order) as a common cross-reference; D365 doesn't yet. See `sales-orders/implementation_plan.md` §"OData TODOs / Gaps". |
 
 ---
 
