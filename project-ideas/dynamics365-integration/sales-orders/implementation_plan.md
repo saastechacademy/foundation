@@ -104,6 +104,13 @@ This sales-order implementation plan focuses on the sales-order-specific service
 | `CustomerGroupId` | `'30'`                    | **TODO**: Needs discussion. Currently hardcoded to `30` as it's not yet mapped in OMS. |
 | `SalesTaxGroup`   | `''` (Empty String)       | **TODO**: Needs mapping. Expected to be something like `AVATAX`. |
 
+### Related Business Risks
+
+The following are business-process-level risks, not field-mapping gaps — full detail lives in `business_processes.md`, not duplicated here:
+
+- **Sales tax group / destination-based tax**: see [business_processes.md §2.6](business_processes.md#26-sales-tax-group-risk-destination-based-tax).
+- **Credit management / credit limit blocking**: see [business_processes.md §2.7](business_processes.md#27-credit-management-interaction).
+- **Customer change-approval workflow**: see [business_processes.md §2.8](business_processes.md#28-customer-change-approval-workflow).
 
 ## Sales Order Flows
 
@@ -224,7 +231,7 @@ This is a fully implemented direct-sync path that creates a sales order header a
 | `CurrencyCode` | `orderDetail.currencyCode` | Defaults to `USD` if missing. |
 | `IsDeliveryAddressOrderSpecific` | Hardcoded `'Yes'` | Uses order-scoped delivery address. |
 | `DeliveryAddressName` | `orderDetail.toName` | Ship-to name. |
-| `DeliveryAddressDescription` | Hardcoded `'OMS Ship To'` | Fixed value. |
+| `DeliveryAddressDescription` | Hardcoded `'OMS Ship To'` | Fixed value. **TODO**: revisit — confirm whether this should remain a fixed literal or be configurable. |
 | `DeliveryAddressStreet` | `address1 + address2` | Concatenated address lines. |
 | `DeliveryAddressCity` | `orderDetail.city` | |
 | `DeliveryAddressStateId` | Normalized `stateProvinceGeoId` | Strips OMS prefixes when present. |
@@ -247,7 +254,7 @@ This is a fully implemented direct-sync path that creates a sales order header a
 | `ProductColorId` | `ProductFeature(COLOR)` | Sent when the OMS item exposes a color feature. |
 | `shipmentMethodTypeId` | `OrderItemShipGroup.shipmentMethodTypeId` | Used to derive the order-level `DeliveryModeCode`. |
 | `ShippingWarehouseId` | `item.shippingWarehouseId` | Populated only when `HcFulfillmentType = WMS`; empty string otherwise. |
-| `HcFulfillmentType` | `D365MappingWorker.getHcFulfillmentType(facilityId)` | Set at order creation time if the fulfillment path is already known: `WMS` (facility in `WH_ONLY_FULFILLMENT`), `OMS` (facility in `OMS_FULFILLMENT`), or omitted if not yet brokered. Will be set later by the brokered/fulfilled item update feeds. |
+| `HcFulfillmentType` | `D365MappingWorker.getHcFulfillmentType(facilityId)` | Set at order creation time if the fulfillment path is already known: `WMS` (facility in `WH_ONLY_FULFILLMENT`), `OMS` (facility in `OMS_FULFILLMENT`), or omitted if not yet brokered. Will be set later by the brokered/fulfilled item update feeds. **Open question**: if a facility is missing from both groups, the field is also omitted — indistinguishable from the "not yet brokered" case. Such a line would be skipped by the packing-slip batch job's `HcFulfillmentType = OMS` filter. Facility-mapping completeness needs to be confirmed, not just brokering timing. |
 
 ##### OData Idempotency and Failure Behavior
 - **Header idempotency key**: `CustomersOrderReference`
@@ -622,7 +629,7 @@ After OMS confirms the remote execution and completes follow-up processing, the 
 | `INVOICECUSTOMERACCOUNTNUMBER` | Resolved D365 customer account | Same as ordering customer account. |
 | `CURRENCYCODE` | `orderDetail.currencyCode` | Defaults to `USD`. |
 | `DELIVERYADDRESSNAME` | `orderDetail.toName` | |
-| `DELIVERYADDRESSDESCRIPTION` | Hardcoded `'OMS Ship To'` | Fixed value. |
+| `DELIVERYADDRESSDESCRIPTION` | Hardcoded `'OMS Ship To'` | Fixed value. **TODO**: revisit — confirm whether this should remain a fixed literal or be configurable. |
 | `DELIVERYADDRESSSTREET` | `address1 + address2` | Concatenated address. |
 | `DELIVERYADDRESSCITY` | `orderDetail.city` | |
 | `DELIVERYADDRESSSTATEID` | Normalized `stateProvinceGeoId` | |
@@ -644,7 +651,7 @@ After OMS confirms the remote execution and completes follow-up processing, the 
 | `PRODUCTCOLORID` | `ProductFeature(COLOR)` | Sent when the OMS item exposes a color feature. |
 | `shipmentMethodTypeId` | `OrderItemShipGroup.shipmentMethodTypeId` | Used to derive the order-level `DELIVERYMODECODE`. |
 | `SHIPPINGWAREHOUSEID` | `shippingWarehouseId` | Populated only when `HCFULFILLMENTTYPE = WMS`; empty string otherwise. |
-| `HCFULFILLMENTTYPE` | `D365MappingWorker.getHcFulfillmentType(facilityId)` | Set at order creation time if the fulfillment path is already known: `WMS` (facility in `WH_ONLY_FULFILLMENT`), `OMS` (facility in `OMS_FULFILLMENT`), or omitted if not yet brokered. Will be set later by the brokered/fulfilled item update feeds. |
+| `HCFULFILLMENTTYPE` | `D365MappingWorker.getHcFulfillmentType(facilityId)` | Set at order creation time if the fulfillment path is already known: `WMS` (facility in `WH_ONLY_FULFILLMENT`), `OMS` (facility in `OMS_FULFILLMENT`), or omitted if not yet brokered. Will be set later by the brokered/fulfilled item update feeds. **Open question**: if a facility is missing from both groups, the field is also omitted — indistinguishable from the "not yet brokered" case. Such a line would be skipped by the packing-slip batch job's `HcFulfillmentType = OMS` filter. Facility-mapping completeness needs to be confirmed, not just brokering timing. |
 
 ###### DMF Shipment Method Handling
 - The eligible-order view also exposes `isMixCartOrder` so order-level delivery mode can be derived consistently.
@@ -673,7 +680,7 @@ After OMS confirms the remote execution and completes follow-up processing, the 
 | XML Attribute | Mapping from OMS | Usage / Notes |
 | :--- | :--- | :--- |
 | `FIXEDCHARGEAMOUNT` | Calculated shipping charge | Defaults to `0` if missing. |
-| `SALESCHARGECODE` | Hardcoded `'FREIGHT'` | Fixed value in current implementation. |
+| `SALESCHARGECODE` | Hardcoded `'FREIGHT'` | Fixed value in current implementation. **TODO**: revisit — confirm this should remain a fixed literal rather than be sourced from configuration; also confirm a `FREIGHT` charges code exists in the target D365 environment (`Accounts receivable > Charges setup > Charges code`). |
 
 ##### DMF Package and Import Details
 - **Generated files**:
@@ -1298,7 +1305,7 @@ Creates journal headers and lines via direct OData REST calls. Supports an optio
 | D365 Field | OMS / Moqui Source | Notes |
 | :--- | :--- | :--- |
 | `dataAreaId` | `ProductStore.externalId` | Legal entity context. |
-| `JournalName` | `"OMSPAY"` | Fixed. |
+| `JournalName` | `"OMSPAY"` | Fixed. **TODO**: revisit — confirm this should remain a fixed literal rather than be sourced from configuration. |
 | `Description` | `"OMS Payment Journal - SO <d365SalesOrderNumber>"` | Idempotency lookup key. |
 
 #### Line (`CustomerPaymentJournalLines`)
@@ -1309,7 +1316,7 @@ Creates journal headers and lines via direct OData REST calls. Supports an optio
 | `JournalBatchNumber` | Returned from header POST | Links line to header. |
 | `AccountType` | `"Cust"` | Fixed. |
 | `AccountDisplayValue` | `"HW\\-" + partyId` | Backslash-escaped to avoid OData filter issues. |
-| `CurrencyCode` | `"USD"` | Currently defaulted. |
+| `CurrencyCode` | `"USD"` | Currently defaulted. **TODO**: revisit alongside the open Sales Currency Code question in `business_processes.md` §8.3 — this hardcode affects payments, not just customer creation. |
 | `CreditAmount` | `OrderPaymentPreference.maxAmount` | Payment amount. |
 | `IsPrepayment` | `"No"` | On-account flow. |
 | `PaymentReference` | `d365SalesOrderNumber` | Settlement anchor. |
@@ -1435,8 +1442,8 @@ The order will be sent to D365 as part of the [Sales Order Sync](#sales-order-sy
 
 ### Implementation Strategy: OOTB vs. Custom Code
 
-- **Automated Packing Slip Posting**: Handled by OOTB D365 batch job (`Sales and marketing > Post packing slip`, filtered by `SalesOrigin = POS`). Validated — see issue [#13](https://github.com/hotwax/dynamics365-integration/issues/13).
-- **Automated Invoice Posting**: Handled by OOTB D365 batch job (`AR > Invoices > Batch invoicing > Invoice`, filtered by `SalesOrigin = POS`). Validated — see issue [#16](https://github.com/hotwax/dynamics365-integration/issues/16).
+- **Automated Packing Slip Posting**: Handled by OOTB D365 batch job (`Sales and marketing > Sales Orders > Order shipping > Post Packing Slip`, filtered by `SalesOrigin = POS`). Validated — see issue [#13](https://github.com/hotwax/dynamics365-integration/issues/13).
+- **Automated Invoice Posting**: Handled by OOTB D365 batch job (`AR > Invoices > Batch invoicing > Invoice`). For now, a single unfiltered job posts invoices for all Delivered orders regardless of sales origin or fulfillment type. Filtering by `SalesOrigin = POS` (issue [#16](https://github.com/hotwax/dynamics365-integration/issues/16)) or `HcFulfillmentType = OMS` (issue [#17](https://github.com/hotwax/dynamics365-integration/issues/17)) is possible if separate jobs are configured later, but that's not the current setup — see [business_processes.md §6.1](./business_processes.md#61-invoice-batch-job).
 - **Payment Journal Posting**: Under evaluation — OOTB AR auto-post may be sufficient; to be confirmed in target environment.
 - **Settlement**: Custom `HotWaxAutoPostSettlementService` implemented in the `dynamics365-integration` repository. OOTB settlement was rejected because it uses customer-level FIFO matching, which cannot honor `PaymentReference = SalesOrderNumber`. See [invoice_settlement.md](./invoice_settlement.md) for full design and test results.
 
