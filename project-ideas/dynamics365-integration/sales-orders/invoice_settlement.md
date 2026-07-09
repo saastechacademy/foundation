@@ -93,10 +93,8 @@ For full implementation details — eligibility view, field mappings for both ap
 
 Invoice posting is triggered inside D365 after the packing slip is posted. This is not directly controlled by OMS.
 
-- **Standard OOTB option**: D365 provides a standard batch job to auto-invoice orders that have been packing-slip updated (under `Accounts receivable > Periodic tasks > Update invoices`).
-- **Custom option**: If OOTB batch is insufficient for target automation requirements, custom X++ `SysOperation` logic can be implemented in the `dynamics365-integration` repository.
-
-**Validation TODO**: Confirm in the target D365 environment whether OOTB batch jobs are sufficient to auto-invoice sales orders created via OMS. This depends on D365 AR configuration and whether orders imported through OData/DMF trigger the standard invoice eligibility filter.
+- **Standard OOTB option (validated)**: D365's standard batch invoicing job (`Accounts receivable > Invoices > Batch invoicing > Invoice`) auto-invoices orders that have reached the packing-slip-updated (`Delivered`) state. Validated in issues [#16](https://github.com/hotwax/dynamics365-integration/issues/16) and [#17](https://github.com/hotwax/dynamics365-integration/issues/17) — confirmed sufficient for sales orders created via OMS (OData/DMF), no custom X++ needed.
+- **Job configuration decision**: Issues #16/#17 originally configured two separately-filtered jobs (`SalesOrigin = POS` and `HcFulfillmentType = OMS`). Per a later decision (see comments on both issues), a single unfiltered job is used for now, since invoicing should run uniformly for all orders regardless of fulfillment origin. See [business_processes.md §6.1](./business_processes.md#61-invoice-batch-job) for current details.
 
 ### 4.2 Multi-Invoice Scenario
 
@@ -186,11 +184,15 @@ When multiple payment journal lines cover a single invoice (e.g. gift card + cre
 | Parameter | Type | Required | Description |
 | :--- | :--- | :--- | :--- |
 | `SalesId` | String | No | Restrict settlement to a specific sales order. Useful for targeted re-runs and debugging. |
-| `TransDate` | Date | No | Only settle invoices with `TransDate ≤ this date`. Omit to process all open invoices (default). Supports period-end scoping. |
+| `FromDate` | Date | No | Only settle invoices with `TransDate >= this date` (invoices **on or after** this date). Omit to process all open invoices (default). Supports period-start scoping. |
+
+**Known Caveat — Exchange Order Exclusion**
+
+`HotWaxAutoPostSettlementService.xml` filters on `custInvoiceJour.PurchaseOrder == ""` to exclude invoices related to exchange orders, avoiding a race condition with the separate `HotWaxAutoPostReturnSettlementService`. This repurposes the standard `PurchaseOrder` field on the invoice as an exclusion flag rather than using a dedicated field. The code comments explicitly flag this as a deliberately deferred design decision, not yet resolved with a cleaner approach.
 
 **D365 Setup**
 
-The service runs as a recurring D365 batch job. Access it from the HotWax custom menu extension → **Auto Post Settlement**. Configure the recurrence interval to match the required settlement frequency.
+The service runs as a recurring D365 batch job. Navigation: `System administration > Periodic` → **HotWax Automated Customer Settlement**. Configure the recurrence interval to match the required settlement frequency.
 
 **Status**: Implemented. Scenarios #1–#3, #5, #7, #12, and #13 verified. See [section 8](#8-settlement-test-scenarios) for full test matrix.
 
@@ -207,7 +209,7 @@ The service runs as a recurring D365 batch job. Access it from the HotWax custom
 POS Completed orders require a tightly automated lifecycle since payment is captured at the point of sale. Steps 1–3 use validated OOTB D365 batch jobs; step 4 uses the custom settlement service.
 
 1. OMS pushes sales order to D365.
-2. D365 auto-posts packing slip — OOTB batch (`Sales and marketing > Order shipping > Post packing slip`, filtered by `SalesOrigin = POS`). Validated in issue [#13](https://github.com/hotwax/dynamics365-integration/issues/13).
+2. D365 auto-posts packing slip — OOTB batch (`Sales and marketing > Sales Orders > Order shipping > Post Packing Slip`, filtered by `SalesOrigin = POS`). Validated in issue [#13](https://github.com/hotwax/dynamics365-integration/issues/13).
 3. D365 auto-posts invoice — OOTB batch (`AR > Invoices > Batch invoicing > Invoice`, filtered by `SalesOrigin = POS`). Validated in issue [#16](https://github.com/hotwax/dynamics365-integration/issues/16).
 4. OMS pushes customer payment journal (OData, unposted draft).
 5. D365 posts the payment journal — OOTB AR auto-post batch. Validated.
@@ -230,7 +232,7 @@ POS Completed orders require a tightly automated lifecycle since payment is capt
 
 | Step | Approach | Notes |
 | :--- | :--- | :--- |
-| Packing slip auto-post | OOTB ✓ | Standard D365 batch (`Sales and marketing > Post packing slip`). Validated — see issues #13, #15. |
+| Packing slip auto-post | OOTB ✓ | Standard D365 batch (`Sales and marketing > Sales Orders > Order shipping > Post Packing Slip`). Validated — see issues #13, #15. |
 | Invoice auto-post | OOTB ✓ | Standard D365 batch (`AR > Invoices > Batch invoicing > Invoice`). Validated — see issues #16, #17. |
 | Payment journal post | OOTB ✓ | Standard D365 AR auto-post batch. Validated. |
 | Settlement | Custom ✓ | OOTB rejected (FIFO by customer, ignores `PaymentReference`). Custom `HotWaxAutoPostSettlementService` implemented — see [section 5.2](#52-custom-settlement-service-hotwaxautopostsettlementservice). |
@@ -337,6 +339,7 @@ These scenarios cover the `HotWaxAutoPostSettlementService` custom X++ settlemen
 | Map `paymentMethodTypeId` to D365 bank account codes | Medium | Currently requires manual mapping. Should be driven by `IntegrationTypeMapping`. |
 | Decide on `SalesTaxGroup` mapping | Medium | Currently sent as empty string. Expected D365 value is something like `AVATAX`. |
 | Send common Shopify Order Id on Customer Payment Journal | Medium | Today the payment journal links to a sales order only via `PaymentReference = d365SalesOrderNumber` — no Shopify Order Id is carried on the journal line. NetSuite sends the Shopify Order Id on every related transaction (Sales Order, Customer Deposit, RMA, Credit Memo, Exchange Order) as a common cross-reference; D365 doesn't yet. See `sales-orders/implementation_plan.md` §"OData TODOs / Gaps". |
+| **Open question**: reconciliation/manual-intervention process for over/underpayment | Medium | Overpayment (scenario #5) and underpayment (scenario #6) are currently only documented as end-states — leftover credit in `CustTransOpen`, or an invoice left partially open — with no documented follow-up workflow (who reconciles it, how, and on what cadence). Needs a decision: is this handled by existing D365 collections/credit processes, or does it need a dedicated OMS/D365 process? |
 
 ---
 
@@ -354,7 +357,7 @@ These scenarios cover the `HotWaxAutoPostSettlementService` custom X++ settlemen
 
 ## 11. Related Docs
 
-- [Business Processes](./business_processes.md) — Section 4 (Customer Payment Management) and Section 5 (Fulfillment & Invoicing).
+- [Business Processes](./business_processes.md) — Section 4 (Customer Payment Management), Section 5 (Fulfillment), and Section 6 (Invoicing).
 - [Implementation Plan](./implementation_plan.md) — Customer Payment Integration section and POS Completed Orders Sync section.
 - [D365 Return & Exchange Settlement Integration](../sales-returns/return_invoice_settlement.md) — Settlement behavior for return credit notes.
 - [Connector Foundation](../foundation/connector_foundation.md) — OData client, auth, and request handling shared by the payment sync service.
