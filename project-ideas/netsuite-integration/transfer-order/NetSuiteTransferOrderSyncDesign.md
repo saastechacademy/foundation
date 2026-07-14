@@ -1,8 +1,8 @@
-# NetSuite Transfer Order Sync Design
+# NetSuite Transfer Order Sync Design (MDM Architecture)
 
 Transfer Orders originate in NetSuite and are synchronized across these components:
 
-1. `mantle-netsuite-connector` handles NetSuite feed import/export and mapping.
+1. `mantle-netsuite-connector` handles NetSuite feed import/export and mapping using Data Manager (MDM).
 2. `oms` creates and approves Transfer Orders.
 3. `poorti` handles Transfer Order fulfillment, shipment creation/update, receiving, and receipt reconciliation.
 4. `netsuite-integration` contains the NetSuite SuiteScript objects, saved searches, CSV imports, and custom fields used by the Transfer Order sync.
@@ -93,16 +93,16 @@ These NetSuite objects support the connector-side jobs documented below.
 
 ### Lifecycle Matrix
 
-| TO Type | Exported From | statusFlowId in OMS | Approved In | Fulfilled In | Shipment Created In | Received In | Inbound NetSuite Feeds | Outbound NetSuite Feeds |
+| TO Type | Exported From | statusFlowId in OMS | Approved In | Fulfilled In | Shipment Created In | Received In | Inbound NetSuite Configurations (MDM) | Outbound NetSuite Feeds (SystemMessage) |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Store to Store | NetSuite | `TO_Fulfill_And_Receive` | OMS | OMS | OMS | OMS | `ImportTransferOrderFeed` | `TransferOrderShipmentFeed`, `TransferOrderShipmentReceiptFeed`, item closure, reconciliation, mis-shipped adjustment |
-| Store to Warehouse | NetSuite | `TO_Fulfill_Only` | OMS | OMS | OMS | Outside OMS | `ImportTransferOrderFeed` | `TransferOrderShipmentFeed` |
-| Warehouse to Store | NetSuite | `TO_Receive_Only` | OMS | NetSuite | OMS from imported fulfillment | OMS | `ImportTransferOrderFeed`, `ImportWhToFulfillmentFeed` | `TransferOrderShipmentReceiptFeed`, item closure, reconciliation, mis-shipped adjustment |
+| Store to Store | NetSuite | `TO_Fulfill_And_Receive` | OMS | OMS | OMS | OMS | `NS_TO_IMPORT` | `TransferOrderShipmentFeed`, `TransferOrderShipmentReceiptFeed`, item closure, reconciliation, mis-shipped adjustment |
+| Store to Warehouse | NetSuite | `TO_Fulfill_Only` | OMS | OMS | OMS | Outside OMS | `NS_TO_IMPORT` | `TransferOrderShipmentFeed` |
+| Warehouse to Store | NetSuite | `TO_Receive_Only` | OMS | NetSuite | OMS from imported fulfillment | OMS | `NS_TO_IMPORT`, `NS_TO_WH_FULFILL` | `TransferOrderShipmentReceiptFeed`, item closure, reconciliation, mis-shipped adjustment |
 
 ### Store to Store
 
 1. NetSuite exports TO.
-2. Connector imports and maps TO feed.
+2. Connector imports and maps TO feed using Data Manager.
 3. OMS creates and approves TO.
 4. OMS fulfills TO in store.
 5. Connector generates shipment feed for NetSuite.
@@ -112,7 +112,7 @@ These NetSuite objects support the connector-side jobs documented below.
 ### Store to Warehouse
 
 1. NetSuite exports TO.
-2. Connector imports and maps TO feed.
+2. Connector imports and maps TO feed using Data Manager.
 3. OMS creates and approves TO.
 4. OMS fulfills TO in store.
 5. Connector generates shipment feed for NetSuite.
@@ -121,10 +121,10 @@ These NetSuite objects support the connector-side jobs documented below.
 ### Warehouse to Store
 
 1. NetSuite exports TO.
-2. Connector imports and maps TO feed.
+2. Connector imports and maps TO feed using Data Manager.
 3. OMS creates and approves TO.
 4. Warehouse fulfills TO in NetSuite.
-5. Connector imports warehouse fulfillment feed.
+5. Connector imports warehouse fulfillment feed using Data Manager.
 6. Poorti creates shipment in OMS in shipped state.
 7. Destination store receives TO in OMS.
 8. Connector generates receipt, closure, mis-shipped, and reconciliation feeds for NetSuite.
@@ -142,10 +142,10 @@ These NetSuite objects support the connector-side jobs documented below.
 All three Transfer Order types are first exported from NetSuite and created in OMS.
 
 Flow:
-1. NetSuite exports Transfer Order feed.
-2. `mantle-netsuite-connector` polls and imports the feed.
-3. `mantle-netsuite-connector` maps the NetSuite payload to OMS Transfer Order payload.
-4. `oms` consumes the mapped feed and creates the Transfer Order.
+1. NetSuite exports Transfer Order feed to SFTP.
+2. `mantle-netsuite-connector` polls and imports the file using `import_NetSuiteTransferOrder` job configured with `NS_TO_IMPORT` MDM configuration.
+3. The NetSuite payload is parsed, normalized, and mapped directly.
+4. `import#TransferOrder` service is invoked to create the Transfer Order in OMS.
 5. `oms` approval jobs move the TO from `ORDER_CREATED` to `ORDER_APPROVED`.
 
 ### 2. Transfer Orders Fulfilled in OMS
@@ -173,32 +173,21 @@ Flow:
 2. OMS approval jobs approve the TO with receive-only lifecycle.
 3. Fulfillment is completed in NetSuite by the warehouse.
 4. NetSuite exports fulfillment feed.
-5. `mantle-netsuite-connector` polls the fulfillment feed and maps it to OMS shipment payload.
+5. `mantle-netsuite-connector` polls the fulfillment feed using `import_NetSuiteWhFulfillment` job configured with `NS_TO_WH_FULFILL` MDM configuration.
 6. `poorti` creates the Transfer Order shipment in OMS, generally in `SHIPMENT_SHIPPED` state for external warehouse fulfillment.
 7. Receiving happens in OMS at the destination store.
 8. After receiving in OMS, `mantle-netsuite-connector` generates receipt-related feeds for NetSuite.
 
 ## A. Transfer Order import from NetSuite to OMS
 
-### System Message Types
+### Data Manager Configurations (MDM)
 
-1. `ImportTransferOrderFeed`
+1. `NS_TO_IMPORT`
    - Component: `mantle-netsuite-connector`
-   - Purpose: poll NetSuite Transfer Order feed from SFTP
-   - `consumeServiceName`: `co.hotwax.system.FeedServices.consume#NetsuiteFeed`
-   - Related type: `GenerateOMSTransferOrderFeed`
-
-2. `GenerateOMSTransferOrderFeed`
-   - Component: `mantle-netsuite-connector`
-   - Purpose: map NetSuite Transfer Orders to OMS Transfer Order payload
-   - `consumeServiceName`: `co.hotwax.system.FeedServices.generate#OMSFeed`
-   - `sendServiceName`: `co.hotwax.netsuite.TransferOrderServices.map#TransferOrder`
-   - Related type: `OMSTransferOrderFeed`
-
-3. `OMSTransferOrderFeed`
-   - Component: `oms`
-   - Purpose: create Transfer Orders in OMS
-   - `sendServiceName`: `co.hotwax.orderledger.order.TransferOrderServices.create#TransferOrder`
+   - Purpose: Direct NetSuite Transfer Order import from SFTP to OMS.
+   - `importServiceName`: `co.hotwax.netsuite.TransferOrderServices.import#TransferOrder`
+   - `importPath`: `/home/${sftpUsername}/netsuite/transferorderv2/import/transfer-order`
+   - `executionModeId`: `DMC_QUEUE`
 
 ### Service Jobs
 
@@ -216,10 +205,9 @@ Flow:
    - Component: `netsuite-integration`
    - Purpose: NetSuite export job for `Warehouse to Store` TOs
 
-4. `poll_SystemMessageFileSftp_TransferOrder`
+4. `import_NetSuiteTransferOrder`
    - Component: `mantle-netsuite-connector`
-   - Purpose: poll imported Transfer Order feed from SFTP
-   - Parameter: `systemMessageTypeId = ImportTransferOrderFeed`
+   - Purpose: Service job running `co.hotwax.util.UtilityServices.get#DataManagerFileFromSftp` to poll and import files using `NS_TO_IMPORT` configuration.
 
 5. `Generate_Transfer_Order_Sync_Ack_Feed`
    - Component: `mantle-netsuite-connector`
@@ -273,18 +261,14 @@ Below feed is generated after OMS-side fulfillment for `Store to Store` and `Sto
 This is the Transfer Order fulfillment flow for store fulfillment feeds exported from NetSuite.
 This is specially to store the External Shipment IDs of NetSuite in OMS.
 
-### System Message Types
+### Data Manager Configurations (MDM)
 
-1. `ImportStoreToFulfillmentFeed`
+1. `NS_TO_STORE_FULFILL`
    - Component: `mantle-netsuite-connector`
-   - Purpose: poll NetSuite store fulfillment feed from SFTP
-   - `consumeServiceName`: `co.hotwax.system.FeedServices.consume#NetsuiteFeed`
-   - Related type: `OMSUpdateTOShipmentFeed`
-
-2. `OMSUpdateTOShipmentFeed`
-   - Component: `poorti`
-   - Purpose: update Transfer Order shipment in OMS
-   - `sendServiceName`: `co.hotwax.poorti.TransferOrderFulfillmentServices.update#TransferOrderShipment`
+   - Purpose: Direct NetSuite Store TO Fulfillment import from SFTP to update shipments in OMS.
+   - `importServiceName`: `co.hotwax.poorti.TransferOrderFulfillmentServices.update#TransferOrderShipment`
+   - `importPath`: `/home/${sftpUsername}/netsuite/transferorderv2/import/fulfillment-store`
+   - `executionModeId`: `DMC_QUEUE`
 
 ### Service Jobs
 
@@ -294,34 +278,22 @@ This is specially to store the External Shipment IDs of NetSuite in OMS.
    - Component: `netsuite-integration`
    - Purpose: NetSuite export job for store fulfillment feed
 
-2. `poll_SystemMessageFileSftp_Store_TO_Fulfillment`
+2. `import_NetSuiteStoreFulfillment`
    - Component: `mantle-netsuite-connector`
-   - Purpose: poll imported store fulfillment feed from SFTP
-   - Parameter: `systemMessageTypeId = ImportStoreToFulfillmentFeed`
+   - Purpose: Service job running `co.hotwax.util.UtilityServices.get#DataManagerFileFromSftp` to poll and import files using `NS_TO_STORE_FULFILL` configuration.
 
 ## E. NetSuite to OMS fulfillment flow for Warehouse Fulfilled TOs
 
 This is the main fulfillment-import flow for `Warehouse to Store` TOs.
 
-### System Message Types
+### Data Manager Configurations (MDM)
 
-1. `ImportWhToFulfillmentFeed`
+1. `NS_TO_WH_FULFILL`
    - Component: `mantle-netsuite-connector`
-   - Purpose: poll NetSuite warehouse fulfillment feed from SFTP
-   - `consumeServiceName`: `co.hotwax.system.FeedServices.consume#NetsuiteFeed`
-   - Related type: `GenerateOMSCreateTOShipmentFeed`
-
-2. `GenerateOMSCreateTOShipmentFeed`
-   - Component: `mantle-netsuite-connector`
-   - Purpose: map warehouse fulfillment payload to OMS Transfer Order shipment payload
-   - `consumeServiceName`: `co.hotwax.system.FeedServices.generate#OMSFeed`
-   - `sendServiceName`: `co.hotwax.netsuite.TransferOrderServices.map#WhTransferOrderFulfillment`
-   - Related type: `OMSCreateTOShipmentFeed`
-
-3. `OMSCreateTOShipmentFeed`
-   - Component: `poorti`
-   - Purpose: create Transfer Order shipment in OMS from external warehouse fulfillment
-   - `sendServiceName`: `co.hotwax.poorti.TransferOrderFulfillmentServices.create#TransferOrderShipment`
+   - Purpose: Direct NetSuite Warehouse TO Fulfillment import from SFTP to create shipments in OMS.
+   - `importServiceName`: `co.hotwax.netsuite.TransferOrderServices.import#WhToFulfillment`
+   - `importPath`: `/home/${sftpUsername}/netsuite/transferorderv2/import/fulfillment-wh`
+   - `executionModeId`: `DMC_QUEUE`
 
 ### Service Jobs
 
@@ -331,10 +303,9 @@ This is the main fulfillment-import flow for `Warehouse to Store` TOs.
    - Component: `netsuite-integration`
    - Purpose: NetSuite export job for warehouse fulfillment feed
 
-2. `poll_SystemMessageFileSftp_Wh_TO_Fulfillment`
+2. `import_NetSuiteWhFulfillment`
    - Component: `mantle-netsuite-connector`
-   - Purpose: poll imported warehouse fulfillment feed from SFTP
-   - Parameter: `systemMessageTypeId = ImportWhToFulfillmentFeed`
+   - Purpose: Service job running `co.hotwax.util.UtilityServices.get#DataManagerFileFromSftp` to poll and import files using `NS_TO_WH_FULFILL` configuration.
 
 ## F. OMS to NetSuite Receipt flow
 
@@ -409,5 +380,3 @@ These feeds are generated after receiving or completion processing in OMS:
    - Purpose: Reconcile Transfer Order Receipt records to link the receipt created against the Order Item with the Shipment.
      Eg scenario - Wh to Store TO where TO is imported and receipts created against the order before the Shipment
      is imported in OMS from external system like NetSuite. For this, the assumption is that the record for OrderShipment for the TO item exists.
-
-
