@@ -19,8 +19,8 @@ https://www.moqui.org/m/docs/mantle/Mantle+Structure+and+UDM/Party
 1. Setup custom component, "relationshipmgr" 
 2. Setup Party and related entities defined in this document.
 3. Build UI using Forms and Screens 
-4. Demonstrate use of your application to manage sample data from you experience, e.g Collage, departments, students, teaching staff. 
-5. Add [Party Contact Mechanism](contact-mech.md) and related entities in your codebase (PartyContactMech and related entites are not defined in this document).
+4. Demonstrate use of your application to manage sample data from your experience, e.g College, departments, students, teaching staff. 
+5. Add [Party Contact Mechanism](contact-mech.md) and related entities in your codebase (PartyContactMech and related entities are not defined in this document).
 6. Prepare sample Contact Mechanism data from your real life experience.
 7. Use your application to manage your contacts.
 
@@ -53,7 +53,7 @@ Example: John Doe works as an employee at ABC Organization, where he is also a c
 #### 2. Person
 - **Description**: A specialization of `Party`, representing individual human beings.
 - **Key Attribute**: `partyId`
-- **Example**: Lets create the relevent person.
+- **Example**: Lets create the relevant person.
 ```json
 {
   "Person": {
@@ -71,14 +71,14 @@ Example: John Doe works as an employee at ABC Organization, where he is also a c
 ```json
 {
   "Organization": {
-    "partyID": "ORG456",
+    "partyId": "ORG456",
     "organizationName": "ABC"
   }
 }
 ```
 #### 4. Party Role
 - **Description**: Defines the role of a `Party` in a specific context.
-- **Key Attributes**: `partyid`, `roleTypeId`
+- **Key Attributes**: `partyId`, `roleTypeId`
 - **Examples**: Lets define the relevant roles for the parties.
 ```json
 {
