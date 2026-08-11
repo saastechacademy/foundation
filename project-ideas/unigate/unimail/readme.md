@@ -1,7 +1,8 @@
 # UniMail — Uniform Email Gateway
 
-UniMail is the email-side of Unigate. It gives callers a single API surface for sending transactional emails and tracking lifecycle events, regardless of which email provider the tenant has configured. The routing from abstract operation to concrete provider is driven entirely by database configuration — no code changes are needed to switch providers or add new ones.
+UniMail is the email side of Unigate. It gives callers a single API surface for sending transactional emails and tracking lifecycle events, regardless of which installed email provider the tenant has configured. Switching between installed adapters is database configuration. Adding a new in-process adapter still requires provider service code and a Unigate deployment.
 
+External partners use a different model: they host an HTTPS receiver while HotWax configures a provider-neutral outbound adapter. See [External Partner Integration for Order Email Events](./external-order-email-integration.md).
 
 ---
 
@@ -24,7 +25,7 @@ sequenceDiagram
     participant Impl as MayurServices
     participant API as Mayur API
 
-    OMS->>Filter: POST /email/send\n api_key + tenant_Id headers
+    OMS->>Filter: POST /communication/email\n api_key + tenant_Id headers
     Filter->>Filter: hash api_key, query UserLoginKeyAndParty
     Filter-->>OMS: 401 if invalid
     Filter->>Router: set tenantPartyId, pass request
@@ -55,13 +56,13 @@ Defines which services handle each abstract operation for a given provider. One 
 ### `CommGatewayAuth`
 
 Per-tenant credential and endpoint data for a specific provider. One record per tenant+provider combination.
-See the [CommGatewayAuth entity doc](../entity/comm-gateway-auth.md) for the full field list, encryption details, and setup workflow.
+See the [CommGatewayAuth entity doc](../entity/CommGatewayAuth.md) for the current field list and setup workflow.
 
 ---
 
 ## APIs
 
-### `POST /email/send` — Send an Email
+### `POST /rest/s1/unigate/communication/email` — Send an Email
 
 Routes to `CommunicationServices.send#EmailCommunication`, which delegates to the provider's `sendEmailServiceName`.
 
@@ -80,7 +81,7 @@ See the [send#EmailCommunication](./services/send-email-communication.md) servic
 
 ---
 
-### `POST /email/flow` — Create an Email Flow
+### `POST /rest/s1/unigate/communication/flow` — Create an Email Flow
 
 Routes to `CommunicationServices.create#EmailFlow`, which delegates to `createFlowServiceName`. See the [services directory](./services/) for detailed explanations of all email APIs.
 
@@ -89,7 +90,8 @@ Routes to `CommunicationServices.create#EmailFlow`, which delegates to `createFl
 ## Related Documents
 
 - [CommGatewayAuth](../entity/CommGatewayAuth.md) — credential entity reference
-- [Add Email Gateway](./add-email-gateway.md) — integrating a new email provider
+- [External Partner Integration](./external-order-email-integration.md) — partner-owned receiver and order event contract
+- [Add In-Process Email Gateway](./add-email-gateway.md) — internal adapter implementation
 - [send#EmailCommunication](./services/send-email-communication.md) — email sending service design
 - [create#EmailFlow](./services/create-email-flow.md) — automated flow provisioning design
 - [get#EmailFlow](./services/get-email-flow.md) — flow status retrieval design

@@ -22,7 +22,7 @@ Steps 1 and 2 are performed by an administrator. Step 3 can be done by either th
 
 Call `co.hotwax.unigate.UnigateTenantServices.create#UnigateTenant`.
 
-**Input**
+### Tenant Input
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|
@@ -31,7 +31,7 @@ Call `co.hotwax.unigate.UnigateTenantServices.create#UnigateTenant`.
 
 **What it does internally:**
 
-```
+```text
 create#UnigateTenant
   → create#co.hotwax.unigate.Party
       (partyTypeEnumId = 'PtyOrganization', organizationName = <input>)
@@ -43,7 +43,7 @@ create#UnigateTenant
 
 The `UNIGATE_API` user group controls which API endpoints the tenant can reach. All tenants are added to it automatically.
 
-**Output**
+### Tenant Output
 
 ```json
 { "partyId": "ACME_001" }
@@ -57,7 +57,7 @@ The returned `partyId` is the tenant's permanent identifier — it will appear a
 
 Call `co.hotwax.unigate.UnigateTenantServices.create#UserLoginKey`.
 
-**Input**
+### API Key Input
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|
@@ -65,7 +65,7 @@ Call `co.hotwax.unigate.UnigateTenantServices.create#UserLoginKey`.
 
 **What it does internally:**
 
-```
+```text
 create#UserLoginKey
   → loginKey = StringUtilities.getRandomString(40)
   → hashedKey = ec.ecfi.getSimpleHash(loginKey, "", LoginKeyHashType, false)
@@ -74,7 +74,7 @@ create#UserLoginKey
   → return plaintext loginKey to caller
 ```
 
-**Output**
+### API Key Output
 
 ```json
 { "loginKey": "a7f2c9...40-char-random-string..." }
@@ -94,7 +94,7 @@ Before the tenant can call UniMail or UniShip, an administrator must create at l
 
 Create a `CommGatewayAuth` record:
 
-```
+```text
 POST /rest/s1/unigate/commGatewayAuth   (or via admin UI)
 
 {
@@ -112,7 +112,7 @@ The returned `commGatewayAuthId` is what the tenant passes in their email API ca
 
 Create a `ShippingGatewayAuth` record:
 
-```
+```text
 POST /rest/s1/unigate/shippingGatewayAuth   (or via admin UI)
 
 {
@@ -129,7 +129,7 @@ POST /rest/s1/unigate/shippingGatewayAuth   (or via admin UI)
 
 The returned `shippingGatewayAuthId` is what the tenant passes in their shipping API calls.
 
-For scenarios where a single tenant needs **separate credentials per facility**, see [Carrier Account Management](../uniship/CarrierAccountManagement.md).
+For scenarios where a single tenant needs **separate credentials per facility**, see [Carrier Account Management](./uniship/carrier-account-management.md).
 
 ---
 
@@ -149,7 +149,7 @@ Both subscreens rely on a single `SystemMessageRemote` record in Maarg with `sys
 |---|---|
 | `internalId` | The Unigate `tenantPartyId` (the `partyId` created in Step 1 above) |
 | `publicKey` | The plaintext API key returned from Step 2 (stored here for use by all OMS services) |
-| `sendUrl` | The Unigate instance base URL (e.g. `https://unigate.hotwax.co`) |
+| `sendUrl` | The Unigate API root (for example, `https://unigate.example.com/rest/s1/unigate`). OMS appends paths such as `communication/email`. |
 
 The screen reads `UNIGATE_CONFIG` on load. If it is missing or incomplete, both subscreens are locked and show an error: *"UNIGATE_CONFIG is incomplete. Please finish configuring Tenant ID, API Key, and Instance URL."*
 
@@ -168,6 +168,7 @@ Once `UNIGATE_CONFIG` is set, this screen manages the full email integration set
 This section lists all `CommGatewayAuth` records for the active tenant, fetched directly from Unigate via `UnigateServices.get#CommGatewayAuths`.
 
 Use **Add Comm Auth** to create a new credential record. The dialog collects:
+
 - `commGatewayConfigId` — the provider to use (populated from `CommGatewayConfig` records in Unigate)
 - `commGatewayAuthId` — a unique identifier you assign (e.g. `KLAVIYO_PROD`)
 - `baseUrl`, `publicKey`, `username`, `password`, `authHeaderName` — provider-specific auth fields
@@ -176,11 +177,14 @@ On submit, this calls `UnigateServices.create#CommGatewayAuth`, which proxies th
 
 Existing records can be edited or deleted inline.
 
+For an external partner endpoint, HotWax must first confirm that a provider-neutral outbound adapter is installed. The partner supplies its HTTPS endpoint and authentication requirements; it does not add a `CommGatewayConfig` service name or deploy code to Unigate. See [External Partner Integration for Order Email Events](./unimail/external-order-email-integration.md).
+
 #### 2. Product Store Email Settings
 
 This section manages `ProductStoreEmailSetting` records — the OMS entity that ties an email type (e.g. `ORDER_COMPLETION`, `READY_FOR_PICKUP`) to a specific Unigate auth and email template.
 
 Use **Add Email Setting** to create a new mapping. The dialog collects:
+
 - `productStoreId` — which product store this setting applies to
 - `emailType` — the email event type (from the `PRDS_EMAIL` enumeration)
 - `fromAddress`, `subject` — sender and subject line
@@ -203,6 +207,7 @@ This screen manages the shipping side of the integration. It has three sections:
 Lists all `ShippingGatewayAuth` records for the active tenant, fetched from Unigate via `UnigateServices.get#ShippingGatewayAuths`.
 
 Use **Add Ship Auth** to create a new credential record. The dialog collects:
+
 - `shippingGatewayConfigId` — the carrier config to use (e.g. `FEDEX_CONFIG`; populated from Unigate's `ShippingGatewayConfig` records)
 - `shippingGatewayAuthId` — a unique identifier you assign (e.g. `SMUS_FEDEX_01`)
 - `baseUrl` — carrier API base URL (sandbox or production)
@@ -222,9 +227,9 @@ Lists `ShippingCarrierBillingConfig` records — billing overrides per carrier a
 
 ## Related Documents
 
-- [TenantAuthFilter](../TenantAuthFilter.md) — how the API key is validated per request
-- [Entity Model](../entity/entity-model.md) — full entity definitions
-- [CommGatewayAuth](../entity/CommGatewayAuth.md) — email credential entity
-- [ShippingGatewayAuth](../entity/ShippingGatewayAuth.md) — shipping credential entity
-- [Carrier Account Management](../uniship/CarrierAccountManagement.md) — multi-facility credential pattern
-
+- [TenantAuthFilter](./tenant-auth-filter.md) — how the API key is validated per request
+- [Entity Model](./entity/entity-model.md) — full entity definitions
+- [CommGatewayAuth](./entity/CommGatewayAuth.md) — email credential entity
+- [ShippingGatewayAuth](./entity/ShippingGatewayAuth.md) — shipping credential entity
+- [External Partner Integration](./unimail/external-order-email-integration.md) — partner-owned order email endpoint
+- [Carrier Account Management](./uniship/carrier-account-management.md) — multi-facility credential pattern

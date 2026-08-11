@@ -1,19 +1,21 @@
-# Adding a New Email Gateway to UniMail
+# Adding an In-Process Email Gateway Adapter to UniMail
 
-This guide walks through integrating a new email provider into UniMail. The integration pattern is consistent across all providers — you implement two things (a service and a template), then register one database record.
+This internal guide covers a provider adapter that is compiled and deployed with Unigate. It is intended for HotWax platform developers, not external partners.
+
+External partners should host their own HTTPS receiver and use the [external order email integration guide](./external-order-email-integration.md). They must not need access to this repository or deploy code to Unigate.
 
 ---
 
 ## The Pattern
 
-UniMail's routing layer (`CommunicationServices`) delegates to provider implementations through a database-configured service name. To add a new provider, you need to:
+UniMail's routing layer (`CommunicationServices`) delegates to installed provider implementations through a database-configured service name. To add an in-process provider, you need to:
 
 1. Implement the service interface
 2. Create the FreeMarker request template(s)
 3. Register the provider in `CommGatewayConfig`
 4. Create a `CommGatewayAuth` record for each tenant using it
 
-No changes to the routing layer (`CommunicationServices.xml`) are needed.
+No changes to the routing layer (`CommunicationServices.xml`) are needed, but the provider service and template still require a Unigate build and deployment. Database routing is configuration-driven; adapter availability is not.
 
 ---
 
@@ -48,7 +50,7 @@ Create `service/co/hotwax/communication/{provider}/{ProviderName}Services.xml`. 
 - Always load `CommGatewayAuth` via `commGatewayAuthId` (passed in context by the router)
 - The `response` and `requestBody` out-parameters are defined in the interface — populate both
 - Use `commGatewayAuth.baseUrl` for the endpoint base — never hardcode URLs
-- Use `commGatewayAuth.authHeaderName` + `commGatewayAuth.publicKey` / `apiKey` for auth — these are what the tenant configures
+- Use `commGatewayAuth.authHeaderName` plus `commGatewayAuth.publicKey`, or `username` and encrypted `password`, for authentication. These are the credential fields in the current entity.
 
 ---
 
@@ -122,15 +124,19 @@ Only populate the service name fields for operations you actually implement. Lea
 
 Each tenant using this provider needs a `CommGatewayAuth` record:
 
-```json
+```http
 POST /rest/s1/unigate/commGatewayAuth
+Content-Type: application/json
+```
+
+```json
 {
   "tenantPartyId": "TENANT_001",
   "commGatewayConfigId": "MY_PROVIDER",
   "authTypeEnumId": "ApiKeyHeader",
   "baseUrl": "https://api.myprovider.com",
   "authHeaderName": "X-Api-Key",
-  "apiKey": "tenant-api-key-here",
+  "publicKey": "tenant-api-key-here",
   "modeEnumId": "Production",
   "description": "Tenant 001 - My Provider production"
 }
@@ -146,7 +152,7 @@ Before considering an integration complete:
 
 - [ ] Service implements `co.hotwax.unigate.ApiInterfaceServices.send#EmailCommunication`
 - [ ] Service reads `commGatewayAuth.baseUrl` and does not hardcode any URLs
-- [ ] Auth header is driven by `commGatewayAuth.authHeaderName` / `apiKey` / `publicKey`
+- [ ] Auth header is driven by `commGatewayAuth.authHeaderName` and `publicKey`, or by the configured username/password fields
 - [ ] FreeMarker template renders valid JSON for the provider
 - [ ] `CommGatewayConfig` record created with correct service name
 - [ ] At least one `CommGatewayAuth` provisioned for a test tenant
@@ -156,6 +162,7 @@ Before considering an integration complete:
 
 ## Related Documents
 
-- [UniMail README](./README.md) — how routing and the existing Mayur integration work
+- [External partner integration](./external-order-email-integration.md) — partner-owned webhook model with no Unigate deployment
+- [UniMail overview](./readme.md) — how routing and the installed implementations work
 - [CommGatewayAuth entity](../entity/CommGatewayAuth.md) — full field reference for auth config
-- [ApiInterfaceServices](../../service/co/hotwax/unigate/ApiInterfaceServices.xml) — the interface contract your service must implement
+- [`send#EmailCommunication` API](./services/send-email-communication.md) — the interface contract your service must implement
