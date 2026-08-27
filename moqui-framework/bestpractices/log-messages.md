@@ -41,23 +41,23 @@ To ensure `<log>` messages are **consistent**, **insightful**, and **easily anal
 ```
 
 ```xml
-<log level="error" message="Inventory [Product ID: ${productId}] - Insufficient stock at Facility ${facilityId}"/>
+<log level="error" message="Inventory [Product ID: ${productId}, Facility: ${facilityId}] - Insufficient stock"/>
 ```
 
 ### 3. **Asset Reservation Logs**
 
 ```xml
-<log level="warn" message="AssetReservation [ID: ${assetReservationId}] - Invalid for OrderItem ${orderItem.orderId}:${orderItem.orderItemSeqId} at Facility ${asset.facilityId}"/>
+<log level="warn" message="AssetReservation [ID: ${assetReservationId}, OrderItem: ${orderItem.orderId}:${orderItem.orderItemSeqId}, Facility: ${asset.facilityId}] - Invalid reservation"/>
 ```
 
 ```xml
-<log level="warn" message="Asset [ID: ${assetId}] - Locked for reservation, remaining ATP: ${asset.availableToPromiseTotal}"/>
+<log level="warn" message="Asset [ID: ${assetId}, ATP: ${asset.availableToPromiseTotal}] - Locked for reservation"/>
 ```
 
 ### 4. **Operational Logs**
 
 ```xml
-<log message="Order [ID: ${orderId}] - Calculated unitAmount ${unitAmount} for Product ${productId}"/>
+<log message="Order [ID: ${orderId}, Product: ${productId}, Unit Amount: ${unitAmount}] - Calculated unit amount"/>
 ```
 
 ```xml
@@ -65,23 +65,23 @@ To ensure `<log>` messages are **consistent**, **insightful**, and **easily anal
 ```
 
 ```xml
-<log message="Inventory [Facility: ${facilityId}] - Adjusted quantity for Product ${productId}, new QOH: ${quantityOnHandTotal}"/>
+<log message="Inventory [Facility: ${facilityId}, Product: ${productId}, QOH: ${quantityOnHandTotal}] - Adjusted quantity"/>
 ```
 
 ### 5. **Time Tracking Logs**
 
 ```xml
-<log message="Process [Validated: ${validateCount} addresses] - Completed in ${elapsedTime} minutes"/>
+<log message="Process [Validated: ${validateCount} addresses, Elapsed: ${elapsedTime} minutes] - Address validation completed"/>
 ```
 
 ```xml
-<log message="Shipment [ID: ${shipmentId}] - Processing completed in ${elapsedTime} seconds"/>
+<log message="Shipment [ID: ${shipmentId}, Elapsed: ${elapsedTime} seconds] - Processing completed"/>
 ```
 
 ### 6. **Configuration and Setup Logs**
 
 ```xml
-<log message="Configuration [ShippingGatewayConfig] - Loaded for Store ${storeId}"/>
+<log message="Configuration [ShippingGatewayConfig, Store: ${storeId}] - Loaded"/>
 ```
 
 ```xml
@@ -91,21 +91,21 @@ To ensure `<log>` messages are **consistent**, **insightful**, and **easily anal
 ### 7. **Inventory Adjustment Logs**
 
 ```xml
-<log message="Inventory [Product: ${productId}] - ATP adjusted by ${adjustmentQty}, new ATP: ${newAtp}"/>
+<log message="Inventory [Product: ${productId}, Adjustment: ${adjustmentQty}, New ATP: ${newAtp}] - ATP adjusted"/>
 ```
 
 ```xml
-<log level="warn" message="Inventory [Product: ${productId}] - Negative ATP detected at Facility ${facilityId}"/>
+<log level="warn" message="Inventory [Product: ${productId}, Facility: ${facilityId}] - Negative ATP detected"/>
 ```
 
 ### 8. **User Action Logs**
 
 ```xml
-<log message="User [ID: ${userLogin.userLoginId}] - Approved Order ${orderId}"/>
+<log message="User [ID: ${userLogin.userLoginId}, Order: ${orderId}] - Approved order"/>
 ```
 
 ```xml
-<log message="User [ID: ${userLogin.userLoginId}] - Cancelled Shipment ${shipmentId}"/>
+<log message="User [ID: ${userLogin.userLoginId}, Shipment: ${shipmentId}] - Cancelled shipment"/>
 ```
 
 ### 9. **System Event Logs**
@@ -116,6 +116,27 @@ To ensure `<log>` messages are **consistent**, **insightful**, and **easily anal
 
 ```xml
 <log level="error" message="System [Job: ${jobId}] - Job execution failed with error ${errorMessage}"/>
+```
+
+### 10. **Exception Logs**
+
+Always pair an exception with a pattern-compliant message. Many exceptions carry a null or
+empty message, so logging only the exception produces useless lines like `|E| null`.
+
+```xml
+<!-- Bad: prints only "null" when the exception has no message -->
+<log level="error" message="${exception.message}"/>
+
+<!-- Good -->
+<log level="error" message="Job [ID: ${jobId}] - Context deserialization failed: ${exception}"/>
+```
+
+```java
+// Bad when used alone: the log line is just the exception message, often null
+Debug.logError(e, MODULE);
+
+// Good: the reader and the log tooling get entity, id, and what failed
+Debug.logError(e, "Job [ID: " + jobId + "] - Context deserialization failed", MODULE);
 ```
 
 ---
@@ -148,6 +169,13 @@ To ensure `<log>` messages are **consistent**, **insightful**, and **easily anal
 
 7. **Track Time Where Relevant**:
     - Include elapsed time for processes or operations that need performance monitoring.
+
+8. **Keep the Action Clause Constant**:
+    - Put every dynamic value inside the `[Context]` block. The action text after the `-` stays identical across occurrences, so log tools can group and count messages reliably (e.g., Grafana/Loki pattern matching, "count by message").
+    - One exception: a trailing error detail may be appended after the constant action, e.g. `- Could not connect: ${errorMessage}`.
+
+9. **Never Log a Bare Exception**:
+    - Always pair the exception with a pattern-compliant message naming the entity and its identifiers. Exceptions with null messages otherwise produce lines like `|E| null`, which cannot be analyzed at all.
 
 ---
 
