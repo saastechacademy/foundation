@@ -5,7 +5,9 @@ Unigate is a **multi-tenant API gateway** built on the Moqui Enterprise Framewor
 - **[UniMail](./unimail/readme.md)** — Email delivery and lifecycle event tracking (Klaviyo, Mayur, and future providers)
 - **[UniShip](./uniship/readme.md)** — Shipping rates, label generation, and label refunds (FedEx, Purolator, Canada Post, ShipHawk, C807, DrivIn)
 
-Callers never deal with provider-specific APIs, authentication schemes, or payload formats. They authenticate once as a tenant, pass a gateway auth ID, and get a normalized response back regardless of which carrier or email provider sits behind it.
+Callers never deal with provider-specific APIs, authentication schemes, or payload formats. They authenticate once as a tenant, pass a gateway auth ID, and get a normalized response back regardless of which installed carrier or email adapter sits behind it.
+
+External communication partners can keep their implementation outside Unigate by hosting an HTTPS receiver. HotWax enables and configures the outbound adapter; the partner does not deploy code to Unigate. See the [external order email integration guide](./unimail/external-order-email-integration.md).
 
 ---
 
@@ -49,7 +51,7 @@ graph LR
     end
 
     %% Flow
-    Client -- "POST /email/*\nPOST /shipment/*" --> Filter
+    Client -- "POST /communication/*\nPOST /shipment/*" --> Filter
     
     Filter -- "tenant_Id" --> CommRouter
     Filter -- "tenant_Id" --> ShipRouter
@@ -70,7 +72,7 @@ graph LR
 
 ## Package Layout
 
-```
+```text
 co.hotwax.unigate                   ← Core authentication and routing
 ├── TenantAuthFilter.groovy         ← Servlet filter (api_key / tenant_Id auth)
 ├── helper/
@@ -100,6 +102,7 @@ co.hotwax.unigate                   ← Core authentication and routing
 Every request is scoped to a **tenant** — a `Party` record of type `PtyOrganization`. Tenants authenticate with a hashed API key stored in `UserLoginKey`, and their carrier credentials live in separate `CommGatewayAuth` / `ShippingGatewayAuth` records linked by `tenantPartyId`.
 
 This means:
+
 - A single tenant can have credentials for multiple carriers simultaneously
 - A single carrier config (`ShippingGatewayConfig`) can serve many tenants with different credentials
 - Adding a carrier for a new tenant is a data operation — no code change required
@@ -110,7 +113,7 @@ See [Tenant Onboarding](./tenant-onboarding.md) for how to provision a new tenan
 
 ## Key Design Decisions
 
-**Database-driven routing** — which service handles a request is read from `CommGatewayConfig.sendEmailServiceName` or `ShippingGatewayConfig.getRateServiceName`. There are no `if/else` chains on carrier names in the routing layer; adding a carrier only requires a new service and a database record.
+**Database-driven routing** — which service handles a request is read from `CommGatewayConfig.sendEmailServiceName` or `ShippingGatewayConfig.getRateServiceName`. There are no `if/else` chains on provider names in the routing layer. Switching between installed adapters is a data change; introducing a new in-process adapter still requires a deployed service and a database record.
 
 **API keys are hashed at rest** — Unigate stores the SHA-based hash of the API key, never the plaintext. The plaintext is returned only once at generation time.
 
@@ -131,7 +134,8 @@ See [Tenant Onboarding](./tenant-onboarding.md) for how to provision a new tenan
 | [ShippingGatewayAuth](./entity/ShippingGatewayAuth.md) | Tenant shipping credentials |
 | [ShippingGatewayConfig](./entity/ShippingGatewayConfig.md) | Gateway service routing config |
 | [UniMail](./unimail/readme.md) | Email gateway — APIs, routing, entities |
-| [Add Email Gateway](./unimail/add-email-gateway.md) | How to integrate a new email provider |
+| [External Order Email Integration](./unimail/external-order-email-integration.md) | Partner-owned webhook contract and certification |
+| [Add In-Process Email Gateway](./unimail/add-email-gateway.md) | Internal provider adapter implementation |
 | [send#EmailCommunication](./unimail/services/send-email-communication.md) | Email sending service design |
 | [create#EmailFlow](./unimail/services/create-email-flow.md) | Automated flow provisioning design |
 | [get#EmailFlow](./unimail/services/get-email-flow.md) | Flow status retrieval design |
@@ -142,5 +146,3 @@ See [Tenant Onboarding](./tenant-onboarding.md) for how to provision a new tenan
 | [get#ShippingRate](./uniship/services/get-shipping-rate.md) | Rate service design |
 | [request#ShippingLabels](./uniship/services/requestShippingLabel.md) | Label request service design |
 | [refund#ShippingLabels](./uniship/services/refundShippingLabels.md) | Label refund service design |
-
-

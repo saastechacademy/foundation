@@ -1,156 +1,91 @@
 # `CommGatewayAuth`
 
-## 1. Overview
+`CommGatewayAuth` stores a tenant's endpoint and credentials for an installed UniMail adapter.
 
-The `CommGatewayAuth` record stores tenant-specific endpoint and credential data for communication gateways used by Unigate, such as Klaviyo and other future email or event providers.
-
----
-
-## 2. Purpose
-
-* Allows each tenant to configure one or more communication gateway accounts they intend to use.
-* Enables the Unigate engine to route email or event API requests using tenant-specific credentials.
-* Stores endpoint, authentication type, and credential values needed to call external communication providers.
-
----
-
-## 3. Entity: `CommGatewayAuth`
+## Current Entity
 
 ```xml
-<entity entity-name="CommGatewayAuth" package="co.hotwax.unigate" use="configuration" cache="false">
+<entity entity-name="CommGatewayAuth" package="co.hotwax.unigate"
+        use="configuration" cache="true">
     <field name="commGatewayAuthId" type="id" is-pk="true"/>
-    <field name="tenantPartyId" type="id" not-null="true"/>
     <field name="commGatewayConfigId" type="id" not-null="true"/>
-
+    <field name="tenantPartyId" type="id" not-null="true"/>
     <field name="modeEnumId" type="id"/>
-    <field name="authTypeEnumId" type="id" not-null="true"/>
-    <field name="baseUrl" type="text-medium" not-null="true"/>
+    <field name="authTypeEnumId" type="id"/>
+    <field name="baseUrl" type="text-medium" enable-audit-log="update"/>
     <field name="authHeaderName" type="text-short"/>
-
-    <field name="apiKey" type="text-medium" encrypt="true"/>
-    <field name="username" type="text-medium"/>
-    <field name="password" type="text-medium" encrypt="true"/>
-    <field name="clientId" type="text-medium"/>
-    <field name="clientSecret" type="text-medium" encrypt="true"/>
-    <field name="accessToken" type="text-very-long" encrypt="true"/>
-    <field name="refreshToken" type="text-very-long" encrypt="true"/>
+    <field name="username" type="text-medium" enable-audit-log="update"/>
+    <field name="password" type="text-medium" encrypt="true"
+           enable-audit-log="update"/>
+    <field name="publicKey" type="text-medium" enable-audit-log="update"/>
     <field name="description" type="text-medium"/>
-    <field name="extraConfigJson" type="text-very-long"/>
-
-    <field name="lastUpdatedStamp" type="date-time"/>
-    <field name="lastUpdatedTxStamp" type="date-time"/>
-    <field name="createdStamp" type="date-time"/>
-    <field name="createdTxStamp" type="date-time"/>
-
-    <relationship type="one" related="co.hotwax.unigate.CommGatewayConfig">
-        <key-map field-name="commGatewayConfigId"/>
-    </relationship>
-    <relationship type="one" related="co.hotwax.unigate.Party" short-alias="tenant">
-        <key-map field-name="tenantPartyId"/>
-    </relationship>
-    <relationship type="one" title="Mode" related="moqui.basic.Enumeration" short-alias="modeEnum">
-        <key-map field-name="modeEnumId"/>
-    </relationship>
-    <relationship type="one" title="AuthType" related="moqui.basic.Enumeration" short-alias="authTypeEnum">
-        <key-map field-name="authTypeEnumId"/>
-    </relationship>
-
-    <index name="COMM_GTWY_AUTH_TNT_CFG">
-        <index-field name="tenantPartyId"/>
-        <index-field name="commGatewayConfigId"/>
-    </index>
 </entity>
 ```
 
-### Notes
+## Fields
 
-* Credential fields use `encrypt="true"` so Moqui can store them encrypted at rest.
-* `authHeaderName` supports providers like Klaviyo that expect token values in a named HTTP header.
-* `extraConfigJson` gives flexibility for provider-specific settings without changing the entity schema.
+| Field | Required | Purpose |
+| --- | --- | --- |
+| `commGatewayAuthId` | Yes | Stable identifier passed in each email API request. |
+| `commGatewayConfigId` | Yes | Selects an installed adapter and its service-name routing. |
+| `tenantPartyId` | Yes | Tenant that owns the endpoint and credentials. |
+| `modeEnumId` | No | Environment or operating mode, such as sandbox or production. |
+| `authTypeEnumId` | No | Describes the configured authentication method. Adapter code must still apply it. |
+| `baseUrl` | No | Provider or partner endpoint base URL. |
+| `authHeaderName` | No | Header used when sending `publicKey`. |
+| `username` | No | Username for adapters that use username/password authentication. |
+| `password` | No | Encrypted password field. |
+| `publicKey` | No | API key, bearer value, or other public credential consumed by the adapter. |
+| `description` | No | Operator-facing label. |
 
----
+## Relationship to `CommGatewayConfig`
 
-## 4. Setup Workflow
+`CommGatewayAuth` does not make an arbitrary URL callable on its own. Its `commGatewayConfigId` points to a `CommGatewayConfig` record whose fields contain deployed Moqui service names:
 
-### Step-by-Step Instructions
+- `sendEmailServiceName`
+- `createEventServiceName`
+- `createFlowServiceName`
+- `getFlowServiceName`
 
-1. **Tenant Manager Logs In**
-   A privileged user, such as a tenant admin or Unigate support user, logs into the Unigate tenant manager interface.
+Switching a tenant between adapters that are already installed is a data change. Adding a new in-process provider implementation still requires its service and template to be deployed. External partners should use the [partner-owned endpoint model](../unimail/external-order-email-integration.md) after HotWax enables a provider-neutral outbound adapter.
 
-2. **Navigate to Communication Gateway Setup Page**
-   Admin chooses to configure communication gateway access for the tenant.
+## Example
 
-3. **Choose Gateway Type**
-   Select from predefined options such as Klaviyo or another supported communication provider. These options are sourced from the `CommGatewayConfig` master entity.
+```http
+POST /rest/s1/unigate/commGatewayAuth
+Content-Type: application/json
+api_key: <tenant-api-key>
+tenant_Id: <tenant-party-id>
+```
 
-4. **Enter Credentials**
-   Provide base URL, auth type, and the relevant credentials for the provider, such as API key, bearer token, basic auth values, or OAuth client credentials.
+```json
+{
+  "commGatewayAuthId": "PARTNER_TEST",
+  "tenantPartyId": "ACME_001",
+  "commGatewayConfigId": "EXTERNAL_WEBHOOK",
+  "authTypeEnumId": "ApiKeyHeader",
+  "modeEnumId": "Sandbox",
+  "baseUrl": "https://partner.example.com/hotwax/events",
+  "authHeaderName": "Authorization",
+  "publicKey": "Bearer test-token",
+  "description": "Partner test endpoint"
+}
+```
 
-5. **Save Configuration**
-   A record is created in the `CommGatewayAuth` entity scoped to the `tenantPartyId`.
+`EXTERNAL_WEBHOOK` is illustrative. Use the configuration ID that HotWax confirms is installed in the target environment.
 
----
+## Security
 
-## 5. Example Use Cases
+- Treat `password`, `publicKey`, and any bearer value as secrets even when the entity field is not marked `encrypt="true"`.
+- The current source encrypts `password`; it does not mark `publicKey` as encrypted.
+- Do not include credentials in screenshots, logs, documentation examples, or support messages.
+- Restrict entity reads and writes to authorized tenant or platform administrators.
+- Use separate test and production records and rotate credentials independently.
+- Audit records contain endpoint and credential-field updates; never place secret values in descriptions.
 
-A retailer configures one communication provider for marketing events and another for transactional communication workflows.
+## Related Documents
 
-* **Klaviyo:**
-
-  * `modeEnumId`: `Production`
-  * `authTypeEnumId`: `ApiKeyHeader`
-  * `baseUrl`: `https://a.klaviyo.com/api`
-  * `authHeaderName`: `Authorization`
-  * `apiKey`: `Klaviyo-API-Key pk_live_xxxxx`
-
-  These values support the current Klaviyo implementation, which needs `baseUrl`, `authHeaderName`, and `apiKey` to submit event payloads.
-
-* **Mayur:**
-
-  * `modeEnumId`: `Production`
-  * `authTypeEnumId`: `NoAuth`
-  * `baseUrl`: `https://example.mayur.internal/api`
-
-  These values support the current Mayur implementation, which only needs the base URL to construct and send requests.
-
----
-
-## 6. Security Considerations
-
-* Credential fields such as `apiKey`, `password`, `clientSecret`, `accessToken`, and `refreshToken` should be encrypted at rest using Moqui field encryption.
-* Access to view or edit communication gateway credentials should be restricted through artifact authorization.
-* Raw secrets should never be exposed through logs, responses, or admin screens without masking.
-
----
-
-## 7. Internal Entity Relationship
-
-* `tenantPartyId` -> references `Party` and identifies the tenant owning the gateway credentials
-* `commGatewayConfigId` -> references the predefined communication gateway definition
-* Enum IDs (`modeEnumId`, `authTypeEnumId`) -> map to values defined in `moqui.basic.Enumeration`
-
----
-
-## 8. Admin Tools & Future Enhancements
-
-* Admin UI for editing existing communication gateway configurations
-* Support for token refresh workflows using `refreshToken`
-* Support for storing provider-specific metadata in `extraConfigJson`
-* Validation or ping test to verify a tenant's gateway configuration before activation
-
----
-
-## 9. Related Entities
-
-| Entity Name | Purpose |
-| --- | --- |
-| `Party` | Identifies the tenant |
-| `CommGatewayConfig` | Identifies supported communication gateway integrations |
-| `Enumeration` | Stores enum values like auth type and mode |
-
----
-
-## 10. Developer Tips
-
-* Cache sensitive fields minimally; `cache="false"` is appropriate for this entity.
-* Keep provider-specific request logic in services, and use `CommGatewayAuth` only for credential and endpoint data.
+- [UniMail overview](../unimail/readme.md)
+- [External partner integration](../unimail/external-order-email-integration.md)
+- [Tenant onboarding](../tenant-onboarding.md)
+- [Entity model](./entity-model.md)
